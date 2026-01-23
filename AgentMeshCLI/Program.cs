@@ -157,6 +157,27 @@ namespace AgentMesh
 
             services.AddSingleton<CodeStaticAnalyzer>();
 
+            // CodeFixer agent config and client
+            services
+                .AddOptions<TranslatorAgentConfiguration>()
+                .Bind(configuration.GetSection(TranslatorAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<TranslatorAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(TranslatorAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<TranslatorAgentConfiguration>();
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<TranslatorAgent>();
+
             // ChatManager agent config and client
             services
                 .AddOptions<ChatManagerAgentConfiguration>()

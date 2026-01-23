@@ -8,6 +8,7 @@ namespace AgentMesh.Application.Models
         public enum RunStep
         {
             ContextManager,
+            Translator,
             Router,
             BusinessRequirements,
             Coder,
@@ -29,6 +30,7 @@ namespace AgentMesh.Application.Models
         // Pure state properties
         public string UserQuestion { get; }
         public string? ContextManagerResponse { get; private set; }
+        public string? TranslatorResponse { get; private set; }
         public string? RouterRecipient { get; private set; }
         public string? BusinessRequirements { get; private set; }
         public bool ShouldEngageCoder { get; private set; }
@@ -48,6 +50,7 @@ namespace AgentMesh.Application.Models
 
         // Workflow state flags
         public bool HasContextManagerResponse => !string.IsNullOrWhiteSpace(ContextManagerResponse);
+        public bool HasTranslatorResponse => !string.IsNullOrWhiteSpace(TranslatorResponse);
         public bool HasRouterRecipient => !string.IsNullOrWhiteSpace(RouterRecipient);
         public bool HasBusinessRequirements => !string.IsNullOrWhiteSpace(BusinessRequirements) || !string.IsNullOrWhiteSpace(OutputForUserFromBusinessAnalyst);
         public bool HasGeneratedCode => !string.IsNullOrWhiteSpace(GeneratedCode);
@@ -65,9 +68,15 @@ namespace AgentMesh.Application.Models
                     UserSentenceText = UserQuestion
                 } as TInput,
 
+                nameof(TranslatorAgentInput) => new TranslatorAgentInput
+                {
+                    Sentence = ContextManagerResponse!,
+                    TargetLanguage = "English"
+                } as TInput,
+
                 nameof(RouterAgentInput) => new RouterAgentInput
                 {
-                    Message = ContextManagerResponse!
+                    Message = TranslatorResponse!
                 } as TInput,
 
                 nameof(BusinessRequirementsCreatorAgentInput) => new BusinessRequirementsCreatorAgentInput
@@ -108,6 +117,11 @@ namespace AgentMesh.Application.Models
                 case ContextManagerAgentOutput cmOutput:
                     ContextManagerResponse = cmOutput.ContextEnrichedUserSentenceText;
                     AddTokenUsage(ContextManagerAgentConfiguration.AgentName, cmOutput.TokenCount, cmOutput.InputTokenCount, cmOutput.OutputTokenCount);
+                    break;
+
+                case TranslatorAgentOutput translatorOutput:
+                    TranslatorResponse = translatorOutput.TranslatedSentence;
+                    AddTokenUsage(TranslatorAgentConfiguration.AgentName, translatorOutput.TokenCount, translatorOutput.InputTokenCount, translatorOutput.OutputTokenCount);
                     break;
 
                 case RouterAgentOutput routerOutput:
@@ -238,6 +252,11 @@ namespace AgentMesh.Application.Models
             if (!HasContextManagerResponse)
             {
                 return RunStep.ContextManager;
+            }
+
+            if (!HasTranslatorResponse)
+            {
+                return RunStep.Translator;
             }
 
             if (!HasRouterRecipient)

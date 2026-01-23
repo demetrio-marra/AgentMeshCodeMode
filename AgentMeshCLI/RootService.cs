@@ -10,6 +10,8 @@ namespace AgentMesh
 {
     internal class RootService
     {
+        private const string TargetLanguage = "English";
+
         private readonly BusinessRequirementsCreatorAgent _businessRequirementsCreatorAgent;
         private readonly BusinessRequirementsCreatorAgentConfiguration _businessRequirementsCreatorConfiguration;
         private readonly CoderAgent _coderAgent;
@@ -23,6 +25,8 @@ namespace AgentMesh
         private readonly IExecutor<JSSandboxInput, JSSandboxOutput> _jsSandboxExecutor;
         private readonly ContextManagerAgent _contextManagerAgent;
         private readonly ContextManagerAgentConfiguration _contextManagerConfiguration;
+        private readonly TranslatorAgent _translatorAgent;
+        private readonly TranslatorAgentConfiguration _translatorConfiguration;
         private readonly RouterAgent _routerAgent;
         private readonly RouterAgentConfiguration _routerConfiguration;
         private readonly UserConfiguration _userConfiguration;
@@ -41,6 +45,8 @@ namespace AgentMesh
                            IExecutor<JSSandboxInput, JSSandboxOutput> jsSandboxExecutor,
                            ContextManagerAgent contextManagerAgent,
                            ContextManagerAgentConfiguration contextManagerConfiguration,
+                           TranslatorAgent translatorAgent,
+                           TranslatorAgentConfiguration translatorConfiguration,
                            RouterAgent routerAgent,
                            RouterAgentConfiguration routerConfiguration,
                            UserConfiguration userConfiguration)
@@ -58,6 +64,8 @@ namespace AgentMesh
             _jsSandboxExecutor = jsSandboxExecutor;
             _contextManagerAgent = contextManagerAgent;
             _contextManagerConfiguration = contextManagerConfiguration;
+            _translatorAgent = translatorAgent;
+            _translatorConfiguration = translatorConfiguration;
             _routerAgent = routerAgent;
             _routerConfiguration = routerConfiguration;
             _userConfiguration = userConfiguration;
@@ -96,6 +104,7 @@ namespace AgentMesh
                 var agentInputCosts = new Dictionary<string, decimal>
                 {
                     { ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration.CostPerMillionInputTokens },
+                    { TranslatorAgentConfiguration.AgentName, _translatorConfiguration.CostPerMillionInputTokens },
                     { RouterAgentConfiguration.AgentName, _routerConfiguration.CostPerMillionInputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration.CostPerMillionInputTokens },
                     { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionInputTokens },
@@ -107,6 +116,7 @@ namespace AgentMesh
                 var agentOutputCosts = new Dictionary<string, decimal>
                 {
                     { ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration.CostPerMillionOutputTokens },
+                    { TranslatorAgentConfiguration.AgentName, _translatorConfiguration.CostPerMillionOutputTokens },
                     { RouterAgentConfiguration.AgentName, _routerConfiguration.CostPerMillionOutputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration.CostPerMillionOutputTokens },
                     { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionOutputTokens },
@@ -139,6 +149,23 @@ namespace AgentMesh
 
                     ConsoleHelper.WriteLineWithColor($"  Tokens consumed: {contextManagerOutput.TokenCount}", ConsoleColor.Magenta);
                     ConsoleHelper.WriteLineWithColor($"  Enriched message: {contextManagerOutput.ContextEnrichedUserSentenceText}", ConsoleColor.Green);
+                    break;
+
+                case RootServiceState.RunStep.Translator:
+                    var translatorInput = state.GetInput<TranslatorAgentInput>();
+
+                    ConsoleHelper.WriteLineWithColor("\nTranslator is translating the enriched message...", ConsoleColor.DarkYellow);
+                    ConsoleHelper.WriteLineWithColor(translatorInput.Sentence, ConsoleColor.Cyan);
+
+                    var translatorOutput = await ExecuteWithRetryAsync(
+                        () => _translatorAgent.ExecuteAsync(translatorInput),
+                        TranslatorAgentConfiguration.AgentName);
+
+                    state.UpdateState(translatorOutput);
+
+                    ConsoleHelper.WriteLineWithColor($"  Tokens consumed: {translatorOutput.TokenCount}", ConsoleColor.Magenta);
+                    ConsoleHelper.WriteLineWithColor($"  Translated message: {translatorOutput.TranslatedSentence}", ConsoleColor.Green);
+                    ConsoleHelper.WriteLineWithColor($"  Detected language: {translatorOutput.DetectedOriginalLanguage}", ConsoleColor.Green);
                     break;
 
                 case RootServiceState.RunStep.Router:
@@ -315,6 +342,7 @@ namespace AgentMesh
         {
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Context Manager", ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Translator", TranslatorAgentConfiguration.AgentName, _translatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Router", RouterAgentConfiguration.AgentName, _routerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Requirements Creator", BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, _coderConfiguration);
