@@ -85,7 +85,7 @@ namespace AgentMesh.Application.Models
 
                 nameof(BusinessRequirementsCreatorAgentInput) => new BusinessRequirementsCreatorAgentInput
                 {
-                    UserQuestionText = UserQuestion
+                    UserQuestionText = ContextManagerResponse
                 } as TInput,
 
                 nameof(CoderAgentInput) => new CoderAgentInput
