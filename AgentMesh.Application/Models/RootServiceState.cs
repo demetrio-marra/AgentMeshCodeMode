@@ -7,6 +7,7 @@ namespace AgentMesh.Application.Models
     {
         public enum RunStep
         {
+            ContextManager,
             Router,
             BusinessRequirements,
             Coder,
@@ -66,7 +67,7 @@ namespace AgentMesh.Application.Models
 
                 nameof(RouterAgentInput) => new RouterAgentInput
                 {
-                    Message = UserQuestion
+                    Message = ContextManagerResponse!
                 } as TInput,
 
                 nameof(BusinessRequirementsCreatorAgentInput) => new BusinessRequirementsCreatorAgentInput
@@ -232,6 +233,11 @@ namespace AgentMesh.Application.Models
             if (IsCompleted)
             {
                 return RunStep.Completed;
+            }
+
+            if (!HasContextManagerResponse)
+            {
+                return RunStep.ContextManager;
             }
 
             if (!HasRouterRecipient)

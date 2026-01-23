@@ -95,6 +95,7 @@ namespace AgentMesh
 
                 var agentInputCosts = new Dictionary<string, decimal>
                 {
+                    { ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration.CostPerMillionInputTokens },
                     { RouterAgentConfiguration.AgentName, _routerConfiguration.CostPerMillionInputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration.CostPerMillionInputTokens },
                     { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionInputTokens },
@@ -105,6 +106,7 @@ namespace AgentMesh
 
                 var agentOutputCosts = new Dictionary<string, decimal>
                 {
+                    { ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration.CostPerMillionOutputTokens },
                     { RouterAgentConfiguration.AgentName, _routerConfiguration.CostPerMillionOutputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration.CostPerMillionOutputTokens },
                     { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionOutputTokens },
@@ -123,6 +125,22 @@ namespace AgentMesh
         {
             switch (state.GetNextStep())
             {
+                case RootServiceState.RunStep.ContextManager:
+                    var contextManagerInput = state.GetInput<ContextManagerAgentInput>();
+
+                    ConsoleHelper.WriteLineWithColor("\nContextManager is enriching the user message with context...", ConsoleColor.DarkYellow);
+                    ConsoleHelper.WriteLineWithColor(contextManagerInput.UserSentenceText, ConsoleColor.Cyan);
+
+                    var contextManagerOutput = await ExecuteWithRetryAsync(
+                        () => _contextManagerAgent.ExecuteAsync(contextManagerInput),
+                        ContextManagerAgentConfiguration.AgentName);
+
+                    state.UpdateState(contextManagerOutput);
+
+                    ConsoleHelper.WriteLineWithColor($"  Tokens consumed: {contextManagerOutput.TokenCount}", ConsoleColor.Magenta);
+                    ConsoleHelper.WriteLineWithColor($"  Enriched message: {contextManagerOutput.ContextEnrichedUserSentenceText}", ConsoleColor.Green);
+                    break;
+
                 case RootServiceState.RunStep.Router:
                     var routerInput = state.GetInput<RouterAgentInput>();
 
@@ -296,6 +314,7 @@ namespace AgentMesh
         private void PrintConfigurations()
         {
             Console.WriteLine("Agent configurations:");
+            ConsoleHelper.PrintAgentConfiguration("Context Manager", ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Router", RouterAgentConfiguration.AgentName, _routerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Requirements Creator", BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, _coderConfiguration);
