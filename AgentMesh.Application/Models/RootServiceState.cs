@@ -31,6 +31,7 @@ namespace AgentMesh.Application.Models
         public string UserQuestion { get; }
         public string? ContextManagerResponse { get; private set; }
         public string? TranslatorResponse { get; private set; }
+        public string? DetectedOriginalLanguage { get; private set; }
         public string? RouterRecipient { get; private set; }
         public string? BusinessRequirements { get; private set; }
         public bool ShouldEngageCoder { get; private set; }
@@ -121,6 +122,7 @@ namespace AgentMesh.Application.Models
 
                 case TranslatorAgentOutput translatorOutput:
                     TranslatorResponse = translatorOutput.TranslatedSentence;
+                    DetectedOriginalLanguage = translatorOutput.DetectedOriginalLanguage;
                     AddTokenUsage(TranslatorAgentConfiguration.AgentName, translatorOutput.TokenCount, translatorOutput.InputTokenCount, translatorOutput.OutputTokenCount);
                     break;
 
@@ -239,7 +241,7 @@ namespace AgentMesh.Application.Models
                 return SandboxResult ?? string.Empty;
             }
 
-            return UserQuestion;
+            return string.Empty;
         }
 
         public RunStep GetNextStep()
