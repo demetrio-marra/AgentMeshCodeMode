@@ -16,6 +16,7 @@ namespace AgentMesh.Application.Models
             CodeFixer,
             Sandbox,
             Presenter,
+            PersonalAssistant,
             Completed
         }
 
@@ -44,6 +45,7 @@ namespace AgentMesh.Application.Models
         public bool HasBeenCheckedAfterFix { get; private set; }
         public string? SandboxResult { get; private set; }
         public string? SandboxError { get; private set; }
+        public string? PresenterOutput { get; private set; }
         public string? FinalAnswer { get; private set; }
         public Dictionary<string, int> TokenUsage { get; private set; }
         public Dictionary<string, int> InputTokenUsage { get; private set; }
@@ -58,6 +60,7 @@ namespace AgentMesh.Application.Models
         public bool HasInitialCodeCheck => IsCodeValid || CodeIssues.Any();
         public bool NeedsCodeFixer => !IsCodeValid && CodeIssues.Any() && CodeFixerIterationCount < 2;
         public bool HasSandboxResult => !string.IsNullOrWhiteSpace(SandboxResult) || !string.IsNullOrWhiteSpace(SandboxError);
+        public bool HasPresenterOutput => !string.IsNullOrWhiteSpace(PresenterOutput);
         public bool IsCompleted => !string.IsNullOrWhiteSpace(FinalAnswer);
 
         public TInput GetInput<TInput>() where TInput : class, new()
@@ -103,8 +106,14 @@ namespace AgentMesh.Application.Models
 
                 nameof(ResultsPresenterAgentInput) => new ResultsPresenterAgentInput
                 {
-                    UserQuestionText = UserQuestion,
-                    ExecutionResult = GetExecutionResult()
+                    Content = GetExecutionResult()
+                } as TInput,
+
+                nameof(PersonalAssistantAgentInput) => new PersonalAssistantAgentInput
+                {
+                    Sentence = ContextManagerResponse ?? string.Empty,
+                    Data = GetDataForPersonalAssistant(),
+                    TargetLanguage = DetectedOriginalLanguage ?? "English"
                 } as TInput,
 
                 _ => throw new NotSupportedException($"Input type {typeof(TInput).Name} is not supported")
@@ -182,8 +191,13 @@ namespace AgentMesh.Application.Models
                     break;
 
                 case ResultsPresenterAgentOutput presenterOutput:
-                    FinalAnswer = presenterOutput.Answer;
+                    PresenterOutput = presenterOutput.Content;
                     AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, presenterOutput.TokenCount, presenterOutput.InputTokenCount, presenterOutput.OutputTokenCount);
+                    break;
+
+                case PersonalAssistantAgentOutput personalAssistantOutput:
+                    FinalAnswer = personalAssistantOutput.Response;
+                    AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
                     break;
 
                 default:
@@ -244,6 +258,18 @@ namespace AgentMesh.Application.Models
             return string.Empty;
         }
 
+        private string GetDataForPersonalAssistant()
+        {
+            // If Presenter has run, use its output
+            if (!string.IsNullOrWhiteSpace(PresenterOutput))
+            {
+                return PresenterOutput!;
+            }
+
+            // Otherwise, use the direct execution result
+            return GetExecutionResult();
+        }
+
         public RunStep GetNextStep()
         {
             if (IsCompleted)
@@ -269,7 +295,7 @@ namespace AgentMesh.Application.Models
             // Check router's decision
             if (RouterRecipient?.Equals("Personal Assistant", StringComparison.OrdinalIgnoreCase) == true)
             {
-                return RunStep.Presenter;
+                return RunStep.PersonalAssistant;
             }
 
             if (RouterRecipient?.Equals("Business Analyst", StringComparison.OrdinalIgnoreCase) == true)
@@ -279,9 +305,10 @@ namespace AgentMesh.Application.Models
                     return RunStep.BusinessRequirements;
                 }
 
+                // If Business Analyst doesn't engage Coder, go to PersonalAssistant
                 if (!ShouldEngageCoder)
                 {
-                    return RunStep.Presenter;
+                    return RunStep.PersonalAssistant;
                 }
 
                 if (!HasGeneratedCode)
@@ -309,11 +336,18 @@ namespace AgentMesh.Application.Models
                     return RunStep.Sandbox;
                 }
 
-                return RunStep.Presenter;
+                // After Sandbox (Coder path), go to Presenter
+                if (!HasPresenterOutput)
+                {
+                    return RunStep.Presenter;
+                }
+
+                // After Presenter, go to PersonalAssistant
+                return RunStep.PersonalAssistant;
             }
 
-            // Default to Presenter if recipient is not recognized
-            return RunStep.Presenter;
+            // Default to PersonalAssistant if recipient is not recognized
+            return RunStep.PersonalAssistant;
         }
     }
 }

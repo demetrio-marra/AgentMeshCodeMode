@@ -29,6 +29,8 @@ namespace AgentMesh
         private readonly TranslatorAgentConfiguration _translatorConfiguration;
         private readonly RouterAgent _routerAgent;
         private readonly RouterAgentConfiguration _routerConfiguration;
+        private readonly PersonalAssistantAgent _personalAssistantAgent;
+        private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
         private readonly UserConfiguration _userConfiguration;
 
         public RootService(
@@ -49,6 +51,8 @@ namespace AgentMesh
                            TranslatorAgentConfiguration translatorConfiguration,
                            RouterAgent routerAgent,
                            RouterAgentConfiguration routerConfiguration,
+                           PersonalAssistantAgent personalAssistantAgent,
+                           PersonalAssistantAgentConfiguration personalAssistantConfiguration,
                            UserConfiguration userConfiguration)
         {
             _businessRequirementsCreatorAgent = businessRequirementsCreatorAgent;
@@ -68,6 +72,8 @@ namespace AgentMesh
             _translatorConfiguration = translatorConfiguration;
             _routerAgent = routerAgent;
             _routerConfiguration = routerConfiguration;
+            _personalAssistantAgent = personalAssistantAgent;
+            _personalAssistantConfiguration = personalAssistantConfiguration;
             _userConfiguration = userConfiguration;
         }
 
@@ -110,7 +116,8 @@ namespace AgentMesh
                     { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionInputTokens },
                     { CodeStaticAnalyzerConfiguration.AgentName, _codeStaticAnalyzerConfiguration.CostPerMillionInputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _codeFixerConfiguration.CostPerMillionInputTokens },
-                    { ResultsPresenterAgentConfiguration.AgentName, _resultsPresenterConfiguration.CostPerMillionInputTokens }
+                    { ResultsPresenterAgentConfiguration.AgentName, _resultsPresenterConfiguration.CostPerMillionInputTokens },
+                    { PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration.CostPerMillionInputTokens }
                 };
 
                 var agentOutputCosts = new Dictionary<string, decimal>
@@ -122,7 +129,8 @@ namespace AgentMesh
                     { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionOutputTokens },
                     { CodeStaticAnalyzerConfiguration.AgentName, _codeStaticAnalyzerConfiguration.CostPerMillionOutputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _codeFixerConfiguration.CostPerMillionOutputTokens },
-                    { ResultsPresenterAgentConfiguration.AgentName, _resultsPresenterConfiguration.CostPerMillionOutputTokens }
+                    { ResultsPresenterAgentConfiguration.AgentName, _resultsPresenterConfiguration.CostPerMillionOutputTokens },
+                    { PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration.CostPerMillionOutputTokens }
                 };
 
                 ConsoleHelper.PrintTokenUsageSummary(state.InputTokenUsage, state.OutputTokenUsage, agentInputCosts, agentOutputCosts);
@@ -198,11 +206,6 @@ namespace AgentMesh
                     state.UpdateState(brcOutput);
 
                     ConsoleHelper.WriteLineWithColor($"  Tokens consumed: {brcOutput.TokenCount}", ConsoleColor.Magenta);
-
-                    if (!brcOutput.EngageCoderAgent)
-                    {
-                        await CompleteWithPresenterAsync(state);
-                    }
                     break;
 
                 case RootServiceState.RunStep.Coder:
@@ -282,6 +285,23 @@ namespace AgentMesh
                     await CompleteWithPresenterAsync(state);
                     break;
 
+                case RootServiceState.RunStep.PersonalAssistant:
+                    var personalAssistantInput = state.GetInput<PersonalAssistantAgentInput>();
+
+                    ConsoleHelper.WriteLineWithColor("\nPersonal Assistant is preparing the final answer for the user.", ConsoleColor.DarkYellow);
+                    ConsoleHelper.WriteLineWithColor($"Sentence: {personalAssistantInput.Sentence}", ConsoleColor.Cyan);
+                    ConsoleHelper.WriteLineWithColor($"Data: {personalAssistantInput.Data}", ConsoleColor.Cyan);
+                    ConsoleHelper.WriteLineWithColor($"Target Language: {personalAssistantInput.TargetLanguage}", ConsoleColor.Cyan);
+
+                    var personalAssistantOutput = await ExecuteWithRetryAsync(
+                        () => _personalAssistantAgent.ExecuteAsync(personalAssistantInput),
+                        PersonalAssistantAgentConfiguration.AgentName);
+
+                    state.UpdateState(personalAssistantOutput);
+
+                    ConsoleHelper.WriteLineWithColor($"  Tokens consumed: {personalAssistantOutput.TokenCount}", ConsoleColor.Magenta);
+                    break;
+
                 case RootServiceState.RunStep.Completed:
                     break;
             }
@@ -291,8 +311,7 @@ namespace AgentMesh
         {
             var resultsPresenterInput = state.GetInput<ResultsPresenterAgentInput>();
             ConsoleHelper.WriteLineWithColor("\nResultsPresenter Agent is preparing the final answer for the user.", ConsoleColor.DarkYellow);
-            ConsoleHelper.WriteLineWithColor(resultsPresenterInput.UserQuestionText, ConsoleColor.Cyan);
-            ConsoleHelper.WriteLineWithColor(resultsPresenterInput.ExecutionResult, ConsoleColor.Cyan);
+            ConsoleHelper.WriteLineWithColor(resultsPresenterInput.Content, ConsoleColor.Cyan);
 
             var resultsPresenterOutput = await ExecuteWithRetryAsync(
                 () => _resultsPresenterAgent.ExecuteAsync(resultsPresenterInput),
@@ -349,6 +368,7 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("CodeStaticAnalyzer", CodeStaticAnalyzerConfiguration.AgentName, _codeStaticAnalyzerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("CodeFixer", CodeFixerAgentConfiguration.AgentName, _codeFixerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Results Presenter", ResultsPresenterAgentConfiguration.AgentName, _resultsPresenterConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration);
             Console.WriteLine();
         }
     }

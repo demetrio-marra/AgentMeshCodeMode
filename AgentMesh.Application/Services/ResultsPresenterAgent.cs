@@ -28,8 +28,7 @@ namespace AgentMesh.Application.Services
             var inputs = new List<AgentMessage>
             {
                 new AgentMessage { Role = AgentMessageRole.System, Content = "Today date is " + DateTime.UtcNow.ToString("yyyy-MM-dd") + "." },
-                new AgentMessage { Role = AgentMessageRole.User, Content = "User question: " + input.UserQuestionText },
-                new AgentMessage { Role = AgentMessageRole.User, Content = "Execution result: " + input.ExecutionResult },
+                new AgentMessage { Role = AgentMessageRole.User, Content = input.Content },
             };
 
             var stopwatch = Stopwatch.StartNew();
@@ -44,7 +43,7 @@ namespace AgentMesh.Application.Services
 
             return new ResultsPresenterAgentOutput
             {
-                Answer = response.Text,
+                Content = response.Text,
                 TokenCount = response.TotalTokenCount,
                 InputTokenCount = response.InputTokenCount,
                 OutputTokenCount = response.OutputTokenCount

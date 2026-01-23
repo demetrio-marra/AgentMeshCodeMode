@@ -239,6 +239,27 @@ namespace AgentMesh
 
             services.AddSingleton<RouterAgent>();
 
+            // PersonalAssistant agent config and client
+            services
+                .AddOptions<PersonalAssistantAgentConfiguration>()
+                .Bind(configuration.GetSection(PersonalAssistantAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<PersonalAssistantAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(PersonalAssistantAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<PersonalAssistantAgentConfiguration>();
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<PersonalAssistantAgent>();
+
             services.AddSingleton<IExecutor<JSSandboxInput, JSSandboxOutput>, JSSandboxExecutor>();
             services.AddSingleton<IJSSandbox, SESJSSandbox>();
 
