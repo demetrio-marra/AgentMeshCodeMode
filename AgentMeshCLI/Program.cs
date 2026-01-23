@@ -176,26 +176,26 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            // PersonalAssistant agent config and client
+            // ContextManager agent config and client
             services
-                .AddOptions<PersonalAssistantAgentConfiguration>()
-                .Bind(configuration.GetSection(PersonalAssistantAgentConfiguration.SectionName))
+                .AddOptions<ContextManagerAgentConfiguration>()
+                .Bind(configuration.GetSection(ContextManagerAgentConfiguration.SectionName))
                 .PostConfigure(options =>
                 {
                     options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
                 })
                 .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<PersonalAssistantAgentConfiguration>>().Value);
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<ContextManagerAgentConfiguration>>().Value);
 
-            services.AddKeyedSingleton<IOpenAIClient>(PersonalAssistantAgentConfiguration.AgentName, (sp, _) =>
+            services.AddKeyedSingleton<IOpenAIClient>(ContextManagerAgentConfiguration.AgentName, (sp, _) =>
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<PersonalAssistantAgentConfiguration>();
+                var config = sp.GetRequiredService<ContextManagerAgentConfiguration>();
                 var systemPrompt = config.SystemPrompt;
                 return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<PersonalAssistantAgent>();
+            services.AddSingleton<ContextManagerAgent>();
 
             // Router agent config and client
             services

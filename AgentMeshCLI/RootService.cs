@@ -21,8 +21,8 @@ namespace AgentMesh
         private readonly ResultsPresenterAgent _resultsPresenterAgent;
         private readonly ResultsPresenterAgentConfiguration _resultsPresenterConfiguration;
         private readonly IExecutor<JSSandboxInput, JSSandboxOutput> _jsSandboxExecutor;
-        private readonly PersonalAssistantAgent _personalAssistantAgent;
-        private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
+        private readonly ContextManagerAgent _contextManagerAgent;
+        private readonly ContextManagerAgentConfiguration _contextManagerConfiguration;
         private readonly RouterAgent _routerAgent;
         private readonly RouterAgentConfiguration _routerConfiguration;
         private readonly UserConfiguration _userConfiguration;
@@ -39,8 +39,8 @@ namespace AgentMesh
                            ResultsPresenterAgent resultsPresenterAgent,
                            ResultsPresenterAgentConfiguration resultsPresenterConfiguration,
                            IExecutor<JSSandboxInput, JSSandboxOutput> jsSandboxExecutor,
-                           PersonalAssistantAgent personalAssistantAgent,
-                           PersonalAssistantAgentConfiguration personalAssistantConfiguration,
+                           ContextManagerAgent contextManagerAgent,
+                           ContextManagerAgentConfiguration contextManagerConfiguration,
                            RouterAgent routerAgent,
                            RouterAgentConfiguration routerConfiguration,
                            UserConfiguration userConfiguration)
@@ -56,8 +56,8 @@ namespace AgentMesh
             _resultsPresenterAgent = resultsPresenterAgent;
             _resultsPresenterConfiguration = resultsPresenterConfiguration;
             _jsSandboxExecutor = jsSandboxExecutor;
-            _personalAssistantAgent = personalAssistantAgent;
-            _personalAssistantConfiguration = personalAssistantConfiguration;
+            _contextManagerAgent = contextManagerAgent;
+            _contextManagerConfiguration = contextManagerConfiguration;
             _routerAgent = routerAgent;
             _routerConfiguration = routerConfiguration;
             _userConfiguration = userConfiguration;

@@ -1,6 +1,6 @@
 namespace AgentMesh.Models
 {
-    public class PersonalAssistantAgentOutput : IAgentOutput
+    public class ContextManagerAgentOutput : IAgentOutput
     {
         public string ResponseText { get; set; } = string.Empty;
         public bool EngageBusinessAnalyst { get; set; }

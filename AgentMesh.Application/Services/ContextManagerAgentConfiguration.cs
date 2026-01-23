@@ -1,9 +1,9 @@
 namespace AgentMesh.Application.Services
 {
-    public class PersonalAssistantAgentConfiguration
+    public class ContextManagerAgentConfiguration
     {
-        public const string SectionName = "Agents:PersonalAssistant";
-        public const string AgentName = "PersonalAssistant";
+        public const string SectionName = "Agents:ContextManager";
+        public const string AgentName = "ContextManager";
 
         public string Provider { get; set; } = string.Empty;
         public string ModelName { get; set; } = string.Empty;

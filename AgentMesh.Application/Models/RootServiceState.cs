@@ -27,7 +27,7 @@ namespace AgentMesh.Application.Models
 
         // Pure state properties
         public string UserQuestion { get; }
-        public string? PersonalAssistantResponse { get; private set; }
+        public string? ContextManagerResponse { get; private set; }
         public string? RouterRecipient { get; private set; }
         public bool ShouldEngageBusinessAnalyst { get; private set; }
         public string? BusinessRequirements { get; private set; }
@@ -47,7 +47,7 @@ namespace AgentMesh.Application.Models
         public Dictionary<string, int> OutputTokenUsage { get; private set; }
 
         // Workflow state flags
-        public bool HasPersonalAssistantResponse => !string.IsNullOrWhiteSpace(PersonalAssistantResponse);
+        public bool HasContextManagerResponse => !string.IsNullOrWhiteSpace(ContextManagerResponse);
         public bool HasRouterRecipient => !string.IsNullOrWhiteSpace(RouterRecipient);
         public bool HasBusinessRequirements => !string.IsNullOrWhiteSpace(BusinessRequirements) || !string.IsNullOrWhiteSpace(OutputForUserFromBusinessAnalyst);
         public bool HasGeneratedCode => !string.IsNullOrWhiteSpace(GeneratedCode);
@@ -60,7 +60,7 @@ namespace AgentMesh.Application.Models
         {
             return typeof(TInput).Name switch
             {
-                nameof(PersonalAssistantAgentInput) => new PersonalAssistantAgentInput
+                nameof(ContextManagerAgentInput) => new ContextManagerAgentInput
                 {
                     UserQuestionText = UserQuestion
                 } as TInput,
@@ -105,10 +105,10 @@ namespace AgentMesh.Application.Models
         {
             switch (output)
             {
-                case PersonalAssistantAgentOutput paOutput:
-                    PersonalAssistantResponse = paOutput.ResponseText;
-                    ShouldEngageBusinessAnalyst = paOutput.EngageBusinessAnalyst;
-                    AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, paOutput.TokenCount, paOutput.InputTokenCount, paOutput.OutputTokenCount);
+                case ContextManagerAgentOutput cmOutput:
+                    ContextManagerResponse = cmOutput.ResponseText;
+                    ShouldEngageBusinessAnalyst = cmOutput.EngageBusinessAnalyst;
+                    AddTokenUsage(ContextManagerAgentConfiguration.AgentName, cmOutput.TokenCount, cmOutput.InputTokenCount, cmOutput.OutputTokenCount);
                     break;
 
                 case RouterAgentOutput routerOutput:

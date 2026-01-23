@@ -1,6 +1,6 @@
 namespace AgentMesh.Models
 {
-    public class PersonalAssistantAgentInput
+    public class ContextManagerAgentInput
     {
         public string UserQuestionText { get; set; } = string.Empty;
     }
