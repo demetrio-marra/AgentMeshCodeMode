@@ -1,0 +1,103 @@
+/**
+ * MCP Tool Error Response
+ * Returned when a tool call fails
+ */
+
+interface MCPToolError {
+  isError: true;
+  error: string;
+}
+
+type MCPToolSuccess<T> = T;
+type MCPToolResponse<T> = MCPToolSuccess<T> | MCPToolError;
+
+interface MyPlatformChartGenerateChartParams {
+  /** Type of chart to generate. Valid values: 'bar' (vertical bar chart for comparing values across categories), 'line' (line chart for showing trends over time or continuous data), 'pie' (pie chart for showing proportional distribution of parts to a whole). Default is 'bar'. */
+  chartType?: string;
+  /** Title text displayed at the top of the chart. Use a descriptive title that clearly indicates what the chart represents. Example: 'Monthly Sales Revenue' or 'Product Performance Comparison'. Default is 'Chart'. */
+  title?: string;
+  /** Label for the X-axis (horizontal axis). For bar charts, this typically represents the category dimension. For line charts, this often represents time or sequential data. Optional - defaults to 'X' if not provided. Not applicable for pie charts. */
+  xLabel?: string;
+  /** Label for the Y-axis (vertical axis). This typically represents the measured value or metric being displayed. Optional - defaults to 'Y' if not provided. Example: 'Revenue ($)', 'Count', 'Percentage'. Not applicable for pie charts. */
+  yLabel?: string;
+  /** JSON array of data points for the chart. Each data point must be an object with 'label' (string) and 'value' (number) properties. Format: [{"label": "Category1", "value": 100}, {"label": "Category2", "value": 200}]. For bar charts: labels represent categories, values are bar heights. For line charts: labels represent X-axis points (can be sequential), values represent Y-axis measurements. For pie charts: labels represent slice names, values represent slice sizes (will be shown as proportions). Minimum 1 data point required. */
+  dataJson?: string;
+}
+
+interface MyPlatformStatisticsGetParams {
+  /** Start date filter for the search range (inclusive), in ISO8601 format without a time component (e.g., "2025-10-20") */
+  queryDateFrom: string;
+  /** End date filter for the search range (inclusive), in ISO8601 format without a time component (e.g., "2025-12-20") */
+  queryDateTo: string;
+  /** Product's name filter */
+  product: string;
+  /** Type of partitioning applied to returned data (e.g. Year, Month, Day) */
+  dataPartitioning: string;
+  /** Product lifecycle phase (e.g. Create, Modify, Renew, Deactivation, Expiration, Get, GDPR) filter */
+  provisioningPhase?: string;
+  /** Name of the company filter */
+  company?: string;
+  /** Product's family name filter */
+  family?: string;
+}
+
+interface MyCompanyCompanyInfoFindProductHierarchyParams {
+  /** Product name */
+  product: string;
+}
+
+interface MyPlatformChartGenerateChartResult {
+  id?: string | null;
+  fileName: string;
+  fileExtension: string;
+  contentType: string;
+  fileSizeBytes?: number;
+  uploadedAt?: string;
+  metadata?: Record<string, any>;
+}
+
+interface MyPlatformStatisticsGetResult {
+  result: {
+    resultDateFrom?: string;
+    resultDateTo?: string;
+    provisioningPhase?: string;
+    ok?: number | null;
+    ko?: number | null;
+    total?: number | null;
+}[];
+}
+
+interface MyCompanyCompanyInfoFindProductHierarchyResult {
+  result: {
+    company?: string | null;
+    family?: string | null;
+    product?: string | null;
+}[];
+}
+
+/**
+ * @tool MyPlatform_Chart_GenerateChart
+ * @description Generates a visual chart (bar, line, or pie) from data, uploads it to an external file server service and returns a reference to the uploaded file for later use. Use this tool when you need to create visual representations of data for analysis or presentation. Bar charts are ideal for comparing discrete categories, line charts for showing trends or time series, and pie charts for displaying proportional distributions where all parts sum to a meaningful whole.
+ * @inputSchema MyPlatformChartGenerateChartParams
+ * @outputSchema MCPToolResponse<MyPlatformChartGenerateChartResult>
+ * @errorSchema MCPToolError
+ */
+declare function MyPlatform_Chart_GenerateChart(params: MyPlatformChartGenerateChartParams): Promise<MCPToolResponse<MyPlatformChartGenerateChartResult>>;
+
+/**
+ * @tool MyPlatform_Statistics_Get
+ * @description Get provisioning processes statistics for a specific product using Company, Family, Product and ProvisioningPhase filters. Supports data partitioning.
+ * @inputSchema MyPlatformStatisticsGetParams
+ * @outputSchema MCPToolResponse<MyPlatformStatisticsGetResult>
+ * @errorSchema MCPToolError
+ */
+declare function MyPlatform_Statistics_Get(params: MyPlatformStatisticsGetParams): Promise<MCPToolResponse<MyPlatformStatisticsGetResult>>;
+
+/**
+ * @tool MyCompany_CompanyInfo_FindProductHierarchy
+ * @description CompanyInfo - Finds which Company and Family entries a specific Product belongs to.
+ * @inputSchema MyCompanyCompanyInfoFindProductHierarchyParams
+ * @outputSchema MCPToolResponse<MyCompanyCompanyInfoFindProductHierarchyResult>
+ * @errorSchema MCPToolError
+ */
+declare function MyCompany_CompanyInfo_FindProductHierarchy(params: MyCompanyCompanyInfoFindProductHierarchyParams): Promise<MCPToolResponse<MyCompanyCompanyInfoFindProductHierarchyResult>>;

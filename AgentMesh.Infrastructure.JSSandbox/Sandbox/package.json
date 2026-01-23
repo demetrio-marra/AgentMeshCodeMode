@@ -1,0 +1,14 @@
+{
+  "name": "mcp-tool-annotator",
+  "version": "1.0.0",
+  "description": "MCP Tool Annotator with Hardened JavaScript Sandbox",
+  "main": "mcp_tool_annotator.js",
+  "scripts": {
+    "sandbox": "node sandbox-runner.js",
+    "annotate": "node mcp_tool_annotator.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.24.0",
+    "ses": "^1.9.0"
+  }
+}

@@ -1,0 +1,219 @@
+===========================================
+API DOCUMENTATION FOR BUSINESS ANALYSTS
+===========================================
+
+This document describes the available tools and their capabilities in business terms.
+All technical implementation details have been abstracted away.
+
+===========================================
+AVAILABLE TOOLS
+===========================================
+
+-------------------------------------------
+1. CHART GENERATION TOOL
+-------------------------------------------
+
+NAME: MyPlatform_Chart_GenerateChart
+
+PURPOSE:
+Creates visual charts from data and saves them as files for analysis or presentation purposes.
+
+WHEN TO USE:
+- When you need to visualize data comparisons, trends, or distributions
+- When preparing reports or presentations that require graphical representations
+- When making data insights more accessible and understandable
+
+CHART TYPES SUPPORTED:
+- Bar Chart: Best for comparing values across different categories
+- Line Chart: Best for showing trends over time or continuous data
+- Pie Chart: Best for showing how parts contribute to a whole (proportional distribution)
+
+INPUT PARAMETERS:
+
+* Chart Type (Optional):
+  - Description: The type of visualization to create
+  - Options: 'bar', 'line', or 'pie'
+  - Default: 'bar'
+
+* Title (Optional):
+  - Description: The main heading displayed at the top of the chart
+  - Example: "Monthly Sales Revenue" or "Product Performance Comparison"
+  - Default: 'Chart'
+
+* X-Axis Label (Optional):
+  - Description: Label for the horizontal axis
+  - Usage: For bar charts (categories), for line charts (time/sequence)
+  - Not applicable for pie charts
+  - Default: 'X'
+
+* Y-Axis Label (Optional):
+  - Description: Label for the vertical axis showing measured values
+  - Example: "Revenue ($)", "Count", "Percentage"
+  - Not applicable for pie charts
+  - Default: 'Y'
+
+* Data (Optional):
+  - Description: The actual data points to visualize
+  - Format: List of items, each with a label (text) and value (number)
+  - Example: [{"label": "Product A", "value": 150}, {"label": "Product B", "value": 200}]
+  - Minimum: At least 1 data point required
+  - Interpretation:
+    * Bar charts: Labels = categories, Values = bar heights
+    * Line charts: Labels = X-axis points, Values = Y-axis measurements
+    * Pie charts: Labels = slice names, Values = slice sizes (shown as proportions)
+
+OUTPUT:
+The tool returns information about the generated chart file:
+- Unique identifier for the file
+- File name and extension
+- File type
+- File size (in bytes)
+- Upload timestamp
+- Additional metadata if applicable
+
+ERROR HANDLING:
+If the operation fails, you will receive an error message describing what went wrong.
+
+-------------------------------------------
+2. STATISTICS RETRIEVAL TOOL
+-------------------------------------------
+
+NAME: MyPlatform_Statistics_Get
+
+PURPOSE:
+Retrieves provisioning process statistics for products within a specified date range,
+with various filtering options.
+
+WHEN TO USE:
+- When analyzing product provisioning performance
+- When generating reports on success/failure rates
+- When tracking product lifecycle activities over time
+- When monitoring specific companies, families, or provisioning phases
+
+INPUT PARAMETERS (REQUIRED):
+
+* Query Date From:
+  - Description: Start date of the analysis Period (inclusive)
+  - Format: ISO8601 date (YYYY-MM-DD), e.g., "2025-10-20"
+
+* Query Date To:
+  - Description: End date of the analysis Period (inclusive)
+  - Format: ISO8601 date (YYYY-MM-DD), e.g., "2025-12-20"
+
+* Product:
+  - Description: Name of the product to analyze
+
+* Data Partitioning:
+  - Description: How to group the returned data
+  - Options: Year, Month, Day
+  - Purpose: Allows you to see trends at different time granularities
+
+INPUT PARAMETERS (OPTIONAL):
+
+* Provisioning Phase:
+  - Description: Specific lifecycle phase to filter by
+  - Options: Create, Modify, Renew, Deactivation, Expiration, Get, GDPR
+  - Purpose: Focus on specific types of provisioning activities
+
+* Company:
+  - Description: Filter results by company name
+  - Purpose: Analyze performance for specific organizational units
+
+* Family:
+  - Description: Filter results by product family
+  - Purpose: Group analysis by product categories
+
+OUTPUT:
+Returns a list of statistical records, each containing:
+- Result Date From: Actual start date of the data in this record
+- Result Date To: Actual end date of the data in this record
+- Provisioning Phase: The phase this record represents
+- OK: Count of successful operations
+- KO: Count of failed operations (KO = "knock out")
+- Total: Total count of all operations
+
+ERROR HANDLING:
+If the operation fails, you will receive an error message describing what went wrong.
+
+-------------------------------------------
+3. PRODUCT HIERARCHY LOOKUP TOOL
+-------------------------------------------
+
+NAME: MyCompany_CompanyInfo_FindProductHierarchy
+
+PURPOSE:
+Identifies which Company and Family a specific Product belongs to in the organizational hierarchy.
+
+WHEN TO USE:
+- When you need to find the organizational context of a product
+- When determining which company or product family manages a specific product
+- When preparing filters for statistics queries and need to know available companies/families
+
+INPUT PARAMETERS (REQUIRED):
+
+* Product:
+  - Description: Name of the product to look up
+
+OUTPUT:
+Returns a list of hierarchy records (there may be multiple if a product belongs to multiple hierarchies):
+- Company: Name of the company
+- Family: Name of the product family
+- Product: Name of the product (confirmation of the searched product)
+
+ERROR HANDLING:
+If the operation fails, you will receive an error message describing what went wrong.
+
+===========================================
+DATA QUALITY NOTES
+===========================================
+
+A list of important considerations on data quality and interpretation for the available tools.
+
+-------------------------------------------
+1. STATISTICS RETRIEVAL TOOL
+-------------------------------------------
+
+- Date ranges are inclusive (both start and end dates are included in results)
+- Statistics may return null values for certain fields if data is not available
+- Multiple hierarchy records may be returned if a product exists in multiple organizational contexts
+- Data partitioning affects the granularity of returned statistics
+- API does not support metrics aggregation across different provisioning phases; each record refers to a single phase only
+- When user does not explicitly provide Company and Family query parameters instruct the Coder agent to also:
+    1. check if MyCompany_CompanyInfo_FindProductHierarchy returns more than one result. If yes
+    2. return a user-facing error message asking to disambiguate which Company and Family to use for the requested Product, listing all possible Company/Family combinations returned by the API.
+
+Define all INPUT parameters:
+  - when the user does not provide a Date range, set input date range parameter to the current year (from January 1st to December 31st of current year).
+  - when the user does not provide Provisioning Phase parameter, set Provisioning Phase parameter to 'Create'.
+  - when the user does not provide Data Partitioning parameter AND the date range is within a single year, set Data Partitioning parameter to 'Month'.
+  - when the user does not provide Data Partitioning parameter AND the date range is within a single month, set Data Partitioning parameter to 'Day'.
+  - when the user does not provide Data Partitioning parameter AND the date range spans multiple years, set Data Partitioning parameter to 'Year'.
+  - when the user does not provide Company parameter, set Company parameter to null (not "N/A", but null).
+  - when the user does not provide Family parameter, set Family parameter to null (not "N/A", but null).
+
+Workflow rules:
+  - when the user asks for statistics for more than a single product, call 'MyPlatform_Statistics_Get' for each product.
+  - when the 'MyPlatform_Statistics_Get' returns an 'ambiguous product hierarchy' error, call 'MyCompany_CompanyInfo_FindProductHierarchy' and
+    return an error message listing all the company/families found for the product to inform user.
+  - if Business Requirements indicate to fetch ALL Provisioning Phases, choose a or b:
+      a. if the Provisioning Phase column is displayed in output table, display the data as it is.
+      b. if the Provisioning Phase column is not in output table, aggregate metrics for all Provisioning Phases before displaying it in the output table.
+  - when the API returns zero records, respond to the user with a simple informative text message.
+
+Data visualization rules:
+  - compose an ASCII output table with headers, separators and padded data, unless the user explicitly requests a different format.
+  - when multiple products are requested, display each product metrics in a common output table, unless user asked to display separate tables.
+  - when Data Partitioning is 'Year', set Period column with "Year" as header text and the numeric value of the year for the values (eg. 2025).
+  - when Data Partitioning is 'Month', set Period column with "Month" as header text and the abbrev. name of the month for the values (eg. Jan, Feb, Mar).
+  - when Data Partitioning is 'Day', set Period column with "Date" as header text and ISO8601 date only for the values (eg. 2025-03-15).
+  - when the user asks for statistics for more than a single product, display the Product column header and data with product name in the output table, right after the Period column.
+  - when Provisioning Phase parameter is set to null (meaning all phases), include the Provisioning Phase column in the output table.
+  - when Provisioning Phase parameter is set to a specific value, the Provisioning Phase column COULD be hidden from the output table.  
+  - display the '0' value to render any zero numeric value in the table.
+  - display table records having AT LEAST a metric different than null.
+  - display the 'N/A' value to render any null numeric value in the table.
+  - hide table records having all metrics null.
+  - display all three metrics (ok, ko and total) when user does not explicitly ask for specific metrics.
+  - display the columns for the metrics asked by the user, as well as any other derived metric.
+  - use this default layout for the output table: Period column first, provisioning phase column (if applicable) second, followed by metrics columns.
+  - always include in the response the parameters documented in the Business Requirements a separate text block after the output table.

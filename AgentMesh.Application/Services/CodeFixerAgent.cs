@@ -1,0 +1,68 @@
+using AgentMesh.Models;
+using AgentMesh.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+
+namespace AgentMesh.Application.Services
+{
+    public class CodeFixerAgent : IAgent<CodeFixerAgentInput, CodeFixerAgentOutput>
+    {
+        private readonly Regex JavascriptCodeRegex = new Regex(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+        private readonly IOpenAIClient _openAIClient;
+        private readonly ILogger<CodeFixerAgent> _logger;
+
+        public CodeFixerAgent(
+            [FromKeyedServices(CodeFixerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+            ILogger<CodeFixerAgent> logger)
+        {
+            _openAIClient = openAIClient;
+            _logger = logger;
+        }
+
+        public async Task<CodeFixerAgentOutput> ExecuteAsync(CodeFixerAgentInput input, CancellationToken cancellationToken = default)
+        {
+            _logger.LogDebug("Executing CodeFixerAgent.");
+
+            var inputMessages = new List<AgentMessage>();
+
+            inputMessages.Add(new AgentMessage
+            {
+                Role = AgentMessageRole.System,
+                Content = "The following issues were detected in the code:\n- " + string.Join("\n- ", input.Issues)
+            });
+
+            inputMessages.Add(new AgentMessage
+            {
+                Role = AgentMessageRole.User,
+                Content = "Fix the following code:\n\n" + input.CodeToFix
+            });
+
+            var stopwatch = Stopwatch.StartNew();
+
+            var response = await _openAIClient.GenerateResponseAsync(inputMessages);
+
+            var codeRegexMatch = JavascriptCodeRegex.Match(response.Text);
+            if (!codeRegexMatch.Success)
+            {
+                throw new BadStructuredResponseException(response.Text, "The model's response did not contain any valid JavaScript code block.");
+            }
+
+            stopwatch.Stop();
+            _logger.LogDebug("CodeFixerAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
+                stopwatch.ElapsedMilliseconds, response.TotalTokenCount);
+
+            var fixedCode = codeRegexMatch.Groups["code"].Value.Trim();
+
+            return new CodeFixerAgentOutput
+            {
+                FixedCode = fixedCode,
+                TokenCount = response.TotalTokenCount,
+                InputTokenCount = response.InputTokenCount,
+                OutputTokenCount = response.OutputTokenCount
+            };
+        }
+    }
+}

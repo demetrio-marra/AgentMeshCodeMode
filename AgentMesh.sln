@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36705.20
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh", "AgentMesh\AgentMesh.csproj", "{FB3C4DBA-DAF8-4DFF-852C-E13E4E477F65}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMeshCLI", "AgentMeshCLI\AgentMeshCLI.csproj", "{7FDE1EAC-C3ED-4B24-BE90-BAFCF0479343}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Application", "AgentMesh.Application\AgentMesh.Application.csproj", "{F9308EF0-FCF0-4C5E-B824-AE2C80CF5533}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.JSSandbox", "AgentMesh.Infrastructure.JSSandbox\AgentMesh.Infrastructure.JSSandbox.csproj", "{0543A26D-8EE5-4A04-9494-599037FE02BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.OpenAIClient", "AgentMesh.Infrastructure.OpenAIClient\AgentMesh.Infrastructure.OpenAIClient.csproj", "{23C51EC1-699F-42EB-A94E-60E36377ED2D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FB3C4DBA-DAF8-4DFF-852C-E13E4E477F65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB3C4DBA-DAF8-4DFF-852C-E13E4E477F65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB3C4DBA-DAF8-4DFF-852C-E13E4E477F65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB3C4DBA-DAF8-4DFF-852C-E13E4E477F65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7FDE1EAC-C3ED-4B24-BE90-BAFCF0479343}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7FDE1EAC-C3ED-4B24-BE90-BAFCF0479343}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7FDE1EAC-C3ED-4B24-BE90-BAFCF0479343}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7FDE1EAC-C3ED-4B24-BE90-BAFCF0479343}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F9308EF0-FCF0-4C5E-B824-AE2C80CF5533}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F9308EF0-FCF0-4C5E-B824-AE2C80CF5533}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F9308EF0-FCF0-4C5E-B824-AE2C80CF5533}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F9308EF0-FCF0-4C5E-B824-AE2C80CF5533}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0543A26D-8EE5-4A04-9494-599037FE02BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0543A26D-8EE5-4A04-9494-599037FE02BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0543A26D-8EE5-4A04-9494-599037FE02BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0543A26D-8EE5-4A04-9494-599037FE02BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23C51EC1-699F-42EB-A94E-60E36377ED2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23C51EC1-699F-42EB-A94E-60E36377ED2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23C51EC1-699F-42EB-A94E-60E36377ED2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23C51EC1-699F-42EB-A94E-60E36377ED2D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {53AB4135-A7FD-458A-A6A7-0EFE9A7D9C1D}
+	EndGlobalSection
+EndGlobal
