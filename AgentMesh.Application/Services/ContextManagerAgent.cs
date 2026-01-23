@@ -3,14 +3,11 @@ using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services
 {
     public class ContextManagerAgent : ChatManagerAgentBaseClass, IContextManagerAgent
     {
-        private static readonly Regex ResponseRegex = new("```(?<responseType>(userResponse|businessAnalyst))\\s*(?<content>[\\s\\S]+)", RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase);
-
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<ContextManagerAgent> _logger;
 
@@ -36,7 +33,7 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing ContextManagerAgent.");
 
             // add last message from user at the end of the context
-            AddUserMessage(input.UserQuestionText);
+            AddUserMessage(input.UserSentenceText);
 
             var inputMessages = new List<AgentMessage>();
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
@@ -54,30 +51,9 @@ namespace AgentMesh.Application.Services
 
             var responseText = response.Text?.Trim() ?? string.Empty;
 
-            var match = ResponseRegex.Match(responseText);
-            if (!match.Success)
-            {
-                _logger.LogWarning("The model's response did not match the expected format. Response: {ResponseText}", responseText);
-                throw new BadStructuredResponseException(responseText, "The model's response did not match the expected format.");
-            }
-
-            var responseType = match.Groups["responseType"].Value.Trim().ToLowerInvariant();
-            if (responseType == "userresponse")
-            {
-                return new ContextManagerAgentOutput
-                {
-                    ResponseText = match.Groups["content"].Value.Trim(),
-                    EngageBusinessAnalyst = false,
-                    TokenCount = response.TotalTokenCount,
-                    InputTokenCount = response.InputTokenCount,
-                    OutputTokenCount = response.OutputTokenCount
-                };
-            }
-
             return new ContextManagerAgentOutput
             {
-                ResponseText = match.Groups["content"].Value.Trim(),
-                EngageBusinessAnalyst = true,
+                ContextEnrichedUserSentenceText = responseText,
                 TokenCount = response.TotalTokenCount,
                 InputTokenCount = response.InputTokenCount,
                 OutputTokenCount = response.OutputTokenCount

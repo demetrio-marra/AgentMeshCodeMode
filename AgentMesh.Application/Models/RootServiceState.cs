@@ -29,7 +29,6 @@ namespace AgentMesh.Application.Models
         public string UserQuestion { get; }
         public string? ContextManagerResponse { get; private set; }
         public string? RouterRecipient { get; private set; }
-        public bool ShouldEngageBusinessAnalyst { get; private set; }
         public string? BusinessRequirements { get; private set; }
         public bool ShouldEngageCoder { get; private set; }
         public string? OutputForUserFromBusinessAnalyst { get; private set; }
@@ -62,7 +61,7 @@ namespace AgentMesh.Application.Models
             {
                 nameof(ContextManagerAgentInput) => new ContextManagerAgentInput
                 {
-                    UserQuestionText = UserQuestion
+                    UserSentenceText = UserQuestion
                 } as TInput,
 
                 nameof(RouterAgentInput) => new RouterAgentInput
@@ -106,8 +105,7 @@ namespace AgentMesh.Application.Models
             switch (output)
             {
                 case ContextManagerAgentOutput cmOutput:
-                    ContextManagerResponse = cmOutput.ResponseText;
-                    ShouldEngageBusinessAnalyst = cmOutput.EngageBusinessAnalyst;
+                    ContextManagerResponse = cmOutput.ContextEnrichedUserSentenceText;
                     AddTokenUsage(ContextManagerAgentConfiguration.AgentName, cmOutput.TokenCount, cmOutput.InputTokenCount, cmOutput.OutputTokenCount);
                     break;
 
