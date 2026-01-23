@@ -23,6 +23,8 @@ namespace AgentMesh
         private readonly IExecutor<JSSandboxInput, JSSandboxOutput> _jsSandboxExecutor;
         private readonly PersonalAssistantAgent _personalAssistantAgent;
         private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
+        private readonly RouterAgent _routerAgent;
+        private readonly RouterAgentConfiguration _routerConfiguration;
         private readonly UserConfiguration _userConfiguration;
 
         public RootService(
@@ -39,6 +41,8 @@ namespace AgentMesh
                            IExecutor<JSSandboxInput, JSSandboxOutput> jsSandboxExecutor,
                            PersonalAssistantAgent personalAssistantAgent,
                            PersonalAssistantAgentConfiguration personalAssistantConfiguration,
+                           RouterAgent routerAgent,
+                           RouterAgentConfiguration routerConfiguration,
                            UserConfiguration userConfiguration)
         {
             _businessRequirementsCreatorAgent = businessRequirementsCreatorAgent;
@@ -54,6 +58,8 @@ namespace AgentMesh
             _jsSandboxExecutor = jsSandboxExecutor;
             _personalAssistantAgent = personalAssistantAgent;
             _personalAssistantConfiguration = personalAssistantConfiguration;
+            _routerAgent = routerAgent;
+            _routerConfiguration = routerConfiguration;
             _userConfiguration = userConfiguration;
         }
 
@@ -89,7 +95,7 @@ namespace AgentMesh
 
                 var agentInputCosts = new Dictionary<string, decimal>
                 {
-                    { PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration.CostPerMillionInputTokens },
+                    { RouterAgentConfiguration.AgentName, _routerConfiguration.CostPerMillionInputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration.CostPerMillionInputTokens },
                     { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionInputTokens },
                     { CodeStaticAnalyzerConfiguration.AgentName, _codeStaticAnalyzerConfiguration.CostPerMillionInputTokens },
@@ -99,7 +105,7 @@ namespace AgentMesh
 
                 var agentOutputCosts = new Dictionary<string, decimal>
                 {
-                    { PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration.CostPerMillionOutputTokens },
+                    { RouterAgentConfiguration.AgentName, _routerConfiguration.CostPerMillionOutputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration.CostPerMillionOutputTokens },
                     { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionOutputTokens },
                     { CodeStaticAnalyzerConfiguration.AgentName, _codeStaticAnalyzerConfiguration.CostPerMillionOutputTokens },
@@ -117,32 +123,27 @@ namespace AgentMesh
         {
             switch (state.GetNextStep())
             {
-                case RootServiceState.RunStep.PersonalAssistant:
-                    var personalAssistantInput = state.GetInput<PersonalAssistantAgentInput>();
+                case RootServiceState.RunStep.Router:
+                    var routerInput = state.GetInput<RouterAgentInput>();
 
-                    ConsoleHelper.WriteLineWithColor("\nPersonal Assistant is processing the user question...", ConsoleColor.DarkYellow);
-                    ConsoleHelper.WriteLineWithColor(personalAssistantInput.UserQuestionText, ConsoleColor.Cyan);
+                    ConsoleHelper.WriteLineWithColor("\nRouter is determining the recipient for the message...", ConsoleColor.DarkYellow);
+                    ConsoleHelper.WriteLineWithColor(routerInput.Message, ConsoleColor.Cyan);
 
-                    var paOutput = await ExecuteWithRetryAsync(
-                        () => _personalAssistantAgent.ExecuteAsync(personalAssistantInput),
-                        PersonalAssistantAgentConfiguration.AgentName);
+                    var routerOutput = await ExecuteWithRetryAsync(
+                        () => _routerAgent.ExecuteAsync(routerInput),
+                        RouterAgentConfiguration.AgentName);
 
-                    state.UpdateState(paOutput);
+                    state.UpdateState(routerOutput);
 
-                    ConsoleHelper.WriteLineWithColor($"  Tokens consumed: {paOutput.TokenCount}", ConsoleColor.Magenta);
-
-                    if (!paOutput.EngageBusinessAnalyst)
-                    {
-                        _personalAssistantAgent.AddAssistantAnswerMessage(paOutput.ResponseText ?? string.Empty);
-                        state.SetFinalAnswer(paOutput.ResponseText ?? string.Empty);
-                    }
+                    ConsoleHelper.WriteLineWithColor($"  Tokens consumed: {routerOutput.TokenCount}", ConsoleColor.Magenta);
+                    ConsoleHelper.WriteLineWithColor($"  Recipient: {routerOutput.Recipient}", ConsoleColor.Green);
                     break;
 
                 case RootServiceState.RunStep.BusinessRequirements:
 
                     var businessRequirementsInput = state.GetInput<BusinessRequirementsCreatorAgentInput>();
 
-                    ConsoleHelper.WriteLineWithColor("\nBusiness Requirements Creator is processing the Personal Assistant's response...", ConsoleColor.DarkYellow);
+                    ConsoleHelper.WriteLineWithColor("\nBusiness Requirements Creator is processing the user question...", ConsoleColor.DarkYellow);
                     ConsoleHelper.WriteLineWithColor(businessRequirementsInput.UserQuestionText, ConsoleColor.Cyan);
 
                     var brcOutput = await ExecuteWithRetryAsync(
@@ -255,10 +256,6 @@ namespace AgentMesh
             state.UpdateState(resultsPresenterOutput);
 
             ConsoleHelper.WriteLineWithColor($"  Tokens consumed: {resultsPresenterOutput.TokenCount}", ConsoleColor.Magenta);
-
-            _personalAssistantAgent.AddAssistantAnswerMessage(resultsPresenterOutput.Answer ?? string.Empty);
-
-
         }
 
         private Task<T> ExecuteWithRetryAsync<T>(Func<Task<T>> action, string agentName)
@@ -299,7 +296,7 @@ namespace AgentMesh
         private void PrintConfigurations()
         {
             Console.WriteLine("Agent configurations:");
-            ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Router", RouterAgentConfiguration.AgentName, _routerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Requirements Creator", BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, _coderConfiguration);
             ConsoleHelper.PrintAgentConfiguration("CodeStaticAnalyzer", CodeStaticAnalyzerConfiguration.AgentName, _codeStaticAnalyzerConfiguration);

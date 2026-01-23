@@ -7,7 +7,7 @@ namespace AgentMesh.Application.Models
     {
         public enum RunStep
         {
-            PersonalAssistant,
+            Router,
             BusinessRequirements,
             Coder,
             CodeSmellChecker,
@@ -28,6 +28,7 @@ namespace AgentMesh.Application.Models
         // Pure state properties
         public string UserQuestion { get; }
         public string? PersonalAssistantResponse { get; private set; }
+        public string? RouterRecipient { get; private set; }
         public bool ShouldEngageBusinessAnalyst { get; private set; }
         public string? BusinessRequirements { get; private set; }
         public bool ShouldEngageCoder { get; private set; }
@@ -47,6 +48,7 @@ namespace AgentMesh.Application.Models
 
         // Workflow state flags
         public bool HasPersonalAssistantResponse => !string.IsNullOrWhiteSpace(PersonalAssistantResponse);
+        public bool HasRouterRecipient => !string.IsNullOrWhiteSpace(RouterRecipient);
         public bool HasBusinessRequirements => !string.IsNullOrWhiteSpace(BusinessRequirements) || !string.IsNullOrWhiteSpace(OutputForUserFromBusinessAnalyst);
         public bool HasGeneratedCode => !string.IsNullOrWhiteSpace(GeneratedCode);
         public bool HasInitialCodeCheck => IsCodeValid || CodeIssues.Any();
@@ -63,9 +65,14 @@ namespace AgentMesh.Application.Models
                     UserQuestionText = UserQuestion
                 } as TInput,
 
+                nameof(RouterAgentInput) => new RouterAgentInput
+                {
+                    Message = UserQuestion
+                } as TInput,
+
                 nameof(BusinessRequirementsCreatorAgentInput) => new BusinessRequirementsCreatorAgentInput
                 {
-                    UserQuestionText = PersonalAssistantResponse ?? UserQuestion
+                    UserQuestionText = UserQuestion
                 } as TInput,
 
                 nameof(CoderAgentInput) => new CoderAgentInput
@@ -86,7 +93,7 @@ namespace AgentMesh.Application.Models
 
                 nameof(ResultsPresenterAgentInput) => new ResultsPresenterAgentInput
                 {
-                    UserQuestionText = PersonalAssistantResponse ?? UserQuestion,
+                    UserQuestionText = UserQuestion,
                     ExecutionResult = GetExecutionResult()
                 } as TInput,
 
@@ -102,6 +109,11 @@ namespace AgentMesh.Application.Models
                     PersonalAssistantResponse = paOutput.ResponseText;
                     ShouldEngageBusinessAnalyst = paOutput.EngageBusinessAnalyst;
                     AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, paOutput.TokenCount, paOutput.InputTokenCount, paOutput.OutputTokenCount);
+                    break;
+
+                case RouterAgentOutput routerOutput:
+                    RouterRecipient = routerOutput.Recipient;
+                    AddTokenUsage(RouterAgentConfiguration.AgentName, routerOutput.TokenCount, routerOutput.InputTokenCount, routerOutput.OutputTokenCount);
                     break;
 
                 case BusinessRequirementsCreatorAgentOutput brcOutput:
@@ -214,7 +226,7 @@ namespace AgentMesh.Application.Models
                 return SandboxResult ?? string.Empty;
             }
 
-            return PersonalAssistantResponse!;
+            return UserQuestion;
         }
 
         public RunStep GetNextStep()
@@ -224,51 +236,58 @@ namespace AgentMesh.Application.Models
                 return RunStep.Completed;
             }
 
-            if (!HasPersonalAssistantResponse)
+            if (!HasRouterRecipient)
             {
-                return RunStep.PersonalAssistant;
+                return RunStep.Router;
             }
 
-            if (!ShouldEngageBusinessAnalyst)
-            {
-                return RunStep.Presenter;
-            }
-
-            if (!HasBusinessRequirements)
-            {
-                return RunStep.BusinessRequirements;
-            }
-
-            if (!ShouldEngageCoder)
+            // Check router's decision
+            if (RouterRecipient?.Equals("Personal Assistant", StringComparison.OrdinalIgnoreCase) == true)
             {
                 return RunStep.Presenter;
             }
 
-            if (!HasGeneratedCode)
+            if (RouterRecipient?.Equals("Business Analyst", StringComparison.OrdinalIgnoreCase) == true)
             {
-                return RunStep.Coder;
+                if (!HasBusinessRequirements)
+                {
+                    return RunStep.BusinessRequirements;
+                }
+
+                if (!ShouldEngageCoder)
+                {
+                    return RunStep.Presenter;
+                }
+
+                if (!HasGeneratedCode)
+                {
+                    return RunStep.Coder;
+                }
+
+                if (!HasInitialCodeCheck)
+                {
+                    return RunStep.CodeSmellChecker;
+                }
+
+                if (NeedsCodeFixer)
+                {
+                    return RunStep.CodeFixer;
+                }
+
+                if (CodeFixerIterationCount > 0 && !HasBeenCheckedAfterFix)
+                {
+                    return RunStep.CodeSmellChecker;
+                }
+
+                if (!HasSandboxResult)
+                {
+                    return RunStep.Sandbox;
+                }
+
+                return RunStep.Presenter;
             }
 
-            if (!HasInitialCodeCheck)
-            {
-                return RunStep.CodeSmellChecker;
-            }
-
-            if (NeedsCodeFixer)
-            {
-                return RunStep.CodeFixer;
-            }
-
-            if (CodeFixerIterationCount > 0 && !HasBeenCheckedAfterFix)
-            {
-                return RunStep.CodeSmellChecker;
-            }
-
-            if (!HasSandboxResult)
-            {
-                return RunStep.Sandbox;
-            }
-
+            // Default to Presenter if recipient is not recognized
             return RunStep.Presenter;
         }
     }
