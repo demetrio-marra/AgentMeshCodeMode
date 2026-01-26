@@ -20,7 +20,6 @@ namespace AgentMesh.Workflows
         private readonly ITranslatorAgent _translatorAgent;
         private readonly IRouterAgent _routerAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent;
-        private readonly UserConfiguration _userConfiguration;
 
         public CodeModeWorkflow(
             IBusinessRequirementsCreatorAgent businessRequirementsCreatorAgent,
@@ -32,8 +31,7 @@ namespace AgentMesh.Workflows
             IContextManagerAgent contextManagerAgent,
             ITranslatorAgent translatorAgent,
             IRouterAgent routerAgent,
-            IPersonalAssistantAgent personalAssistantAgent,
-            UserConfiguration userConfiguration)
+            IPersonalAssistantAgent personalAssistantAgent)
         {
             _businessRequirementsCreatorAgent = businessRequirementsCreatorAgent;
             _coderAgent = coderAgent;
@@ -45,7 +43,6 @@ namespace AgentMesh.Workflows
             _translatorAgent = translatorAgent;
             _routerAgent = routerAgent;
             _personalAssistantAgent = personalAssistantAgent;
-            _userConfiguration = userConfiguration;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput)
@@ -148,7 +145,6 @@ namespace AgentMesh.Workflows
                 case CodeModeWorkflowState.RunStep.Sandbox:
                     var sandboxInput = new JSSandboxInput
                     {
-                        AgentId = _userConfiguration.AgentId,
                         Code = state.GeneratedCode ?? string.Empty
                     };
 
@@ -160,7 +156,7 @@ namespace AgentMesh.Workflows
                     catch (Exception ex)
                     {
                         state.SetSandboxError(ex.Message);
-                    }
+                        }
                     break;
 
                 case CodeModeWorkflowState.RunStep.Presenter:
