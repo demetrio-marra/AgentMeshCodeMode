@@ -3,11 +3,8 @@ using AgentMesh.Application.Services;
 using AgentMesh.Models;
 using OpenAI;
 using OpenAI.Chat;
-using OpenAI.Responses;
-using Polly;
 using System.ClientModel;
 using System.Globalization;
-using System.Linq;
 
 namespace AgentMesh.Infrastructure.OpenAIClient
 {
@@ -88,14 +85,7 @@ namespace AgentMesh.Infrastructure.OpenAIClient
                 ResponseFormat = ChatResponseFormat.CreateTextFormat(),
             };
 
-           // chatCompletionOptions.Tools.Clear();
-
-            var retryPolicy = Policy
-                .HandleResult<ClientResult<ChatCompletion>>(result => string.IsNullOrWhiteSpace(GetResponseText(result)))
-                .WaitAndRetryAsync(1, _ => TimeSpan.FromSeconds(5));
-
-            var chatCompletionResult = await retryPolicy.ExecuteAsync(async () =>
-                await _client.CompleteChatAsync(chatMessages, chatCompletionOptions));
+            var chatCompletionResult = await _client.CompleteChatAsync(chatMessages, chatCompletionOptions);
 
             var responseText = GetResponseText(chatCompletionResult) ?? string.Empty;
 
