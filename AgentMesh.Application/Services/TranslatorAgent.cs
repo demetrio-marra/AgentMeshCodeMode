@@ -28,6 +28,7 @@ namespace AgentMesh.Application.Services
             CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing TranslatorAgent.");
+            _logger.LogDebug("TranslatorAgent Input: {Input}", JsonSerializer.Serialize(input));
 
             var inputJson = JsonSerializer.Serialize(new
             {
@@ -83,7 +84,7 @@ namespace AgentMesh.Application.Services
                 throw new BadStructuredResponseException(responseText, "The model's response did not contain a valid translation.");
             }
 
-            return new TranslatorAgentOutput
+            var output = new TranslatorAgentOutput
             {
                 TranslatedSentence = translationResponse.TranslatedSentence,
                 DetectedOriginalLanguage = translationResponse.DetectedOriginalLanguage ?? "Unknown",
@@ -91,6 +92,8 @@ namespace AgentMesh.Application.Services
                 InputTokenCount = response.InputTokenCount,
                 OutputTokenCount = response.OutputTokenCount
             };
+            _logger.LogDebug("TranslatorAgent Output: {Output}", JsonSerializer.Serialize(output));
+            return output;
         }
 
         private class TranslationResponse

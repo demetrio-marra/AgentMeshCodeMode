@@ -1,7 +1,7 @@
 ﻿/**
  * MCP Tools Implementation File (JavaScript)
- * Generated: 2025-12-03T14:26:32.736Z
- * Server: http://localhost:59000
+ * Generated: 2026-01-26T16:00:03.966Z
+ * Server: http://localhost:8080
  * 
  * This file contains real implementations that call MCP tools via Streamable HTTP.
  * Import and use these functions to interact with the MCP server.
@@ -121,7 +121,26 @@ class MCPClient {
 // Create singleton instance
 // You can set agent ID later using: mcpClient.setAgentId('your-agent-id')
 const serverUrl = process.env.MCP_SERVER_URL || 'http://localhost:8080';
-const mcpClient = new MCPClient(serverUrl);
+const mcpClient = new MCPClient(serverUrl); 
+
+/**
+ * @tool MyPlatform_CompanyInfo_FindProductHierarchy
+ * @description CompanyInfo - Finds which Company and Family a specific Product belongs to.
+ * @inputSchema MyPlatformCompanyInfoFindProductHierarchyParams
+ * @outputSchema MCPToolResponse<MyPlatformCompanyInfoFindProductHierarchyResult>
+ * @errorSchema MCPToolError
+ */
+async function MyPlatform_CompanyInfo_FindProductHierarchy(params = {}) {
+    try {
+        return await mcpClient.callTool('MyPlatform_CompanyInfo_FindProductHierarchy', params);
+    } catch (error) {
+        console.error('Error calling tool MyPlatform_CompanyInfo_FindProductHierarchy:', error.message);
+        return {
+            isError: true,
+            error: error.message
+        };
+    }
+}
 
 /**
  * @tool MyPlatform_Statistics_GetRates
@@ -135,82 +154,6 @@ async function MyPlatform_Statistics_GetRates(params = {}) {
         return await mcpClient.callTool('MyPlatform_Statistics_GetRates', params);
     } catch (error) {
         console.error('Error calling tool MyPlatform_Statistics_GetRates:', error.message);
-        return {
-            isError: true,
-            error: error.message
-        };
-    }
-}
-
-/**
- * @tool MyCompany_CompanyInfo_GetAllProductNames
- * @description CompanyInfo - Retrieves all available product names.
- * @inputSchema MyCompanyCompanyInfoGetAllProductNamesParams
- * @outputSchema MCPToolResponse<MyCompanyCompanyInfoGetAllProductNamesResult>
- * @errorSchema MCPToolError
- */
-async function MyCompany_CompanyInfo_GetAllProductNames(params = {}) {
-    try {
-        return await mcpClient.callTool('MyCompany_CompanyInfo_GetAllProductNames', params);
-    } catch (error) {
-        console.error('Error calling tool MyCompany_CompanyInfo_GetAllProductNames:', error.message);
-        return {
-            isError: true,
-            error: error.message
-        };
-    }
-}
-
-/**
- * @tool MyPlatform_ProvisioningInfo
- * @description Get provisioning information. Returns a list of provisioning information matching the search criteria. If only one result is found, it includes detailed GsaContract and Queue information.
- * @inputSchema MyPlatformProvisioningInfoParams
- * @outputSchema MCPToolResponse<MyPlatformProvisioningInfoResult>
- * @errorSchema MCPToolError
- */
-async function MyPlatform_ProvisioningInfo(params = {}) {
-    try {
-        return await mcpClient.callTool('MyPlatform_ProvisioningInfo', params);
-    } catch (error) {
-        console.error('Error calling tool MyPlatform_ProvisioningInfo:', error.message);
-        return {
-            isError: true,
-            error: error.message
-        };
-    }
-}
-
-/**
- * @tool MyPlatform_Chart_GenerateChart
- * @description Generates a visual chart (bar, line, or pie) from data, uploads it to an external file server service and returns a reference to the uploaded file for later use. Use this tool when you need to create visual representations of data for analysis or presentation. Bar charts are ideal for comparing discrete categories, line charts for showing trends or time series, and pie charts for displaying proportional distributions where all parts sum to a meaningful whole.
- * @inputSchema MyPlatformChartGenerateChartParams
- * @outputSchema MCPToolResponse<MyPlatformChartGenerateChartResult>
- * @errorSchema MCPToolError
- */
-async function MyPlatform_Chart_GenerateChart(params = {}) {
-    try {
-        return await mcpClient.callTool('MyPlatform_Chart_GenerateChart', params);
-    } catch (error) {
-        console.error('Error calling tool MyPlatform_Chart_GenerateChart:', error.message);
-        return {
-            isError: true,
-            error: error.message
-        };
-    }
-}
-
-/**
- * @tool MyPlatform_ProvisioningInfo_GetById
- * @description Get provisioning information by RequestRegister ID. Returns detailed provisioning information including RequestRegister, GsaContract, and Queue data.
- * @inputSchema MyPlatformProvisioningInfoGetByIdParams
- * @outputSchema MCPToolResponse<MyPlatformProvisioningInfoGetByIdResult>
- * @errorSchema MCPToolError
- */
-async function MyPlatform_ProvisioningInfo_GetById(params = {}) {
-    try {
-        return await mcpClient.callTool('MyPlatform_ProvisioningInfo_GetById', params);
-    } catch (error) {
-        console.error('Error calling tool MyPlatform_ProvisioningInfo_GetById:', error.message);
         return {
             isError: true,
             error: error.message
@@ -257,44 +200,6 @@ async function MyPlatform_MyPermissions_Get(params = {}) {
 }
 
 /**
- * @tool MyCompany_CompanyInfo_GetProductsHierarchy
- * @description CompanyInfo - Retrieves the Company/Family/Product flattened map. Omit filters to get the complete map.
- * @inputSchema MyCompanyCompanyInfoGetProductsHierarchyParams
- * @outputSchema MCPToolResponse<MyCompanyCompanyInfoGetProductsHierarchyResult>
- * @errorSchema MCPToolError
- */
-async function MyCompany_CompanyInfo_GetProductsHierarchy(params = {}) {
-    try {
-        return await mcpClient.callTool('MyCompany_CompanyInfo_GetProductsHierarchy', params);
-    } catch (error) {
-        console.error('Error calling tool MyCompany_CompanyInfo_GetProductsHierarchy:', error.message);
-        return {
-            isError: true,
-            error: error.message
-        };
-    }
-}
-
-/**
- * @tool MyCompany_CompanyInfo_FindProductHierarchy
- * @description CompanyInfo - Finds which Company and Family a specific Product belongs to.
- * @inputSchema MyCompanyCompanyInfoFindProductHierarchyParams
- * @outputSchema MCPToolResponse<MyCompanyCompanyInfoFindProductHierarchyResult>
- * @errorSchema MCPToolError
- */
-async function MyCompany_CompanyInfo_FindProductHierarchy(params = {}) {
-    try {
-        return await mcpClient.callTool('MyCompany_CompanyInfo_FindProductHierarchy', params);
-    } catch (error) {
-        console.error('Error calling tool MyCompany_CompanyInfo_FindProductHierarchy:', error.message);
-        return {
-            isError: true,
-            error: error.message
-        };
-    }
-}
-
-/**
  * @tool MyPlatform_Statistics_GetAverageDuration
  * @description Get provisioning processes average duration in seconds for a specific product using Company, Family, Product and ProvisioningPhase filters. Supports data partitioning.
  * @inputSchema MyPlatformStatisticsGetAverageDurationParams
@@ -313,19 +218,74 @@ async function MyPlatform_Statistics_GetAverageDuration(params = {}) {
     }
 }
 
+/**
+ * @tool MyPlatform_CompanyInfo_GetProductsHierarchy
+ * @description CompanyInfo - Retrieves the Company/Family/Product flattened map. Omit filters to get the complete map.
+ * @inputSchema MyPlatformCompanyInfoGetProductsHierarchyParams
+ * @outputSchema MCPToolResponse<MyPlatformCompanyInfoGetProductsHierarchyResult>
+ * @errorSchema MCPToolError
+ */
+async function MyPlatform_CompanyInfo_GetProductsHierarchy(params = {}) {
+    try {
+        return await mcpClient.callTool('MyPlatform_CompanyInfo_GetProductsHierarchy', params);
+    } catch (error) {
+        console.error('Error calling tool MyPlatform_CompanyInfo_GetProductsHierarchy:', error.message);
+        return {
+            isError: true,
+            error: error.message
+        };
+    }
+}
+
+/**
+ * @tool MyPlatform_Chart_GenerateChart
+ * @description Generates a visual chart (bar, line, or pie) from data, uploads it to an external file server service and returns a reference to the uploaded file for later use. Use this tool when you need to create visual representations of data for analysis or presentation. Bar charts are ideal for comparing discrete categories, line charts for showing trends or time series, and pie charts for displaying proportional distributions where all parts sum to a meaningful whole.
+ * @inputSchema MyPlatformChartGenerateChartParams
+ * @outputSchema MCPToolResponse<MyPlatformChartGenerateChartResult>
+ * @errorSchema MCPToolError
+ */
+async function MyPlatform_Chart_GenerateChart(params = {}) {
+    try {
+        return await mcpClient.callTool('MyPlatform_Chart_GenerateChart', params);
+    } catch (error) {
+        console.error('Error calling tool MyPlatform_Chart_GenerateChart:', error.message);
+        return {
+            isError: true,
+            error: error.message
+        };
+    }
+}
+
+/**
+ * @tool MyCompany_CompanyInfo_GetAllProductNames
+ * @description CompanyInfo - Retrieves all available product names.
+ * @inputSchema MyCompanyCompanyInfoGetAllProductNamesParams
+ * @outputSchema MCPToolResponse<MyCompanyCompanyInfoGetAllProductNamesResult>
+ * @errorSchema MCPToolError
+ */
+async function MyCompany_CompanyInfo_GetAllProductNames(params = {}) {
+    try {
+        return await mcpClient.callTool('MyCompany_CompanyInfo_GetAllProductNames', params);
+    } catch (error) {
+        console.error('Error calling tool MyCompany_CompanyInfo_GetAllProductNames:', error.message);
+        return {
+            isError: true,
+            error: error.message
+        };
+    }
+}
+
 // Export the client and all tool functions
 module.exports = {
     mcpClient,
+    MyPlatform_CompanyInfo_FindProductHierarchy,
     MyPlatform_Statistics_GetRates,
-    MyCompany_CompanyInfo_GetAllProductNames,
-    MyPlatform_ProvisioningInfo,
-    MyPlatform_Chart_GenerateChart,
-    MyPlatform_ProvisioningInfo_GetById,
     MyPlatform_Statistics_Get,
     MyPlatform_MyPermissions_Get,
-    MyCompany_CompanyInfo_GetProductsHierarchy,
-    MyCompany_CompanyInfo_FindProductHierarchy,
-    MyPlatform_Statistics_GetAverageDuration
+    MyPlatform_Statistics_GetAverageDuration,
+    MyPlatform_CompanyInfo_GetProductsHierarchy,
+    MyPlatform_Chart_GenerateChart,
+    MyCompany_CompanyInfo_GetAllProductNames
 };
 
 /**
@@ -346,7 +306,26 @@ module.exports = {
  *   console.log('Product names:', result.result);
  * }
  * 
- * // Example 2: Multiple tool calls with error handling
+ * // Example 2: Complete error handling pattern
+ * async function example2() {
+ *   try {
+ *     const result = await tools.MyPlatform_ProvisioningInfo_GetById({ id: '123e4567-e89b-12d3-a456-426614174000' });
+ *     
+ *     if (result.isError) {
+ *       console.error('Tool failed:', result.error);
+ *       return null;
+ *     }
+ *     
+ *     // Access the structured data directly
+ *     console.log('Request Register:', result.requestRegister);
+ *     console.log('GSA Contract:', result.gsaContract);
+ *     return result;
+ *   } finally {
+ *     await tools.mcpClient.close();
+ *   }
+ * }
+ * 
+ * // Example 3: Multiple tool calls with error handling
  * async function example3() {
  *   const results = [];
  *   const products = ['Product1', 'Product2'];

@@ -26,6 +26,7 @@ namespace AgentMesh.Application.Services
             CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing RouterAgent.");
+            _logger.LogDebug("RouterAgent Input: {Input}", JsonSerializer.Serialize(input));
 
             var inputMessages = new List<AgentMessage>();
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
@@ -56,13 +57,15 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(responseText, "The model's response did not contain a valid recipient.");
                 }
 
-                return new RouterAgentOutput
+                var output = new RouterAgentOutput
                 {
                     Recipient = jsonResponse.Recipient.Trim(),
                     TokenCount = response.TotalTokenCount,
                     InputTokenCount = response.InputTokenCount,
                     OutputTokenCount = response.OutputTokenCount
                 };
+                _logger.LogDebug("RouterAgent Output: {Output}", JsonSerializer.Serialize(output));
+                return output;
             }
             catch (JsonException ex)
             {

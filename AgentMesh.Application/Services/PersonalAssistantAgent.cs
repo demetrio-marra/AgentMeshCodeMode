@@ -25,6 +25,7 @@ namespace AgentMesh.Application.Services
             CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing PersonalAssistantAgent.");
+            _logger.LogDebug("PersonalAssistantAgent Input: {Input}", JsonSerializer.Serialize(input));
 
             var inputJson = JsonSerializer.Serialize(new
             {
@@ -51,13 +52,15 @@ namespace AgentMesh.Application.Services
 
             var responseText = response.Text?.Trim() ?? string.Empty;
 
-            return new PersonalAssistantAgentOutput
+            var output = new PersonalAssistantAgentOutput
             {
                 Response = responseText,
                 TokenCount = response.TotalTokenCount,
                 InputTokenCount = response.InputTokenCount,
                 OutputTokenCount = response.OutputTokenCount
             };
+            _logger.LogDebug("PersonalAssistantAgent Output: {Output}", JsonSerializer.Serialize(output));
+            return output;
         }
     }
 }

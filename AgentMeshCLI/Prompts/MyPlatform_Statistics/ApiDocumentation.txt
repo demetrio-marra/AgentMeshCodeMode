@@ -163,6 +163,22 @@ Returns a list of hierarchy records (there may be multiple if a product belongs 
 ERROR HANDLING:
 If the operation fails, you will receive an error message describing what went wrong.
 
+-------------------------------------------
+4. PRODUCTS LIST TOOL
+-------------------------------------------
+
+NAME: MyCompany_CompanyInfo_GetAllProductNames
+
+PURPOSE:
+List all available products in the organizational catalog.
+
+WHEN TO USE:
+- When you need to find the list of supported products
+- When the user is unsure of the exact product name to use in queries
+
+OUTPUT:
+Returns a list of product names available in the catalog.
+
 ===========================================
 DATA QUALITY NOTES
 ===========================================

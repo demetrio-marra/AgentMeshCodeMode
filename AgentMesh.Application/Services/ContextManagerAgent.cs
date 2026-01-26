@@ -31,6 +31,7 @@ namespace AgentMesh.Application.Services
             CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing ContextManagerAgent.");
+            _logger.LogDebug("ContextManagerAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
             // add last message from user at the end of the context
             AddUserMessage(input.UserSentenceText);
@@ -51,13 +52,15 @@ namespace AgentMesh.Application.Services
 
             var responseText = response.Text?.Trim() ?? string.Empty;
 
-            return new ContextManagerAgentOutput
+            var output = new ContextManagerAgentOutput
             {
                 ContextEnrichedUserSentenceText = responseText,
                 TokenCount = response.TotalTokenCount,
                 InputTokenCount = response.InputTokenCount,
                 OutputTokenCount = response.OutputTokenCount
             };
+            _logger.LogDebug("ContextManagerAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
+            return output;
         }
 
         public async Task<ContextManagerAgentState> GetState()

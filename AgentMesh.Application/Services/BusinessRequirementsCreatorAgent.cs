@@ -30,6 +30,7 @@ namespace AgentMesh.Application.Services
             CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing BusinessRequirementsCreatorAgent.");
+            _logger.LogDebug("BusinessRequirementsCreatorAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
             var inputMessages = new List<AgentMessage>();
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"API Documentation: {_apiDocumentation}" });
@@ -58,7 +59,7 @@ namespace AgentMesh.Application.Services
             var responseType = match.Groups["responseType"].Value.Trim().ToLowerInvariant();
             if (responseType == "userresponse")
             {
-                return new BusinessRequirementsCreatorAgentOutput
+                var output = new BusinessRequirementsCreatorAgentOutput
                 {
                     EngageCoderAgent = false,
                     AnswerToUserText = match.Groups["content"].Value.Trim(),
@@ -66,9 +67,11 @@ namespace AgentMesh.Application.Services
                     InputTokenCount = response.InputTokenCount,
                     OutputTokenCount = response.OutputTokenCount
                 };
+                _logger.LogDebug("BusinessRequirementsCreatorAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
+                return output;
             }
 
-            return new BusinessRequirementsCreatorAgentOutput
+            var businessRequirementsOutput = new BusinessRequirementsCreatorAgentOutput
             {
                 EngageCoderAgent = true,
                 BusinessRequirements = match.Groups["content"].Value.Trim(),
@@ -76,6 +79,8 @@ namespace AgentMesh.Application.Services
                 InputTokenCount = response.InputTokenCount,
                 OutputTokenCount = response.OutputTokenCount
             };
+            _logger.LogDebug("BusinessRequirementsCreatorAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(businessRequirementsOutput));
+            return businessRequirementsOutput;
         }
     }
 }

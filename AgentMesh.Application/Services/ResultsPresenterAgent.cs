@@ -24,6 +24,7 @@ namespace AgentMesh.Application.Services
             CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing ResultsPresenterAgent.");
+            _logger.LogDebug("ResultsPresenterAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
             var inputs = new List<AgentMessage>
             {
@@ -41,13 +42,15 @@ namespace AgentMesh.Application.Services
                 stopwatch.ElapsedMilliseconds,
                 response.TotalTokenCount);
 
-            return new ResultsPresenterAgentOutput
+            var output = new ResultsPresenterAgentOutput
             {
                 Content = response.Text,
                 TokenCount = response.TotalTokenCount,
                 InputTokenCount = response.InputTokenCount,
                 OutputTokenCount = response.OutputTokenCount
             };
+            _logger.LogDebug("ResultsPresenterAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
+            return output;
         }
     }
 }

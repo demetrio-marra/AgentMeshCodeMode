@@ -25,6 +25,7 @@ namespace AgentMesh.Application.Services
         public async Task<CodeFixerAgentOutput> ExecuteAsync(CodeFixerAgentInput input, CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing CodeFixerAgent.");
+            _logger.LogDebug("CodeFixerAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
             var inputMessages = new List<AgentMessage>();
 
@@ -56,13 +57,15 @@ namespace AgentMesh.Application.Services
 
             var fixedCode = codeRegexMatch.Groups["code"].Value.Trim();
 
-            return new CodeFixerAgentOutput
+            var output = new CodeFixerAgentOutput
             {
                 FixedCode = fixedCode,
                 TokenCount = response.TotalTokenCount,
                 InputTokenCount = response.InputTokenCount,
                 OutputTokenCount = response.OutputTokenCount
             };
+            _logger.LogDebug("CodeFixerAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
+            return output;
         }
     }
 }

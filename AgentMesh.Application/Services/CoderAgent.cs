@@ -27,6 +27,7 @@ namespace AgentMesh.Application.Services
         public async Task<CoderAgentOutput> ExecuteAsync(CoderAgentInput input, CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing CoderAgent.");
+            _logger.LogDebug("CoderAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
             var inputMessages = new List<AgentMessage>
             {
@@ -51,13 +52,15 @@ namespace AgentMesh.Application.Services
 
             var codeToRun = codeRegexMatch.Groups["code"].Value.Trim();
 
-            return new CoderAgentOutput
+            var output = new CoderAgentOutput
             {
                 CodeToRun = codeToRun,
                 TokenCount = response.TotalTokenCount,
                 InputTokenCount = response.InputTokenCount,
                 OutputTokenCount = response.OutputTokenCount
             };
+            _logger.LogDebug("CoderAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
+            return output;
         }
     }
 }
