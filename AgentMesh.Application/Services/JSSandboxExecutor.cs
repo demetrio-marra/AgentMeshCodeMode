@@ -3,7 +3,7 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services
 {
-    public class JSSandboxExecutor : IExecutor<JSSandboxInput, JSSandboxOutput>
+    public class JSSandboxExecutor : IJSSandboxExecutor
     {
         private readonly IJSSandbox _jsSandbox;
         private readonly UserConfiguration _userConfiguration;

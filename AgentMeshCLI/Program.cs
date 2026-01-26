@@ -262,7 +262,7 @@ namespace AgentMesh
 
             services.AddSingleton<IPersonalAssistantAgent, PersonalAssistantAgent>();
 
-            services.AddSingleton<IExecutor<JSSandboxInput, JSSandboxOutput>, JSSandboxExecutor>();
+            services.AddSingleton<IJSSandboxExecutor, JSSandboxExecutor>();
             services.AddSingleton<IJSSandbox, SESJSSandbox>();
 
             services.AddSingleton<IWorkflow, CodeModeWorkflow>();
