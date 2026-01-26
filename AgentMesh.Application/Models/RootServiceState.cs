@@ -85,7 +85,7 @@ namespace AgentMesh.Application.Models
 
                 nameof(BusinessRequirementsCreatorAgentInput) => new BusinessRequirementsCreatorAgentInput
                 {
-                    UserQuestionText = ContextManagerResponse
+                    UserQuestionText = TranslatorResponse!
                 } as TInput,
 
                 nameof(CoderAgentInput) => new CoderAgentInput
@@ -111,7 +111,7 @@ namespace AgentMesh.Application.Models
 
                 nameof(PersonalAssistantAgentInput) => new PersonalAssistantAgentInput
                 {
-                    Sentence = ContextManagerResponse ?? string.Empty,
+                    Sentence = TranslatorResponse ?? string.Empty,
                     Data = GetDataForPersonalAssistant(),
                     TargetLanguage = DetectedOriginalLanguage ?? "English"
                 } as TInput,
@@ -230,11 +230,6 @@ namespace AgentMesh.Application.Models
         public void SetLastCodeWithLineNumbers(string codeWithLineNumbers)
         {
             LastCodeWithLineNumbers = codeWithLineNumbers;
-        }
-
-        public void SetFinalAnswer(string answer)
-        {
-            FinalAnswer = answer;
         }
 
         private string GetExecutionResult()

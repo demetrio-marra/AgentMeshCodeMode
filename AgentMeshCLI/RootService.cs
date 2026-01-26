@@ -105,6 +105,8 @@ namespace AgentMesh
                     await ExecuteNextStepAsync(state);
                 }
 
+                _contextManagerAgent.AddAssistantAnswerMessage(state.FinalAnswer!);
+
                 ConsoleHelper.WriteLineWithColor("\nResponse for user:\n" + state.FinalAnswer!, ConsoleColor.Green);
 
                 var agentInputCosts = new Dictionary<string, decimal>
@@ -282,7 +284,18 @@ namespace AgentMesh
 
                 case RootServiceState.RunStep.Presenter:
 
-                    await CompleteWithPresenterAsync(state);
+                    var resultsPresenterInput = state.GetInput<ResultsPresenterAgentInput>();
+                    ConsoleHelper.WriteLineWithColor("\nResultsPresenter Agent is preparing the final answer for the user.", ConsoleColor.DarkYellow);
+                    ConsoleHelper.WriteLineWithColor(resultsPresenterInput.Content, ConsoleColor.Cyan);
+
+                    var resultsPresenterOutput = await ExecuteWithRetryAsync(
+                        () => _resultsPresenterAgent.ExecuteAsync(resultsPresenterInput),
+                        ResultsPresenterAgentConfiguration.AgentName);
+
+                    state.UpdateState(resultsPresenterOutput);
+
+                    ConsoleHelper.WriteLineWithColor($"  Tokens consumed: {resultsPresenterOutput.TokenCount}", ConsoleColor.Magenta);
+
                     break;
 
                 case RootServiceState.RunStep.PersonalAssistant:
@@ -305,21 +318,6 @@ namespace AgentMesh
                 case RootServiceState.RunStep.Completed:
                     break;
             }
-        }
-
-        private async Task CompleteWithPresenterAsync(RootServiceState state)
-        {
-            var resultsPresenterInput = state.GetInput<ResultsPresenterAgentInput>();
-            ConsoleHelper.WriteLineWithColor("\nResultsPresenter Agent is preparing the final answer for the user.", ConsoleColor.DarkYellow);
-            ConsoleHelper.WriteLineWithColor(resultsPresenterInput.Content, ConsoleColor.Cyan);
-
-            var resultsPresenterOutput = await ExecuteWithRetryAsync(
-                () => _resultsPresenterAgent.ExecuteAsync(resultsPresenterInput),
-                ResultsPresenterAgentConfiguration.AgentName);
-
-            state.UpdateState(resultsPresenterOutput);
-
-            ConsoleHelper.WriteLineWithColor($"  Tokens consumed: {resultsPresenterOutput.TokenCount}", ConsoleColor.Magenta);
         }
 
         private Task<T> ExecuteWithRetryAsync<T>(Func<Task<T>> action, string agentName)
