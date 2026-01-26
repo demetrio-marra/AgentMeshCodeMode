@@ -216,7 +216,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<ContextManagerAgent>();
+            services.AddSingleton<IContextManagerAgent, ContextManagerAgent>();
 
             // Router agent config and client
             services

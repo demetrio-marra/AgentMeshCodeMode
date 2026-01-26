@@ -59,5 +59,21 @@ namespace AgentMesh.Application.Services
                 OutputTokenCount = response.OutputTokenCount
             };
         }
+
+        public async Task<ContextManagerAgentState> GetState()
+        {
+            var result = new ContextManagerAgentState
+            {
+                ChatHistory = Context.ToList()
+            };
+            return await Task.FromResult(result);
+        }
+
+        public async Task SetState(ContextManagerAgentState state)
+        {
+            Context.Clear();
+            Context.AddRange(state.ChatHistory);
+            await Task.CompletedTask;
+        }
     }
 }

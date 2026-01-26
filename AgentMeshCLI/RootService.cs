@@ -23,7 +23,7 @@ namespace AgentMesh
         private readonly ResultsPresenterAgent _resultsPresenterAgent;
         private readonly ResultsPresenterAgentConfiguration _resultsPresenterConfiguration;
         private readonly IExecutor<JSSandboxInput, JSSandboxOutput> _jsSandboxExecutor;
-        private readonly ContextManagerAgent _contextManagerAgent;
+        private readonly IContextManagerAgent _contextManagerAgent;
         private readonly ContextManagerAgentConfiguration _contextManagerConfiguration;
         private readonly TranslatorAgent _translatorAgent;
         private readonly TranslatorAgentConfiguration _translatorConfiguration;
@@ -45,7 +45,7 @@ namespace AgentMesh
                            ResultsPresenterAgent resultsPresenterAgent,
                            ResultsPresenterAgentConfiguration resultsPresenterConfiguration,
                            IExecutor<JSSandboxInput, JSSandboxOutput> jsSandboxExecutor,
-                           ContextManagerAgent contextManagerAgent,
+                           IContextManagerAgent contextManagerAgent,
                            ContextManagerAgentConfiguration contextManagerConfiguration,
                            TranslatorAgent translatorAgent,
                            TranslatorAgentConfiguration translatorConfiguration,
@@ -104,8 +104,6 @@ namespace AgentMesh
                 {
                     await ExecuteNextStepAsync(state);
                 }
-
-                _contextManagerAgent.AddAssistantAnswerMessage(state.FinalAnswer!);
 
                 ConsoleHelper.WriteLineWithColor("\nResponse for user:\n" + state.FinalAnswer!, ConsoleColor.Green);
 
@@ -311,11 +309,19 @@ namespace AgentMesh
                         PersonalAssistantAgentConfiguration.AgentName);
 
                     state.UpdateState(personalAssistantOutput);
+                    var contextManagerState = await _contextManagerAgent.GetState();
+                    contextManagerState.ChatHistory.Add(new AgentMessage
+                    {
+                        Role = AgentMessageRole.Assistant,
+                        Content = state.FinalAnswer!
+                    });
+                    await _contextManagerAgent.SetState(contextManagerState);
 
                     ConsoleHelper.WriteLineWithColor($"  Tokens consumed: {personalAssistantOutput.TokenCount}", ConsoleColor.Magenta);
                     break;
 
                 case RootServiceState.RunStep.Completed:
+                 
                     break;
             }
         }

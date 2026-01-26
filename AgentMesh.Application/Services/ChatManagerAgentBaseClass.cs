@@ -27,30 +27,7 @@ namespace AgentMesh.Application.Services
             _logger = logger;
         }
 
-        /// <summary>
-        /// Gets the current chat context as a read-only collection.
-        /// </summary>
-        protected IReadOnlyList<AgentMessage> Context => _context.AsReadOnly();
-
-        /// <summary>
-        /// Adds an assistant answer message to the chat context.
-        /// </summary>
-        /// <param name="answerText">The text content of the assistant's answer.</param>
-        public void AddAssistantAnswerMessage(string answerText)
-        {
-            _context.Add(new AgentMessage { Role = AgentMessageRole.Assistant, Content = answerText });
-            _logger.LogDebug("Added assistant message to context. Total messages: {MessageCount}", _context.Count);
-        }
-
-        /// <summary>
-        /// Adds a user message to the chat context.
-        /// </summary>
-        /// <param name="userText">The text content of the user's message.</param>
-        protected void AddUserMessage(string userText)
-        {
-            _context.Add(new AgentMessage { Role = AgentMessageRole.User, Content = userText });
-            _logger.LogDebug("Added user message to context. Total messages: {MessageCount}", _context.Count);
-        }
+        protected List<AgentMessage> Context => _context;
 
         /// <summary>
         /// 
@@ -78,13 +55,13 @@ namespace AgentMesh.Application.Services
         }
 
         /// <summary>
-        /// Clears all messages from the chat context.
+        /// Adds a user message to the chat context.
         /// </summary>
-        protected void ClearContext()
+        /// <param name="userText">The text content of the user's message.</param>
+        protected void AddUserMessage(string userText)
         {
-            var messageCount = _context.Count;
-            _context.Clear();
-            _logger.LogDebug("Context cleared. Removed {MessageCount} messages", messageCount);
+            _context.Add(new AgentMessage { Role = AgentMessageRole.User, Content = userText });
+            _logger.LogDebug("Added user message to context. Total messages: {MessageCount}", _context.Count);
         }
 
         private void SummaryContext()
