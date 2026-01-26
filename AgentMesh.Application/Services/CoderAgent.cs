@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services
 {
-    public class CoderAgent : IAgent<CoderAgentInput, CoderAgentOutput>
+    public class CoderAgent : ICoderAgent
     {
         private readonly Regex JavascriptCodeRegex = new Regex(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 

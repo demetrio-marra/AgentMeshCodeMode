@@ -1,8 +1,10 @@
 ﻿using AgentMesh.Application.Services;
+using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Models;
 using AgentMesh.Services;
+using AgentMesh.Workflows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -67,7 +69,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<BusinessRequirementsCreatorAgent>();
+            services.AddSingleton<IBusinessRequirementsCreatorAgent, BusinessRequirementsCreatorAgent>();
 
             // Coder agent config and client
             services
@@ -89,7 +91,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<CoderAgent>();
+            services.AddSingleton<ICoderAgent, CoderAgent>();
 
             // Code Smell Checker
             services.AddSingleton<ICodeSmellDetector, CodeSmellDetector>();
@@ -113,7 +115,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<ResultsPresenterAgent>();
+            services.AddSingleton<IResultsPresenterAgent, ResultsPresenterAgent>();
 
             // CodeFixer agent config and client
             services
@@ -134,7 +136,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<CodeFixerAgent>();
+            services.AddSingleton<ICodeFixerAgent, CodeFixerAgent>();
 
             // CodeStaticAnalyzer agent config and client
             services
@@ -155,7 +157,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<CodeStaticAnalyzer>();
+            services.AddSingleton<ICodeStaticAnalyzer, CodeStaticAnalyzer>();
 
             // CodeFixer agent config and client
             services
@@ -176,7 +178,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<TranslatorAgent>();
+            services.AddSingleton<ITranslatorAgent, TranslatorAgent>();
 
             // ChatManager agent config and client
             services
@@ -237,7 +239,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<RouterAgent>();
+            services.AddSingleton<IRouterAgent, RouterAgent>();
 
             // PersonalAssistant agent config and client
             services
@@ -258,12 +260,13 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<PersonalAssistantAgent>();
+            services.AddSingleton<IPersonalAssistantAgent, PersonalAssistantAgent>();
 
             services.AddSingleton<IExecutor<JSSandboxInput, JSSandboxOutput>, JSSandboxExecutor>();
             services.AddSingleton<IJSSandbox, SESJSSandbox>();
 
-            services.AddSingleton<RootService>();
+            services.AddSingleton<IWorkflow, CodeModeWorkflow>();
+            services.AddSingleton<UserConsoleInputService>();
 
             services
                .AddOptions<UserConfiguration>()
@@ -274,9 +277,9 @@ namespace AgentMesh
             // Build service provider
             var serviceProvider = services.BuildServiceProvider();
            
-            // Create and run the playground
-            var rootService = serviceProvider.GetRequiredService<RootService>();
-            await rootService.Run();
+            // Create and run the service
+            var userConsoleInputService = serviceProvider.GetRequiredService<UserConsoleInputService>();
+            await userConsoleInputService.Run();
         }
 
         private static string ResolveConfigText(string currentValue, string? filePath)

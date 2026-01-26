@@ -3,7 +3,7 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models
 {
-    public class RootServiceState
+    public class CodeModeWorkflowState
     {
         public enum RunStep
         {
@@ -20,7 +20,7 @@ namespace AgentMesh.Application.Models
             Completed
         }
 
-        public RootServiceState(string userQuestion)
+        public CodeModeWorkflowState(string userQuestion)
         {
             UserQuestion = userQuestion;
             TokenUsage = new Dictionary<string, int>();
