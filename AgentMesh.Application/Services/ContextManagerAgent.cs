@@ -8,6 +8,8 @@ namespace AgentMesh.Application.Services
 {
     public class ContextManagerAgent : ChatManagerAgentBaseClass, IContextManagerAgent
     {
+        public const string NO_RELEVANT_CONTEXT_FOUND = "NO RELEVANT CONTEXT FOUND";
+
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<ContextManagerAgent> _logger;
 
@@ -54,7 +56,7 @@ namespace AgentMesh.Application.Services
 
             var output = new ContextManagerAgentOutput
             {
-                ContextEnrichedUserSentenceText = responseText,
+                RelevantContext = responseText,
                 TokenCount = response.TotalTokenCount,
                 InputTokenCount = response.InputTokenCount,
                 OutputTokenCount = response.OutputTokenCount

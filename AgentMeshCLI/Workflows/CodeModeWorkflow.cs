@@ -59,14 +59,21 @@ namespace AgentMesh.Workflows
             {
                 UserSentenceText = state.UserQuestion
             });
-            state.ContextManagerResponse = contextManagerOutput.ContextEnrichedUserSentenceText;
+            if (contextManagerOutput.RelevantContext == ContextManagerAgent.NO_RELEVANT_CONTEXT_FOUND)
+            {
+                state.UserQuestionRelevantContext = null;
+            }
+            else
+            {
+                state.UserQuestionRelevantContext = contextManagerOutput.RelevantContext;
+            }
             state.AddTokenUsage(ContextManagerAgentConfiguration.AgentName, contextManagerOutput.TokenCount, contextManagerOutput.InputTokenCount, contextManagerOutput.OutputTokenCount);
 
             _logger.LogInformation("Engaging Translator Agent...");
 
             var translatorOutput = await _translatorAgent.ExecuteAsync(new TranslatorAgentInput
             {
-                Sentence = state.ContextManagerResponse,
+                Sentence = state.UserQuestion,
                 TargetLanguage = INTERNAL_AGENTIC_LANGUAGE
             });
             state.TranslatorResponse = translatorOutput.TranslatedSentence;
@@ -74,10 +81,9 @@ namespace AgentMesh.Workflows
             state.AddTokenUsage(TranslatorAgentConfiguration.AgentName, translatorOutput.TokenCount, translatorOutput.InputTokenCount, translatorOutput.OutputTokenCount);
 
             _logger.LogInformation("Engaging Router Agent...");
-
             var routerOutput = await _routerAgent.ExecuteAsync(new RouterAgentInput
             {
-                Message = state.TranslatorResponse
+                Message = state.UserQuestionWithContext
             });
             state.RouterRecipient = routerOutput.Recipient;
             state.AddTokenUsage(RouterAgentConfiguration.AgentName, routerOutput.TokenCount, routerOutput.InputTokenCount, routerOutput.OutputTokenCount);
@@ -91,7 +97,7 @@ namespace AgentMesh.Workflows
                 _logger.LogInformation("Engaging Business Requirements Creator Agent...");
                 var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
                 {
-                    UserQuestionText = state.TranslatorResponse
+                    UserQuestionText = state.UserQuestionWithContext
                 });
                 state.ShouldEngageCoder = brcOutput.EngageCoderAgent;
                 state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount);
@@ -206,7 +212,7 @@ namespace AgentMesh.Workflows
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
-                Sentence = state.TranslatorResponse!,
+                Sentence = state.UserQuestionWithContext!,
                 Data = data,
                 TargetLanguage = state.DetectedOriginalLanguage!
             });
