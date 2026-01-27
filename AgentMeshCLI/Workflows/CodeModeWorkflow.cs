@@ -221,8 +221,7 @@ namespace AgentMesh.Workflows
             return new WorkflowResult
             {
                 Response = state.FinalAnswer!,
-                InputTokenUsage = state.InputTokenUsage,
-                OutputTokenUsage = state.OutputTokenUsage
+                TokenUsageEntries = state.TokenUsageEntries
             };
         }
 

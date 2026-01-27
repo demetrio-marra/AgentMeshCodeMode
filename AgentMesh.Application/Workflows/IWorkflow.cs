@@ -1,3 +1,5 @@
+using AgentMesh.Application.Models;
+
 namespace AgentMesh.Application.Workflows
 {
     public interface IWorkflow
@@ -8,7 +10,6 @@ namespace AgentMesh.Application.Workflows
     public class WorkflowResult
     {
         public string Response { get; set; } = string.Empty;
-        public Dictionary<string, int> InputTokenUsage { get; set; } = new();
-        public Dictionary<string, int> OutputTokenUsage { get; set; } = new();
+        public List<AgentTokenUsageEntry> TokenUsageEntries { get; set; } = new();
     }
 }

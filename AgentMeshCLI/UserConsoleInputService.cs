@@ -99,7 +99,7 @@ namespace AgentMesh
                     { PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration.CostPerMillionOutputTokens }
                 };
 
-                ConsoleHelper.PrintTokenUsageSummary(result.InputTokenUsage, result.OutputTokenUsage, agentInputCosts, agentOutputCosts);
+                ConsoleHelper.PrintTokenUsageSummary(result.TokenUsageEntries, agentInputCosts, agentOutputCosts);
             }
         }
 

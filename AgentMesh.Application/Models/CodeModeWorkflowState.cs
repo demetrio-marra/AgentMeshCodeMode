@@ -5,9 +5,7 @@
         public CodeModeWorkflowState(string userQuestion)
         {
             UserQuestion = userQuestion;
-            TokenUsage = new Dictionary<string, int>();
-            InputTokenUsage = new Dictionary<string, int>();
-            OutputTokenUsage = new Dictionary<string, int>();
+            TokenUsageEntries = new List<AgentTokenUsageEntry>();
             CodeIssues = new List<string>();
         }
 
@@ -29,24 +27,16 @@
         public string? SandboxError { get; set; }
         public string? PresenterOutput { get; set; }
         public string? FinalAnswer { get; set; }
-        public Dictionary<string, int> TokenUsage { get; set; }
-        public Dictionary<string, int> InputTokenUsage { get; set; }
-        public Dictionary<string, int> OutputTokenUsage { get; set; }
+        public List<AgentTokenUsageEntry> TokenUsageEntries { get; set; }
 
         public void AddTokenUsage(string agentName, int tokenCount, int inputTokenCount, int outputTokenCount)
         {
-            if (TokenUsage.ContainsKey(agentName))
+            TokenUsageEntries.Add(new AgentTokenUsageEntry
             {
-                TokenUsage[agentName] += tokenCount;
-                InputTokenUsage[agentName] += inputTokenCount;
-                OutputTokenUsage[agentName] += outputTokenCount;
-            }
-            else
-            {
-                TokenUsage[agentName] = tokenCount;
-                InputTokenUsage[agentName] = inputTokenCount;
-                OutputTokenUsage[agentName] = outputTokenCount;
-            }
+                AgentName = agentName,
+                InputTokens = inputTokenCount,
+                OutputTokens = outputTokenCount
+            });
         }
     }
 }
