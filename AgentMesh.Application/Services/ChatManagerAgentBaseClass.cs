@@ -39,7 +39,10 @@ namespace AgentMesh.Application.Services
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Generating response with {MessageCount} messages", messages.Count());
             
-            var response = await _openAIClient.GenerateResponseAsync(messages);
+            var response = await Resilience.ExecuteWithRetryAsync(async () =>
+            {
+                return await _openAIClient.GenerateResponseAsync(messages);
+            }, "ChatManagerAgent", _logger);
             
             stopwatch.Stop();
             _logger.LogDebug("Response generated in {ElapsedMs}ms. Input tokens: {InputTokens}, Output tokens: {OutputTokens}, Total tokens: {TotalTokens}",
