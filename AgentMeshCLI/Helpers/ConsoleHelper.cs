@@ -15,8 +15,7 @@ namespace AgentMesh.Helpers
         public static void PrintAgentConfiguration(string friendlyName, string agentName, dynamic configuration)
         {
             Console.WriteLine($"- {friendlyName} ({agentName})");
-            Console.WriteLine($"  Provider: {configuration.Provider}");
-            Console.WriteLine($"  Model: {configuration.ModelName}");
+            Console.WriteLine($"  LLM: {configuration.LLM}");
             Console.WriteLine($"  Temperature: {configuration.ModelTemperature}");
         }
 

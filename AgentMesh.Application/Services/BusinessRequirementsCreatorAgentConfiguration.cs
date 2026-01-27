@@ -5,14 +5,11 @@ namespace AgentMesh.Application.Services
         public const string SectionName = "Agents:BusinessRequirementsCreator";
         public const string AgentName = "BusinessRequirementsCreator";
 
-        public string Provider { get; set; } = string.Empty;
-        public string ModelName { get; set; } = string.Empty;
+        public string LLM { get; set; } = string.Empty;
         public string ModelTemperature { get; set; } = string.Empty;
         public string SystemPrompt { get; set; } = string.Empty;
         public string? SystemPromptFile { get; set; }
         public string ApiDocumentation { get; set; } = string.Empty;
         public string? ApiDocumentationFile { get; set; }
-        public decimal CostPerMillionInputTokens { get; set; }
-        public decimal CostPerMillionOutputTokens { get; set; }
     }
 }

@@ -1,3 +1,4 @@
+using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Helpers;
@@ -19,6 +20,7 @@ namespace AgentMesh
         private readonly ContextAggregatorAgentConfiguration _contextAggregatorConfiguration;
         private readonly RouterAgentConfiguration _routerConfiguration;
         private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
+        private readonly LLMsConfiguration _llmsConfiguration;
 
         public UserConsoleInputService(
             IWorkflow workflow,
@@ -31,7 +33,8 @@ namespace AgentMesh
             TranslatorAgentConfiguration translatorConfiguration,
             ContextAggregatorAgentConfiguration contextAggregatorConfiguration,
             RouterAgentConfiguration routerConfiguration,
-            PersonalAssistantAgentConfiguration personalAssistantConfiguration)
+            PersonalAssistantAgentConfiguration personalAssistantConfiguration,
+            LLMsConfiguration llmsConfiguration)
         {
             _workflow = workflow;
             _businessRequirementsCreatorConfiguration = businessRequirementsCreatorConfiguration;
@@ -44,6 +47,7 @@ namespace AgentMesh
             _contextAggregatorConfiguration = contextAggregatorConfiguration;
             _routerConfiguration = routerConfiguration;
             _personalAssistantConfiguration = personalAssistantConfiguration;
+            _llmsConfiguration = llmsConfiguration;
         }
 
         public async Task Run()
@@ -73,30 +77,30 @@ namespace AgentMesh
 
                 var agentInputCosts = new Dictionary<string, decimal>
                 {
-                    { ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration.CostPerMillionInputTokens },
-                    { TranslatorAgentConfiguration.AgentName, _translatorConfiguration.CostPerMillionInputTokens },
-                    { ContextAggregatorAgentConfiguration.AgentName, _contextAggregatorConfiguration.CostPerMillionInputTokens },
-                    { RouterAgentConfiguration.AgentName, _routerConfiguration.CostPerMillionInputTokens },
-                    { BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration.CostPerMillionInputTokens },
-                    { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionInputTokens },
-                    { CodeStaticAnalyzerConfiguration.AgentName, _codeStaticAnalyzerConfiguration.CostPerMillionInputTokens },
-                    { CodeFixerAgentConfiguration.AgentName, _codeFixerConfiguration.CostPerMillionInputTokens },
-                    { ResultsPresenterAgentConfiguration.AgentName, _resultsPresenterConfiguration.CostPerMillionInputTokens },
-                    { PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration.CostPerMillionInputTokens }
+                    { ContextManagerAgentConfiguration.AgentName, _llmsConfiguration[_contextManagerConfiguration.LLM].CostPerMillionInputTokens },
+                    { TranslatorAgentConfiguration.AgentName, _llmsConfiguration[_translatorConfiguration.LLM].CostPerMillionInputTokens },
+                    { ContextAggregatorAgentConfiguration.AgentName, _llmsConfiguration[_contextAggregatorConfiguration.LLM].CostPerMillionInputTokens },
+                    { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionInputTokens },
+                    { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionInputTokens },
+                    { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionInputTokens },
+                    { CodeStaticAnalyzerConfiguration.AgentName, _llmsConfiguration[_codeStaticAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
+                    { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionInputTokens },
+                    { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionInputTokens },
+                    { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionInputTokens }
                 };
 
                 var agentOutputCosts = new Dictionary<string, decimal>
                 {
-                    { ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration.CostPerMillionOutputTokens },
-                    { TranslatorAgentConfiguration.AgentName, _translatorConfiguration.CostPerMillionOutputTokens },
-                    { ContextAggregatorAgentConfiguration.AgentName, _contextAggregatorConfiguration.CostPerMillionOutputTokens },
-                    { RouterAgentConfiguration.AgentName, _routerConfiguration.CostPerMillionOutputTokens },
-                    { BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration.CostPerMillionOutputTokens },
-                    { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionOutputTokens },
-                    { CodeStaticAnalyzerConfiguration.AgentName, _codeStaticAnalyzerConfiguration.CostPerMillionOutputTokens },
-                    { CodeFixerAgentConfiguration.AgentName, _codeFixerConfiguration.CostPerMillionOutputTokens },
-                    { ResultsPresenterAgentConfiguration.AgentName, _resultsPresenterConfiguration.CostPerMillionOutputTokens },
-                    { PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration.CostPerMillionOutputTokens }
+                    { ContextManagerAgentConfiguration.AgentName, _llmsConfiguration[_contextManagerConfiguration.LLM].CostPerMillionOutputTokens },
+                    { TranslatorAgentConfiguration.AgentName, _llmsConfiguration[_translatorConfiguration.LLM].CostPerMillionOutputTokens },
+                    { ContextAggregatorAgentConfiguration.AgentName, _llmsConfiguration[_contextAggregatorConfiguration.LLM].CostPerMillionOutputTokens },
+                    { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionOutputTokens },
+                    { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionOutputTokens },
+                    { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionOutputTokens },
+                    { CodeStaticAnalyzerConfiguration.AgentName, _llmsConfiguration[_codeStaticAnalyzerConfiguration.LLM].CostPerMillionOutputTokens },
+                    { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionOutputTokens },
+                    { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionOutputTokens },
+                    { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
                 ConsoleHelper.PrintTokenUsageSummary(result.TokenUsageEntries, agentInputCosts, agentOutputCosts);

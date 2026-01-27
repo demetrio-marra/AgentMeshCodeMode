@@ -1,4 +1,5 @@
-﻿using AgentMesh.Application.Services;
+﻿using AgentMesh.Application.Models;
+using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Infrastructure.OpenAIClient;
@@ -49,6 +50,13 @@ namespace AgentMesh
 
             services.AddInferenceProviders(configuration);
 
+            // Load LLMs configuration
+            services
+                .AddOptions<LLMsConfiguration>()
+                .Bind(configuration.GetSection(LLMsConfiguration.SectionName))
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<LLMsConfiguration>>().Value);
+
             // Business Requirements Creator agent config and client
             services
                 .AddOptions<BusinessRequirementsCreatorAgentConfiguration>()
@@ -65,8 +73,10 @@ namespace AgentMesh
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
                 var config = sp.GetRequiredService<BusinessRequirementsCreatorAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
             services.AddSingleton<IBusinessRequirementsCreatorAgent, BusinessRequirementsCreatorAgent>();
@@ -87,8 +97,10 @@ namespace AgentMesh
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
                 var config = sp.GetRequiredService<CoderAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
             services.AddSingleton<ICoderAgent, CoderAgent>();
@@ -111,8 +123,10 @@ namespace AgentMesh
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
                 var config = sp.GetRequiredService<ResultsPresenterAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
             services.AddSingleton<IResultsPresenterAgent, ResultsPresenterAgent>();
@@ -132,8 +146,10 @@ namespace AgentMesh
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
                 var config = sp.GetRequiredService<CodeFixerAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
             services.AddSingleton<ICodeFixerAgent, CodeFixerAgent>();
@@ -153,8 +169,10 @@ namespace AgentMesh
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
                 var config = sp.GetRequiredService<CodeStaticAnalyzerConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
             services.AddSingleton<ICodeStaticAnalyzer, CodeStaticAnalyzer>();
@@ -174,8 +192,10 @@ namespace AgentMesh
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
                 var config = sp.GetRequiredService<TranslatorAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
             services.AddSingleton<ITranslatorAgent, TranslatorAgent>();
@@ -195,8 +215,10 @@ namespace AgentMesh
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
                 var config = sp.GetRequiredService<ContextAggregatorAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
             services.AddSingleton<IContextAggregatorAgent, ContextAggregatorAgent>();
@@ -216,8 +238,10 @@ namespace AgentMesh
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
                 var config = sp.GetRequiredService<ChatManagerAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
             // ContextManager agent config and client
@@ -235,8 +259,10 @@ namespace AgentMesh
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
                 var config = sp.GetRequiredService<ContextManagerAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
             services.AddSingleton<IContextManagerAgent, ContextManagerAgent>();
@@ -256,8 +282,10 @@ namespace AgentMesh
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
                 var config = sp.GetRequiredService<RouterAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
             services.AddSingleton<IRouterAgent, RouterAgent>();
@@ -277,8 +305,10 @@ namespace AgentMesh
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
                 var config = sp.GetRequiredService<PersonalAssistantAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
             services.AddSingleton<IPersonalAssistantAgent, PersonalAssistantAgent>();
@@ -320,6 +350,16 @@ namespace AgentMesh
             }
 
             return currentValue;
+        }
+
+        private static LLMConfiguration ResolveLLMConfiguration(string llmKey, LLMsConfiguration llmsConfiguration)
+        {
+            if (!llmsConfiguration.TryGetValue(llmKey, out var llmConfig))
+            {
+                throw new InvalidOperationException($"LLM configuration not found for key: {llmKey}");
+            }
+
+            return llmConfig;
         }
     }
 }
