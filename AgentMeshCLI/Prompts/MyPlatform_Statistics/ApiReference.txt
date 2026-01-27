@@ -103,9 +103,11 @@ interface MyCompanyCompanyInfoGetAllProductNamesParams {
 }
 
 interface MyPlatformCompanyInfoFindProductHierarchyResult {
+  result: {
   company?: string | null;
   family?: string | null;
   product?: string | null;
+}[];
 }
 
 interface MyPlatformStatisticsGetRatesResult {
