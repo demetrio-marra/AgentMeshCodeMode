@@ -85,9 +85,23 @@ namespace AgentMesh.Infrastructure.OpenAIClient
                 ResponseFormat = ChatResponseFormat.CreateTextFormat(),
             };
 
-            var chatCompletionResult = await _client.CompleteChatAsync(chatMessages, chatCompletionOptions);
+            // use ExecuteRetryAsync to handle transient errors
 
-            var responseText = GetResponseText(chatCompletionResult) ?? string.Empty;
+            ClientResult<ChatCompletion> chatCompletionResult;
+            try
+            {
+                chatCompletionResult = await _client.CompleteChatAsync(chatMessages, chatCompletionOptions);
+            }
+            catch (ClientResultException ex) when (ex.Message.Contains("Tool choice is none, but model called a tool"))
+            {
+                throw new BadStructuredResponseException("", ex.Message, ex);
+            }
+
+            var responseText = GetResponseText(chatCompletionResult);
+            if (string.IsNullOrWhiteSpace(responseText))
+            {
+                throw new BadStructuredResponseException("", "The response text is empty.");
+            }
 
             return new OpenAIClientResponse
             {

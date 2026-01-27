@@ -90,9 +90,9 @@ class SandboxRunner {
                 await mcpTools.mcpClient.ensureConnected();
                 return mcpTools.MyPlatform_Statistics_GetRates(params);
             },
-            MyCompany_CompanyInfo_GetAllProductNames: async (params) => {
+            MyPlatform_CompanyInfo_GetAllProductNames: async (params) => {
                 await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyCompany_CompanyInfo_GetAllProductNames(params);
+                return mcpTools.MyPlatform_CompanyInfo_GetAllProductNames(params);
             },
             MyPlatform_ProvisioningInfo: async (params) => {
                 await mcpTools.mcpClient.ensureConnected();
@@ -114,13 +114,13 @@ class SandboxRunner {
                 await mcpTools.mcpClient.ensureConnected();
                 return mcpTools.MyPlatform_MyPermissions_Get(params);
             },
-            MyCompany_CompanyInfo_GetProductsHierarchy: async (params) => {
+            MyPlatform_CompanyInfo_GetProductsHierarchy: async (params) => {
                 await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyCompany_CompanyInfo_GetProductsHierarchy(params);
+                return mcpTools.MyPlatform_CompanyInfo_GetProductsHierarchy(params);
             },
-            MyCompany_CompanyInfo_FindProductHierarchy: async (params) => {
+            MyPlatform_CompanyInfo_FindProductHierarchy: async (params) => {
                 await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyCompany_CompanyInfo_FindProductHierarchy(params);
+                return mcpTools.MyPlatform_CompanyInfo_FindProductHierarchy(params);
             },
             MyPlatform_Statistics_GetAverageDuration: async (params) => {
                 await mcpTools.mcpClient.ensureConnected();
@@ -272,19 +272,19 @@ Examples:
   node sandbox-runner.js "agent-id" --file my-script.js
 
   # With JSON output
-  node sandbox-runner.js --json "return await MyCompany_CompanyInfo_GetAllProductNames({});"
+  node sandbox-runner.js --json "return await MyPlatform_CompanyInfo_GetAllProductNames({});"
   node sandbox-runner.js "agent-id" --json "return { test: true };"
 
 Available MCP Tools:
   - MyPlatform_Statistics_GetRates
-  - MyCompany_CompanyInfo_GetAllProductNames
+  - MyPlatform_CompanyInfo_GetAllProductNames
   - MyPlatform_ProvisioningInfo
   - MyPlatform_Chart_GenerateChart
   - MyPlatform_ProvisioningInfo_GetById
   - MyPlatform_Statistics_Get
   - MyPlatform_MyPermissions_Get
-  - MyCompany_CompanyInfo_GetProductsHierarchy
-  - MyCompany_CompanyInfo_FindProductHierarchy
+  - MyPlatform_CompanyInfo_GetProductsHierarchy
+  - MyPlatform_CompanyInfo_FindProductHierarchy
   - MyPlatform_Statistics_GetAverageDuration
 
 Note: Code runs in a hardened SES sandbox with limited access to Node.js APIs.

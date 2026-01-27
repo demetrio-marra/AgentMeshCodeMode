@@ -257,17 +257,17 @@ async function MyPlatform_Chart_GenerateChart(params = {}) {
 }
 
 /**
- * @tool MyCompany_CompanyInfo_GetAllProductNames
+ * @tool MyPlatform_CompanyInfo_GetAllProductNames
  * @description CompanyInfo - Retrieves all available product names.
  * @inputSchema MyCompanyCompanyInfoGetAllProductNamesParams
  * @outputSchema MCPToolResponse<MyCompanyCompanyInfoGetAllProductNamesResult>
  * @errorSchema MCPToolError
  */
-async function MyCompany_CompanyInfo_GetAllProductNames(params = {}) {
+async function MyPlatform_CompanyInfo_GetAllProductNames(params = {}) {
     try {
-        return await mcpClient.callTool('MyCompany_CompanyInfo_GetAllProductNames', params);
+        return await mcpClient.callTool('MyPlatform_CompanyInfo_GetAllProductNames', params);
     } catch (error) {
-        console.error('Error calling tool MyCompany_CompanyInfo_GetAllProductNames:', error.message);
+        console.error('Error calling tool MyPlatform_CompanyInfo_GetAllProductNames:', error.message);
         return {
             isError: true,
             error: error.message
@@ -285,7 +285,7 @@ module.exports = {
     MyPlatform_Statistics_GetAverageDuration,
     MyPlatform_CompanyInfo_GetProductsHierarchy,
     MyPlatform_Chart_GenerateChart,
-    MyCompany_CompanyInfo_GetAllProductNames
+    MyPlatform_CompanyInfo_GetAllProductNames
 };
 
 /**
@@ -295,7 +295,7 @@ module.exports = {
  * 
  * // Example 1: Basic usage with error handling
  * async function example1() {
- *   const result = await tools.MyCompany_CompanyInfo_GetAllProductNames({});
+ *   const result = await tools.MyPlatform_CompanyInfo_GetAllProductNames({});
  *   
  *   if (result.isError) {
  *     console.error('Tool error:', result.error);

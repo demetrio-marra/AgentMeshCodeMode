@@ -39,48 +39,49 @@ namespace AgentMesh.Application.Services
 
             var stopwatch = Stopwatch.StartNew();
 
-            var response = await _openAIClient.GenerateResponseAsync(inputMessages);
+            var result = await Resilience.ExecuteWithRetryAsync(async () =>
+            {
+                var response = await _openAIClient.GenerateResponseAsync(inputMessages);
+                var responseText = response.Text?.Trim() ?? string.Empty;
+
+                var match = ResponseRegex.Match(responseText);
+                if (!match.Success)
+                {
+                    _logger.LogWarning("The model's response did not match the expected format. Response: {ResponseText}", responseText);
+                    throw new BadStructuredResponseException(responseText, "The model's response did not match the expected format.");
+                }
+
+                var responseType = match.Groups["responseType"].Value.Trim().ToLowerInvariant();
+                if (responseType == "userresponse")
+                {
+                    return new BusinessRequirementsCreatorAgentOutput
+                    {
+                        EngageCoderAgent = false,
+                        AnswerToUserText = match.Groups["content"].Value.Trim(),
+                        TokenCount = response.TotalTokenCount,
+                        InputTokenCount = response.InputTokenCount,
+                        OutputTokenCount = response.OutputTokenCount
+                    };
+                }
+
+                return new BusinessRequirementsCreatorAgentOutput
+                {
+                    EngageCoderAgent = true,
+                    BusinessRequirements = match.Groups["content"].Value.Trim(),
+                    TokenCount = response.TotalTokenCount,
+                    InputTokenCount = response.InputTokenCount,
+                    OutputTokenCount = response.OutputTokenCount
+                };
+            }, BusinessRequirementsCreatorAgentConfiguration.AgentName, _logger);
 
             stopwatch.Stop();
             _logger.LogDebug(
                 "BusinessRequirementsCreatorAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
                 stopwatch.ElapsedMilliseconds,
-                response.TotalTokenCount);
+                result.TokenCount);
 
-            var responseText = response.Text?.Trim() ?? string.Empty;
-
-            var match = ResponseRegex.Match(responseText);
-            if (!match.Success)
-            {
-                _logger.LogWarning("The model's response did not match the expected format. Response: {ResponseText}", responseText);
-                throw new BadStructuredResponseException(responseText, "The model's response did not match the expected format.");
-            }
-
-            var responseType = match.Groups["responseType"].Value.Trim().ToLowerInvariant();
-            if (responseType == "userresponse")
-            {
-                var output = new BusinessRequirementsCreatorAgentOutput
-                {
-                    EngageCoderAgent = false,
-                    AnswerToUserText = match.Groups["content"].Value.Trim(),
-                    TokenCount = response.TotalTokenCount,
-                    InputTokenCount = response.InputTokenCount,
-                    OutputTokenCount = response.OutputTokenCount
-                };
-                _logger.LogDebug("BusinessRequirementsCreatorAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
-                return output;
-            }
-
-            var businessRequirementsOutput = new BusinessRequirementsCreatorAgentOutput
-            {
-                EngageCoderAgent = true,
-                BusinessRequirements = match.Groups["content"].Value.Trim(),
-                TokenCount = response.TotalTokenCount,
-                InputTokenCount = response.InputTokenCount,
-                OutputTokenCount = response.OutputTokenCount
-            };
-            _logger.LogDebug("BusinessRequirementsCreatorAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(businessRequirementsOutput));
-            return businessRequirementsOutput;
+            _logger.LogDebug("BusinessRequirementsCreatorAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(result));
+            return result;
         }
     }
 }

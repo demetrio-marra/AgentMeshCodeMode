@@ -43,57 +43,60 @@ namespace AgentMesh.Application.Services
 
             var stopwatch = Stopwatch.StartNew();
 
-            var response = await _openAIClient.GenerateResponseAsync(inputMessages);
+            var result = await Resilience.ExecuteWithRetryAsync(async () =>
+            {
+                var response = await _openAIClient.GenerateResponseAsync(inputMessages);
+                var responseText = response.Text?.Trim() ?? string.Empty;
+
+                var jsonMatch = JsonCodeRegex.Match(responseText);
+                string jsonContent;
+                
+                if (jsonMatch.Success)
+                {
+                    jsonContent = jsonMatch.Groups["json"].Value.Trim();
+                }
+                else
+                {
+                    jsonContent = responseText;
+                }
+
+                TranslationResponse? translationResponse;
+                try
+                {
+                    translationResponse = JsonSerializer.Deserialize<TranslationResponse>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogError(ex, "Failed to parse translation response: {ResponseText}", jsonContent);
+                    throw new BadStructuredResponseException(responseText, "The model's response did not contain valid JSON.");
+                }
+
+                if (translationResponse == null || string.IsNullOrWhiteSpace(translationResponse.TranslatedSentence))
+                {
+                    throw new BadStructuredResponseException(responseText, "The model's response did not contain a valid translation.");
+                }
+
+                return new TranslatorAgentOutput
+                {
+                    TranslatedSentence = translationResponse.TranslatedSentence,
+                    DetectedOriginalLanguage = translationResponse.DetectedOriginalLanguage ?? "Unknown",
+                    TokenCount = response.TotalTokenCount,
+                    InputTokenCount = response.InputTokenCount,
+                    OutputTokenCount = response.OutputTokenCount
+                };
+            }, TranslatorAgentConfiguration.AgentName, _logger);
 
             stopwatch.Stop();
             _logger.LogDebug(
                 "TranslatorAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
                 stopwatch.ElapsedMilliseconds,
-                response.TotalTokenCount);
+                result.TokenCount);
 
-            var responseText = response.Text?.Trim() ?? string.Empty;
-
-            var jsonMatch = JsonCodeRegex.Match(responseText);
-            string jsonContent;
-            
-            if (jsonMatch.Success)
-            {
-                jsonContent = jsonMatch.Groups["json"].Value.Trim();
-            }
-            else
-            {
-                jsonContent = responseText;
-            }
-
-            TranslationResponse? translationResponse;
-            try
-            {
-                translationResponse = JsonSerializer.Deserialize<TranslationResponse>(jsonContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Failed to parse translation response: {ResponseText}", jsonContent);
-                throw new BadStructuredResponseException(responseText, "The model's response did not contain valid JSON.");
-            }
-
-            if (translationResponse == null || string.IsNullOrWhiteSpace(translationResponse.TranslatedSentence))
-            {
-                throw new BadStructuredResponseException(responseText, "The model's response did not contain a valid translation.");
-            }
-
-            var output = new TranslatorAgentOutput
-            {
-                TranslatedSentence = translationResponse.TranslatedSentence,
-                DetectedOriginalLanguage = translationResponse.DetectedOriginalLanguage ?? "Unknown",
-                TokenCount = response.TotalTokenCount,
-                InputTokenCount = response.InputTokenCount,
-                OutputTokenCount = response.OutputTokenCount
-            };
-            _logger.LogDebug("TranslatorAgent Output: {Output}", JsonSerializer.Serialize(output));
-            return output;
+            _logger.LogDebug("TranslatorAgent Output: {Output}", JsonSerializer.Serialize(result));
+            return result;
         }
 
         private class TranslationResponse

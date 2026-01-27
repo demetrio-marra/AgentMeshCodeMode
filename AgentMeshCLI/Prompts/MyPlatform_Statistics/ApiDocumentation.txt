@@ -139,7 +139,7 @@ If the operation fails, you will receive an error message describing what went w
 3. PRODUCT HIERARCHY LOOKUP TOOL
 -------------------------------------------
 
-NAME: MyCompany_CompanyInfo_FindProductHierarchy
+NAME: MyPlatform_CompanyInfo_FindProductHierarchy
 
 PURPOSE:
 Identifies which Company and Family a specific Product belongs to in the organizational hierarchy.
@@ -167,7 +167,7 @@ If the operation fails, you will receive an error message describing what went w
 4. PRODUCTS LIST TOOL
 -------------------------------------------
 
-NAME: MyCompany_CompanyInfo_GetAllProductNames
+NAME: MyPlatform_CompanyInfo_GetAllProductNames
 
 PURPOSE:
 List all available products in the organizational catalog.
@@ -195,7 +195,7 @@ A list of important considerations on data quality and interpretation for the av
 - Data partitioning affects the granularity of returned statistics
 - API does not support metrics aggregation across different provisioning phases; each record refers to a single phase only
 - When user does not explicitly provide Company and Family query parameters instruct the Coder agent to also:
-    1. check if MyCompany_CompanyInfo_FindProductHierarchy returns more than one result. If yes
+    1. check if MyPlatform_CompanyInfo_FindProductHierarchy returns more than one result. If yes
     2. return a user-facing error message asking to disambiguate which Company and Family to use for the requested Product, listing all possible Company/Family combinations returned by the API.
 
 Define all INPUT parameters:
@@ -209,7 +209,7 @@ Define all INPUT parameters:
 
 Workflow rules:
   - when the user asks for statistics for more than a single product, call 'MyPlatform_Statistics_Get' for each product.
-  - when the 'MyPlatform_Statistics_Get' returns an 'ambiguous product hierarchy' error, call 'MyCompany_CompanyInfo_FindProductHierarchy' and
+  - when the 'MyPlatform_Statistics_Get' returns an 'ambiguous product hierarchy' error, call 'MyPlatform_CompanyInfo_FindProductHierarchy' and
     return an error message listing all the company/families found for the product to inform user.
   - if Business Requirements indicate to fetch ALL Provisioning Phases, choose a or b:
       a. if the Provisioning Phase column is displayed in output table, display the data as it is.

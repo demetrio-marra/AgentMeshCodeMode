@@ -34,44 +34,47 @@ namespace AgentMesh.Application.Services
 
             var stopwatch = Stopwatch.StartNew();
 
-            var response = await _openAIClient.GenerateResponseAsync(inputMessages);
+            var result = await Resilience.ExecuteWithRetryAsync(async () =>
+            {
+                var response = await _openAIClient.GenerateResponseAsync(inputMessages);
+                var responseText = response.Text?.Trim() ?? string.Empty;
+
+                try
+                {
+                    var jsonResponse = JsonSerializer.Deserialize<RouterResponse>(responseText, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    if (jsonResponse == null || string.IsNullOrWhiteSpace(jsonResponse.Recipient))
+                    {
+                        _logger.LogWarning("The model's response did not contain a valid recipient. Response: {ResponseText}", responseText);
+                        throw new BadStructuredResponseException(responseText, "The model's response did not contain a valid recipient.");
+                    }
+
+                    return new RouterAgentOutput
+                    {
+                        Recipient = jsonResponse.Recipient.Trim(),
+                        TokenCount = response.TotalTokenCount,
+                        InputTokenCount = response.InputTokenCount,
+                        OutputTokenCount = response.OutputTokenCount
+                    };
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to parse RouterAgent response as JSON. Response: {ResponseText}", responseText);
+                    throw new BadStructuredResponseException(responseText, "Failed to parse response as JSON.", ex);
+                }
+            }, RouterAgentConfiguration.AgentName, _logger);
 
             stopwatch.Stop();
             _logger.LogDebug(
                 "RouterAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
                 stopwatch.ElapsedMilliseconds,
-                response.TotalTokenCount);
+                result.TokenCount);
 
-            var responseText = response.Text?.Trim() ?? string.Empty;
-
-            try
-            {
-                var jsonResponse = JsonSerializer.Deserialize<RouterResponse>(responseText, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                if (jsonResponse == null || string.IsNullOrWhiteSpace(jsonResponse.Recipient))
-                {
-                    _logger.LogWarning("The model's response did not contain a valid recipient. Response: {ResponseText}", responseText);
-                    throw new BadStructuredResponseException(responseText, "The model's response did not contain a valid recipient.");
-                }
-
-                var output = new RouterAgentOutput
-                {
-                    Recipient = jsonResponse.Recipient.Trim(),
-                    TokenCount = response.TotalTokenCount,
-                    InputTokenCount = response.InputTokenCount,
-                    OutputTokenCount = response.OutputTokenCount
-                };
-                _logger.LogDebug("RouterAgent Output: {Output}", JsonSerializer.Serialize(output));
-                return output;
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogWarning(ex, "Failed to parse RouterAgent response as JSON. Response: {ResponseText}", responseText);
-                throw new BadStructuredResponseException(responseText, "Failed to parse response as JSON.", ex);
-            }
+            _logger.LogDebug("RouterAgent Output: {Output}", JsonSerializer.Serialize(result));
+            return result;
         }
 
         private class RouterResponse

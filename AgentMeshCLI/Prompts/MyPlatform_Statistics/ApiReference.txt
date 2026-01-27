@@ -233,10 +233,10 @@ declare function MyPlatform_CompanyInfo_GetProductsHierarchy(params: MyPlatformC
 declare function MyPlatform_Chart_GenerateChart(params: MyPlatformChartGenerateChartParams): Promise<MCPToolResponse<MyPlatformChartGenerateChartResult>>;
 
 /**
- * @tool MyCompany_CompanyInfo_GetAllProductNames
+ * @tool MyPlatform_CompanyInfo_GetAllProductNames
  * @description CompanyInfo - Retrieves all available product names.
  * @inputSchema MyCompanyCompanyInfoGetAllProductNamesParams
  * @outputSchema MCPToolResponse<MyCompanyCompanyInfoGetAllProductNamesResult>
  * @errorSchema MCPToolError
  */
-declare function MyCompany_CompanyInfo_GetAllProductNames(params: MyCompanyCompanyInfoGetAllProductNamesParams): Promise<MCPToolResponse<MyCompanyCompanyInfoGetAllProductNamesResult>>;
+declare function MyPlatform_CompanyInfo_GetAllProductNames(params: MyCompanyCompanyInfoGetAllProductNamesParams): Promise<MCPToolResponse<MyCompanyCompanyInfoGetAllProductNamesResult>>;

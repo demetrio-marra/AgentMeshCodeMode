@@ -43,29 +43,33 @@ namespace AgentMesh.Application.Services
 
             var stopwatch = Stopwatch.StartNew();
 
-            var response = await _openAIClient.GenerateResponseAsync(inputMessages);
-
-            var codeRegexMatch = JavascriptCodeRegex.Match(response.Text);
-            if (!codeRegexMatch.Success)
+            var result = await Resilience.ExecuteWithRetryAsync(async () =>
             {
-                throw new BadStructuredResponseException(response.Text, "The model's response did not contain any valid JavaScript code block.");
-            }
+                var response = await _openAIClient.GenerateResponseAsync(inputMessages);
+
+                var codeRegexMatch = JavascriptCodeRegex.Match(response.Text);
+                if (!codeRegexMatch.Success)
+                {
+                    throw new BadStructuredResponseException(response.Text, "The model's response did not contain any valid JavaScript code block.");
+                }
+
+                var fixedCode = codeRegexMatch.Groups["code"].Value.Trim();
+
+                return new CodeFixerAgentOutput
+                {
+                    FixedCode = fixedCode,
+                    TokenCount = response.TotalTokenCount,
+                    InputTokenCount = response.InputTokenCount,
+                    OutputTokenCount = response.OutputTokenCount
+                };
+            }, CodeFixerAgentConfiguration.AgentName, _logger);
 
             stopwatch.Stop();
             _logger.LogDebug("CodeFixerAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
-                stopwatch.ElapsedMilliseconds, response.TotalTokenCount);
+                stopwatch.ElapsedMilliseconds, result.TokenCount);
 
-            var fixedCode = codeRegexMatch.Groups["code"].Value.Trim();
-
-            var output = new CodeFixerAgentOutput
-            {
-                FixedCode = fixedCode,
-                TokenCount = response.TotalTokenCount,
-                InputTokenCount = response.InputTokenCount,
-                OutputTokenCount = response.OutputTokenCount
-            };
-            _logger.LogDebug("CodeFixerAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
-            return output;
+            _logger.LogDebug("CodeFixerAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(result));
+            return result;
         }
     }
 }

@@ -38,29 +38,33 @@ namespace AgentMesh.Application.Services
 
             var stopwatch = Stopwatch.StartNew();
 
-            var response = await _openAIClient.GenerateResponseAsync(inputMessages);
-
-            var codeRegexMatch = JavascriptCodeRegex.Match(response.Text);
-            if (!codeRegexMatch.Success)
+            var result = await Resilience.ExecuteWithRetryAsync(async () =>
             {
-                throw new BadStructuredResponseException(response.Text, "The model's response did not contain any valid JavaScript code block.");
-            }
+                var response = await _openAIClient.GenerateResponseAsync(inputMessages);
+
+                var codeRegexMatch = JavascriptCodeRegex.Match(response.Text);
+                if (!codeRegexMatch.Success)
+                {
+                    throw new BadStructuredResponseException(response.Text, "The model's response did not contain any valid JavaScript code block.");
+                }
+
+                var codeToRun = codeRegexMatch.Groups["code"].Value.Trim();
+
+                return new CoderAgentOutput
+                {
+                    CodeToRun = codeToRun,
+                    TokenCount = response.TotalTokenCount,
+                    InputTokenCount = response.InputTokenCount,
+                    OutputTokenCount = response.OutputTokenCount
+                };
+            }, CoderAgentConfiguration.AgentName, _logger);
 
             stopwatch.Stop();
             _logger.LogDebug("CoderAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
-                stopwatch.ElapsedMilliseconds, response.TotalTokenCount);
+                stopwatch.ElapsedMilliseconds, result.TokenCount);
 
-            var codeToRun = codeRegexMatch.Groups["code"].Value.Trim();
-
-            var output = new CoderAgentOutput
-            {
-                CodeToRun = codeToRun,
-                TokenCount = response.TotalTokenCount,
-                InputTokenCount = response.InputTokenCount,
-                OutputTokenCount = response.OutputTokenCount
-            };
-            _logger.LogDebug("CoderAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
-            return output;
+            _logger.LogDebug("CoderAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(result));
+            return result;
         }
     }
 }

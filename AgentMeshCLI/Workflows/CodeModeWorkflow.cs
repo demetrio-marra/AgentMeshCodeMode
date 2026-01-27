@@ -4,8 +4,6 @@ using AgentMesh.Application.Workflows;
 using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
-using Polly;
-using System.ClientModel;
 
 namespace AgentMesh.Workflows
 {
@@ -55,46 +53,38 @@ namespace AgentMesh.Workflows
         {
             var state = new CodeModeWorkflowState(userInput);
 
-            var contextManagerOutput = await ExecuteWithRetryAsync(
-                () => _contextManagerAgent.ExecuteAsync(new ContextManagerAgentInput
-                {
-                    UserSentenceText = state.UserQuestion
-                }),
-                ContextManagerAgentConfiguration.AgentName);
+            var contextManagerOutput = await _contextManagerAgent.ExecuteAsync(new ContextManagerAgentInput
+            {
+                UserSentenceText = state.UserQuestion
+            });
             state.ContextManagerResponse = contextManagerOutput.ContextEnrichedUserSentenceText;
             state.AddTokenUsage(ContextManagerAgentConfiguration.AgentName, contextManagerOutput.TokenCount, contextManagerOutput.InputTokenCount, contextManagerOutput.OutputTokenCount);
 
-            var translatorOutput = await ExecuteWithRetryAsync(
-                () => _translatorAgent.ExecuteAsync(new TranslatorAgentInput
-                {
-                    Sentence = state.ContextManagerResponse,
-                    TargetLanguage = INTERNAL_AGENTIC_LANGUAGE
-                }),
-                TranslatorAgentConfiguration.AgentName);
+            var translatorOutput = await _translatorAgent.ExecuteAsync(new TranslatorAgentInput
+            {
+                Sentence = state.ContextManagerResponse,
+                TargetLanguage = INTERNAL_AGENTIC_LANGUAGE
+            });
             state.TranslatorResponse = translatorOutput.TranslatedSentence;
             state.DetectedOriginalLanguage = translatorOutput.DetectedOriginalLanguage;
             state.AddTokenUsage(TranslatorAgentConfiguration.AgentName, translatorOutput.TokenCount, translatorOutput.InputTokenCount, translatorOutput.OutputTokenCount);
 
-            var routerOutput = await ExecuteWithRetryAsync(
-                () => _routerAgent.ExecuteAsync(new RouterAgentInput
-                {
-                    Message = state.TranslatorResponse
-                }),
-                RouterAgentConfiguration.AgentName);
+            var routerOutput = await _routerAgent.ExecuteAsync(new RouterAgentInput
+            {
+                Message = state.TranslatorResponse
+            });
             state.RouterRecipient = routerOutput.Recipient;
             state.AddTokenUsage(RouterAgentConfiguration.AgentName, routerOutput.TokenCount, routerOutput.InputTokenCount, routerOutput.OutputTokenCount);
 
             if (routerOutput.Recipient?.Equals("Personal Assistant", StringComparison.OrdinalIgnoreCase) == true)
             {
                 var dataForPersonalAssistant = state.OutputForUserFromBusinessAnalyst ?? string.Empty;
-                var personalAssistantOutput = await ExecuteWithRetryAsync(
-                    () => _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
-                    {
-                        Sentence = state.TranslatorResponse ?? string.Empty,
-                        Data = dataForPersonalAssistant,
-                        TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
-                    }),
-                    PersonalAssistantAgentConfiguration.AgentName);
+                var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
+                {
+                    Sentence = state.TranslatorResponse ?? string.Empty,
+                    Data = dataForPersonalAssistant,
+                    TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
+                });
                 state.FinalAnswer = personalAssistantOutput.Response;
                 state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
 
@@ -108,12 +98,10 @@ namespace AgentMesh.Workflows
             }
             else if (routerOutput.Recipient?.Equals("Business Analyst", StringComparison.OrdinalIgnoreCase) == true)
             {
-                var brcOutput = await ExecuteWithRetryAsync(
-                    () => _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
-                    {
-                        UserQuestionText = state.TranslatorResponse
-                    }),
-                    BusinessRequirementsCreatorAgentConfiguration.AgentName);
+                var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
+                {
+                    UserQuestionText = state.TranslatorResponse
+                });
                 state.ShouldEngageCoder = brcOutput.EngageCoderAgent;
                 state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount);
 
@@ -121,24 +109,20 @@ namespace AgentMesh.Workflows
                 {
                     state.BusinessRequirements = brcOutput.BusinessRequirements;
 
-                    var coderAgentOutput = await ExecuteWithRetryAsync(
-                        () => _coderAgent.ExecuteAsync(new CoderAgentInput
-                        {
-                            BusinessRequirements = state.BusinessRequirements ?? string.Empty
-                        }),
-                        CoderAgentConfiguration.AgentName);
+                    var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
+                    {
+                        BusinessRequirements = state.BusinessRequirements ?? string.Empty
+                    });
                     state.GeneratedCode = coderAgentOutput.CodeToRun;
                     state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);
 
                     var codeWithLineNumbers = GetSourceCodeWithLineNumbers(coderAgentOutput.CodeToRun);
                     state.LastCodeWithLineNumbers = codeWithLineNumbers;
 
-                    var staticAnalyzerOutput = await ExecuteWithRetryAsync(
-                        () => _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
-                        {
-                            CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty
-                        }),
-                        CodeStaticAnalyzerConfiguration.AgentName);
+                    var staticAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
+                    {
+                        CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty
+                    });
                     state.IsCodeValid = !staticAnalyzerOutput.Violations.Any();
                     if (!state.IsCodeValid)
                     {
@@ -148,13 +132,11 @@ namespace AgentMesh.Workflows
 
                     for (int i = 0; i < 2 && !state.IsCodeValid && state.CodeIssues.Any(); i++)
                     {
-                        var codeFixerOutput = await ExecuteWithRetryAsync(
-                            () => _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
-                            {
-                                CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty,
-                                Issues = state.CodeIssues
-                            }),
-                            CodeFixerAgentConfiguration.AgentName);
+                        var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
+                        {
+                            CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty,
+                            Issues = state.CodeIssues
+                        });
                         state.GeneratedCode = codeFixerOutput.FixedCode;
                         state.CodeFixerIterationCount++;
                         state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
@@ -162,12 +144,10 @@ namespace AgentMesh.Workflows
                         var fixedCodeWithLineNumbers = GetSourceCodeWithLineNumbers(codeFixerOutput.FixedCode);
                         state.LastCodeWithLineNumbers = fixedCodeWithLineNumbers;
 
-                        var reAnalyzerOutput = await ExecuteWithRetryAsync(
-                            () => _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
-                            {
-                                CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty
-                            }),
-                            CodeStaticAnalyzerConfiguration.AgentName);
+                        var reAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
+                        {
+                            CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty
+                        });
                         state.IsCodeValid = !reAnalyzerOutput.Violations.Any();
                         if (!state.IsCodeValid)
                         {
@@ -196,40 +176,34 @@ namespace AgentMesh.Workflows
                     }
 
                     var executionResult = state.SandboxError ?? state.SandboxResult ?? string.Empty;
-                    var resultsPresenterOutput = await ExecuteWithRetryAsync(
-                        () => _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
-                        {
-                            Content = executionResult
-                        }),
-                        ResultsPresenterAgentConfiguration.AgentName);
+                    var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
+                    {
+                        Content = executionResult
+                    });
                     state.PresenterOutput = resultsPresenterOutput.Content;
                     state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
 
                     var dataForPersonalAssistant = state.PresenterOutput ?? executionResult;
-                    var personalAssistantOutput = await ExecuteWithRetryAsync(
-                        () => _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
-                        {
-                            Sentence = state.TranslatorResponse ?? string.Empty,
-                            Data = dataForPersonalAssistant,
-                            TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
-                        }),
-                        PersonalAssistantAgentConfiguration.AgentName);
+                    var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
+                    {
+                        Sentence = state.TranslatorResponse ?? string.Empty,
+                        Data = dataForPersonalAssistant,
+                        TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
+                    });
                     state.FinalAnswer = personalAssistantOutput.Response;
                     state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
                 }
                 else
-                {
+               {
                     state.OutputForUserFromBusinessAnalyst = brcOutput.AnswerToUserText ?? string.Empty;
 
                     var dataForPersonalAssistant = state.OutputForUserFromBusinessAnalyst;
-                    var personalAssistantOutput = await ExecuteWithRetryAsync(
-                        () => _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
-                        {
-                            Sentence = state.TranslatorResponse ?? string.Empty,
-                            Data = dataForPersonalAssistant,
-                            TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
-                        }),
-                        PersonalAssistantAgentConfiguration.AgentName);
+                    var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
+                    {
+                        Sentence = state.TranslatorResponse ?? string.Empty,
+                        Data = dataForPersonalAssistant,
+                        TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
+                    });
                     state.FinalAnswer = personalAssistantOutput.Response;
                     state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
                 }
@@ -245,14 +219,12 @@ namespace AgentMesh.Workflows
             else
             {
                 var dataForPersonalAssistant = string.Empty;
-                var personalAssistantOutput = await ExecuteWithRetryAsync(
-                    () => _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
-                    {
-                        Sentence = state.TranslatorResponse ?? string.Empty,
-                        Data = dataForPersonalAssistant,
-                        TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
-                    }),
-                    PersonalAssistantAgentConfiguration.AgentName);
+                var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
+                {
+                    Sentence = state.TranslatorResponse ?? string.Empty,
+                    Data = dataForPersonalAssistant,
+                    TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
+                });
                 state.FinalAnswer = personalAssistantOutput.Response;
                 state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
 
@@ -271,23 +243,6 @@ namespace AgentMesh.Workflows
                 InputTokenUsage = state.InputTokenUsage,
                 OutputTokenUsage = state.OutputTokenUsage
             };
-        }
-
-        private Task<T> ExecuteWithRetryAsync<T>(Func<Task<T>> action, string agentName)
-        {
-            var policy = Policy
-                .Handle<BadStructuredResponseException>()
-                .Or<ClientResultException>(ex => ex.Message.Contains("Tool choice is none, but model called a tool"))
-                .WaitAndRetryAsync(
-                    retryCount: 2,
-                    sleepDurationProvider: _ => TimeSpan.FromSeconds(5),
-                    onRetry: (exception, timeSpan, retryCount, context) =>
-                    {
-                        // Silent retry for workflow execution
-                        _logger.LogWarning(exception, "Retry {RetryCount} for agent {AgentName} due to error: {ErrorMessage}", retryCount, agentName, exception.Message);
-                    });
-
-            return policy.ExecuteAsync(action);
         }
 
         private static string GetSourceCodeWithLineNumbers(string sourceCode, bool useSpaceFiller = true)
