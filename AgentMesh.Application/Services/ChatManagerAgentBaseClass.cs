@@ -52,7 +52,7 @@ namespace AgentMesh.Application.Services
             {
                 _logger.LogDebug("Token threshold reached ({TotalTokens} >= {Threshold}), triggering context summary",
                     response.TotalTokenCount, _summaryTokenThreshold);
-                SummaryContext();
+                await SummaryContextAsync();
             }
             return response;
         }
@@ -67,7 +67,7 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Added user message to context. Total messages: {MessageCount}", _context.Count);
         }
 
-        private void SummaryContext()
+        private async Task SummaryContextAsync()
         {
             if (_context.Count < _numMessageToPreseve)
             {
@@ -85,7 +85,11 @@ namespace AgentMesh.Application.Services
             {
                 new AgentMessage { Role = AgentMessageRole.User, Content = _summaryPrompt + ":\n\n<chathistory>" + string.Join("\n\n", _context.Select(x=> $"Role:{x.Role}\nContent:{x.Content}")) + "</chathistory>" }
             };
-            var summaryResponse = _summaryOpenAIClient.GenerateResponseAsync(summaryInputMessages).GetAwaiter().GetResult();
+            
+            var summaryResponse = await Resilience.ExecuteWithRetryAsync(async () =>
+            {
+                return await _summaryOpenAIClient.GenerateResponseAsync(summaryInputMessages);
+            }, "ChatManagerAgent_Summary", _logger);
 
             _logger.LogDebug("Summary generated. Input tokens: {InputTokens}, Output tokens: {OutputTokens}, Total tokens: {TotalTokens}",
                 summaryResponse.InputTokenCount, summaryResponse.OutputTokenCount, summaryResponse.TotalTokenCount);
