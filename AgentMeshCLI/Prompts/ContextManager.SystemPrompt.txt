@@ -72,23 +72,3 @@ NO RELEVANT CONTEXT FOUND
 - Think step-by-step: First identify key entities/topics in the new statement, then scan conversation for matches
 </critical_instructions>
 </system_prompt>
-```
-
-**Key optimizations for 20B models:**
-
-1. **Clear role definition** - Prevents the model from trying to answer the question itself
-2. **Explicit output format** - Reduces ambiguity and improves consistency
-3. **Concrete examples** - 20B models benefit significantly from few-shot examples
-4. **Structured criteria** - Enumerated relevance rules help the model systematically evaluate context
-5. **XML tags** - Help with parsing and focus attention on different sections
-6. **Conservative bias** - Instructs to include rather than exclude (better recall than precision for this use case)
-
-**Usage tip:** For a 20B model, prepend the conversation history clearly separated from the new statement:
-```
-<conversation_history>
-[Previous turns...]
-</conversation_history>
-
-<new_user_statement>
-[Current statement]
-</new_user_statement>
