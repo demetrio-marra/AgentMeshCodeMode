@@ -28,17 +28,12 @@ namespace AgentMesh.Application.Services
             CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing TranslatorAgent.");
-            _logger.LogDebug("TranslatorAgent Input: {Input}", JsonSerializer.Serialize(input));
-
-            var inputJson = JsonSerializer.Serialize(new
-            {
-                sentence = input.Sentence,
-                targetLanguage = input.TargetLanguage
-            });
+            _logger.LogDebug("TranslatorAgent Input: {Input}", input.Sentence);
 
             var inputMessages = new List<AgentMessage>
             {
-                new AgentMessage { Role = AgentMessageRole.User, Content = inputJson }
+                new AgentMessage { Role = AgentMessageRole.System, Content = $"Translate this sentence to {input.TargetLanguage}" },
+                new AgentMessage { Role = AgentMessageRole.User, Content = input.Sentence }
             };
 
             var stopwatch = Stopwatch.StartNew();
