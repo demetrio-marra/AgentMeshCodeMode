@@ -10,7 +10,7 @@ namespace AgentMesh.Application.Services
 {
     public class TranslatorAgent : ITranslatorAgent
     {
-        private readonly Regex JsonCodeRegex = new Regex(@"```\s*json\s*(?<json>(?:(?!```)[\s\S])*)\s*", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        private readonly Regex JsonCodeRegex = new Regex(@"^```\s*json\s*(?<json>[\s\S]+)```$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<TranslatorAgent> _logger;
