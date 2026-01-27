@@ -30,8 +30,7 @@ namespace AgentMesh.Application.Services
             var inputJson = JsonSerializer.Serialize(new
             {
                 sentence = input.Sentence,
-                data = input.Data,
-                targetLanguage = input.TargetLanguage
+                data = input.Data
             });
 
             var inputMessages = new List<AgentMessage>

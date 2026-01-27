@@ -16,6 +16,7 @@ namespace AgentMesh
         private readonly ResultsPresenterAgentConfiguration _resultsPresenterConfiguration;
         private readonly ContextManagerAgentConfiguration _contextManagerConfiguration;
         private readonly TranslatorAgentConfiguration _translatorConfiguration;
+        private readonly ContextAggregatorAgentConfiguration _contextAggregatorConfiguration;
         private readonly RouterAgentConfiguration _routerConfiguration;
         private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
 
@@ -28,6 +29,7 @@ namespace AgentMesh
             ResultsPresenterAgentConfiguration resultsPresenterConfiguration,
             ContextManagerAgentConfiguration contextManagerConfiguration,
             TranslatorAgentConfiguration translatorConfiguration,
+            ContextAggregatorAgentConfiguration contextAggregatorConfiguration,
             RouterAgentConfiguration routerConfiguration,
             PersonalAssistantAgentConfiguration personalAssistantConfiguration)
         {
@@ -39,6 +41,7 @@ namespace AgentMesh
             _resultsPresenterConfiguration = resultsPresenterConfiguration;
             _contextManagerConfiguration = contextManagerConfiguration;
             _translatorConfiguration = translatorConfiguration;
+            _contextAggregatorConfiguration = contextAggregatorConfiguration;
             _routerConfiguration = routerConfiguration;
             _personalAssistantConfiguration = personalAssistantConfiguration;
         }
@@ -72,6 +75,7 @@ namespace AgentMesh
                 {
                     { ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration.CostPerMillionInputTokens },
                     { TranslatorAgentConfiguration.AgentName, _translatorConfiguration.CostPerMillionInputTokens },
+                    { ContextAggregatorAgentConfiguration.AgentName, _contextAggregatorConfiguration.CostPerMillionInputTokens },
                     { RouterAgentConfiguration.AgentName, _routerConfiguration.CostPerMillionInputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration.CostPerMillionInputTokens },
                     { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionInputTokens },
@@ -85,6 +89,7 @@ namespace AgentMesh
                 {
                     { ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration.CostPerMillionOutputTokens },
                     { TranslatorAgentConfiguration.AgentName, _translatorConfiguration.CostPerMillionOutputTokens },
+                    { ContextAggregatorAgentConfiguration.AgentName, _contextAggregatorConfiguration.CostPerMillionOutputTokens },
                     { RouterAgentConfiguration.AgentName, _routerConfiguration.CostPerMillionOutputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration.CostPerMillionOutputTokens },
                     { CoderAgentConfiguration.AgentName, _coderConfiguration.CostPerMillionOutputTokens },
@@ -103,6 +108,7 @@ namespace AgentMesh
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Context Manager", ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Translator", TranslatorAgentConfiguration.AgentName, _translatorConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Context Aggregator", ContextAggregatorAgentConfiguration.AgentName, _contextAggregatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Router", RouterAgentConfiguration.AgentName, _routerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Requirements Creator", BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, _coderConfiguration);

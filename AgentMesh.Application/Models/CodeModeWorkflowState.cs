@@ -13,8 +13,8 @@
 
         public string UserQuestion { get; }
         public string? UserQuestionRelevantContext { get; set; }
-        public string UserQuestionWithContext => string.IsNullOrWhiteSpace(UserQuestionRelevantContext) ? TranslatorResponse : $"{TranslatorResponse}\n\nRelevant context:\n{UserQuestionRelevantContext}";
         public string? TranslatorResponse { get; set; }
+        public string? AggregatedUserQuestion { get; set; }
         public string? DetectedOriginalLanguage { get; set; }
         public string? RouterRecipient { get; set; }
         public string? BusinessRequirements { get; set; }

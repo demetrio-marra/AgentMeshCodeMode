@@ -180,6 +180,27 @@ namespace AgentMesh
 
             services.AddSingleton<ITranslatorAgent, TranslatorAgent>();
 
+            // ContextAggregator agent config and client
+            services
+                .AddOptions<ContextAggregatorAgentConfiguration>()
+                .Bind(configuration.GetSection(ContextAggregatorAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<ContextAggregatorAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(ContextAggregatorAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<ContextAggregatorAgentConfiguration>();
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(config.ModelName, config.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IContextAggregatorAgent, ContextAggregatorAgent>();
+
             // ChatManager agent config and client
             services
                 .AddOptions<ChatManagerAgentConfiguration>()
