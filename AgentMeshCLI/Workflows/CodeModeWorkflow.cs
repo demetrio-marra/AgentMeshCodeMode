@@ -86,12 +86,11 @@ namespace AgentMesh.Workflows
             {
                 _logger.LogInformation("Engaging Personal Assistant Agent...");
 
-                var dataForPersonalAssistant = state.OutputForUserFromBusinessAnalyst ?? string.Empty;
                 var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
                 {
-                    Sentence = state.TranslatorResponse ?? string.Empty,
-                    Data = dataForPersonalAssistant,
-                    TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
+                    Sentence = state.TranslatorResponse,
+                    Data = null,
+                    TargetLanguage = state.DetectedOriginalLanguage
                 });
                 state.FinalAnswer = personalAssistantOutput.Response;
                 state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
@@ -121,18 +120,17 @@ namespace AgentMesh.Workflows
 
                     var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
                     {
-                        BusinessRequirements = state.BusinessRequirements ?? string.Empty
+                        BusinessRequirements = state.BusinessRequirements!
                     });
                     state.GeneratedCode = coderAgentOutput.CodeToRun;
                     state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);
 
-                    var codeWithLineNumbers = GetSourceCodeWithLineNumbers(coderAgentOutput.CodeToRun);
-                    state.LastCodeWithLineNumbers = codeWithLineNumbers;
+                    state.LastCodeWithLineNumbers = GetSourceCodeWithLineNumbers(state.GeneratedCode);
                     
                     _logger.LogInformation("Engaging Code Static Analyzer Agent...");
                     var staticAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
                     {
-                        CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty
+                        CodeToFix = state.LastCodeWithLineNumbers
                     });
                     state.IsCodeValid = !staticAnalyzerOutput.Violations.Any();
                     if (!state.IsCodeValid)
@@ -146,19 +144,18 @@ namespace AgentMesh.Workflows
                         _logger.LogInformation("Engaging Code Fixer Agent... Iteration {Iteration}", i + 1);
                         var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
                         {
-                            CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty,
+                            CodeToFix = state.LastCodeWithLineNumbers,
                             Issues = state.CodeIssues
                         });
                         state.GeneratedCode = codeFixerOutput.FixedCode;
                         state.CodeFixerIterationCount++;
                         state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
 
-                        var fixedCodeWithLineNumbers = GetSourceCodeWithLineNumbers(codeFixerOutput.FixedCode);
-                        state.LastCodeWithLineNumbers = fixedCodeWithLineNumbers;
+                        state.LastCodeWithLineNumbers = GetSourceCodeWithLineNumbers(state.GeneratedCode);
 
                         var reAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
                         {
-                            CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty
+                            CodeToFix = state.LastCodeWithLineNumbers
                         });
                         state.IsCodeValid = !reAnalyzerOutput.Violations.Any();
                         if (!state.IsCodeValid)
@@ -172,12 +169,13 @@ namespace AgentMesh.Workflows
                         state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, reAnalyzerOutput.TokenCount, reAnalyzerOutput.InputTokenCount, reAnalyzerOutput.OutputTokenCount);
                     }
 
+                    var sandBoxError = false;
                     try
                     {
                         _logger.LogInformation("Engaging JS Sandbox Executor...");
                         var executionOutput = await _jsSandboxExecutor.ExecuteAsync(new JSSandboxInput
                         {
-                            Code = state.GeneratedCode ?? string.Empty
+                            Code = state.GeneratedCode
                         });
                         state.SandboxResult = executionOutput.Result;
                         state.SandboxError = null;
@@ -186,39 +184,37 @@ namespace AgentMesh.Workflows
                     {
                         state.SandboxError = ex.Message;
                         state.SandboxResult = null;
+                        sandBoxError = true;
                     }
 
-                    var executionResult = state.SandboxError ?? state.SandboxResult ?? string.Empty;
                     _logger.LogInformation("Engaging Results Presenter Agent...");
                     var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
                     {
-                        Content = executionResult
+                        Content = sandBoxError ? state.SandboxError! : state.SandboxResult!
                     });
                     state.PresenterOutput = resultsPresenterOutput.Content;
                     state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
 
-                    var dataForPersonalAssistant = state.PresenterOutput ?? executionResult;
                     _logger.LogInformation("Engaging Personal Assistant Agent...");
                     var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
                     {
-                        Sentence = state.TranslatorResponse ?? string.Empty,
-                        Data = dataForPersonalAssistant,
-                        TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
+                        Sentence = state.TranslatorResponse,
+                        Data = state.PresenterOutput,
+                        TargetLanguage = state.DetectedOriginalLanguage
                     });
                     state.FinalAnswer = personalAssistantOutput.Response;
                     state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
                 }
-                else
-               {
-                    state.OutputForUserFromBusinessAnalyst = brcOutput.AnswerToUserText ?? string.Empty;
+                else // Do not engage coder
+                {
+                    state.OutputForUserFromBusinessAnalyst = brcOutput.AnswerToUserText;
 
-                    var dataForPersonalAssistant = state.OutputForUserFromBusinessAnalyst;
                     _logger.LogInformation("Engaging Personal Assistant Agent...");
                     var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
                     {
-                        Sentence = state.TranslatorResponse ?? string.Empty,
-                        Data = dataForPersonalAssistant,
-                        TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
+                        Sentence = state.TranslatorResponse,
+                        Data = state.OutputForUserFromBusinessAnalyst,
+                        TargetLanguage = state.DetectedOriginalLanguage
                     });
                     state.FinalAnswer = personalAssistantOutput.Response;
                     state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
@@ -234,24 +230,8 @@ namespace AgentMesh.Workflows
             }
             else
             {
-                var dataForPersonalAssistant = string.Empty;
-                _logger.LogInformation("Engaging Personal Assistant Agent...");
-                var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
-                {
-                    Sentence = state.TranslatorResponse ?? string.Empty,
-                    Data = dataForPersonalAssistant,
-                    TargetLanguage = state.DetectedOriginalLanguage ?? INTERNAL_AGENTIC_LANGUAGE
-                });
-                state.FinalAnswer = personalAssistantOutput.Response;
-                state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
-
-                var contextManagerState = await _contextManagerAgent.GetState();
-                contextManagerState.ChatHistory.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.Assistant,
-                    Content = state.FinalAnswer
-                });
-                await _contextManagerAgent.SetState(contextManagerState);
+                // bad response from router
+                throw new Exception($"Router Agent returned an unknown recipient: {routerOutput.Recipient}");
             }
 
             return new WorkflowResult
