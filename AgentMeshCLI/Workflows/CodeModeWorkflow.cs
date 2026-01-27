@@ -53,12 +53,16 @@ namespace AgentMesh.Workflows
         {
             var state = new CodeModeWorkflowState(userInput);
 
+            _logger.LogInformation("Engaging Context Manager Agent...");
+
             var contextManagerOutput = await _contextManagerAgent.ExecuteAsync(new ContextManagerAgentInput
             {
                 UserSentenceText = state.UserQuestion
             });
             state.ContextManagerResponse = contextManagerOutput.ContextEnrichedUserSentenceText;
             state.AddTokenUsage(ContextManagerAgentConfiguration.AgentName, contextManagerOutput.TokenCount, contextManagerOutput.InputTokenCount, contextManagerOutput.OutputTokenCount);
+
+            _logger.LogInformation("Engaging Translator Agent...");
 
             var translatorOutput = await _translatorAgent.ExecuteAsync(new TranslatorAgentInput
             {
@@ -69,6 +73,8 @@ namespace AgentMesh.Workflows
             state.DetectedOriginalLanguage = translatorOutput.DetectedOriginalLanguage;
             state.AddTokenUsage(TranslatorAgentConfiguration.AgentName, translatorOutput.TokenCount, translatorOutput.InputTokenCount, translatorOutput.OutputTokenCount);
 
+            _logger.LogInformation("Engaging Router Agent...");
+
             var routerOutput = await _routerAgent.ExecuteAsync(new RouterAgentInput
             {
                 Message = state.TranslatorResponse
@@ -78,6 +84,8 @@ namespace AgentMesh.Workflows
 
             if (routerOutput.Recipient?.Equals("Personal Assistant", StringComparison.OrdinalIgnoreCase) == true)
             {
+                _logger.LogInformation("Engaging Personal Assistant Agent...");
+
                 var dataForPersonalAssistant = state.OutputForUserFromBusinessAnalyst ?? string.Empty;
                 var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
                 {
@@ -98,6 +106,7 @@ namespace AgentMesh.Workflows
             }
             else if (routerOutput.Recipient?.Equals("Business Analyst", StringComparison.OrdinalIgnoreCase) == true)
             {
+                _logger.LogInformation("Engaging Business Requirements Creator Agent...");
                 var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
                 {
                     UserQuestionText = state.TranslatorResponse
@@ -107,6 +116,7 @@ namespace AgentMesh.Workflows
 
                 if (brcOutput.EngageCoderAgent)
                 {
+                    _logger.LogInformation("Engaging Coder Agent...");
                     state.BusinessRequirements = brcOutput.BusinessRequirements;
 
                     var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
@@ -118,7 +128,8 @@ namespace AgentMesh.Workflows
 
                     var codeWithLineNumbers = GetSourceCodeWithLineNumbers(coderAgentOutput.CodeToRun);
                     state.LastCodeWithLineNumbers = codeWithLineNumbers;
-
+                    
+                    _logger.LogInformation("Engaging Code Static Analyzer Agent...");
                     var staticAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
                     {
                         CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty
@@ -132,6 +143,7 @@ namespace AgentMesh.Workflows
 
                     for (int i = 0; i < 2 && !state.IsCodeValid && state.CodeIssues.Any(); i++)
                     {
+                        _logger.LogInformation("Engaging Code Fixer Agent... Iteration {Iteration}", i + 1);
                         var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
                         {
                             CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty,
@@ -162,6 +174,7 @@ namespace AgentMesh.Workflows
 
                     try
                     {
+                        _logger.LogInformation("Engaging JS Sandbox Executor...");
                         var executionOutput = await _jsSandboxExecutor.ExecuteAsync(new JSSandboxInput
                         {
                             Code = state.GeneratedCode ?? string.Empty
@@ -176,6 +189,7 @@ namespace AgentMesh.Workflows
                     }
 
                     var executionResult = state.SandboxError ?? state.SandboxResult ?? string.Empty;
+                    _logger.LogInformation("Engaging Results Presenter Agent...");
                     var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
                     {
                         Content = executionResult
@@ -184,6 +198,7 @@ namespace AgentMesh.Workflows
                     state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
 
                     var dataForPersonalAssistant = state.PresenterOutput ?? executionResult;
+                    _logger.LogInformation("Engaging Personal Assistant Agent...");
                     var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
                     {
                         Sentence = state.TranslatorResponse ?? string.Empty,
@@ -198,6 +213,7 @@ namespace AgentMesh.Workflows
                     state.OutputForUserFromBusinessAnalyst = brcOutput.AnswerToUserText ?? string.Empty;
 
                     var dataForPersonalAssistant = state.OutputForUserFromBusinessAnalyst;
+                    _logger.LogInformation("Engaging Personal Assistant Agent...");
                     var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
                     {
                         Sentence = state.TranslatorResponse ?? string.Empty,
@@ -219,6 +235,7 @@ namespace AgentMesh.Workflows
             else
             {
                 var dataForPersonalAssistant = string.Empty;
+                _logger.LogInformation("Engaging Personal Assistant Agent...");
                 var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
                 {
                     Sentence = state.TranslatorResponse ?? string.Empty,
