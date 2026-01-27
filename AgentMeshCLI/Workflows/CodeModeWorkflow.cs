@@ -84,7 +84,7 @@ namespace AgentMesh.Workflows
 
             if (routerOutput.Recipient?.Equals("Personal Assistant", StringComparison.OrdinalIgnoreCase) == true)
             {
-                await InvokePersonalAssistantAndUpdateContextAsync(state);
+                await CompleteWorkflowAsync(state);
             }
             else if (routerOutput.Recipient?.Equals("Business Analyst", StringComparison.OrdinalIgnoreCase) == true)
             {
@@ -178,12 +178,12 @@ namespace AgentMesh.Workflows
                     state.PresenterOutput = resultsPresenterOutput.Content;
                     state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
 
-                    await InvokePersonalAssistantAndUpdateContextAsync(state, state.PresenterOutput);
+                    await CompleteWorkflowAsync(state, state.PresenterOutput);
                 }
                 else // Do not engage coder
                 {
                     state.OutputForUserFromBusinessAnalyst = brcOutput.AnswerToUserText;
-                    await InvokePersonalAssistantAndUpdateContextAsync(state, state.OutputForUserFromBusinessAnalyst);
+                    await CompleteWorkflowAsync(state, state.OutputForUserFromBusinessAnalyst);
                 }
             }
             else
@@ -200,19 +200,30 @@ namespace AgentMesh.Workflows
             };
         }
 
-        private async Task InvokePersonalAssistantAndUpdateContextAsync(CodeModeWorkflowState state, string? data = null)
+        private async Task CompleteWorkflowAsync(CodeModeWorkflowState state, string? data = null)
         {
             _logger.LogInformation("Engaging Personal Assistant Agent...");
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
-                Sentence = state.TranslatorResponse,
+                Sentence = state.TranslatorResponse!,
                 Data = data,
-                TargetLanguage = state.DetectedOriginalLanguage
+                TargetLanguage = state.DetectedOriginalLanguage!
             });
             state.FinalAnswer = personalAssistantOutput.Response;
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
 
+            _logger.LogInformation("Engaging Translator Agent for final translation...");
+
+            var finalTranslatorOutput = await _translatorAgent.ExecuteAsync(new TranslatorAgentInput
+            {
+                Sentence = state.FinalAnswer!,
+                TargetLanguage = state.DetectedOriginalLanguage!
+            });
+            state.FinalAnswer = finalTranslatorOutput.TranslatedSentence!;
+            state.AddTokenUsage(TranslatorAgentConfiguration.AgentName, finalTranslatorOutput.TokenCount, finalTranslatorOutput.InputTokenCount, finalTranslatorOutput.OutputTokenCount);
+
+            _logger.LogInformation("Updating Context Manager Agent state with final answer...");
             var contextManagerState = await _contextManagerAgent.GetState();
             contextManagerState.ChatHistory.Add(new AgentMessage
             {
