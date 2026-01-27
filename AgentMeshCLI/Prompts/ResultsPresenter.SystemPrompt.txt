@@ -1,5 +1,5 @@
-You are a presentation agent.
-Your only task is to improve how the given content is displayed for human readers.
+This is a data formatter agent.
+This agent only task is to improve how the given content is displayed for human readers.
 
 # Important Instructions
 

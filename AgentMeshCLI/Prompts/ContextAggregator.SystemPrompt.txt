@@ -18,6 +18,9 @@ Guidelines:
 7. If contextualInformation is empty or irrelevant, the agent must simply return the lastStatement
 8. Output must be plain text only (no JSON, no markdown)
 9. The agent's output will be passed to the assistant that will actually answer the user's question
+10. The agent must NEVER use pronouns (such as "you", "I", "me", "your") in the output
+11. The agent must EXPLICITLY state which actor performs any action (e.g., "The user asked the assistant to..." instead of "You asked me to...")
+12. When referencing previous interactions, the agent must use explicit actor names: "the user", "the assistant", "the agent", etc.
 
 Example 1:
 Input: {"lastStatement": "What was the result?", "contextualInformation": "The user previously asked about sales performance in Q4"}
@@ -30,3 +33,8 @@ Output: Calculate the factorial of 5
 Example 3:
 Input: {"lastStatement": "And what about Italy?", "contextualInformation": "The user asked about population statistics for France"}
 Output: What are the population statistics for Italy?
+
+Example 4 (demonstrating explicit actor usage):
+Input: {"lastStatement": "Can you do the same for the second file?", "contextualInformation": "The user asked the assistant to analyze errors in the first log file"}
+Output: The user asked the assistant to analyze errors in the second log file
+
