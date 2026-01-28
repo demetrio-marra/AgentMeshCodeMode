@@ -232,20 +232,11 @@ namespace AgentMesh.Workflows
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
                 Sentence = state.AggregatedUserQuestion!,
-                Data = data
+                Data = data,
+                OutputLanguage = state.DetectedOriginalLanguage!
             });
             state.FinalAnswer = personalAssistantOutput.Response;
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
-
-            _logger.LogInformation("Engaging Translator Agent for final translation...");
-
-            var finalTranslatorOutput = await _translatorAgent.ExecuteAsync(new TranslatorAgentInput
-            {
-                Sentence = state.FinalAnswer!,
-                TargetLanguage = state.DetectedOriginalLanguage!
-            });
-            state.FinalAnswer = finalTranslatorOutput.TranslatedSentence!;
-            state.AddTokenUsage(TranslatorAgentConfiguration.AgentName, finalTranslatorOutput.TokenCount, finalTranslatorOutput.InputTokenCount, finalTranslatorOutput.OutputTokenCount);
 
             _logger.LogInformation("Updating Context Manager Agent state with final answer...");
             var contextManagerState = await _contextManagerAgent.GetState();

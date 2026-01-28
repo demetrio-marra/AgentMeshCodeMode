@@ -27,16 +27,22 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing PersonalAssistantAgent.");
             _logger.LogDebug("PersonalAssistantAgent Input: {Input}", JsonSerializer.Serialize(input));
 
-            var inputJson = JsonSerializer.Serialize(new
-            {
-                sentence = input.Sentence,
-                data = input.Data
-            });
+            var inputMessage = $@"# Sentence by user:
+```text
+{input.Sentence}
+```
+
+# Additional data (if any):
+```text
+{input.Data}
+```
+";
 
             var inputMessages = new List<AgentMessage>
             {
+                new AgentMessage { Role = AgentMessageRole.System, Content = $"Respond in {input.OutputLanguage}." },
                 new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.User, Content = inputJson }
+                new AgentMessage { Role = AgentMessageRole.User, Content = inputMessage }
             };
 
             var stopwatch = Stopwatch.StartNew();
