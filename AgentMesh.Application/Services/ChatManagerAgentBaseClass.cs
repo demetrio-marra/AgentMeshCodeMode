@@ -1,12 +1,15 @@
-using AgentMesh.Application.Models;
+﻿using AgentMesh.Application.Models;
 using AgentMesh.Models;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Text;
 
 namespace AgentMesh.Application.Services
 {
     public abstract class ChatManagerAgentBaseClass
     {
+        private const string MESSAGES_SEPARATOR = "════════";
+
         private readonly List<AgentMessage> _context;
         private IOpenAIClient _openAIClient;
         private IOpenAIClient _summaryOpenAIClient;
@@ -38,10 +41,36 @@ namespace AgentMesh.Application.Services
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Generating response with {MessageCount} messages", messages.Count());
-            
+
+            // create a single message with transcript of all messages
+            var transcription = new List<string>();
+            foreach (var message in messages)
+            {
+                if (message.Role == AgentMessageRole.System)
+                    continue;
+
+                var role = "User";
+                if (message.Role == AgentMessageRole.Assistant)
+                {
+                    role = "Expert";
+                }
+
+                var messageTranscript = $"Role: {role}\nContent: {message.Content}";
+                transcription.Add(messageTranscript);
+            }
+
+            var messagesSent = new List<AgentMessage>();
+            messagesSent.AddRange(messages.Where(m => m.Role == AgentMessageRole.System).ToList());
+            var transcriptListString = string.Join($"\n{MESSAGES_SEPARATOR}\n", transcription);
+            messagesSent.Add(new AgentMessage
+            {
+                Role = AgentMessageRole.User,
+                Content = transcriptListString
+            }); 
+
             var response = await Resilience.ExecuteWithRetryAsync(async () =>
             {
-                return await _openAIClient.GenerateResponseAsync(messages);
+                return await _openAIClient.GenerateResponseAsync(messagesSent);
             }, "ChatManagerAgent", _logger);
             
             stopwatch.Stop();
