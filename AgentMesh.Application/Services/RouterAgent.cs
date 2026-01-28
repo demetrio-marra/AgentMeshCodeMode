@@ -43,18 +43,13 @@ namespace AgentMesh.Application.Services
 
                 try
                 {
-                    var jsonResponse = JsonSerializer.Deserialize<RouterResponse>(responseText, new JsonSerializerOptions
+                    if (string.IsNullOrWhiteSpace(responseText))
                     {
-                        PropertyNameCaseInsensitive = true
-                    });
-
-                    if (jsonResponse == null || string.IsNullOrWhiteSpace(jsonResponse.Recipient))
-                    {
-                        _logger.LogWarning("The model's response did not contain a valid recipient. Response: {ResponseText}", responseText);
-                        throw new BadStructuredResponseException(responseText, "The model's response did not contain a valid recipient.");
+                        _logger.LogWarning("The model's response was empty.");
+                        throw new BadStructuredResponseException(responseText, "The model's response was empty.");
                     }
 
-                    var recipient = jsonResponse.Recipient.Trim();
+                    var recipient = responseText;
                     if (_configuration.AllowedRecipients.Count > 0 && !_configuration.AllowedRecipients.Contains(recipient, StringComparer.OrdinalIgnoreCase))
                     {
                         _logger.LogWarning("The recipient '{Recipient}' is not in the allowed recipients list. Response: {ResponseText}", recipient, responseText);
@@ -84,11 +79,6 @@ namespace AgentMesh.Application.Services
 
             _logger.LogDebug("RouterAgent Output: {Output}", JsonSerializer.Serialize(result));
             return result;
-        }
-
-        private class RouterResponse
-        {
-            public string Recipient { get; set; } = string.Empty;
         }
     }
 }
