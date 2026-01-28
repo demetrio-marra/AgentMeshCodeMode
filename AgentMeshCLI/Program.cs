@@ -37,7 +37,7 @@ namespace AgentMesh
 
             services.AddLogging(builder =>
             {
-                builder.SetMinimumLevel(LogLevel.Debug);
+                builder.AddConfiguration(configuration.GetSection("Logging"));
                 builder.AddConsole();
             });
 
