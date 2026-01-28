@@ -9,5 +9,6 @@ namespace AgentMesh.Application.Services
         public string ModelTemperature { get; set; } = string.Empty;
         public string SystemPrompt { get; set; } = string.Empty;
         public string? SystemPromptFile { get; set; }
+        public List<string> AllowedRecipients { get; set; } = new List<string>();
     }
 }

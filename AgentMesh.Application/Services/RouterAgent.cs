@@ -11,6 +11,7 @@ namespace AgentMesh.Application.Services
     {
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<RouterAgent> _logger;
+        private readonly RouterAgentConfiguration _configuration;
 
         public RouterAgent(
             [FromKeyedServices(RouterAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
@@ -18,6 +19,7 @@ namespace AgentMesh.Application.Services
             ILogger<RouterAgent> logger)
         {
             _openAIClient = openAIClient;
+            _configuration = configuration;
             _logger = logger;
         }
 
@@ -52,9 +54,16 @@ namespace AgentMesh.Application.Services
                         throw new BadStructuredResponseException(responseText, "The model's response did not contain a valid recipient.");
                     }
 
+                    var recipient = jsonResponse.Recipient.Trim();
+                    if (_configuration.AllowedRecipients.Count > 0 && !_configuration.AllowedRecipients.Contains(recipient, StringComparer.OrdinalIgnoreCase))
+                    {
+                        _logger.LogWarning("The recipient '{Recipient}' is not in the allowed recipients list. Response: {ResponseText}", recipient, responseText);
+                        throw new BadStructuredResponseException(responseText, $"The recipient '{recipient}' is not in the allowed recipients list. Allowed recipients: {string.Join(", ", _configuration.AllowedRecipients)}");
+                    }
+
                     return new RouterAgentOutput
                     {
-                        Recipient = jsonResponse.Recipient.Trim(),
+                        Recipient = recipient,
                         TokenCount = response.TotalTokenCount,
                         InputTokenCount = response.InputTokenCount,
                         OutputTokenCount = response.OutputTokenCount
