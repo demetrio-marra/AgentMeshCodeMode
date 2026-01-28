@@ -23,6 +23,10 @@ interface MyPlatformCompanyInfoFindProductHierarchyParams {
   product: string;
 }
 
+interface MyPlatformCompanyInfoGetAllProductNamesParams {
+
+}
+
 interface MyPlatformStatisticsGetRatesParams {
   /** Start date filter for the search range (inclusive), in ISO8601 format without a time component (e.g., "2025-10-20") */
   queryDateFrom: string;
@@ -32,7 +36,7 @@ interface MyPlatformStatisticsGetRatesParams {
   product: string;
   /** Type of partitioning applied to returned data (e.g. Year, Month, Day) */
   dataPartitioning: string;
-  /** Product lifecycle phase (e.g. Create, Modify, Renew, Deactivation, Expiration, Get, GDPR) filter */
+  /** Product lifecycle phase (e.g. FirstActivation, Renew, Deactivation, Expiration) filter */
   provisioningPhase?: string;
   /** Name of the company filter */
   company?: string;
@@ -49,7 +53,7 @@ interface MyPlatformStatisticsGetParams {
   product: string;
   /** Type of partitioning applied to returned data (e.g. Year, Month, Day) */
   dataPartitioning: string;
-  /** Product lifecycle phase (e.g. Create, Modify, Renew, Deactivation, Expiration, Get, GDPR) filter */
+  /** Product lifecycle phase (e.g. FirstActivation, Renew, Deactivation, Expiration) filter */
   provisioningPhase?: string;
   /** Name of the company filter */
   company?: string;
@@ -70,7 +74,7 @@ interface MyPlatformStatisticsGetAverageDurationParams {
   product: string;
   /** Type of partitioning applied to returned data (e.g. Year, Month, Day) */
   dataPartitioning: string;
-  /** Product lifecycle phase (e.g. Create, Modify, Renew, Deactivation, Expiration, Get, GDPR) filter */
+  /** Product lifecycle phase (e.g. FirstActivation, Renew, Deactivation, Expiration) filter */
   provisioningPhase?: string;
   /** Name of the company filter */
   company?: string;
@@ -98,16 +102,16 @@ interface MyPlatformChartGenerateChartParams {
   dataJson?: string;
 }
 
-interface MyCompanyCompanyInfoGetAllProductNamesParams {
-
-}
-
 interface MyPlatformCompanyInfoFindProductHierarchyResult {
   result: {
   company?: string | null;
   family?: string | null;
   product?: string | null;
 }[];
+}
+
+interface MyPlatformCompanyInfoGetAllProductNamesResult {
+  result: string[];
 }
 
 interface MyPlatformStatisticsGetRatesResult {
@@ -167,10 +171,6 @@ interface MyPlatformChartGenerateChartResult {
   metadata?: Record<string, any>;
 }
 
-interface MyCompanyCompanyInfoGetAllProductNamesResult {
-  result: string[];
-}
-
 /**
  * @tool MyPlatform_CompanyInfo_FindProductHierarchy
  * @description CompanyInfo - Finds which Company and Family a specific Product belongs to.
@@ -179,6 +179,15 @@ interface MyCompanyCompanyInfoGetAllProductNamesResult {
  * @errorSchema MCPToolError
  */
 declare function MyPlatform_CompanyInfo_FindProductHierarchy(params: MyPlatformCompanyInfoFindProductHierarchyParams): Promise<MCPToolResponse<MyPlatformCompanyInfoFindProductHierarchyResult>>;
+
+/**
+ * @tool MyPlatform_CompanyInfo_GetAllProductNames
+ * @description CompanyInfo - Retrieves all available product names.
+ * @inputSchema MyPlatformCompanyInfoGetAllProductNamesParams
+ * @outputSchema MCPToolResponse<MyPlatformCompanyInfoGetAllProductNamesResult>
+ * @errorSchema MCPToolError
+ */
+declare function MyPlatform_CompanyInfo_GetAllProductNames(params: MyPlatformCompanyInfoGetAllProductNamesParams): Promise<MCPToolResponse<MyPlatformCompanyInfoGetAllProductNamesResult>>;
 
 /**
  * @tool MyPlatform_Statistics_GetRates
@@ -234,11 +243,14 @@ declare function MyPlatform_CompanyInfo_GetProductsHierarchy(params: MyPlatformC
  */
 declare function MyPlatform_Chart_GenerateChart(params: MyPlatformChartGenerateChartParams): Promise<MCPToolResponse<MyPlatformChartGenerateChartResult>>;
 
-/**
- * @tool MyPlatform_CompanyInfo_GetAllProductNames
- * @description CompanyInfo - Retrieves all available product names.
- * @inputSchema MyCompanyCompanyInfoGetAllProductNamesParams
- * @outputSchema MCPToolResponse<MyCompanyCompanyInfoGetAllProductNamesResult>
- * @errorSchema MCPToolError
- */
-declare function MyPlatform_CompanyInfo_GetAllProductNames(params: MyCompanyCompanyInfoGetAllProductNamesParams): Promise<MCPToolResponse<MyCompanyCompanyInfoGetAllProductNamesResult>>;
+// Export all tool function declarations
+export {
+  MyPlatform_CompanyInfo_FindProductHierarchy,
+  MyPlatform_CompanyInfo_GetAllProductNames,
+  MyPlatform_Statistics_GetRates,
+  MyPlatform_Statistics_Get,
+  MyPlatform_MyPermissions_Get,
+  MyPlatform_Statistics_GetAverageDuration,
+  MyPlatform_CompanyInfo_GetProductsHierarchy,
+  MyPlatform_Chart_GenerateChart
+};

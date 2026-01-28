@@ -112,7 +112,7 @@ INPUT PARAMETERS (OPTIONAL):
 
 * Provisioning Phase:
   - Description: Specific lifecycle phase to filter by
-  - Options: Create, Modify, Renew, Deactivation, Expiration, Get, GDPR
+  - Options: FirstActivation, Renew, Deactivation, Expiration
   - Purpose: Focus on specific types of provisioning activities
 
 * Company:
@@ -197,10 +197,11 @@ A list of important considerations on data quality and interpretation for the av
 - When user does not explicitly provide Company and Family query parameters instruct the Coder agent to also:
     1. check if MyPlatform_CompanyInfo_FindProductHierarchy returns more than one result. If yes
     2. return a user-facing error message asking to disambiguate which Company and Family to use for the requested Product, listing all possible Company/Family combinations returned by the API.
+- The Provisioning phases normally follows this lifecycle order: FirstActivation -> Expiration -> Renew -> Deactivation. The Expiration/Renew may repeat multiple times before Deactivation. Deactivation can only happen once at the end of the lifecycle.
 
 Define all INPUT parameters:
   - when the user does not provide a Date range, set input date range parameter to the current year (from January 1st to December 31st of current year).
-  - when the user does not provide Provisioning Phase parameter, set Provisioning Phase parameter to 'Create'.
+  - when the user does not provide Provisioning Phase parameter, set Provisioning Phase parameter to 'FirstActivation'.
   - when the user does not provide Data Partitioning parameter AND the date range is within a single year, set Data Partitioning parameter to 'Month'.
   - when the user does not provide Data Partitioning parameter AND the date range is within a single month, set Data Partitioning parameter to 'Day'.
   - when the user does not provide Data Partitioning parameter AND the date range spans multiple years, set Data Partitioning parameter to 'Year'.
