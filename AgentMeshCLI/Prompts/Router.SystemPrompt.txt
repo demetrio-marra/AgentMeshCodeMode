@@ -13,13 +13,13 @@ Route each message to exactly one recipient.
    * generic human knowledge request: general knowledge questions
    * unrecognized: does not fit any of the above categories
 3. Decide the recipient route according to those policies
-   * greetings -> PersonalAssistant
-   * information request on assistant -> PersonalAssistant
-   * information request on assistant capabilities -> BusinessAdvisor
-   * advice request on company-related systems/data USAGE -> BusinessAdvisor
    * data extraction request -> BusinessRequirementsCreator
    * company-related operations request -> BusinessRequirementsCreator
+   * advice request on company-related systems/data USAGE -> BusinessAdvisor
+   * information request on assistant capabilities -> BusinessAdvisor
+   * information request on assistant -> PersonalAssistant
    * generic human knowledge request -> PersonalAssistant
+   * greetings -> PersonalAssistant
    * unrecognized -> PersonalAssistant
 4. Output the recipient name ONLY, with no additional text
 
