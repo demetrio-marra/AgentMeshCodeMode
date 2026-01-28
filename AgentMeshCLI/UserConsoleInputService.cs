@@ -11,6 +11,7 @@ namespace AgentMesh
     {
         private readonly IWorkflow _workflow;
         private readonly BusinessRequirementsCreatorAgentConfiguration _businessRequirementsCreatorConfiguration;
+        private readonly BusinessAdvisorAgentConfiguration _businessAdvisorConfiguration;
         private readonly CoderAgentConfiguration _coderConfiguration;
         private readonly CodeStaticAnalyzerConfiguration _codeStaticAnalyzerConfiguration;
         private readonly CodeFixerAgentConfiguration _codeFixerConfiguration;
@@ -25,6 +26,7 @@ namespace AgentMesh
         public UserConsoleInputService(
             IWorkflow workflow,
             BusinessRequirementsCreatorAgentConfiguration businessRequirementsCreatorConfiguration,
+            BusinessAdvisorAgentConfiguration businessAdvisorConfiguration,
             CoderAgentConfiguration coderConfiguration,
             CodeStaticAnalyzerConfiguration codeStaticAnalyzerConfiguration,
             CodeFixerAgentConfiguration codeFixerConfiguration,
@@ -38,6 +40,7 @@ namespace AgentMesh
         {
             _workflow = workflow;
             _businessRequirementsCreatorConfiguration = businessRequirementsCreatorConfiguration;
+            _businessAdvisorConfiguration = businessAdvisorConfiguration;
             _coderConfiguration = coderConfiguration;
             _codeStaticAnalyzerConfiguration = codeStaticAnalyzerConfiguration;
             _codeFixerConfiguration = codeFixerConfiguration;
@@ -82,6 +85,7 @@ namespace AgentMesh
                     { ContextAggregatorAgentConfiguration.AgentName, _llmsConfiguration[_contextAggregatorConfiguration.LLM].CostPerMillionInputTokens },
                     { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionInputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionInputTokens },
+                    { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionInputTokens },
                     { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionInputTokens },
                     { CodeStaticAnalyzerConfiguration.AgentName, _llmsConfiguration[_codeStaticAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionInputTokens },
@@ -96,6 +100,7 @@ namespace AgentMesh
                     { ContextAggregatorAgentConfiguration.AgentName, _llmsConfiguration[_contextAggregatorConfiguration.LLM].CostPerMillionOutputTokens },
                     { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionOutputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionOutputTokens },
+                    { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionOutputTokens },
                     { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionOutputTokens },
                     { CodeStaticAnalyzerConfiguration.AgentName, _llmsConfiguration[_codeStaticAnalyzerConfiguration.LLM].CostPerMillionOutputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionOutputTokens },
@@ -115,6 +120,7 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("Context Aggregator", ContextAggregatorAgentConfiguration.AgentName, _contextAggregatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Router", RouterAgentConfiguration.AgentName, _routerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Requirements Creator", BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Business Advisor", BusinessAdvisorAgentConfiguration.AgentName, _businessAdvisorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, _coderConfiguration);
             ConsoleHelper.PrintAgentConfiguration("CodeStaticAnalyzer", CodeStaticAnalyzerConfiguration.AgentName, _codeStaticAnalyzerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("CodeFixer", CodeFixerAgentConfiguration.AgentName, _codeFixerConfiguration);

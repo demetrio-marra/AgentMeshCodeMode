@@ -14,6 +14,7 @@ namespace AgentMesh.Workflows
         private readonly ILogger<CodeModeWorkflow> _logger;
 
         private readonly IBusinessRequirementsCreatorAgent _businessRequirementsCreatorAgent;
+        private readonly IBusinessAdvisorAgent _businessAdvisorAgent;
         private readonly ICoderAgent _coderAgent;
         private readonly ICodeStaticAnalyzer _codeStaticAnalyzer;
         private readonly ICodeFixerAgent _codeFixerAgent;
@@ -27,6 +28,7 @@ namespace AgentMesh.Workflows
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IBusinessRequirementsCreatorAgent businessRequirementsCreatorAgent,
+            IBusinessAdvisorAgent businessAdvisorAgent,
             ICoderAgent coderAgent,
             ICodeStaticAnalyzer codeStaticAnalyzer,
             ICodeFixerAgent codeFixerAgent,
@@ -40,6 +42,7 @@ namespace AgentMesh.Workflows
         {
             _logger = logger;
             _businessRequirementsCreatorAgent = businessRequirementsCreatorAgent;
+            _businessAdvisorAgent = businessAdvisorAgent;
             _coderAgent = coderAgent;
             _codeStaticAnalyzer = codeStaticAnalyzer;
             _codeFixerAgent = codeFixerAgent;

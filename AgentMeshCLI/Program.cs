@@ -81,6 +81,30 @@ namespace AgentMesh
 
             services.AddSingleton<IBusinessRequirementsCreatorAgent, BusinessRequirementsCreatorAgent>();
 
+            // Business Advisor agent config and client
+            services
+                .AddOptions<BusinessAdvisorAgentConfiguration>()
+                .Bind(configuration.GetSection(BusinessAdvisorAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                    options.ApiDocumentation = ResolveConfigText(options.ApiDocumentation, options.ApiDocumentationFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<BusinessAdvisorAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(BusinessAdvisorAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<BusinessAdvisorAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IBusinessAdvisorAgent, BusinessAdvisorAgent>();
+
             // Coder agent config and client
             services
                 .AddOptions<CoderAgentConfiguration>()
