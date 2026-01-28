@@ -111,11 +111,11 @@ namespace AgentMesh.Workflows
             state.RouterRecipient = routerOutput.Recipient;
             state.AddTokenUsage(RouterAgentConfiguration.AgentName, routerOutput.TokenCount, routerOutput.InputTokenCount, routerOutput.OutputTokenCount);
 
-            if (routerOutput.Recipient?.Equals("Personal Assistant", StringComparison.OrdinalIgnoreCase) == true)
+            if (routerOutput.Recipient?.Equals("PersonalAssistant", StringComparison.OrdinalIgnoreCase) == true)
             {
                 await CompleteWorkflowAsync(state);
             }
-            else if (routerOutput.Recipient?.Equals("Business Analyst", StringComparison.OrdinalIgnoreCase) == true)
+            else if (routerOutput.Recipient?.Equals("BusinessRequirementsCreator", StringComparison.OrdinalIgnoreCase) == true)
             {
                 _logger.LogInformation("Engaging Business Requirements Creator Agent...");
                 var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
@@ -209,15 +209,114 @@ namespace AgentMesh.Workflows
 
                     await CompleteWorkflowAsync(state, state.PresenterOutput);
                 }
-                else // Do not engage coder
+                else
                 {
                     state.OutputForUserFromBusinessAnalyst = brcOutput.AnswerToUserText;
                     await CompleteWorkflowAsync(state, state.OutputForUserFromBusinessAnalyst);
                 }
             }
+            else if (routerOutput.Recipient?.Equals("BusinessAdvisor", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                _logger.LogInformation("Engaging Business Advisor Agent...");
+                var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
+                {
+                    UserQuestionText = state.AggregatedUserQuestion!
+                });
+                state.ShouldEngageCoder = baOutput.EngageCoderAgent;
+                state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
+
+                if (baOutput.EngageCoderAgent)
+                {
+                    _logger.LogInformation("Engaging Coder Agent...");
+                    state.BusinessRequirements = baOutput.BusinessRequirements;
+
+                    var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
+                    {
+                        BusinessRequirements = state.BusinessRequirements!
+                    });
+                    state.GeneratedCode = coderAgentOutput.CodeToRun;
+                    state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);
+
+                    state.LastCodeWithLineNumbers = GetSourceCodeWithLineNumbers(state.GeneratedCode);
+                    
+                    _logger.LogInformation("Engaging Code Static Analyzer Agent...");
+                    var staticAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
+                    {
+                        CodeToFix = state.LastCodeWithLineNumbers
+                    });
+                    state.IsCodeValid = !staticAnalyzerOutput.Violations.Any();
+                    if (!state.IsCodeValid)
+                    {
+                        state.CodeIssues = staticAnalyzerOutput.Violations.ToList();
+                    }
+                    state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, staticAnalyzerOutput.TokenCount, staticAnalyzerOutput.InputTokenCount, staticAnalyzerOutput.OutputTokenCount);
+
+                    for (int i = 0; i < 2 && !state.IsCodeValid && state.CodeIssues.Any(); i++)
+                    {
+                        _logger.LogInformation("Engaging Code Fixer Agent... Iteration {Iteration}", i + 1);
+                        var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
+                        {
+                            CodeToFix = state.LastCodeWithLineNumbers,
+                            Issues = state.CodeIssues
+                        });
+                        state.GeneratedCode = codeFixerOutput.FixedCode;
+                        state.CodeFixerIterationCount++;
+                        state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
+
+                        state.LastCodeWithLineNumbers = GetSourceCodeWithLineNumbers(state.GeneratedCode);
+
+                        var reAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
+                        {
+                            CodeToFix = state.LastCodeWithLineNumbers
+                        });
+                        state.IsCodeValid = !reAnalyzerOutput.Violations.Any();
+                        if (!state.IsCodeValid)
+                        {
+                            state.CodeIssues = reAnalyzerOutput.Violations.ToList();
+                        }
+                        else
+                        {
+                            state.CodeIssues.Clear();
+                        }
+                        state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, reAnalyzerOutput.TokenCount, reAnalyzerOutput.InputTokenCount, reAnalyzerOutput.OutputTokenCount);
+                    }
+
+                    var sandBoxError = false;
+                    try
+                    {
+                        _logger.LogInformation("Engaging JS Sandbox Executor...");
+                        var executionOutput = await _jsSandboxExecutor.ExecuteAsync(new JSSandboxInput
+                        {
+                            Code = state.GeneratedCode
+                        });
+                        state.SandboxResult = executionOutput.Result;
+                        state.SandboxError = null;
+                    }
+                    catch (Exception ex)
+                    {
+                        state.SandboxError = ex.Message;
+                        state.SandboxResult = null;
+                        sandBoxError = true;
+                    }
+
+                    _logger.LogInformation("Engaging Results Presenter Agent...");
+                    var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
+                    {
+                        Content = sandBoxError ? state.SandboxError! : state.SandboxResult!
+                    });
+                    state.PresenterOutput = resultsPresenterOutput.Content;
+                    state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
+
+                    await CompleteWorkflowAsync(state, state.PresenterOutput);
+                }
+                else
+                {
+                    state.OutputForUserFromBusinessAnalyst = baOutput.AnswerToUserText;
+                    await CompleteWorkflowAsync(state, state.OutputForUserFromBusinessAnalyst);
+                }
+            }
             else
             {
-                // bad response from router
                 throw new Exception($"Router Agent returned an unknown recipient: {routerOutput.Recipient}");
             }
 
