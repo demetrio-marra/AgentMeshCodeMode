@@ -9,7 +9,7 @@ namespace AgentMesh.Application.Services
 {
     public class BusinessRequirementsCreatorAgent : IBusinessRequirementsCreatorAgent
     {
-        private static readonly Regex ResponseRegex = new("```(?<responseType>(personalAssistantInstructions|businessRequirements))\\s*(?<content>[\\s\\S]+)", RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase);
+        private static readonly Regex ResponseRegex = new("```(?<responseType>(information|businessRequirements))\\s*(?<content>[\\s\\S]+)", RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase);
 
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<BusinessRequirementsCreatorAgent> _logger;
@@ -52,7 +52,7 @@ namespace AgentMesh.Application.Services
                 }
 
                 var responseType = match.Groups["responseType"].Value.Trim().ToLowerInvariant();
-                if (responseType == "personalassistantinstructions")
+                if (responseType == "information")
                 {
                     return new BusinessRequirementsCreatorAgentOutput
                     {
