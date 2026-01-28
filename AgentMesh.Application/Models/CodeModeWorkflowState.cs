@@ -18,6 +18,7 @@
         public string? BusinessRequirements { get; set; }
         public bool ShouldEngageCoder { get; set; }
         public string? OutputForUserFromBusinessAnalyst { get; set; }
+        public string? BusinessAdvisorContent { get; set; }
         public string? GeneratedCode { get; set; }
         public string? LastCodeWithLineNumbers { get; set; }
         public List<string> CodeIssues { get; set; }

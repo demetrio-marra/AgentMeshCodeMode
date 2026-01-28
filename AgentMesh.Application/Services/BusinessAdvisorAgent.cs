@@ -3,14 +3,11 @@ using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services
 {
     public class BusinessAdvisorAgent : IBusinessAdvisorAgent
     {
-        private static readonly Regex ResponseRegex = new("```(?<responseType>(information|businessRequirements))\\s*(?<content>[\\s\\S]+)", RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase);
-
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<BusinessAdvisorAgent> _logger;
         private readonly string _apiDocumentation;
@@ -44,30 +41,15 @@ namespace AgentMesh.Application.Services
                 var response = await _openAIClient.GenerateResponseAsync(inputMessages);
                 var responseText = response.Text?.Trim() ?? string.Empty;
 
-                var match = ResponseRegex.Match(responseText);
-                if (!match.Success)
+                if (string.IsNullOrWhiteSpace(responseText))
                 {
-                    _logger.LogWarning("The model's response did not match the expected format. Response: {ResponseText}", responseText);
-                    throw new BadStructuredResponseException(responseText, "The model's response did not match the expected format.");
-                }
-
-                var responseType = match.Groups["responseType"].Value.Trim().ToLowerInvariant();
-                if (responseType == "information")
-                {
-                    return new BusinessAdvisorAgentOutput
-                    {
-                        EngageCoderAgent = false,
-                        AnswerToUserText = match.Groups["content"].Value.Trim(),
-                        TokenCount = response.TotalTokenCount,
-                        InputTokenCount = response.InputTokenCount,
-                        OutputTokenCount = response.OutputTokenCount
-                    };
+                    _logger.LogWarning("The model's response is empty");
+                    throw new BadStructuredResponseException(responseText, "The model's response is empty.");
                 }
 
                 return new BusinessAdvisorAgentOutput
                 {
-                    EngageCoderAgent = true,
-                    BusinessRequirements = match.Groups["content"].Value.Trim(),
+                    Content = responseText,
                     TokenCount = response.TotalTokenCount,
                     InputTokenCount = response.InputTokenCount,
                     OutputTokenCount = response.OutputTokenCount
