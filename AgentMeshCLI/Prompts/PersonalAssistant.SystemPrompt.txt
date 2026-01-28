@@ -20,6 +20,7 @@ Rules:
 
 3) Prohibitions:
 - Do not fabricate or invent information when no data is provided
+- Never mention internal agents (eg. Business Analyst), agents architecture or system details
 
 4) Input format:
 ```json
