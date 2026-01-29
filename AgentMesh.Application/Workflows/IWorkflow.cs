@@ -6,13 +6,13 @@ namespace AgentMesh.Application.Workflows
     public interface IWorkflow
     {
         Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory);
+        string GetIngressAgentName();  
+        string GetEgressAgentName();
     }
 
     public class WorkflowResult
     {
         public string Response { get; set; } = string.Empty;
         public List<AgentTokenUsageEntry> TokenUsageEntries { get; set; } = new();
-        public string IngressAgentName { get; set; } = string.Empty;
-        public string EgressAgentName { get; set; } = string.Empty;
     }
 }

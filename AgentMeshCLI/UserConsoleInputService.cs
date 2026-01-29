@@ -77,11 +77,11 @@ namespace AgentMesh
                 var result = await _workflow.ExecuteAsync(question!, conversation);
 
                 var inputMessageTokens = result.TokenUsageEntries
-                    .Where(e => e.AgentName == result.IngressAgentName)
+                    .Where(e => e.AgentName == _workflow.GetIngressAgentName())
                     .Sum(e => e.InputTokens);
 
                 var outputMessageTokens = result.TokenUsageEntries
-                    .Where(e => e.AgentName == result.EgressAgentName)
+                    .Where(e => e.AgentName == _workflow.GetEgressAgentName())
                     .Sum(e => e.OutputTokens);
 
                 var answerDateTime = DateTime.UtcNow;
