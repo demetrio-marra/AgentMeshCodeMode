@@ -5,5 +5,6 @@
         public ContextMessageRole Role { get; set; }
         public DateTime Date { get; set; }
         public string Text { get; set; } = string.Empty;
+        public int TokensCount { get; set; }
     }
 }
