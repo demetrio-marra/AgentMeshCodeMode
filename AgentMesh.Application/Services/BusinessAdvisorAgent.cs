@@ -44,7 +44,7 @@ namespace AgentMesh.Application.Services
                 if (string.IsNullOrWhiteSpace(responseText))
                 {
                     _logger.LogWarning("The model's response is empty");
-                    throw new BadStructuredResponseException(responseText, "The model's response is empty.");
+                    throw new EmptyAgentResponseException();
                 }
 
                 return new BusinessAdvisorAgentOutput

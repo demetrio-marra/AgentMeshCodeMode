@@ -1,6 +1,6 @@
 ﻿namespace AgentMesh.Models
 {
-    public class BadStructuredResponseException : Exception
+    public class BadStructuredResponseException : BadAgentResponseException
     {
         public string RawOutput { get; set; } = string.Empty;
 

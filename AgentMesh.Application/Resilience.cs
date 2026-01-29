@@ -10,6 +10,7 @@ namespace AgentMesh.Application
         {
             var policy = Policy
                 .Handle<BadStructuredResponseException>()
+                .Or<EmptyAgentResponseException>()
                 .Or<Exception>(ex => ex.GetType().Name == "ClientResultException" && ex.Message.Contains("Tool choice is none, but model called a tool"))
                 .WaitAndRetryAsync(
                     retryCount: 2,

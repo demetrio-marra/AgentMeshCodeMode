@@ -34,23 +34,35 @@ namespace AgentMesh.Application.Services
 
             var stopwatch = Stopwatch.StartNew();
 
-            var response = await _openAIClient.GenerateResponseAsync(inputs);
+            var result = await Resilience.ExecuteWithRetryAsync(async () =>
+            {
+                var response = await _openAIClient.GenerateResponseAsync(inputs);
+                var responseText = response.Text?.Trim() ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(responseText))
+                {
+                    _logger.LogWarning("The model's response is empty");
+                    throw new EmptyAgentResponseException();
+                }
+
+                return new ResultsPresenterAgentOutput
+                {
+                    Content = responseText,
+                    TokenCount = response.TotalTokenCount,
+                    InputTokenCount = response.InputTokenCount,
+                    OutputTokenCount = response.OutputTokenCount
+                };
+            }, ResultsPresenterAgentConfiguration.AgentName, _logger);
 
             stopwatch.Stop();
             _logger.LogDebug(
                 "ResultsPresenterAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
                 stopwatch.ElapsedMilliseconds,
-                response.TotalTokenCount);
+                result.TokenCount);
 
-            var output = new ResultsPresenterAgentOutput
-            {
-                Content = response.Text,
-                TokenCount = response.TotalTokenCount,
-                InputTokenCount = response.InputTokenCount,
-                OutputTokenCount = response.OutputTokenCount
-            };
-            _logger.LogDebug("ResultsPresenterAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
-            return output;
+            var output = result;
+            _logger.LogDebug("ResultsPresenterAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(result));
+            return result;
         }
     }
 }

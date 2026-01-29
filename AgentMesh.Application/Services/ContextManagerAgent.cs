@@ -45,14 +45,19 @@ namespace AgentMesh.Application.Services
             var stopwatch = Stopwatch.StartNew();
 
             var response = await GenerateResponseAsync(inputMessages);
+            var responseText = response.Text?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(responseText))
+            {
+                _logger.LogWarning("The model's response is empty");
+                throw new EmptyAgentResponseException();
+            }
 
             stopwatch.Stop();
             _logger.LogDebug(
                 "ContextManagerAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
                 stopwatch.ElapsedMilliseconds,
                 response.TotalTokenCount);
-
-            var responseText = response.Text?.Trim() ?? string.Empty;
 
             var output = new ContextManagerAgentOutput
             {

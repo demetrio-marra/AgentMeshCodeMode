@@ -41,11 +41,18 @@ namespace AgentMesh.Application.Services
             var result = await Resilience.ExecuteWithRetryAsync(async () =>
             {
                 var response = await _openAIClient.GenerateResponseAsync(inputMessages);
+                var responseText = response.Text?.Trim() ?? string.Empty;
 
-                var codeRegexMatch = JavascriptCodeRegex.Match(response.Text);
+                if (string.IsNullOrWhiteSpace(responseText))
+                {
+                    _logger.LogWarning("The model's response is empty");
+                    throw new EmptyAgentResponseException();
+                }
+
+                var codeRegexMatch = JavascriptCodeRegex.Match(responseText);
                 if (!codeRegexMatch.Success)
                 {
-                    throw new BadStructuredResponseException(response.Text, "The model's response did not contain any valid JavaScript code block.");
+                    throw new BadStructuredResponseException(responseText, "The model's response did not contain any valid JavaScript code block.");
                 }
 
                 var codeToRun = codeRegexMatch.Groups["code"].Value.Trim();

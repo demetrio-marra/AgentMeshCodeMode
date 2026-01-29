@@ -43,6 +43,12 @@ namespace AgentMesh.Application.Services
                 var response = await _openAIClient.GenerateResponseAsync(inputMessages);
                 var responseText = response.Text?.Trim() ?? string.Empty;
 
+                if (string.IsNullOrWhiteSpace(responseText))
+                {
+                    _logger.LogWarning("The model's response is empty");
+                    throw new EmptyAgentResponseException();
+                }
+
                 var jsonMatch = JsonCodeRegex.Match(responseText);
                 string jsonContent;
                 
