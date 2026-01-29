@@ -75,19 +75,30 @@ namespace AgentMesh
 
                 var questionDateTime = DateTime.UtcNow;
                 var result = await _workflow.ExecuteAsync(question!, conversation);
+
+                var inputMessageTokens = result.TokenUsageEntries
+                    .Where(e => e.AgentName == result.IngressAgentName)
+                    .Sum(e => e.InputTokens);
+
+                var outputMessageTokens = result.TokenUsageEntries
+                    .Where(e => e.AgentName == result.EgressAgentName)
+                    .Sum(e => e.OutputTokens);
+
                 var answerDateTime = DateTime.UtcNow;
 
                 conversation.Add(new ContextMessage
                 {
                     Role = ContextMessageRole.User,
                     Date = questionDateTime,
-                    Text = question!
+                    Text = question!,
+                    TokensCount = inputMessageTokens
                 });
                 conversation.Add(new ContextMessage
                 {
                     Role = ContextMessageRole.Assistant,
                     Date = answerDateTime,
-                    Text = result.Response
+                    Text = result.Response,
+                    TokensCount = outputMessageTokens
                 });
 
                 ConsoleHelper.WriteLineWithColor("\nResponse for user:\n" + result.Response, ConsoleColor.Green);
@@ -121,6 +132,7 @@ namespace AgentMesh
                 };
 
                 ConsoleHelper.PrintTokenUsageSummary(result.TokenUsageEntries, agentInputCosts, agentOutputCosts);
+                Console.WriteLine($"Total context tokens in conversation history: {GetContextMessagesTokenCount(conversation)}\n");
             }
         }
 
@@ -139,5 +151,7 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration);
             Console.WriteLine();
         }
+
+        private int GetContextMessagesTokenCount(List<ContextMessage> conversation) => conversation.Sum(m => m.TokensCount);
     }
 }
