@@ -1,12 +1,15 @@
-﻿namespace AgentMesh.Application.Models
+﻿using AgentMesh.Models;
+
+namespace AgentMesh.Application.Models
 {
     public class CodeModeWorkflowState
     {
-        public CodeModeWorkflowState(string userQuestion)
+        public CodeModeWorkflowState(string userQuestion, IEnumerable<ContextMessage> contextMessages)
         {
             OriginalUserRequest = userQuestion;
             TokenUsageEntries = new List<AgentTokenUsageEntry>();
             CodeIssues = new List<string>();
+            InitialContextMessages = contextMessages.ToList();
         }
 
         public string OriginalUserRequest { get; }
@@ -30,6 +33,8 @@
         public string? PresenterOutput { get; set; }
         public string? FinalAnswer { get; set; }
         public List<AgentTokenUsageEntry> TokenUsageEntries { get; set; }
+
+        public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
 
         public void AddTokenUsage(string agentName, int tokenCount, int inputTokenCount, int outputTokenCount)
         {

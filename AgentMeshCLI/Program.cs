@@ -268,6 +268,29 @@ namespace AgentMesh
 
             services.AddSingleton<IContextManagerAgent, ContextManagerAgent>();
 
+            // ContextAnalyzer agent config and client
+            services
+                .AddOptions<ContextAnalyzerAgentConfiguration>()
+                .Bind(configuration.GetSection(ContextAnalyzerAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<ContextAnalyzerAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(ContextAnalyzerAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<ContextAnalyzerAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IContextAnalyzerAgent, ContextAnalyzerAgent>();
+
             // Router agent config and client
             services
                 .AddOptions<RouterAgentConfiguration>()

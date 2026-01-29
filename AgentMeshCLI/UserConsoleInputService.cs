@@ -16,7 +16,7 @@ namespace AgentMesh
         private readonly CodeStaticAnalyzerConfiguration _codeStaticAnalyzerConfiguration;
         private readonly CodeFixerAgentConfiguration _codeFixerConfiguration;
         private readonly ResultsPresenterAgentConfiguration _resultsPresenterConfiguration;
-        private readonly ContextManagerAgentConfiguration _contextManagerConfiguration;
+        private readonly ContextAnalyzerAgentConfiguration _contextAnalyzerConfiguration;
         private readonly TranslatorAgentConfiguration _translatorConfiguration;
         private readonly RouterAgentConfiguration _routerConfiguration;
         private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
@@ -30,7 +30,7 @@ namespace AgentMesh
             CodeStaticAnalyzerConfiguration codeStaticAnalyzerConfiguration,
             CodeFixerAgentConfiguration codeFixerConfiguration,
             ResultsPresenterAgentConfiguration resultsPresenterConfiguration,
-            ContextManagerAgentConfiguration contextManagerConfiguration,
+            ContextAnalyzerAgentConfiguration contextAnalyzerConfiguration,
             TranslatorAgentConfiguration translatorConfiguration,
             RouterAgentConfiguration routerConfiguration,
             PersonalAssistantAgentConfiguration personalAssistantConfiguration,
@@ -43,7 +43,7 @@ namespace AgentMesh
             _codeStaticAnalyzerConfiguration = codeStaticAnalyzerConfiguration;
             _codeFixerConfiguration = codeFixerConfiguration;
             _resultsPresenterConfiguration = resultsPresenterConfiguration;
-            _contextManagerConfiguration = contextManagerConfiguration;
+            _contextAnalyzerConfiguration = contextAnalyzerConfiguration;
             _translatorConfiguration = translatorConfiguration;
             _routerConfiguration = routerConfiguration;
             _personalAssistantConfiguration = personalAssistantConfiguration;
@@ -53,6 +53,8 @@ namespace AgentMesh
         public async Task Run()
         {
             PrintConfigurations();
+
+            var conversation = new List<ContextMessage>();
 
             while (true)
             {
@@ -71,13 +73,28 @@ namespace AgentMesh
                     break;
                 }
 
-                var result = await _workflow.ExecuteAsync(question!);
+                var questionDateTime = DateTime.UtcNow;
+                var result = await _workflow.ExecuteAsync(question!, conversation);
+                var answerDateTime = DateTime.UtcNow;
+
+                conversation.Add(new ContextMessage
+                {
+                    Role = ContextMessageRole.User,
+                    Date = questionDateTime,
+                    Text = question!
+                });
+                conversation.Add(new ContextMessage
+                {
+                    Role = ContextMessageRole.Assistant,
+                    Date = answerDateTime,
+                    Text = result.Response
+                });
 
                 ConsoleHelper.WriteLineWithColor("\nResponse for user:\n" + result.Response, ConsoleColor.Green);
 
                 var agentInputCosts = new Dictionary<string, decimal>
                 {
-                    { ContextManagerAgentConfiguration.AgentName, _llmsConfiguration[_contextManagerConfiguration.LLM].CostPerMillionInputTokens },
+                    { ContextAnalyzerAgentConfiguration.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
                     { TranslatorAgentConfiguration.AgentName, _llmsConfiguration[_translatorConfiguration.LLM].CostPerMillionInputTokens },
                     { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionInputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionInputTokens },
@@ -91,7 +108,7 @@ namespace AgentMesh
 
                 var agentOutputCosts = new Dictionary<string, decimal>
                 {
-                    { ContextManagerAgentConfiguration.AgentName, _llmsConfiguration[_contextManagerConfiguration.LLM].CostPerMillionOutputTokens },
+                    { ContextAnalyzerAgentConfiguration.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionOutputTokens },
                     { TranslatorAgentConfiguration.AgentName, _llmsConfiguration[_translatorConfiguration.LLM].CostPerMillionOutputTokens },
                     { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionOutputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionOutputTokens },
@@ -110,7 +127,7 @@ namespace AgentMesh
         private void PrintConfigurations()
         {
             Console.WriteLine("Agent configurations:");
-            ConsoleHelper.PrintAgentConfiguration("Context Manager", ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgentConfiguration.AgentName, _contextAnalyzerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Translator", TranslatorAgentConfiguration.AgentName, _translatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Router", RouterAgentConfiguration.AgentName, _routerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Requirements Creator", BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration);

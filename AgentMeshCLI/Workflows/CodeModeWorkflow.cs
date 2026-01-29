@@ -21,7 +21,8 @@ namespace AgentMesh.Workflows
         private readonly ICodeFixerAgent _codeFixerAgent;
         private readonly IResultsPresenterAgent _resultsPresenterAgent;
         private readonly IJSSandboxExecutor _jsSandboxExecutor;
-        private readonly IContextManagerAgent _contextManagerAgent;
+        //private readonly IContextManagerAgent _contextManagerAgent;
+        private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
         private readonly ITranslatorAgent _translatorAgent;
         private readonly IRouterAgent _routerAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent;
@@ -36,6 +37,7 @@ namespace AgentMesh.Workflows
             IResultsPresenterAgent resultsPresenterAgent,
             IJSSandboxExecutor jsSandboxExecutor,
             IContextManagerAgent contextManagerAgent,
+            IContextAnalyzerAgent contextAnalyzerAgent,
             ITranslatorAgent translatorAgent,
             IRouterAgent routerAgent,
             IPersonalAssistantAgent personalAssistantAgent)
@@ -49,38 +51,43 @@ namespace AgentMesh.Workflows
             _codeFixerAgent = codeFixerAgent;
             _resultsPresenterAgent = resultsPresenterAgent;
             _jsSandboxExecutor = jsSandboxExecutor;
-            _contextManagerAgent = contextManagerAgent;
+            //_contextManagerAgent = contextManagerAgent;
+            _contextAnalyzerAgent = contextAnalyzerAgent;
             _translatorAgent = translatorAgent;
             _routerAgent = routerAgent;
             _personalAssistantAgent = personalAssistantAgent;
         }
 
-        public async Task<WorkflowResult> ExecuteAsync(string userInput)
+        public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
         {
             await _workflowProgressNotifier.NotifyWorkflowStart();
 
-            var state = new CodeModeWorkflowState(userInput);
+            var state = new CodeModeWorkflowState(userInput, chatHistory);
 
-            _logger.LogDebug("Engaging Context Manager Agent...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Manager Agent", new Dictionary<string, string>
+            _logger.LogDebug("Loading conversation history from Context Manager Agent...");
+
+            _logger.LogDebug("Engaging Context Analyzer Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", new Dictionary<string, string>
             {
-                { "UserSentenceText", state.OriginalUserRequest }
+                { "ContextMessages", "<omitted for brevity>. Total: " + chatHistory.Count().ToString() },
+                { "UserLastRequest", state.OriginalUserRequest }
             });
 
-            var contextManagerOutput = await _contextManagerAgent.ExecuteAsync(new ContextManagerAgentInput
+            var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
             {
-                UserSentenceText = state.OriginalUserRequest
+                ContextMessages = state.InitialContextMessages.ToList(),
+                UserLastRequest = state.OriginalUserRequest
             });
-            if (contextManagerOutput.RelevantContext == ContextManagerAgent.NO_RELEVANT_CONTEXT_FOUND)
+            if (contextAnalyzerOutput.RelevantContext == ContextAnalyzerAgent.NO_RELEVANT_CONTEXT_FOUND)
             {
                 state.UserQuestionRelevantContext = null;
             }
             else
             {
-                state.UserQuestionRelevantContext = contextManagerOutput.RelevantContext;
+                state.UserQuestionRelevantContext = contextAnalyzerOutput.RelevantContext;
             }
-            state.AddTokenUsage(ContextManagerAgentConfiguration.AgentName, contextManagerOutput.TokenCount, contextManagerOutput.InputTokenCount, contextManagerOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Manager Agent", new Dictionary<string, string>
+            state.AddTokenUsage(ContextAnalyzerAgentConfiguration.AgentName, contextAnalyzerOutput.TokenCount, contextAnalyzerOutput.InputTokenCount, contextAnalyzerOutput.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", new Dictionary<string, string>
             {
                 { "RelevantContext", state.UserQuestionRelevantContext ?? "(No relevant context found)" }
             });
@@ -354,15 +361,6 @@ namespace AgentMesh.Workflows
             {
                 { "Response", state.FinalAnswer }
             });
-
-            _logger.LogDebug("Updating Context Manager Agent state with final answer...");
-            var contextManagerState = await _contextManagerAgent.GetState();
-            contextManagerState.ChatHistory.Add(new AgentMessage
-            {
-                Role = AgentMessageRole.Assistant,
-                Content = state.FinalAnswer
-            });
-            await _contextManagerAgent.SetState(contextManagerState);
         }
 
         private static string GetSourceCodeWithLineNumbers(string sourceCode, bool useSpaceFiller = true)

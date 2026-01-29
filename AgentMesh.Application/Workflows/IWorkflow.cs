@@ -1,10 +1,11 @@
 using AgentMesh.Application.Models;
+using AgentMesh.Models;
 
 namespace AgentMesh.Application.Workflows
 {
     public interface IWorkflow
     {
-        Task<WorkflowResult> ExecuteAsync(string userInput);
+        Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory);
     }
 
     public class WorkflowResult
