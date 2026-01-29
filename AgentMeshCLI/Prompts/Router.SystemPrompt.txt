@@ -24,14 +24,23 @@ Match the input message to ONE category below and route to the specified recipie
 - Greetings and salutations
 - Unrecognized or unclear requests
 
-# Output Format
-Recipient: [RecipientName]
-Rationale: [Brief explanation of why this recipient was chosen]
+# Output Format 
 
-# Output format
+## Recipient value
 Recipient: EXACTLY ONE between the following strings
 * BusinessRequirementsCreator
 * BusinessAdvisor
 * PersonalAssistant
 
+## Rationale value
 Rationale: A brief explanation (1-2 sentences) of why the message was categorized and routed to this recipient
+
+## Final Output Structure
+Just 2 unquoted lines of plain text as the following example:
+
+```plaintext
+Recipient: PersonalAssistant
+Rationale: The user's message is a general knowledge question not related to company systems, making PersonalAssistant the appropriate recipient.
+```
+
+Important: Do not use JSON, Arrays, quotes, or any other formatting. Only the 2 plain text lines as specified.
