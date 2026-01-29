@@ -30,9 +30,11 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing RouterAgent.");
             _logger.LogDebug("RouterAgent Input: {Input}", JsonSerializer.Serialize(input));
 
+            var userMessage = UserMessageBuilder.BuildUserMessageString(input.RequestContext, input.UserRequest);
+
             var inputMessages = new List<AgentMessage>();
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.Message });
+            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = userMessage });
 
             var stopwatch = Stopwatch.StartNew();
 

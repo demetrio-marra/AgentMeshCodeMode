@@ -1,4 +1,4 @@
-using AgentMesh.Models;
+﻿using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -29,10 +29,14 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing BusinessAdvisorAgent.");
             _logger.LogDebug("BusinessAdvisorAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
-            var inputMessages = new List<AgentMessage>();
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"API Documentation: {_apiDocumentation}" });
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.UserQuestionText });
+            var userMessage = UserMessageBuilder.BuildUserMessageString(input.RequestContext, input.UserRequest);
+
+            var inputMessages = new List<AgentMessage>
+            {
+                new AgentMessage { Role = AgentMessageRole.System, Content = $"API Documentation: {_apiDocumentation}" },
+                new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
+                new AgentMessage { Role = AgentMessageRole.User, Content = userMessage }
+            };
 
             var stopwatch = Stopwatch.StartNew();
 

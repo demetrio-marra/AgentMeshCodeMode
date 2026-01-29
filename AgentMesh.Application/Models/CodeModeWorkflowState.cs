@@ -4,15 +4,15 @@
     {
         public CodeModeWorkflowState(string userQuestion)
         {
-            UserQuestion = userQuestion;
+            OriginalUserRequest = userQuestion;
             TokenUsageEntries = new List<AgentTokenUsageEntry>();
             CodeIssues = new List<string>();
         }
 
-        public string UserQuestion { get; }
+        public string OriginalUserRequest { get; }
         public string? UserQuestionRelevantContext { get; set; }
         public string? TranslatorResponse { get; set; }
-        public string? AggregatedUserQuestion { get; set; }
+        public string? EnglishTranslatedUserRequest { get; set; }
         public string? DetectedOriginalLanguage { get; set; }
         public string? RouterRecipient { get; set; }
         public string? BusinessRequirements { get; set; }

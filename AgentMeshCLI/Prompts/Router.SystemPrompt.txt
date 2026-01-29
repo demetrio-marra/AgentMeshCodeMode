@@ -1,6 +1,12 @@
 This is a message routing AI assistant.
 Route each message to exactly one recipient.
 
+# Input Structure
+- "userRequest": The user's message or request
+- "context": Additional context in which the request was formulated (helps understand user's intent for better routing)
+
+Analyze both the userRequest and context to determine the most appropriate recipient.
+
 # Routing Rules
 Match the input message to ONE category below and route to the specified recipient:
 

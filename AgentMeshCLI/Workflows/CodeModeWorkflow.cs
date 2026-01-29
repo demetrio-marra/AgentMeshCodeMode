@@ -64,12 +64,12 @@ namespace AgentMesh.Workflows
             _logger.LogDebug("Engaging Context Manager Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Manager Agent", new Dictionary<string, string>
             {
-                { "UserSentenceText", state.UserQuestion }
+                { "UserSentenceText", state.OriginalUserRequest }
             });
 
             var contextManagerOutput = await _contextManagerAgent.ExecuteAsync(new ContextManagerAgentInput
             {
-                UserSentenceText = state.UserQuestion
+                UserSentenceText = state.OriginalUserRequest
             });
             if (contextManagerOutput.RelevantContext == ContextManagerAgent.NO_RELEVANT_CONTEXT_FOUND)
             {
@@ -88,17 +88,15 @@ namespace AgentMesh.Workflows
             _logger.LogDebug("Engaging Translator Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Translator Agent", new Dictionary<string, string>
             {
-                { "Sentence", state.UserQuestion },
                 { "TargetLanguage", INTERNAL_AGENTIC_LANGUAGE },
-                { "UserRequest", state.UserQuestion },
+                { "UserRequest", state.OriginalUserRequest },
                 { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
             });
 
             var translatorOutput = await _translatorAgent.ExecuteAsync(new TranslatorAgentInput
             {
-                Sentence = state.UserQuestion,
                 TargetLanguage = INTERNAL_AGENTIC_LANGUAGE,
-                UserRequest = state.UserQuestion,
+                UserRequest = state.OriginalUserRequest,
                 RequestContext = state.UserQuestionRelevantContext ?? string.Empty
             });
             state.TranslatorResponse = translatorOutput.TranslatedSentence;
@@ -110,20 +108,18 @@ namespace AgentMesh.Workflows
                 { "DetectedOriginalLanguage", state.DetectedOriginalLanguage! }
             });
 
-            state.AggregatedUserQuestion = state.TranslatorResponse;
+            state.EnglishTranslatedUserRequest = state.TranslatorResponse;
             
             _logger.LogDebug("Engaging Router Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Router Agent", new Dictionary<string, string>
             {
-                { "Message", state.AggregatedUserQuestion! },
-                { "UserRequest", state.UserQuestion },
+                { "UserRequest", state.EnglishTranslatedUserRequest },
                 { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
             });
 
             var routerOutput = await _routerAgent.ExecuteAsync(new RouterAgentInput
             {
-                Message = state.AggregatedUserQuestion!,
-                UserRequest = state.UserQuestion,
+                UserRequest = state.EnglishTranslatedUserRequest,
                 RequestContext = state.UserQuestionRelevantContext ?? string.Empty
             });
             state.RouterRecipient = routerOutput.Recipient;
@@ -143,15 +139,13 @@ namespace AgentMesh.Workflows
                 _logger.LogDebug("Engaging Business Requirements Creator Agent...");
                 await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
                 {
-                    { "UserQuestionText", state.AggregatedUserQuestion! },
-                    { "UserRequest", state.UserQuestion },
+                    { "UserRequest", state.EnglishTranslatedUserRequest },
                     { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
                 });
 
                 var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
                 {
-                    UserQuestionText = state.AggregatedUserQuestion!,
-                    UserRequest = state.UserQuestion,
+                    UserRequest = state.EnglishTranslatedUserRequest,
                     RequestContext = state.UserQuestionRelevantContext ?? string.Empty
                 });
                 state.ShouldEngageCoder = true;
@@ -277,15 +271,15 @@ namespace AgentMesh.Workflows
                 _logger.LogDebug("Engaging Results Presenter Agent...");
                 await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
                 {
-                    { "Content", sandBoxError ? state.SandboxError! : state.SandboxResult! },
-                    { "UserRequest", state.UserQuestion },
+                    { "Data", sandBoxError ? state.SandboxError! : state.SandboxResult! },
+                    { "UserRequest", state.EnglishTranslatedUserRequest },
                     { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
                 });
 
                 var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
                 {
-                    Content = sandBoxError ? state.SandboxError! : state.SandboxResult!,
-                    UserRequest = state.UserQuestion,
+                    Data = sandBoxError ? state.SandboxError! : state.SandboxResult!,
+                    UserRequest = state.EnglishTranslatedUserRequest,
                     RequestContext = state.UserQuestionRelevantContext ?? string.Empty
                 });
                 state.PresenterOutput = resultsPresenterOutput.Content;
@@ -302,15 +296,13 @@ namespace AgentMesh.Workflows
                 _logger.LogDebug("Engaging Business Advisor Agent...");
                 await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
                 {
-                    { "UserQuestionText", state.AggregatedUserQuestion! },
-                    { "UserRequest", state.UserQuestion },
+                    { "UserRequest", state.EnglishTranslatedUserRequest },
                     { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
                 });
 
                 var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
                 {
-                    UserQuestionText = state.AggregatedUserQuestion!,
-                    UserRequest = state.UserQuestion,
+                    UserRequest = state.EnglishTranslatedUserRequest,
                     RequestContext = state.UserQuestionRelevantContext ?? string.Empty
                 });
                 state.BusinessAdvisorContent = baOutput.Content;
@@ -341,19 +333,17 @@ namespace AgentMesh.Workflows
             _logger.LogDebug("Engaging Personal Assistant Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Personal Assistant Agent", new Dictionary<string, string>
             {
-                { "Sentence", state.AggregatedUserQuestion! },
                 { "Data", data ?? "(No data)" },
                 { "OutputLanguage", state.DetectedOriginalLanguage! },
-                { "UserRequest", state.UserQuestion },
+                { "UserRequest", state.EnglishTranslatedUserRequest! },
                 { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
             });
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
-                Sentence = state.AggregatedUserQuestion!,
                 Data = data,
                 OutputLanguage = state.DetectedOriginalLanguage!,
-                UserRequest = state.UserQuestion,
+                UserRequest = state.EnglishTranslatedUserRequest,
                 RequestContext = state.UserQuestionRelevantContext ?? string.Empty
             });
             state.FinalAnswer = personalAssistantOutput.Response;
