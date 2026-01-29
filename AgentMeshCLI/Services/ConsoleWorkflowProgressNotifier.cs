@@ -36,6 +36,9 @@ namespace AgentMesh.Services
                     ConsoleHelper.WriteLineWithColor($"{output.Key}: {paramLines}", ConsoleColor.White);
                 }
             }
+
+            ConsoleHelper.WriteLineWithColor("══════════════════════════════════════════════════════════════════════════", ConsoleColor.Gray);
+
             await Task.CompletedTask;
         }
 
