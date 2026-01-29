@@ -3,14 +3,12 @@ using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using System.Text;
 
 namespace AgentMesh.Application.Services
 {
     public class ContextAnalyzerAgent : IContextAnalyzerAgent
     {
         public const string NO_RELEVANT_CONTEXT_FOUND = "NO RELEVANT CONTEXT FOUND";
-        private const string MESSAGES_SEPARATOR = "════════";
 
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<ContextAnalyzerAgent> _logger;
@@ -31,7 +29,7 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing ContextAnalyzerAgent.");
             _logger.LogDebug("ContextAnalyzerAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
-            var userMessage = BuildUserMessage(input.ContextMessages, input.UserLastRequest);
+            var userMessage = MessageSerializationUtils.SerializeConversationHistory(input.ContextMessages, input.UserLastRequest);
 
             var inputMessages = new List<AgentMessage>
             {
@@ -69,32 +67,6 @@ namespace AgentMesh.Application.Services
 
             _logger.LogDebug("ContextAnalyzerAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(result));
             return result;
-        }
-
-        private string BuildUserMessage(List<ContextMessage> contextMessages, string userLastRequest)
-        {
-            var sb = new StringBuilder();
-
-            if (contextMessages.Any())
-            {
-                sb.AppendLine("<conversation_history>");
-                
-                foreach (var message in contextMessages)
-                {
-                    var role = message.Role == ContextMessageRole.User ? "User" : "Assistant";
-                    sb.AppendLine($"{role} {message.Date:yyyy-MM-ddTHH:mm:ssZ}");
-                    sb.AppendLine(message.Text);
-                    sb.AppendLine(MESSAGES_SEPARATOR);
-                }
-                
-                sb.AppendLine("</conversation_history>");
-            }
-
-            sb.AppendLine($"<user_last_request>");
-            sb.AppendLine(userLastRequest);
-            sb.AppendLine("</user_last_request>");
-
-            return sb.ToString();
         }
     }
 }

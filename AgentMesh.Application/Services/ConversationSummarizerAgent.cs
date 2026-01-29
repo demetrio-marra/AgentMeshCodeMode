@@ -1,5 +1,5 @@
+﻿using AgentMesh.Application.Models;
 using AgentMesh.Models;
-using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -10,7 +10,6 @@ namespace AgentMesh.Application.Services
     {
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<ConversationSummarizerAgent> _logger;
-        private readonly string _systemPrompt;
 
         public ConversationSummarizerAgent([FromKeyedServices(ConversationSummarizerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
                                           ConversationSummarizerAgentConfiguration configuration,
@@ -18,7 +17,6 @@ namespace AgentMesh.Application.Services
         {
             _openAIClient = openAIClient;
             _logger = logger;
-            _systemPrompt = configuration.SystemPrompt;
         }
 
         public async Task<ConversationSummarizerAgentOutput> ExecuteAsync(ConversationSummarizerAgentInput input, CancellationToken cancellationToken = default)
@@ -26,11 +24,22 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing ConversationSummarizerAgent.");
             _logger.LogDebug("ConversationSummarizerAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
+            var countOfMessagesToIncludeInSummarization = input.Conversation.Count() - input.CountOfMessagesToKeep;
+            if (countOfMessagesToIncludeInSummarization <= 0)
+            {
+                countOfMessagesToIncludeInSummarization = input.Conversation.Count();
+            }
+
+            var messagesToSummarize = input.Conversation
+                .Take(countOfMessagesToIncludeInSummarization)
+                .ToList();
+
+            var serializedConversation = MessageSerializationUtils.SerializeConversationHistory(messagesToSummarize);
+
             var inputMessages = new List<AgentMessage>
             {
                 new AgentMessage { Role = AgentMessageRole.System, Content = "Today date is " + DateTime.UtcNow.ToString("yyyy-MM-dd") + "." },
-                new AgentMessage { Role = AgentMessageRole.System, Content = _systemPrompt },
-                new AgentMessage { Role = AgentMessageRole.User, Content = input.ConversationHistory }
+                new AgentMessage { Role = AgentMessageRole.User, Content = serializedConversation }
             };
 
             var stopwatch = Stopwatch.StartNew();
@@ -58,6 +67,12 @@ namespace AgentMesh.Application.Services
             stopwatch.Stop();
             _logger.LogDebug("ConversationSummarizerAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
                 stopwatch.ElapsedMilliseconds, result.TokenCount);
+
+            var newConversation = input.Conversation
+                .Skip(countOfMessagesToIncludeInSummarization)
+                .ToList();
+
+            result.NewConversation = newConversation;
 
             _logger.LogDebug("ConversationSummarizerAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(result));
             return result;

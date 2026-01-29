@@ -29,7 +29,7 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing BusinessAdvisorAgent.");
             _logger.LogDebug("BusinessAdvisorAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
-            var userMessage = UserMessageBuilder.BuildUserMessageString(input.RequestContext, input.UserRequest);
+            var userMessage = MessageSerializationUtils.SerializeRequestAndContext(input.RequestContext, input.UserRequest);
 
             var inputMessages = new List<AgentMessage>
             {
