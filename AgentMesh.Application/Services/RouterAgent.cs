@@ -49,7 +49,27 @@ namespace AgentMesh.Application.Services
                         throw new EmptyAgentResponseException();
                     }
 
-                    var recipient = responseText;
+                    var recipient = string.Empty;
+                    var rationale = string.Empty;
+
+                    var lines = responseText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var line in lines)
+                    {
+                        if (line.StartsWith("Recipient:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            recipient = line.Substring("Recipient:".Length).Trim();
+                        }
+                        else if (line.StartsWith("Rationale:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            rationale = line.Substring("Rationale:".Length).Trim();
+                        }
+                    }
+
+                    if (string.IsNullOrWhiteSpace(recipient))
+                    {
+                        recipient = responseText.Trim();
+                    }
+
                     if (_configuration.AllowedRecipients.Count > 0 && !_configuration.AllowedRecipients.Contains(recipient, StringComparer.OrdinalIgnoreCase))
                     {
                         _logger.LogWarning("The recipient '{Recipient}' is not in the allowed recipients list. Response: {ResponseText}", recipient, responseText);
@@ -59,6 +79,7 @@ namespace AgentMesh.Application.Services
                     return new RouterAgentOutput
                     {
                         Recipient = recipient,
+                        Rationale = rationale,
                         TokenCount = response.TotalTokenCount,
                         InputTokenCount = response.InputTokenCount,
                         OutputTokenCount = response.OutputTokenCount

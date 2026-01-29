@@ -6,7 +6,7 @@ Route each message to exactly one recipient.
 2. Categorize the message according to the following policies
    * greetings: greetings and salutations
    * information request on assistant: information request about the assistant such as its name, how it feels; all about the assistant ITSELF
-   * information request on assistant capabilities: generic system capabilities, support, help
+   * information request on capabilities or assistant capabilities: generic system capabilities, support, help
    * advice request on company-related systems/data USAGE: advice on how to use company-related systems or data
    * data extraction request: data extraction from company-related systems or data
    * company-related operations request: operations related to company systems or data
@@ -16,14 +16,19 @@ Route each message to exactly one recipient.
    * data extraction request -> BusinessRequirementsCreator
    * company-related operations request -> BusinessRequirementsCreator
    * advice request on company-related systems/data USAGE -> BusinessAdvisor
-   * information request on assistant capabilities -> BusinessAdvisor
+   * information request on capabilities or assistant capabilities -> BusinessAdvisor
    * information request on assistant -> PersonalAssistant
    * generic human knowledge request -> PersonalAssistant
    * greetings -> PersonalAssistant
    * unrecognized -> PersonalAssistant
-4. Output the recipient name ONLY, with no additional text
+4. Output the recipient name and rationale in the following format:
+Recipient: [RecipientName]
+Rationale: [Brief explanation of why this recipient was chosen]
 
-# Output EXACTLY with ONLY ONE between the following strings
+# Output format
+Recipient: EXACTLY ONE between the following strings
 * BusinessRequirementsCreator
 * BusinessAdvisor
 * PersonalAssistant
+
+Rationale: A brief explanation (1-2 sentences) of why the message was categorized and routed to this recipient

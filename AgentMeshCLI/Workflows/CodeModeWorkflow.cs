@@ -149,7 +149,8 @@ namespace AgentMesh.Workflows
             state.AddTokenUsage(RouterAgentConfiguration.AgentName, routerOutput.TokenCount, routerOutput.InputTokenCount, routerOutput.OutputTokenCount);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Router Agent", new Dictionary<string, string>
             {
-                { "Recipient", routerOutput.Recipient ?? "(Unknown)" }
+                { "Recipient", routerOutput.Recipient ?? "(Unknown)" },
+                { "Rationale", routerOutput.Rationale ?? "(No rationale provided)" }
             });
 
             if (routerOutput.Recipient?.Equals("PersonalAssistant", StringComparison.OrdinalIgnoreCase) == true)
