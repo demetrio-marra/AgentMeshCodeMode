@@ -8,6 +8,9 @@ namespace AgentMesh.Application.Services
 {
     public class ConversationSummarizerAgent : IConversationSummarizerAgent
     {
+        public const string SectionName = "Agents:ConversationSummarizer";
+        public const string AgentName = "ConversationSummarizer";
+
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<ConversationSummarizerAgent> _logger;
 
@@ -39,6 +42,7 @@ namespace AgentMesh.Application.Services
             var inputMessages = new List<AgentMessage>
             {
                 new AgentMessage { Role = AgentMessageRole.System, Content = "Today date is " + DateTime.UtcNow.ToString("yyyy-MM-dd") + "." },
+                new AgentMessage { Role = AgentMessageRole.System, Content = $"Summarize in {input.SummaryLanguage} language" },
                 new AgentMessage { Role = AgentMessageRole.User, Content = serializedConversation }
             };
 

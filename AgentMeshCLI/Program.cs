@@ -243,28 +243,6 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            // ContextManager agent config and client
-            services
-                .AddOptions<ContextManagerAgentConfiguration>()
-                .Bind(configuration.GetSection(ContextManagerAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<ContextManagerAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(ContextManagerAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<ContextManagerAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-            services.AddSingleton<IContextManagerAgent, ContextManagerAgent>();
 
             // ContextAnalyzer agent config and client
             services
@@ -334,6 +312,30 @@ namespace AgentMesh
             });
 
             services.AddSingleton<IPersonalAssistantAgent, PersonalAssistantAgent>();
+
+            // conversation summarizer agent config and client
+            services
+                .AddOptions<ConversationSummarizerAgentConfiguration>()
+                .Bind(configuration.GetSection(ConversationSummarizerAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<ConversationSummarizerAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(ConversationSummarizerAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<ConversationSummarizerAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IConversationSummarizerAgent, ConversationSummarizerAgent>();
+
 
             services.AddSingleton<IJSSandboxExecutor, JSSandboxExecutor>();
             services.AddSingleton<IJSSandbox, SESJSSandbox>();

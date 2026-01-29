@@ -20,7 +20,6 @@ namespace AgentMesh.Application.Workflows
         private readonly ICodeFixerAgent _codeFixerAgent;
         private readonly IResultsPresenterAgent _resultsPresenterAgent;
         private readonly IJSSandboxExecutor _jsSandboxExecutor;
-        //private readonly IContextManagerAgent _contextManagerAgent;
         private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
         private readonly ITranslatorAgent _translatorAgent;
         private readonly IRouterAgent _routerAgent;
@@ -35,7 +34,6 @@ namespace AgentMesh.Application.Workflows
             ICodeFixerAgent codeFixerAgent,
             IResultsPresenterAgent resultsPresenterAgent,
             IJSSandboxExecutor jsSandboxExecutor,
-            IContextManagerAgent contextManagerAgent,
             IContextAnalyzerAgent contextAnalyzerAgent,
             ITranslatorAgent translatorAgent,
             IRouterAgent routerAgent,
@@ -50,7 +48,6 @@ namespace AgentMesh.Application.Workflows
             _codeFixerAgent = codeFixerAgent;
             _resultsPresenterAgent = resultsPresenterAgent;
             _jsSandboxExecutor = jsSandboxExecutor;
-            //_contextManagerAgent = contextManagerAgent;
             _contextAnalyzerAgent = contextAnalyzerAgent;
             _translatorAgent = translatorAgent;
             _routerAgent = routerAgent;

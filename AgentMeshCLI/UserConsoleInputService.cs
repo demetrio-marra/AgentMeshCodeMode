@@ -20,6 +20,8 @@ namespace AgentMesh
         private readonly RouterAgentConfiguration _routerConfiguration;
         private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
         private readonly LLMsConfiguration _llmsConfiguration;
+        private readonly ConversationSummarizerAgentConfiguration _conversationSummarizerConfiguration;
+        private readonly IConversationSummarizerAgent _conversationSummarizerAgent;
 
         public UserConsoleInputService(
             IWorkflow workflow,
@@ -33,7 +35,9 @@ namespace AgentMesh
             TranslatorAgentConfiguration translatorConfiguration,
             RouterAgentConfiguration routerConfiguration,
             PersonalAssistantAgentConfiguration personalAssistantConfiguration,
-            LLMsConfiguration llmsConfiguration)
+            LLMsConfiguration llmsConfiguration,
+            ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration,
+            IConversationSummarizerAgent conversationSummarizerAgent)
         {
             _workflow = workflow;
             _businessRequirementsCreatorConfiguration = businessRequirementsCreatorConfiguration;
@@ -47,6 +51,8 @@ namespace AgentMesh
             _routerConfiguration = routerConfiguration;
             _personalAssistantConfiguration = personalAssistantConfiguration;
             _llmsConfiguration = llmsConfiguration;
+            _conversationSummarizerConfiguration = conversationSummarizerConfiguration;
+            _conversationSummarizerAgent = conversationSummarizerAgent;
         }
 
         public async Task Run()
@@ -122,7 +128,8 @@ namespace AgentMesh
                     { CodeStaticAnalyzerConfiguration.AgentName, _llmsConfiguration[_codeStaticAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionInputTokens },
                     { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionInputTokens },
-                    { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionInputTokens }
+                    { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionInputTokens },
+                    { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens }
                 };
 
                 var agentOutputCosts = new Dictionary<string, decimal>
@@ -136,11 +143,31 @@ namespace AgentMesh
                     { CodeStaticAnalyzerConfiguration.AgentName, _llmsConfiguration[_codeStaticAnalyzerConfiguration.LLM].CostPerMillionOutputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionOutputTokens },
                     { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionOutputTokens },
-                    { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionOutputTokens }
+                    { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionOutputTokens },
+                    { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
                 ConsoleHelper.PrintTokenUsageSummary(result.TokenUsageEntries, agentInputCosts, agentOutputCosts);
                 Console.WriteLine($"Total context tokens in conversation history: {conversationContext.TokensCount}\n");
+
+                if (conversationContext.TokensCount >= _conversationSummarizerConfiguration.SummaryTokenThreshold)
+                {
+                    var currentCountOfMessages = conversationContext.Conversation.Count();
+
+                    ConsoleHelper.WriteLineWithColor("Conversation tokens exceeded threshold. Summarizing conversation...", ConsoleColor.Yellow);
+                    var summarizerInput = new ConversationSummarizerAgentInput {
+                        Conversation = conversationContext.Conversation,
+                        CountOfMessagesToKeep = _conversationSummarizerConfiguration.NumMessageToPreseve,
+                        SummaryLanguage = _conversationSummarizerConfiguration.SummarizeLanguage
+                    };
+                    var summarizationResult = await _conversationSummarizerAgent.ExecuteAsync(summarizerInput);
+                    conversationContext.Conversation = summarizationResult.NewConversation;
+                    conversationContext.TokensCount = 0; // non è reale
+
+                    var afterCountOfMessages = conversationContext.Conversation.Count();
+
+                    ConsoleHelper.WriteLineWithColor($"Conversation summarized successfully. Messages count {currentCountOfMessages} -> {afterCountOfMessages}\n", ConsoleColor.Yellow);
+                }
             }
         }
 
@@ -157,6 +184,7 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("CodeFixer", CodeFixerAgentConfiguration.AgentName, _codeFixerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Results Presenter", ResultsPresenterAgentConfiguration.AgentName, _resultsPresenterConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Conversation Summarizer", ConversationSummarizerAgent.AgentName, _conversationSummarizerConfiguration);
             Console.WriteLine();
         }
     }
