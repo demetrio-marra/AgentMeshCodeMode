@@ -54,7 +54,7 @@ namespace AgentMesh
         {
             PrintConfigurations();
 
-            var conversation = new List<ContextMessage>();
+            var conversationContext = new ConversationContext();
 
             while (true)
             {
@@ -74,7 +74,8 @@ namespace AgentMesh
                 }
 
                 var questionDateTime = DateTime.UtcNow;
-                var result = await _workflow.ExecuteAsync(question!, conversation);
+                var currentConversation = conversationContext.Conversation.ToList();
+                var result = await _workflow.ExecuteAsync(question!, conversationContext.Conversation.ToList());
 
                 var inputMessageTokens = result.TokenUsageEntries
                     .Where(e => e.AgentName == _workflow.GetIngressAgentName())
@@ -86,20 +87,28 @@ namespace AgentMesh
 
                 var answerDateTime = DateTime.UtcNow;
 
-                conversation.Add(new ContextMessage
+                currentConversation.Add(new ContextMessage
                 {
                     Role = ContextMessageRole.User,
                     Date = questionDateTime,
                     Text = question!,
-                    TokensCount = inputMessageTokens
                 });
-                conversation.Add(new ContextMessage
+                currentConversation.Add(new ContextMessage
                 {
                     Role = ContextMessageRole.Assistant,
                     Date = answerDateTime,
                     Text = result.Response,
-                    TokensCount = outputMessageTokens
                 });
+
+                // Passiamo l'intera conversazione al context analyzer agent.
+                // Quindi i token totali, non devono essere sommati ogni volta,
+                // ma semplicemente aggiornati con i token dell'ultima interazione,
+                // ai quali aggiungeremo quello di output dell'ultima risposta.
+                // In questo modo avremo sempre il conteggio totale dei token in conversazione
+                // senza però il conteggio dei token dell'ultimo messaggio di input.
+                // Potremmo migliorarlo includendo anche l'ultimo messaggio nel context, prima di inviarlo
+                conversationContext.TokensCount = inputMessageTokens + outputMessageTokens;
+                conversationContext.Conversation = currentConversation;
 
                 ConsoleHelper.WriteLineWithColor("\nResponse for user:\n" + result.Response, ConsoleColor.Green);
 
@@ -132,7 +141,7 @@ namespace AgentMesh
                 };
 
                 ConsoleHelper.PrintTokenUsageSummary(result.TokenUsageEntries, agentInputCosts, agentOutputCosts);
-                Console.WriteLine($"Total context tokens in conversation history: {GetContextMessagesTokenCount(conversation)}\n");
+                Console.WriteLine($"Total context tokens in conversation history: {conversationContext.TokensCount}\n");
             }
         }
 
@@ -151,7 +160,5 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration);
             Console.WriteLine();
         }
-
-        private int GetContextMessagesTokenCount(List<ContextMessage> conversation) => conversation.Sum(m => m.TokensCount);
     }
 }

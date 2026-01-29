@@ -333,9 +333,7 @@ namespace AgentMesh.Workflows
             return new WorkflowResult
             {
                 Response = state.FinalAnswer!,
-                TokenUsageEntries = state.TokenUsageEntries,
-                IngressAgentName = ContextAnalyzerAgentConfiguration.AgentName,
-                EgressAgentName = PersonalAssistantAgentConfiguration.AgentName
+                TokenUsageEntries = state.TokenUsageEntries
             };
         }
 
