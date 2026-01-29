@@ -100,11 +100,13 @@ namespace AgentMesh.Workflows
                 RequestContext = state.UserQuestionRelevantContext ?? string.Empty
             });
             state.TranslatorResponse = translatorOutput.TranslatedSentence;
+            state.TranslatedContext = translatorOutput.TranslatedContext;
             state.DetectedOriginalLanguage = translatorOutput.DetectedOriginalLanguage;
             state.AddTokenUsage(TranslatorAgentConfiguration.AgentName, translatorOutput.TokenCount, translatorOutput.InputTokenCount, translatorOutput.OutputTokenCount);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Translator Agent", new Dictionary<string, string>
             {
                 { "TranslatedSentence", state.TranslatorResponse! },
+                { "TranslatedContext", state.TranslatedContext ?? "(No context translated)" },
                 { "DetectedOriginalLanguage", state.DetectedOriginalLanguage! }
             });
 
@@ -114,13 +116,13 @@ namespace AgentMesh.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Router Agent", new Dictionary<string, string>
             {
                 { "UserRequest", state.EnglishTranslatedUserRequest },
-                { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
+                { "RequestContext", state.TranslatedContext ?? string.Empty }
             });
 
             var routerOutput = await _routerAgent.ExecuteAsync(new RouterAgentInput
             {
                 UserRequest = state.EnglishTranslatedUserRequest,
-                RequestContext = state.UserQuestionRelevantContext ?? string.Empty
+                RequestContext = state.TranslatedContext ?? string.Empty
             });
             state.RouterRecipient = routerOutput.Recipient;
             state.AddTokenUsage(RouterAgentConfiguration.AgentName, routerOutput.TokenCount, routerOutput.InputTokenCount, routerOutput.OutputTokenCount);
@@ -140,13 +142,13 @@ namespace AgentMesh.Workflows
                 await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
                 {
                     { "UserRequest", state.EnglishTranslatedUserRequest },
-                    { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
+                    { "RequestContext", state.TranslatedContext ?? string.Empty }
                 });
 
                 var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
                 {
                     UserRequest = state.EnglishTranslatedUserRequest,
-                    RequestContext = state.UserQuestionRelevantContext ?? string.Empty
+                    RequestContext = state.TranslatedContext ?? string.Empty
                 });
                 state.ShouldEngageCoder = true;
                 state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount);
@@ -273,14 +275,14 @@ namespace AgentMesh.Workflows
                 {
                     { "Data", sandBoxError ? state.SandboxError! : state.SandboxResult! },
                     { "UserRequest", state.EnglishTranslatedUserRequest },
-                    { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
+                    { "RequestContext", state.TranslatedContext ?? string.Empty }
                 });
 
                 var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
                 {
                     Data = sandBoxError ? state.SandboxError! : state.SandboxResult!,
                     UserRequest = state.EnglishTranslatedUserRequest,
-                    RequestContext = state.UserQuestionRelevantContext ?? string.Empty
+                    RequestContext = state.TranslatedContext ?? string.Empty
                 });
                 state.PresenterOutput = resultsPresenterOutput.Content;
                 state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
@@ -297,13 +299,13 @@ namespace AgentMesh.Workflows
                 await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
                 {
                     { "UserRequest", state.EnglishTranslatedUserRequest },
-                    { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
+                    { "RequestContext", state.TranslatedContext ?? string.Empty }
                 });
 
                 var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
                 {
                     UserRequest = state.EnglishTranslatedUserRequest,
-                    RequestContext = state.UserQuestionRelevantContext ?? string.Empty
+                    RequestContext = state.TranslatedContext ?? string.Empty
                 });
                 state.BusinessAdvisorContent = baOutput.Content;
                 state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
@@ -336,7 +338,7 @@ namespace AgentMesh.Workflows
                 { "Data", data ?? "(No data)" },
                 { "OutputLanguage", state.DetectedOriginalLanguage! },
                 { "UserRequest", state.EnglishTranslatedUserRequest! },
-                { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
+                { "RequestContext", state.TranslatedContext ?? string.Empty }
             });
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
@@ -344,7 +346,7 @@ namespace AgentMesh.Workflows
                 Data = data,
                 OutputLanguage = state.DetectedOriginalLanguage!,
                 UserRequest = state.EnglishTranslatedUserRequest,
-                RequestContext = state.UserQuestionRelevantContext ?? string.Empty
+                RequestContext = state.TranslatedContext ?? string.Empty
             });
             state.FinalAnswer = personalAssistantOutput.Response;
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);

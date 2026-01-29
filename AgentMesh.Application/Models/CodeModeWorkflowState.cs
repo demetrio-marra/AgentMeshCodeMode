@@ -13,6 +13,7 @@
         public string? UserQuestionRelevantContext { get; set; }
         public string? TranslatorResponse { get; set; }
         public string? EnglishTranslatedUserRequest { get; set; }
+        public string? TranslatedContext { get; set; }
         public string? DetectedOriginalLanguage { get; set; }
         public string? RouterRecipient { get; set; }
         public string? BusinessRequirements { get; set; }

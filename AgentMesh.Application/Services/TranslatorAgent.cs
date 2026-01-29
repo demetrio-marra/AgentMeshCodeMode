@@ -4,13 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services
 {
     public class TranslatorAgent : ITranslatorAgent
     {
-        private readonly Regex JsonCodeRegex = new Regex(@"^```\s*json\s*(?<json>[\s\S]+)```$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        private const string NO_CONTEXT_MARKER = "NO_CONTEXT";
 
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<TranslatorAgent> _logger;
@@ -34,7 +33,7 @@ namespace AgentMesh.Application.Services
 
             var inputMessages = new List<AgentMessage>
             {
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Translate this sentence to {input.TargetLanguage}" },
+                new AgentMessage { Role = AgentMessageRole.System, Content = $"Translate this text to {input.TargetLanguage}" },
                 new AgentMessage { Role = AgentMessageRole.User, Content = userMessage }
             };
 
@@ -51,41 +50,33 @@ namespace AgentMesh.Application.Services
                     throw new EmptyAgentResponseException();
                 }
 
-                var jsonMatch = JsonCodeRegex.Match(responseText);
-                string jsonContent;
-                
-                if (jsonMatch.Success)
+                var detectedLanguage = ExtractTagContent(responseText, "DETECTED_LANGUAGE");
+                var translatedRequest = ExtractTagContent(responseText, "TRANSLATED_REQUEST");
+                var translatedContext = ExtractTagContent(responseText, "TRANSLATED_CONTEXT");
+
+                if (string.IsNullOrWhiteSpace(detectedLanguage))
                 {
-                    jsonContent = jsonMatch.Groups["json"].Value.Trim();
-                }
-                else
-                {
-                    jsonContent = responseText;
+                    _logger.LogError("Translation response did not contain DETECTED_LANGUAGE tag: {ResponseText}", responseText);
+                    throw new BadStructuredResponseException(responseText, "The model's response did not contain the expected DETECTED_LANGUAGE tag.");
                 }
 
-                TranslationResponse? translationResponse;
-                try
+                if (string.IsNullOrWhiteSpace(translatedRequest))
                 {
-                    translationResponse = JsonSerializer.Deserialize<TranslationResponse>(jsonContent, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                }
-                catch (JsonException ex)
-                {
-                    _logger.LogError(ex, "Failed to parse translation response: {ResponseText}", jsonContent);
-                    throw new BadStructuredResponseException(responseText, "The model's response did not contain valid JSON.");
+                    _logger.LogError("Translation response did not contain TRANSLATED_REQUEST tag: {ResponseText}", responseText);
+                    throw new BadStructuredResponseException(responseText, "The model's response did not contain the expected TRANSLATED_REQUEST tag.");
                 }
 
-                if (translationResponse == null || string.IsNullOrWhiteSpace(translationResponse.TranslatedSentence))
+                if (string.IsNullOrWhiteSpace(translatedContext))
                 {
-                    throw new BadStructuredResponseException(responseText, "The model's response did not contain a valid translation.");
+                    _logger.LogError("Translation response did not contain TRANSLATED_CONTEXT tag: {ResponseText}", responseText);
+                    throw new BadStructuredResponseException(responseText, "The model's response did not contain the expected TRANSLATED_CONTEXT tag.");
                 }
 
                 return new TranslatorAgentOutput
                 {
-                    TranslatedSentence = translationResponse.TranslatedSentence,
-                    DetectedOriginalLanguage = translationResponse.DetectedOriginalLanguage ?? "Unknown",
+                    TranslatedSentence = translatedRequest,
+                    TranslatedContext = translatedContext.Equals(NO_CONTEXT_MARKER, StringComparison.OrdinalIgnoreCase) ? null : translatedContext,
+                    DetectedOriginalLanguage = string.IsNullOrWhiteSpace(detectedLanguage) ? "Unknown" : detectedLanguage,
                     TokenCount = response.TotalTokenCount,
                     InputTokenCount = response.InputTokenCount,
                     OutputTokenCount = response.OutputTokenCount
@@ -102,10 +93,25 @@ namespace AgentMesh.Application.Services
             return result;
         }
 
-        private class TranslationResponse
+        private static string ExtractTagContent(string text, string tagName)
         {
-            public string TranslatedSentence { get; set; } = string.Empty;
-            public string? DetectedOriginalLanguage { get; set; }
+            var openTag = $"<{tagName}>";
+            var closeTag = $"</{tagName}>";
+
+            var startIndex = text.IndexOf(openTag, StringComparison.OrdinalIgnoreCase);
+            if (startIndex == -1)
+            {
+                return string.Empty;
+            }
+
+            startIndex += openTag.Length;
+            var endIndex = text.IndexOf(closeTag, startIndex, StringComparison.OrdinalIgnoreCase);
+            if (endIndex == -1)
+            {
+                return string.Empty;
+            }
+
+            return text.Substring(startIndex, endIndex - startIndex).Trim();
         }
     }
 }
