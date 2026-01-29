@@ -1,11 +1,10 @@
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
-using AgentMesh.Application.Workflows;
 using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 
-namespace AgentMesh.Workflows
+namespace AgentMesh.Application.Workflows
 {
     public class CodeModeWorkflow : IWorkflow
     {
