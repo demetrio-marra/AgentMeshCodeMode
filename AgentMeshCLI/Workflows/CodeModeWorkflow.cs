@@ -23,7 +23,6 @@ namespace AgentMesh.Workflows
         private readonly IJSSandboxExecutor _jsSandboxExecutor;
         private readonly IContextManagerAgent _contextManagerAgent;
         private readonly ITranslatorAgent _translatorAgent;
-        private readonly IContextAggregatorAgent _contextAggregatorAgent;
         private readonly IRouterAgent _routerAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent;
 
@@ -38,7 +37,6 @@ namespace AgentMesh.Workflows
             IJSSandboxExecutor jsSandboxExecutor,
             IContextManagerAgent contextManagerAgent,
             ITranslatorAgent translatorAgent,
-            IContextAggregatorAgent contextAggregatorAgent,
             IRouterAgent routerAgent,
             IPersonalAssistantAgent personalAssistantAgent)
         {
@@ -53,7 +51,6 @@ namespace AgentMesh.Workflows
             _jsSandboxExecutor = jsSandboxExecutor;
             _contextManagerAgent = contextManagerAgent;
             _translatorAgent = translatorAgent;
-            _contextAggregatorAgent = contextAggregatorAgent;
             _routerAgent = routerAgent;
             _personalAssistantAgent = personalAssistantAgent;
         }
@@ -92,13 +89,17 @@ namespace AgentMesh.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Translator Agent", new Dictionary<string, string>
             {
                 { "Sentence", state.UserQuestion },
-                { "TargetLanguage", INTERNAL_AGENTIC_LANGUAGE }
+                { "TargetLanguage", INTERNAL_AGENTIC_LANGUAGE },
+                { "UserRequest", state.UserQuestion },
+                { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
             });
 
             var translatorOutput = await _translatorAgent.ExecuteAsync(new TranslatorAgentInput
             {
                 Sentence = state.UserQuestion,
-                TargetLanguage = INTERNAL_AGENTIC_LANGUAGE
+                TargetLanguage = INTERNAL_AGENTIC_LANGUAGE,
+                UserRequest = state.UserQuestion,
+                RequestContext = state.UserQuestionRelevantContext ?? string.Empty
             });
             state.TranslatorResponse = translatorOutput.TranslatedSentence;
             state.DetectedOriginalLanguage = translatorOutput.DetectedOriginalLanguage;
@@ -109,41 +110,21 @@ namespace AgentMesh.Workflows
                 { "DetectedOriginalLanguage", state.DetectedOriginalLanguage! }
             });
 
-            if (!string.IsNullOrWhiteSpace(state.UserQuestionRelevantContext))
-            {
-                _logger.LogDebug("Engaging Context Aggregator Agent...");
-                await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Aggregator Agent", new Dictionary<string, string>
-                {
-                    { "LastStatement", state.TranslatorResponse! },
-                    { "ContextualInformation", state.UserQuestionRelevantContext ?? string.Empty }
-                });
-
-                var contextAggregatorOutput = await _contextAggregatorAgent.ExecuteAsync(new ContextAggregatorAgentInput
-                {
-                    LastStatement = state.TranslatorResponse!,
-                    ContextualInformation = state.UserQuestionRelevantContext ?? string.Empty
-                });
-                state.AggregatedUserQuestion = contextAggregatorOutput.AggregatedSentence;
-                state.AddTokenUsage(ContextAggregatorAgentConfiguration.AgentName, contextAggregatorOutput.TokenCount, contextAggregatorOutput.InputTokenCount, contextAggregatorOutput.OutputTokenCount);
-                await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Aggregator Agent", new Dictionary<string, string>
-                {
-                    { "AggregatedSentence", state.AggregatedUserQuestion! }
-                });
-            }
-            else
-            {
-                state.AggregatedUserQuestion = state.TranslatorResponse;
-            }
+            state.AggregatedUserQuestion = state.TranslatorResponse;
             
             _logger.LogDebug("Engaging Router Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Router Agent", new Dictionary<string, string>
             {
-                { "Message", state.AggregatedUserQuestion! }
+                { "Message", state.AggregatedUserQuestion! },
+                { "UserRequest", state.UserQuestion },
+                { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
             });
 
             var routerOutput = await _routerAgent.ExecuteAsync(new RouterAgentInput
             {
-                Message = state.AggregatedUserQuestion!
+                Message = state.AggregatedUserQuestion!,
+                UserRequest = state.UserQuestion,
+                RequestContext = state.UserQuestionRelevantContext ?? string.Empty
             });
             state.RouterRecipient = routerOutput.Recipient;
             state.AddTokenUsage(RouterAgentConfiguration.AgentName, routerOutput.TokenCount, routerOutput.InputTokenCount, routerOutput.OutputTokenCount);
@@ -162,12 +143,16 @@ namespace AgentMesh.Workflows
                 _logger.LogDebug("Engaging Business Requirements Creator Agent...");
                 await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
                 {
-                    { "UserQuestionText", state.AggregatedUserQuestion! }
+                    { "UserQuestionText", state.AggregatedUserQuestion! },
+                    { "UserRequest", state.UserQuestion },
+                    { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
                 });
 
                 var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
                 {
-                    UserQuestionText = state.AggregatedUserQuestion!
+                    UserQuestionText = state.AggregatedUserQuestion!,
+                    UserRequest = state.UserQuestion,
+                    RequestContext = state.UserQuestionRelevantContext ?? string.Empty
                 });
                 state.ShouldEngageCoder = true;
                 state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount);
@@ -292,12 +277,16 @@ namespace AgentMesh.Workflows
                 _logger.LogDebug("Engaging Results Presenter Agent...");
                 await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
                 {
-                    { "Content", sandBoxError ? state.SandboxError! : state.SandboxResult! }
+                    { "Content", sandBoxError ? state.SandboxError! : state.SandboxResult! },
+                    { "UserRequest", state.UserQuestion },
+                    { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
                 });
 
                 var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
                 {
-                    Content = sandBoxError ? state.SandboxError! : state.SandboxResult!
+                    Content = sandBoxError ? state.SandboxError! : state.SandboxResult!,
+                    UserRequest = state.UserQuestion,
+                    RequestContext = state.UserQuestionRelevantContext ?? string.Empty
                 });
                 state.PresenterOutput = resultsPresenterOutput.Content;
                 state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
@@ -313,12 +302,16 @@ namespace AgentMesh.Workflows
                 _logger.LogDebug("Engaging Business Advisor Agent...");
                 await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
                 {
-                    { "UserQuestionText", state.AggregatedUserQuestion! }
+                    { "UserQuestionText", state.AggregatedUserQuestion! },
+                    { "UserRequest", state.UserQuestion },
+                    { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
                 });
 
                 var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
                 {
-                    UserQuestionText = state.AggregatedUserQuestion!
+                    UserQuestionText = state.AggregatedUserQuestion!,
+                    UserRequest = state.UserQuestion,
+                    RequestContext = state.UserQuestionRelevantContext ?? string.Empty
                 });
                 state.BusinessAdvisorContent = baOutput.Content;
                 state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
@@ -350,14 +343,18 @@ namespace AgentMesh.Workflows
             {
                 { "Sentence", state.AggregatedUserQuestion! },
                 { "Data", data ?? "(No data)" },
-                { "OutputLanguage", state.DetectedOriginalLanguage! }
+                { "OutputLanguage", state.DetectedOriginalLanguage! },
+                { "UserRequest", state.UserQuestion },
+                { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
             });
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
                 Sentence = state.AggregatedUserQuestion!,
                 Data = data,
-                OutputLanguage = state.DetectedOriginalLanguage!
+                OutputLanguage = state.DetectedOriginalLanguage!,
+                UserRequest = state.UserQuestion,
+                RequestContext = state.UserQuestionRelevantContext ?? string.Empty
             });
             state.FinalAnswer = personalAssistantOutput.Response;
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);

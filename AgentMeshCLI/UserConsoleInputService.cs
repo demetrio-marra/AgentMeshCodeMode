@@ -18,7 +18,6 @@ namespace AgentMesh
         private readonly ResultsPresenterAgentConfiguration _resultsPresenterConfiguration;
         private readonly ContextManagerAgentConfiguration _contextManagerConfiguration;
         private readonly TranslatorAgentConfiguration _translatorConfiguration;
-        private readonly ContextAggregatorAgentConfiguration _contextAggregatorConfiguration;
         private readonly RouterAgentConfiguration _routerConfiguration;
         private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
         private readonly LLMsConfiguration _llmsConfiguration;
@@ -33,7 +32,6 @@ namespace AgentMesh
             ResultsPresenterAgentConfiguration resultsPresenterConfiguration,
             ContextManagerAgentConfiguration contextManagerConfiguration,
             TranslatorAgentConfiguration translatorConfiguration,
-            ContextAggregatorAgentConfiguration contextAggregatorConfiguration,
             RouterAgentConfiguration routerConfiguration,
             PersonalAssistantAgentConfiguration personalAssistantConfiguration,
             LLMsConfiguration llmsConfiguration)
@@ -47,7 +45,6 @@ namespace AgentMesh
             _resultsPresenterConfiguration = resultsPresenterConfiguration;
             _contextManagerConfiguration = contextManagerConfiguration;
             _translatorConfiguration = translatorConfiguration;
-            _contextAggregatorConfiguration = contextAggregatorConfiguration;
             _routerConfiguration = routerConfiguration;
             _personalAssistantConfiguration = personalAssistantConfiguration;
             _llmsConfiguration = llmsConfiguration;
@@ -82,7 +79,6 @@ namespace AgentMesh
                 {
                     { ContextManagerAgentConfiguration.AgentName, _llmsConfiguration[_contextManagerConfiguration.LLM].CostPerMillionInputTokens },
                     { TranslatorAgentConfiguration.AgentName, _llmsConfiguration[_translatorConfiguration.LLM].CostPerMillionInputTokens },
-                    { ContextAggregatorAgentConfiguration.AgentName, _llmsConfiguration[_contextAggregatorConfiguration.LLM].CostPerMillionInputTokens },
                     { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionInputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionInputTokens },
                     { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionInputTokens },
@@ -97,7 +93,6 @@ namespace AgentMesh
                 {
                     { ContextManagerAgentConfiguration.AgentName, _llmsConfiguration[_contextManagerConfiguration.LLM].CostPerMillionOutputTokens },
                     { TranslatorAgentConfiguration.AgentName, _llmsConfiguration[_translatorConfiguration.LLM].CostPerMillionOutputTokens },
-                    { ContextAggregatorAgentConfiguration.AgentName, _llmsConfiguration[_contextAggregatorConfiguration.LLM].CostPerMillionOutputTokens },
                     { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionOutputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionOutputTokens },
                     { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionOutputTokens },
@@ -117,7 +112,6 @@ namespace AgentMesh
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Context Manager", ContextManagerAgentConfiguration.AgentName, _contextManagerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Translator", TranslatorAgentConfiguration.AgentName, _translatorConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Context Aggregator", ContextAggregatorAgentConfiguration.AgentName, _contextAggregatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Router", RouterAgentConfiguration.AgentName, _routerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Requirements Creator", BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Advisor", BusinessAdvisorAgentConfiguration.AgentName, _businessAdvisorConfiguration);
