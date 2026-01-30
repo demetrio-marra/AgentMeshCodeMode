@@ -3,12 +3,14 @@ using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Helpers;
 using AgentMesh.Models;
+using AgentMesh.Services;
 
 namespace AgentMesh
 {
     internal class UserConsoleInputService
     {
         private readonly IWorkflow _workflow;
+        private readonly IWorkflowProgressNotifier _workflowProgressNotifier;
         private readonly BusinessRequirementsCreatorAgentConfiguration _businessRequirementsCreatorConfiguration;
         private readonly BusinessAdvisorAgentConfiguration _businessAdvisorConfiguration;
         private readonly CoderAgentConfiguration _coderConfiguration;
@@ -25,6 +27,7 @@ namespace AgentMesh
 
         public UserConsoleInputService(
             IWorkflow workflow,
+            IWorkflowProgressNotifier workflowProgressNotifier,
             BusinessRequirementsCreatorAgentConfiguration businessRequirementsCreatorConfiguration,
             BusinessAdvisorAgentConfiguration businessAdvisorConfiguration,
             CoderAgentConfiguration coderConfiguration,
@@ -40,6 +43,7 @@ namespace AgentMesh
             IConversationSummarizerAgent conversationSummarizerAgent)
         {
             _workflow = workflow;
+            _workflowProgressNotifier = workflowProgressNotifier;
             _businessRequirementsCreatorConfiguration = businessRequirementsCreatorConfiguration;
             _businessAdvisorConfiguration = businessAdvisorConfiguration;
             _coderConfiguration = coderConfiguration;
@@ -147,25 +151,39 @@ namespace AgentMesh
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
-                Console.WriteLine($"\n\nConversation status: Count of messages {conversationContext.Conversation.Count()}. Count of tokens: {conversationContext.TokensCount}\n");
+                ConsoleHelper.WriteLineWithColor($"\n\nConversation status: Count of messages {conversationContext.Conversation.Count()}. Count of tokens: {conversationContext.TokensCount}\n", ConsoleColor.Gray);
 
                 if (conversationContext.TokensCount >= _conversationSummarizerConfiguration.SummaryTokenThreshold)
                 {
                     var currentCountOfMessages = conversationContext.Conversation.Count();
 
-                    ConsoleHelper.WriteLineWithColor($"Conversation tokens exceeded threshold ({_conversationSummarizerConfiguration.SummaryTokenThreshold}). Summarizing conversation...", ConsoleColor.Yellow);
+                    ConsoleHelper.WriteLineWithColor($"Conversation tokens exceeded configured threshold ({_conversationSummarizerConfiguration.SummaryTokenThreshold}). Summarizing conversation...", ConsoleColor.White);
+
                     var summarizerInput = new ConversationSummarizerAgentInput {
                         Conversation = conversationContext.Conversation,
                         CountOfMessagesToKeep = _conversationSummarizerConfiguration.NumMessageToPreseve,
                         SummaryLanguage = _conversationSummarizerConfiguration.SummarizeLanguage
                     };
+
+                    await _workflowProgressNotifier.NotifyWorkflowStepStart("Conversation Summarizer Agent", new Dictionary<string, string>
+                    {
+                        { "Conversation", $"<omitted for brevity>. Total: {summarizerInput.Conversation.Count()}" },
+                        { "CountOfMessagesToKeep", summarizerInput.CountOfMessagesToKeep.ToString() },
+                        { "SummaryLanguage", summarizerInput.SummaryLanguage ?? string.Empty }
+                    });
+
                     var summarizationResult = await _conversationSummarizerAgent.ExecuteAsync(summarizerInput);
+
+                    await _workflowProgressNotifier.NotifyWorkflowStepEnd("Conversation Summarizer Agent", new Dictionary<string, string>
+                    {
+                        { "Conversation", $"<omitted for brevity>. Total: {summarizationResult.NewConversation.Count()}" },
+                        { "Summary", summarizationResult.Summary.ToString() }
+                    });
+
                     conversationContext.Conversation = summarizationResult.NewConversation;
                     conversationContext.TokensCount = 0; // non fa niente se non è preciso, tanto lo ricalcoliamo al prossimo giro
 
                     var afterCountOfMessages = conversationContext.Conversation.Count();
-
-                    ConsoleHelper.WriteLineWithColor($"Conversation summarized successfully. Messages count {currentCountOfMessages} -> {afterCountOfMessages}\n", ConsoleColor.Yellow);
 
                     var summarizationTokenUsageEntry = new AgentTokenUsageEntry
                     {
