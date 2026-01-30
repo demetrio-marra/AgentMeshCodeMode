@@ -161,7 +161,7 @@ namespace AgentMesh
                     };
                     var summarizationResult = await _conversationSummarizerAgent.ExecuteAsync(summarizerInput);
                     conversationContext.Conversation = summarizationResult.NewConversation;
-                    conversationContext.TokensCount = 0; // non è reale
+                    conversationContext.TokensCount = 0; // non fa niente se non è preciso, tanto lo ricalcoliamo al prossimo giro
 
                     var afterCountOfMessages = conversationContext.Conversation.Count();
 
