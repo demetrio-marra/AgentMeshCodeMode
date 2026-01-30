@@ -167,7 +167,13 @@ namespace AgentMesh
 
                     ConsoleHelper.WriteLineWithColor($"Conversation summarized successfully. Messages count {currentCountOfMessages} -> {afterCountOfMessages}\n", ConsoleColor.Yellow);
 
-                    var summarizationTokenUsageEntry = new AgentTokenUsageEntry { AgentName = ConversationSummarizerAgent.AgentName, InputTokens = summarizationResult.InputTokenCount, OutputTokens = summarizationResult.OutputTokenCount }
+                    var summarizationTokenUsageEntry = new AgentTokenUsageEntry
+                    {
+                        AgentName = ConversationSummarizerAgent.AgentName,
+                        InputTokens = summarizationResult.InputTokenCount,
+                        OutputTokens = summarizationResult.OutputTokenCount
+                    };
+                    
                     result.TokenUsageEntries.Add(summarizationTokenUsageEntry);
                 }
 
