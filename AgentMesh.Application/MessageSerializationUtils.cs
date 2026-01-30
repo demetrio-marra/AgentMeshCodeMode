@@ -44,13 +44,6 @@ namespace AgentMesh.Application
             return sb.ToString();
         }
 
-        public static string AddAdditionalSectionToSerializedMessage(string existingUserMessage, string additionalDataLabel, string additionalDataContent)
-        {
-            var sb = new StringBuilder(existingUserMessage);
-            sb.Append(WrapSection(additionalDataLabel, additionalDataContent));
-            return sb.ToString();
-        }
-
         private static string WrapSection(string label, string content)
         {
             var sb = new StringBuilder();

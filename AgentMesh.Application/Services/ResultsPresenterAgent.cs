@@ -27,11 +27,11 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("ResultsPresenterAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
             var userMessage = MessageSerializationUtils.SerializeRequestAndContext(input.RequestContext, input.UserRequest);
-            userMessage = MessageSerializationUtils.AddAdditionalSectionToSerializedMessage(userMessage, "data", input.Data);
 
             var inputs = new List<AgentMessage>
             {
                 new AgentMessage { Role = AgentMessageRole.System, Content = "Today date is " + DateTime.UtcNow.ToString("yyyy-MM-dd") + "." },
+                new AgentMessage { Role = AgentMessageRole.System, Content = "Data to present\n" + input.Data },
                 new AgentMessage { Role = AgentMessageRole.User, Content = userMessage },
             };
 

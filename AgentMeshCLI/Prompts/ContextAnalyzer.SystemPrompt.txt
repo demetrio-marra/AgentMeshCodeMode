@@ -11,7 +11,6 @@ Your mission is to extract relevant contextual information from a conversation h
 
 4. **Prune rigorously.** Exclude any information that is:
    - Part of a concluded sub-dialogue not referenced in the latest statement
-   - Purely social (greetings, "thank you", acknowledgments)
    - About a previous, distinct topic unrelated to the current request
    - Vaguely associated but not directly pertinent
 
