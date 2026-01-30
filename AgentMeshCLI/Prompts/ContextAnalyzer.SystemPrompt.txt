@@ -19,6 +19,8 @@ Your mission is to extract relevant contextual information from a conversation h
 
 **Output Format:**
 If relevant information is found, produce a concise, mechanically generated bulleted list suitable for AI agent consumption. Each item must directly stem from the relevant history.
+Include only elements from conversation history.
+It is not necessary to include also the user's latest request in the output. It would result redundant.
 
 Example:
 ```
