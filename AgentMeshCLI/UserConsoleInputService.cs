@@ -147,7 +147,6 @@ namespace AgentMesh
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
-                ConsoleHelper.PrintTokenUsageSummary(result.TokenUsageEntries, agentInputCosts, agentOutputCosts);
                 Console.WriteLine($"Total context tokens in conversation history: {conversationContext.TokensCount}\n");
 
                 if (conversationContext.TokensCount >= _conversationSummarizerConfiguration.SummaryTokenThreshold)
@@ -167,7 +166,12 @@ namespace AgentMesh
                     var afterCountOfMessages = conversationContext.Conversation.Count();
 
                     ConsoleHelper.WriteLineWithColor($"Conversation summarized successfully. Messages count {currentCountOfMessages} -> {afterCountOfMessages}\n", ConsoleColor.Yellow);
+
+                    var summarizationTokenUsageEntry = new AgentTokenUsageEntry { AgentName = ConversationSummarizerAgent.AgentName, InputTokens = summarizationResult.InputTokenCount, OutputTokens = summarizationResult.OutputTokenCount }
+                    result.TokenUsageEntries.Add(summarizationTokenUsageEntry);
                 }
+
+                ConsoleHelper.PrintTokenUsageSummary(result.TokenUsageEntries, agentInputCosts, agentOutputCosts);
             }
         }
 
