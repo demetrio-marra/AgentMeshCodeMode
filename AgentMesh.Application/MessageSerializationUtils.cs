@@ -7,6 +7,9 @@ namespace AgentMesh.Application
     {
         public const string MESSAGES_SEPARATOR = "════════";
 
+        private const string SECTION_BEGIN_MARKER = "<<<<<<<< BEGIN `{0}` SECTION >>>>>>>>";
+        private const string SECTION_END_MARKER = "<<<<<<<< END `{0}` SECTION >>>>>>>>";
+
         public static string SerializeConversationHistory(IEnumerable<ContextMessage> contextMessages)
         {
             var sb = new StringBuilder();
@@ -17,7 +20,9 @@ namespace AgentMesh.Application
                 sb.AppendLine(message.Text);
                 sb.AppendLine(MESSAGES_SEPARATOR);
             }
-            return sb.ToString();
+            
+            var section = WrapSection("conversation history", sb.ToString().TrimEnd());
+            return section;
         }
 
         public static string SerializeConversationHistory(IEnumerable<ContextMessage> contextMessages, string userLastRequest)
@@ -25,9 +30,7 @@ namespace AgentMesh.Application
             var ret = SerializeConversationHistory(contextMessages);
             var sb = new StringBuilder(ret);
 
-            sb.AppendLine($"<user_last_request>");
-            sb.AppendLine(userLastRequest);
-            sb.AppendLine("</user_last_request>");
+            sb.Append(WrapSection("user's latest request", userLastRequest));
 
             return sb.ToString();
         }
@@ -35,27 +38,25 @@ namespace AgentMesh.Application
         public static string SerializeRequestAndContext(string requestContext, string requestText)
         {
             var sb = new StringBuilder();
-
-            sb.AppendLine("```context");
-            sb.AppendLine(requestContext);
-            sb.AppendLine("```");
-            sb.AppendLine();
-
-            sb.AppendLine("```userRequest");
-            sb.AppendLine(requestText);
-            sb.AppendLine("```");
-            sb.AppendLine();
+            sb.Append(WrapSection("context", requestContext));
+            sb.Append(WrapSection("userRequest", requestText));
 
             return sb.ToString();
         }
 
-        public static string AddAdditionalDataToSerializedMessage(string existingUserMessage, string additionalDataLabel, string additionalDataContent)
+        public static string AddAdditionalSectionToSerializedMessage(string existingUserMessage, string additionalDataLabel, string additionalDataContent)
         {
             var sb = new StringBuilder(existingUserMessage);
-            sb.AppendLine("```" + additionalDataLabel);
-            sb.AppendLine(additionalDataContent);
-            sb.AppendLine("```");
-            sb.AppendLine();
+            sb.Append(WrapSection(additionalDataLabel, additionalDataContent));
+            return sb.ToString();
+        }
+
+        private static string WrapSection(string label, string content)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine(string.Format(SECTION_BEGIN_MARKER, label));
+            sb.AppendLine(content);
+            sb.AppendLine(string.Format(SECTION_END_MARKER, label));
             return sb.ToString();
         }
     }

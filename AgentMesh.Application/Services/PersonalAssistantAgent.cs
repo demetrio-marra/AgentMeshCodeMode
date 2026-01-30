@@ -28,7 +28,7 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("PersonalAssistantAgent Input: {Input}", JsonSerializer.Serialize(input));
 
             var userMessage = MessageSerializationUtils.SerializeRequestAndContext(input.RequestContext, input.UserRequest);
-            userMessage = MessageSerializationUtils.AddAdditionalDataToSerializedMessage(userMessage, "data", input.Data);
+            userMessage = MessageSerializationUtils.AddAdditionalSectionToSerializedMessage(userMessage, "data", input.Data);
 
             var inputMessages = new List<AgentMessage>
             {

@@ -147,7 +147,7 @@ namespace AgentMesh
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
-                Console.WriteLine($"\n\nTotal context tokens in conversation history: {conversationContext.TokensCount}\n");
+                Console.WriteLine($"\n\nConversation status: Count of messages {conversationContext.Conversation.Count()}. Count of tokens: {conversationContext.TokensCount}\n");
 
                 if (conversationContext.TokensCount >= _conversationSummarizerConfiguration.SummaryTokenThreshold)
                 {
