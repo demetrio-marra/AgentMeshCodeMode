@@ -222,28 +222,6 @@ namespace AgentMesh
 
             services.AddSingleton<ITranslatorAgent, TranslatorAgent>();
 
-            // ChatManager agent config and client
-            services
-                .AddOptions<ChatManagerAgentConfiguration>()
-                .Bind(configuration.GetSection(ChatManagerAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<ChatManagerAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(ChatManagerAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<ChatManagerAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-
             // ContextAnalyzer agent config and client
             services
                 .AddOptions<ContextAnalyzerAgentConfiguration>()
