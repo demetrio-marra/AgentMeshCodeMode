@@ -153,7 +153,7 @@ namespace AgentMesh
                 {
                     var currentCountOfMessages = conversationContext.Conversation.Count();
 
-                    ConsoleHelper.WriteLineWithColor("Conversation tokens exceeded threshold. Summarizing conversation...", ConsoleColor.Yellow);
+                    ConsoleHelper.WriteLineWithColor($"Conversation tokens exceeded threshold ({_conversationSummarizerConfiguration.SummaryTokenThreshold}). Summarizing conversation...", ConsoleColor.Yellow);
                     var summarizerInput = new ConversationSummarizerAgentInput {
                         Conversation = conversationContext.Conversation,
                         CountOfMessagesToKeep = _conversationSummarizerConfiguration.NumMessageToPreseve,

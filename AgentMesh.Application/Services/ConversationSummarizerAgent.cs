@@ -37,6 +37,8 @@ namespace AgentMesh.Application.Services
                 .Take(countOfMessagesToIncludeInSummarization)
                 .ToList();
 
+            var lastSummarizedMessageTimeStamp = messagesToSummarize.LastOrDefault()?.Date ?? DateTime.MinValue;
+
             var serializedConversation = MessageSerializationUtils.SerializeConversationHistory(messagesToSummarize);
 
             var inputMessages = new List<AgentMessage>
@@ -75,6 +77,14 @@ namespace AgentMesh.Application.Services
             var newConversation = input.Conversation
                 .Skip(countOfMessagesToIncludeInSummarization)
                 .ToList();
+
+            // add summarized message to conversation
+            newConversation.Insert(0, new ContextMessage
+            {
+                Role = ContextMessageRole.Assistant,
+                Text = $"Summary of previous conversation: {result.Summary}",
+                Date = lastSummarizedMessageTimeStamp
+            });
 
             result.NewConversation = newConversation;
 
