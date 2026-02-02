@@ -33,4 +33,5 @@ Use the userRequest and context to understand what the user was asking for, whic
 * If the data contains "fetch failed" error, inform the User that the System had a temporary issue occurred while retrieving information
 * If the data contains "access denied" error, inform the User that they do not have permission to access the requested information
 * If the data contains "not found" error, inform the User that the requested information could not be found
+* If the error message mention not existing APIs or services, inform the User that the requested functionality is not available on the System without mentioning APIs or system-specific details
 * For any other errors, inform the User that an unexpected error occurred on the System and suggest trying again later
