@@ -176,6 +176,29 @@ namespace AgentMesh
 
             services.AddSingleton<ICodeFixerAgent, CodeFixerAgent>();
 
+            // CodeExecutionFailuresDetector agent config and client
+            services
+                .AddOptions<CodeExecutionFailuresDetectorAgentConfiguration>()
+                .Bind(configuration.GetSection(CodeExecutionFailuresDetectorAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<CodeExecutionFailuresDetectorAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<CodeExecutionFailuresDetectorAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<ICodeExecutionFailuresDetectorAgent, JavascriptCodeExecutionFailuresDetectorAgent>();
+
             // CodeStaticAnalyzer agent config and client
             services
                 .AddOptions<CodeStaticAnalyzerConfiguration>()

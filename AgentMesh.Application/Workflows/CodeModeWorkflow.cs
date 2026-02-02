@@ -18,6 +18,7 @@ namespace AgentMesh.Application.Workflows
         private readonly ICoderAgent _coderAgent;
         private readonly ICodeStaticAnalyzer _codeStaticAnalyzer;
         private readonly ICodeFixerAgent _codeFixerAgent;
+        private readonly ICodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent;
         private readonly IResultsPresenterAgent _resultsPresenterAgent;
         private readonly IJSSandboxExecutor _jsSandboxExecutor;
         private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
@@ -32,6 +33,7 @@ namespace AgentMesh.Application.Workflows
             ICoderAgent coderAgent,
             ICodeStaticAnalyzer codeStaticAnalyzer,
             ICodeFixerAgent codeFixerAgent,
+            ICodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent,
             IResultsPresenterAgent resultsPresenterAgent,
             IJSSandboxExecutor jsSandboxExecutor,
             IContextAnalyzerAgent contextAnalyzerAgent,
@@ -46,6 +48,7 @@ namespace AgentMesh.Application.Workflows
             _coderAgent = coderAgent;
             _codeStaticAnalyzer = codeStaticAnalyzer;
             _codeFixerAgent = codeFixerAgent;
+            _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
             _resultsPresenterAgent = resultsPresenterAgent;
             _jsSandboxExecutor = jsSandboxExecutor;
             _contextAnalyzerAgent = contextAnalyzerAgent;
@@ -271,6 +274,88 @@ namespace AgentMesh.Application.Workflows
                     {
                         { "Error", state.SandboxError }
                     });
+                }
+
+                if (!sandBoxError)
+                {
+                    for (int i = 0; i < 2 && state.CodeExecutionFailuresDetectorIterationCount < 2; i++)
+                    {
+                        _logger.LogDebug("Engaging Code Execution Failures Detector Agent... Iteration {Iteration}", i + 1);
+                        await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Execution Failures Detector Agent (Iteration {i + 1})", new Dictionary<string, string>
+                        {
+                            { "CodeWithLineNumbers", state.LastCodeWithLineNumbers },
+                            { "ExecutionResult", state.SandboxResult! }
+                        });
+
+                        var detectorOutput = await _codeExecutionFailuresDetectorAgent.ExecuteAsync(new CodeExecutionFailuresDetectorAgentInput
+                        {
+                            CodeWithLineNumbers = state.LastCodeWithLineNumbers,
+                            ExecutionResult = state.SandboxResult!
+                        });
+                        state.CodeExecutionFailuresDetectorIterationCount++;
+                        state.AddTokenUsage(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, detectorOutput.TokenCount, detectorOutput.InputTokenCount, detectorOutput.OutputTokenCount);
+                        await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Execution Failures Detector Agent (Iteration {i + 1})", new Dictionary<string, string>
+                        {
+                            { "Analysis", detectorOutput.Analysis }
+                        });
+
+                        if (detectorOutput.Analysis.Equals(JavascriptCodeExecutionFailuresDetectorAgent.NO_ERROR, StringComparison.OrdinalIgnoreCase))
+                        {
+                            break;
+                        }
+
+                        _logger.LogDebug("Engaging Code Fixer Agent for runtime errors... Iteration {Iteration}", i + 1);
+                        await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Fixer Agent for Runtime Errors (Iteration {i + 1})", new Dictionary<string, string>
+                        {
+                            { "CodeToFix", state.LastCodeWithLineNumbers },
+                            { "IssuesCount", "1" }
+                        });
+
+                        var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
+                        {
+                            CodeToFix = state.LastCodeWithLineNumbers,
+                            Issues = new[] { detectorOutput.Analysis }
+                        });
+                        state.GeneratedCode = codeFixerOutput.FixedCode;
+                        state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
+                        await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent for Runtime Errors (Iteration {i + 1})", new Dictionary<string, string>
+                        {
+                            { "FixedCode", state.GeneratedCode }
+                        });
+
+                        state.LastCodeWithLineNumbers = GetSourceCodeWithLineNumbers(state.GeneratedCode);
+
+                        try
+                        {
+                            _logger.LogDebug("Re-executing JS Sandbox Executor after runtime fix...");
+                            await _workflowProgressNotifier.NotifyWorkflowStepStart("JS Sandbox Executor (Re-execution)", new Dictionary<string, string>
+                            {
+                                { "Code", state.GeneratedCode }
+                            });
+
+                            var reExecutionOutput = await _jsSandboxExecutor.ExecuteAsync(new JSSandboxInput
+                            {
+                                Code = state.GeneratedCode
+                            });
+                            state.SandboxResult = reExecutionOutput.Result;
+                            state.SandboxError = null;
+                            await _workflowProgressNotifier.NotifyWorkflowStepEnd("JS Sandbox Executor (Re-execution)", new Dictionary<string, string>
+                            {
+                                { "Result", state.SandboxResult }
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            state.SandboxError = ex.Message;
+                            state.SandboxResult = null;
+                            sandBoxError = true;
+                            await _workflowProgressNotifier.NotifyWorkflowStepEnd("JS Sandbox Executor (Re-execution)", new Dictionary<string, string>
+                            {
+                                { "Error", state.SandboxError }
+                            });
+                            break;
+                        }
+                    }
                 }
 
                 _logger.LogDebug("Engaging Results Presenter Agent...");

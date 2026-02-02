@@ -28,6 +28,7 @@ namespace AgentMesh.Application.Models
         public List<string> CodeIssues { get; set; }
         public bool IsCodeValid { get; set; }
         public int CodeFixerIterationCount { get; set; }
+        public int CodeExecutionFailuresDetectorIterationCount { get; set; }
         public string? SandboxResult { get; set; }
         public string? SandboxError { get; set; }
         public string? PresenterOutput { get; set; }
