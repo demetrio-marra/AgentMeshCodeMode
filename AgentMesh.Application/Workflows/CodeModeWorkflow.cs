@@ -65,6 +65,78 @@ namespace AgentMesh.Application.Workflows
 
             _logger.LogDebug("Loading conversation history from Context Manager Agent...");
 
+            await ExecuteContextAnalyzerAsync(state, chatHistory);
+            await ExecuteTranslatorAsync(state);
+
+            var routerRecipient = await ExecuteRouterAsync(state);
+
+            if (routerRecipient?.Equals("PersonalAssistant", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                goto CompleteWorkflow;
+            }
+            else if (routerRecipient?.Equals("BusinessRequirementsCreator", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                await ExecuteBusinessRequirementsCreatorAsync(state);
+                await ExecuteCoderAsync(state);
+                await ExecuteCodeStaticAnalyzerAsync(state);
+
+                for (int i = 0; i < 2 && !state.IsCodeValid && state.CodeIssues.Any(); i++)
+                {
+                    await ExecuteCodeFixerAsync(state, i + 1, false);
+                    await ExecuteCodeStaticAnalyzerAsync(state);
+                }
+
+                bool sandBoxError = await ExecuteJSSandboxAsync(state, false);
+
+                for (int i = 0; i < 2 && state.CodeExecutionFailuresDetectorIterationCount < 2; i++)
+                {
+                    var analysis = await ExecuteCodeExecutionFailuresDetectorAsync(state, i + 1);
+
+                    if (analysis.Equals(JavascriptCodeExecutionFailuresDetectorAgent.NO_ERROR, StringComparison.OrdinalIgnoreCase))
+                    {
+                        break;
+                    }
+
+                    await ExecuteCodeFixerForRuntimeErrorsAsync(state, analysis, i + 1);
+
+                    sandBoxError = await ExecuteJSSandboxAsync(state, true);
+                    if (sandBoxError)
+                    {
+                        break;
+                    }
+                }
+
+                await ExecuteResultsPresenterAsync(state, sandBoxError);
+
+                await CompleteWorkflowAsync(state, state.PresenterOutput);
+                goto WorkflowEnd;
+            }
+            else if (routerRecipient?.Equals("BusinessAdvisor", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                await ExecuteBusinessAdvisorAsync(state);
+                await CompleteWorkflowAsync(state, state.BusinessAdvisorContent);
+                goto WorkflowEnd;
+            }
+            else
+            {
+                throw new Exception($"Router Agent returned an unknown recipient: {routerRecipient}");
+            }
+
+        CompleteWorkflow:
+            await CompleteWorkflowAsync(state);
+
+        WorkflowEnd:
+            await _workflowProgressNotifier.NotifyWorkflowEnd();
+
+            return new WorkflowResult
+            {
+                Response = state.FinalAnswer!,
+                TokenUsageEntries = state.TokenUsageEntries
+            };
+        }
+
+        private async Task ExecuteContextAnalyzerAsync(CodeModeWorkflowState state, IEnumerable<ContextMessage> chatHistory)
+        {
             _logger.LogDebug("Engaging Context Analyzer Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", new Dictionary<string, string>
             {
@@ -90,7 +162,10 @@ namespace AgentMesh.Application.Workflows
             {
                 { "RelevantContext", state.UserQuestionRelevantContext ?? "(No relevant context found)" }
             });
+        }
 
+        private async Task ExecuteTranslatorAsync(CodeModeWorkflowState state)
+        {
             _logger.LogDebug("Engaging Translator Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Translator Agent", new Dictionary<string, string>
             {
@@ -105,19 +180,20 @@ namespace AgentMesh.Application.Workflows
                 UserRequest = state.OriginalUserRequest,
                 RequestContext = state.UserQuestionRelevantContext ?? string.Empty
             });
-            state.TranslatorResponse = translatorOutput.TranslatedSentence;
+            state.EnglishTranslatedUserRequest = translatorOutput.TranslatedSentence;
             state.TranslatedContext = translatorOutput.TranslatedContext;
             state.DetectedOriginalLanguage = translatorOutput.DetectedOriginalLanguage;
             state.AddTokenUsage(TranslatorAgentConfiguration.AgentName, translatorOutput.TokenCount, translatorOutput.InputTokenCount, translatorOutput.OutputTokenCount);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Translator Agent", new Dictionary<string, string>
             {
-                { "TranslatedSentence", state.TranslatorResponse! },
+                { "TranslatedSentence", state.EnglishTranslatedUserRequest! },
                 { "TranslatedContext", state.TranslatedContext ?? "(No context translated)" },
                 { "DetectedOriginalLanguage", state.DetectedOriginalLanguage! }
             });
+        }
 
-            state.EnglishTranslatedUserRequest = state.TranslatorResponse;
-            
+        private async Task<string?> ExecuteRouterAsync(CodeModeWorkflowState state)
+        {
             _logger.LogDebug("Engaging Router Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Router Agent", new Dictionary<string, string>
             {
@@ -138,283 +214,235 @@ namespace AgentMesh.Application.Workflows
                 { "Rationale", routerOutput.Rationale ?? "(No rationale provided)" }
             });
 
-            if (routerOutput.Recipient?.Equals("PersonalAssistant", StringComparison.OrdinalIgnoreCase) == true)
+            return routerOutput.Recipient;
+        }
+
+        private async Task ExecuteBusinessRequirementsCreatorAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Business Requirements Creator Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
             {
-                await CompleteWorkflowAsync(state);
-            }
-            else if (routerOutput.Recipient?.Equals("BusinessRequirementsCreator", StringComparison.OrdinalIgnoreCase) == true)
+                { "UserRequest", state.EnglishTranslatedUserRequest },
+                { "RequestContext", state.TranslatedContext ?? string.Empty }
+            });
+
+            var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
             {
-                _logger.LogDebug("Engaging Business Requirements Creator Agent...");
-                await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
-                {
-                    { "UserRequest", state.EnglishTranslatedUserRequest },
-                    { "RequestContext", state.TranslatedContext ?? string.Empty }
-                });
-
-                var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
-                {
-                    UserRequest = state.EnglishTranslatedUserRequest,
-                    RequestContext = state.TranslatedContext ?? string.Empty
-                });
-                state.ShouldEngageCoder = true;
-                state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount);
-                await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Requirements Creator Agent", new Dictionary<string, string>
-                {
-                    { "BusinessRequirements", brcOutput.BusinessRequirements }
-                });
-
-                _logger.LogDebug("Engaging Coder Agent...");
-                state.BusinessRequirements = brcOutput.BusinessRequirements;
-                await _workflowProgressNotifier.NotifyWorkflowStepStart("Coder Agent", new Dictionary<string, string>
-                {
-                    { "BusinessRequirements", state.BusinessRequirements! }
-                });
-
-                var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
-                {
-                    BusinessRequirements = state.BusinessRequirements!
-                });
-                state.GeneratedCode = coderAgentOutput.CodeToRun;
-                state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);
-                await _workflowProgressNotifier.NotifyWorkflowStepEnd("Coder Agent", new Dictionary<string, string>
-                {
-                    { "CodeToRun", state.GeneratedCode }
-                });
-
-                state.LastCodeWithLineNumbers = GetSourceCodeWithLineNumbers(state.GeneratedCode);
-                    
-                _logger.LogDebug("Engaging Code Static Analyzer Agent...");
-                await _workflowProgressNotifier.NotifyWorkflowStepStart("Code Static Analyzer Agent", new Dictionary<string, string>
-                {
-                    { "CodeToFix", state.LastCodeWithLineNumbers }
-                });
-
-                var staticAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
-                {
-                    CodeToFix = state.LastCodeWithLineNumbers
-                });
-                state.IsCodeValid = !staticAnalyzerOutput.Violations.Any();
-                if (!state.IsCodeValid)
-                {
-                    state.CodeIssues = staticAnalyzerOutput.Violations.ToList();
-                }
-                state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, staticAnalyzerOutput.TokenCount, staticAnalyzerOutput.InputTokenCount, staticAnalyzerOutput.OutputTokenCount);
-                await _workflowProgressNotifier.NotifyWorkflowStepEnd("Code Static Analyzer Agent", new Dictionary<string, string>
-                {
-                    { "IsCodeValid", state.IsCodeValid.ToString() },
-                    { "ViolationsCount", staticAnalyzerOutput.Violations.Count().ToString() }
-                });
-
-                for (int i = 0; i < 2 && !state.IsCodeValid && state.CodeIssues.Any(); i++)
-                {
-                    _logger.LogDebug("Engaging Code Fixer Agent... Iteration {Iteration}", i + 1);
-                    await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Fixer Agent (Iteration {i + 1})", new Dictionary<string, string>
-                    {
-                        { "CodeToFix", state.LastCodeWithLineNumbers },
-                        { "IssuesCount", state.CodeIssues.Count.ToString() }
-                    });
-
-                    var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
-                    {
-                        CodeToFix = state.LastCodeWithLineNumbers,
-                        Issues = state.CodeIssues
-                    });
-                    state.GeneratedCode = codeFixerOutput.FixedCode;
-                    state.CodeFixerIterationCount++;
-                    state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
-                    await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent (Iteration {i + 1})", new Dictionary<string, string>
-                    {
-                        { "FixedCode", state.GeneratedCode }
-                    });
-
-                    state.LastCodeWithLineNumbers = GetSourceCodeWithLineNumbers(state.GeneratedCode);
-
-                    var reAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
-                    {
-                        CodeToFix = state.LastCodeWithLineNumbers
-                    });
-                    state.IsCodeValid = !reAnalyzerOutput.Violations.Any();
-                    if (!state.IsCodeValid)
-                    {
-                        state.CodeIssues = reAnalyzerOutput.Violations.ToList();
-                    }
-                    else
-                    {
-                        state.CodeIssues.Clear();
-                    }
-                    state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, reAnalyzerOutput.TokenCount, reAnalyzerOutput.InputTokenCount, reAnalyzerOutput.OutputTokenCount);
-                }
-
-                var sandBoxError = false;
-                try
-                {
-                    _logger.LogDebug("Engaging JS Sandbox Executor...");
-                    await _workflowProgressNotifier.NotifyWorkflowStepStart("JS Sandbox Executor", new Dictionary<string, string>
-                    {
-                        { "Code", state.GeneratedCode }
-                    });
-
-                    var executionOutput = await _jsSandboxExecutor.ExecuteAsync(new JSSandboxInput
-                    {
-                        Code = state.GeneratedCode
-                    });
-                    state.SandboxResult = executionOutput.Result;
-                    state.SandboxError = null;
-                    await _workflowProgressNotifier.NotifyWorkflowStepEnd("JS Sandbox Executor", new Dictionary<string, string>
-                    {
-                        { "Result", state.SandboxResult }
-                    });
-                }
-                catch (Exception ex)
-                {
-                    state.SandboxError = ex.Message;
-                    state.SandboxResult = null;
-                    sandBoxError = true;
-                    await _workflowProgressNotifier.NotifyWorkflowStepEnd("JS Sandbox Executor", new Dictionary<string, string>
-                    {
-                        { "Error", state.SandboxError }
-                    });
-                }
-
-         
-                for (int i = 0; i < 2 && state.CodeExecutionFailuresDetectorIterationCount < 2; i++)
-                {
-                    _logger.LogDebug("Engaging Code Execution Failures Detector Agent... Iteration {Iteration}", i + 1);
-                    await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Execution Failures Detector Agent (Iteration {i + 1})", new Dictionary<string, string>
-                    {
-                        { "CodeWithLineNumbers", state.LastCodeWithLineNumbers },
-                        { "ExecutionResult", state.SandboxResult! }
-                    });
-
-                    var detectorOutput = await _codeExecutionFailuresDetectorAgent.ExecuteAsync(new CodeExecutionFailuresDetectorAgentInput
-                    {
-                        CodeWithLineNumbers = state.LastCodeWithLineNumbers,
-                        ExecutionResult = state.SandboxResult!
-                    });
-                    state.CodeExecutionFailuresDetectorIterationCount++;
-                    state.AddTokenUsage(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, detectorOutput.TokenCount, detectorOutput.InputTokenCount, detectorOutput.OutputTokenCount);
-                    await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Execution Failures Detector Agent (Iteration {i + 1})", new Dictionary<string, string>
-                    {
-                        { "Analysis", detectorOutput.Analysis }
-                    });
-
-                    if (detectorOutput.Analysis.Equals(JavascriptCodeExecutionFailuresDetectorAgent.NO_ERROR, StringComparison.OrdinalIgnoreCase))
-                    {
-                        break;
-                    }
-
-                    _logger.LogDebug("Engaging Code Fixer Agent for runtime errors... Iteration {Iteration}", i + 1);
-                    await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Fixer Agent for Runtime Errors (Iteration {i + 1})", new Dictionary<string, string>
-                    {
-                        { "CodeToFix", state.LastCodeWithLineNumbers },
-                        { "IssuesCount", "1" }
-                    });
-
-                    var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
-                    {
-                        CodeToFix = state.LastCodeWithLineNumbers,
-                        Issues = new[] { detectorOutput.Analysis }
-                    });
-                    state.GeneratedCode = codeFixerOutput.FixedCode;
-                    state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
-                    await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent for Runtime Errors (Iteration {i + 1})", new Dictionary<string, string>
-                    {
-                        { "FixedCode", state.GeneratedCode }
-                    });
-
-                    state.LastCodeWithLineNumbers = GetSourceCodeWithLineNumbers(state.GeneratedCode);
-
-                    try
-                    {
-                        _logger.LogDebug("Re-executing JS Sandbox Executor after runtime fix...");
-                        await _workflowProgressNotifier.NotifyWorkflowStepStart("JS Sandbox Executor (Re-execution)", new Dictionary<string, string>
-                        {
-                            { "Code", state.GeneratedCode }
-                        });
-
-                        var reExecutionOutput = await _jsSandboxExecutor.ExecuteAsync(new JSSandboxInput
-                        {
-                            Code = state.GeneratedCode
-                        });
-                        state.SandboxResult = reExecutionOutput.Result;
-                        state.SandboxError = null;
-                        await _workflowProgressNotifier.NotifyWorkflowStepEnd("JS Sandbox Executor (Re-execution)", new Dictionary<string, string>
-                        {
-                            { "Result", state.SandboxResult }
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        state.SandboxError = ex.Message;
-                        state.SandboxResult = null;
-                        sandBoxError = true;
-                        await _workflowProgressNotifier.NotifyWorkflowStepEnd("JS Sandbox Executor (Re-execution)", new Dictionary<string, string>
-                        {
-                            { "Error", state.SandboxError }
-                        });
-                        break;
-                    }
-                }
-                
-
-                _logger.LogDebug("Engaging Results Presenter Agent...");
-                await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
-                {
-                    { "Data", sandBoxError ? state.SandboxError! : state.SandboxResult! },
-                    { "UserRequest", state.EnglishTranslatedUserRequest },
-                    { "RequestContext", state.TranslatedContext ?? string.Empty }
-                });
-
-                var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
-                {
-                    Data = sandBoxError ? state.SandboxError! : state.SandboxResult!,
-                    UserRequest = state.EnglishTranslatedUserRequest,
-                    RequestContext = state.TranslatedContext ?? string.Empty
-                });
-                state.PresenterOutput = resultsPresenterOutput.Content;
-                state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
-                await _workflowProgressNotifier.NotifyWorkflowStepEnd("Results Presenter Agent", new Dictionary<string, string>
-                {
-                    { "Content", state.PresenterOutput }
-                });
-
-                await CompleteWorkflowAsync(state, state.PresenterOutput);             
-            }
-            else if (routerOutput.Recipient?.Equals("BusinessAdvisor", StringComparison.OrdinalIgnoreCase) == true)
+                UserRequest = state.EnglishTranslatedUserRequest,
+                RequestContext = state.TranslatedContext ?? string.Empty
+            });
+            state.ShouldEngageCoder = true;
+            state.BusinessRequirements = brcOutput.BusinessRequirements;
+            state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Requirements Creator Agent", new Dictionary<string, string>
             {
-                _logger.LogDebug("Engaging Business Advisor Agent...");
-                await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
-                {
-                    { "UserRequest", state.EnglishTranslatedUserRequest },
-                    { "RequestContext", state.TranslatedContext ?? string.Empty }
-                });
+                { "BusinessRequirements", brcOutput.BusinessRequirements }
+            });
+        }
 
-                var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
-                {
-                    UserRequest = state.EnglishTranslatedUserRequest,
-                    RequestContext = state.TranslatedContext ?? string.Empty
-                });
-                state.BusinessAdvisorContent = baOutput.Content;
-                state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
-                await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Advisor Agent", new Dictionary<string, string>
-                {
-                    { "Content", state.BusinessAdvisorContent }
-                });
-                
-                await CompleteWorkflowAsync(state, state.BusinessAdvisorContent);
+        private async Task ExecuteCoderAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Coder Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Coder Agent", new Dictionary<string, string>
+            {
+                { "BusinessRequirements", state.BusinessRequirements! }
+            });
+
+            var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
+            {
+                BusinessRequirements = state.BusinessRequirements!
+            });
+            state.GeneratedCode = coderAgentOutput.CodeToRun;
+            state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Coder Agent", new Dictionary<string, string>
+            {
+                { "CodeToRun", state.GeneratedCode }
+            });
+        }
+
+        private async Task ExecuteCodeStaticAnalyzerAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Code Static Analyzer Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Code Static Analyzer Agent", new Dictionary<string, string>
+            {
+                { "CodeToFix", state.LastCodeWithLineNumbers }
+            });
+
+            var staticAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
+            {
+                CodeToFix = state.LastCodeWithLineNumbers
+            });
+            state.IsCodeValid = !staticAnalyzerOutput.Violations.Any();
+            if (!state.IsCodeValid)
+            {
+                state.CodeIssues = staticAnalyzerOutput.Violations.ToList();
             }
             else
             {
-                throw new Exception($"Router Agent returned an unknown recipient: {routerOutput.Recipient}");
+                state.CodeIssues.Clear();
+            }
+            state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, staticAnalyzerOutput.TokenCount, staticAnalyzerOutput.InputTokenCount, staticAnalyzerOutput.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Code Static Analyzer Agent", new Dictionary<string, string>
+            {
+                { "IsCodeValid", state.IsCodeValid.ToString() },
+                { "ViolationsCount", staticAnalyzerOutput.Violations.Count().ToString() }
+            });
+        }
+
+        private async Task ExecuteCodeFixerAsync(CodeModeWorkflowState state, int iteration, bool isRuntimeFix)
+        {
+            var agentName = isRuntimeFix ? $"Code Fixer Agent for Runtime Errors (Iteration {iteration})" : $"Code Fixer Agent (Iteration {iteration})";
+            
+            _logger.LogDebug("Engaging Code Fixer Agent... Iteration {Iteration}", iteration);
+            await _workflowProgressNotifier.NotifyWorkflowStepStart(agentName, new Dictionary<string, string>
+            {
+                { "CodeToFix", state.LastCodeWithLineNumbers },
+                { "IssuesCount", state.CodeIssues.Count.ToString() }
+            });
+
+            var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
+            {
+                CodeToFix = state.LastCodeWithLineNumbers,
+                Issues = state.CodeIssues
+            });
+            state.GeneratedCode = codeFixerOutput.FixedCode;
+            state.CodeFixerIterationCount++;
+            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd(agentName, new Dictionary<string, string>
+            {
+                { "FixedCode", state.GeneratedCode }
+            });
+        }
+
+        private async Task<bool> ExecuteJSSandboxAsync(CodeModeWorkflowState state, bool isReexecution)
+        {
+            var stepName = isReexecution ? "JS Sandbox Executor (Re-execution)" : "JS Sandbox Executor";
+            var logMessage = isReexecution ? "Re-executing JS Sandbox Executor after runtime fix..." : "Engaging JS Sandbox Executor...";
+
+            bool sandBoxError = false;
+            try
+            {
+                _logger.LogDebug(logMessage);
+                await _workflowProgressNotifier.NotifyWorkflowStepStart(stepName, new Dictionary<string, string>
+                {
+                    { "Code", state.GeneratedCode }
+                });
+
+                var executionOutput = await _jsSandboxExecutor.ExecuteAsync(new JSSandboxInput
+                {
+                    Code = state.GeneratedCode
+                });
+                state.SandboxResult = executionOutput.Result;
+                state.SandboxError = null;
+                await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, new Dictionary<string, string>
+                {
+                    { "Result", state.SandboxResult }
+                });
+            }
+            catch (Exception ex)
+            {
+                state.SandboxError = ex.Message;
+                state.SandboxResult = null;
+                sandBoxError = true;
+                await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, new Dictionary<string, string>
+                {
+                    { "Error", state.SandboxError }
+                });
             }
 
-            await _workflowProgressNotifier.NotifyWorkflowEnd();
+            return sandBoxError;
+        }
 
-            return new WorkflowResult
+        private async Task<string> ExecuteCodeExecutionFailuresDetectorAsync(CodeModeWorkflowState state, int iteration)
+        {
+            _logger.LogDebug("Engaging Code Execution Failures Detector Agent... Iteration {Iteration}", iteration);
+            await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Execution Failures Detector Agent (Iteration {iteration})", new Dictionary<string, string>
             {
-                Response = state.FinalAnswer!,
-                TokenUsageEntries = state.TokenUsageEntries
-            };
+                { "CodeWithLineNumbers", state.LastCodeWithLineNumbers },
+                { "ExecutionResult", state.SandboxResult! }
+            });
+
+            var detectorOutput = await _codeExecutionFailuresDetectorAgent.ExecuteAsync(new CodeExecutionFailuresDetectorAgentInput
+            {
+                CodeWithLineNumbers = state.LastCodeWithLineNumbers,
+                ExecutionResult = state.SandboxResult!
+            });
+            state.CodeExecutionFailuresDetectorIterationCount++;
+            state.AddTokenUsage(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, detectorOutput.TokenCount, detectorOutput.InputTokenCount, detectorOutput.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Execution Failures Detector Agent (Iteration {iteration})", new Dictionary<string, string>
+            {
+                { "Analysis", detectorOutput.Analysis }
+            });
+
+            return detectorOutput.Analysis;
+        }
+
+        private async Task ExecuteCodeFixerForRuntimeErrorsAsync(CodeModeWorkflowState state, string analysis, int iteration)
+        {
+            _logger.LogDebug("Engaging Code Fixer Agent for runtime errors... Iteration {Iteration}", iteration);
+            await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", new Dictionary<string, string>
+            {
+                { "CodeToFix", state.LastCodeWithLineNumbers },
+                { "IssuesCount", "1" }
+            });
+
+            var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
+            {
+                CodeToFix = state.LastCodeWithLineNumbers,
+                Issues = new[] { analysis }
+            });
+            state.GeneratedCode = codeFixerOutput.FixedCode;
+            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", new Dictionary<string, string>
+            {
+                { "FixedCode", state.GeneratedCode }
+            });
+        }
+
+        private async Task ExecuteResultsPresenterAsync(CodeModeWorkflowState state, bool sandBoxError)
+        {
+            _logger.LogDebug("Engaging Results Presenter Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
+            {
+                { "Data", sandBoxError ? state.SandboxError! : state.SandboxResult! },
+                { "UserRequest", state.EnglishTranslatedUserRequest },
+                { "RequestContext", state.TranslatedContext ?? string.Empty }
+            });
+
+            var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
+            {
+                Data = sandBoxError ? state.SandboxError! : state.SandboxResult!,
+                UserRequest = state.EnglishTranslatedUserRequest,
+                RequestContext = state.TranslatedContext ?? string.Empty
+            });
+            state.PresenterOutput = resultsPresenterOutput.Content;
+            state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Results Presenter Agent", new Dictionary<string, string>
+            {
+                { "Content", state.PresenterOutput }
+            });
+        }
+
+        private async Task ExecuteBusinessAdvisorAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Business Advisor Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
+            {
+                { "UserRequest", state.EnglishTranslatedUserRequest },
+                { "RequestContext", state.TranslatedContext ?? string.Empty }
+            });
+
+            var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
+            {
+                UserRequest = state.EnglishTranslatedUserRequest,
+                RequestContext = state.TranslatedContext ?? string.Empty
+            });
+            state.BusinessAdvisorContent = baOutput.Content;
+            state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Advisor Agent", new Dictionary<string, string>
+            {
+                { "Content", state.BusinessAdvisorContent }
+            });
         }
 
         private async Task CompleteWorkflowAsync(CodeModeWorkflowState state, string? data = null)
@@ -443,22 +471,6 @@ namespace AgentMesh.Application.Workflows
             });
         }
 
-        private static string GetSourceCodeWithLineNumbers(string sourceCode, bool useSpaceFiller = true)
-        {
-            var fillerChar = ' ';
-            if (!useSpaceFiller)
-            {
-                fillerChar = '0';
-            }
-            var codeLines = sourceCode.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            var maxLineNumberWidth = codeLines.Length.ToString().Length;
-            var sb = new System.Text.StringBuilder();
-            for (int i = 0; i < codeLines.Length; i++)
-            {
-                sb.AppendLine($"[{(i + 1).ToString().PadLeft(maxLineNumberWidth, fillerChar)}] {codeLines[i]}");
-            }
-            return sb.ToString();
-        }
 
         public string GetIngressAgentName() => ContextAnalyzerAgentConfiguration.AgentName;
 

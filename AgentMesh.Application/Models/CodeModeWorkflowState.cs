@@ -14,7 +14,6 @@ namespace AgentMesh.Application.Models
 
         public string OriginalUserRequest { get; }
         public string? UserQuestionRelevantContext { get; set; }
-        public string? TranslatorResponse { get; set; }
         public string? EnglishTranslatedUserRequest { get; set; }
         public string? TranslatedContext { get; set; }
         public string? DetectedOriginalLanguage { get; set; }
@@ -24,7 +23,7 @@ namespace AgentMesh.Application.Models
         public string? OutputForUserFromBusinessAnalyst { get; set; }
         public string? BusinessAdvisorContent { get; set; }
         public string? GeneratedCode { get; set; }
-        public string? LastCodeWithLineNumbers { get; set; }
+        public string? LastCodeWithLineNumbers { get => SourceCodeUtils.GetSourceCodeWithLineNumbers(GeneratedCode); }
         public List<string> CodeIssues { get; set; }
         public bool IsCodeValid { get; set; }
         public int CodeFixerIterationCount { get; set; }
