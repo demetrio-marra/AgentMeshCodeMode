@@ -20,7 +20,7 @@ type MCPToolResponse<T> = MCPToolSuccess<T> | MCPToolError;
 
 interface MyPlatformCompanyInfoFindProductHierarchyParams {
   /** Product name */
-  product: string;
+  product: 'FiberInternet1Gbps' | 'BusinessEthernet' | 'VirtualPrivateServer' | 'DedicatedBareMetalServer' | 'ObjectStorage' | 'BackupAsAService' | 'ManagedFirewall' | 'LoadBalancerAsAService';
 }
 
 interface MyPlatformCompanyInfoGetAllProductNamesParams {
@@ -33,15 +33,15 @@ interface MyPlatformStatisticsGetRatesParams {
   /** End date filter for the search range (inclusive), in ISO8601 format without a time component (e.g., "2025-12-20") */
   queryDateTo: string;
   /** Product's name filter */
-  product: string;
-  /** Type of partitioning applied to returned data (e.g. Year, Month, Day) */
-  dataPartitioning: string;
-  /** Product lifecycle phase (e.g. FirstActivation, Renew, Deactivation, Expiration) filter */
-  provisioningPhase?: string;
+  product: 'FiberInternet1Gbps' | 'BusinessEthernet' | 'VirtualPrivateServer' | 'DedicatedBareMetalServer' | 'ObjectStorage' | 'BackupAsAService' | 'ManagedFirewall' | 'LoadBalancerAsAService';
+  /** Group data by time period */
+  dataPartitioning: 'Year' | 'Month' | 'Day';
+  /** Product lifecycle phase filter */
+  provisioningPhase?: 'FirstActivation' | 'Renew' | 'Deactivation' | 'Expiration' | null;
   /** Name of the company filter */
-  company?: string;
+  company?: 'NetWave' | 'SkyLink' | null;
   /** Product's family name filter */
-  family?: string;
+  family?: 'Connectivity' | 'CloudCompute' | 'CloudStorage' | 'NetworkServices' | null;
 }
 
 interface MyPlatformStatisticsGetParams {
@@ -50,15 +50,15 @@ interface MyPlatformStatisticsGetParams {
   /** End date filter for the search range (inclusive), in ISO8601 format without a time component (e.g., "2025-12-20") */
   queryDateTo: string;
   /** Product's name filter */
-  product: string;
-  /** Type of partitioning applied to returned data (e.g. Year, Month, Day) */
-  dataPartitioning: string;
-  /** Product lifecycle phase (e.g. FirstActivation, Renew, Deactivation, Expiration) filter */
-  provisioningPhase?: string;
+  product: 'FiberInternet1Gbps' | 'BusinessEthernet' | 'VirtualPrivateServer' | 'DedicatedBareMetalServer' | 'ObjectStorage' | 'BackupAsAService' | 'ManagedFirewall' | 'LoadBalancerAsAService';
+  /** Group data by time period */
+  dataPartitioning: 'Year' | 'Month' | 'Day';
+  /** Product lifecycle phase filter */
+  provisioningPhase?: 'FirstActivation' | 'Renew' | 'Deactivation' | 'Expiration' | null;
   /** Name of the company filter */
-  company?: string;
+  company?: 'NetWave' | 'SkyLink' | null;
   /** Product's family name filter */
-  family?: string;
+  family?: 'Connectivity' | 'CloudCompute' | 'CloudStorage' | 'NetworkServices' | null;
 }
 
 interface MyPlatformMyPermissionsGetParams {
@@ -71,22 +71,22 @@ interface MyPlatformStatisticsGetAverageDurationParams {
   /** End date filter for the search range (inclusive), in ISO8601 format without a time component (e.g., "2025-12-20") */
   queryDateTo: string;
   /** Product's name filter */
-  product: string;
-  /** Type of partitioning applied to returned data (e.g. Year, Month, Day) */
-  dataPartitioning: string;
-  /** Product lifecycle phase (e.g. FirstActivation, Renew, Deactivation, Expiration) filter */
-  provisioningPhase?: string;
+  product: 'FiberInternet1Gbps' | 'BusinessEthernet' | 'VirtualPrivateServer' | 'DedicatedBareMetalServer' | 'ObjectStorage' | 'BackupAsAService' | 'ManagedFirewall' | 'LoadBalancerAsAService';
+  /** Group data by time period */
+  dataPartitioning: 'Year' | 'Month' | 'Day';
+  /** Product lifecycle phase filter */
+  provisioningPhase?: 'FirstActivation' | 'Renew' | 'Deactivation' | 'Expiration' | null;
   /** Name of the company filter */
-  company?: string;
+  company?: 'NetWave' | 'SkyLink' | null;
   /** Product's family name filter */
-  family?: string;
+  family?: 'Connectivity' | 'CloudCompute' | 'CloudStorage' | 'NetworkServices' | null;
 }
 
 interface MyPlatformCompanyInfoGetProductsHierarchyParams {
   /** Company name */
-  company?: string;
+  company?: 'NetWave' | 'SkyLink' | null;
   /** Family name */
-  family?: string;
+  family?: 'Connectivity' | 'CloudCompute' | 'CloudStorage' | 'NetworkServices' | null;
 }
 
 interface MyPlatformChartGenerateChartParams {
