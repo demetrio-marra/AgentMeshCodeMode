@@ -2,6 +2,7 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Helpers;
+using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Models;
 using AgentMesh.Services;
 
@@ -23,6 +24,7 @@ namespace AgentMesh
         private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
         private readonly LLMsConfiguration _llmsConfiguration;
         private readonly ConversationSummarizerAgentConfiguration _conversationSummarizerConfiguration;
+        private readonly SESJSSandboxConfiguration _sesJsSandboxConfiguration;
         private readonly IConversationSummarizerAgent _conversationSummarizerAgent;
 
         public UserConsoleInputService(
@@ -40,6 +42,7 @@ namespace AgentMesh
             PersonalAssistantAgentConfiguration personalAssistantConfiguration,
             LLMsConfiguration llmsConfiguration,
             ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration,
+            SESJSSandboxConfiguration sESJSSandboxConfiguration,
             IConversationSummarizerAgent conversationSummarizerAgent)
         {
             _workflow = workflow;
@@ -56,6 +59,7 @@ namespace AgentMesh
             _personalAssistantConfiguration = personalAssistantConfiguration;
             _llmsConfiguration = llmsConfiguration;
             _conversationSummarizerConfiguration = conversationSummarizerConfiguration;
+            _sesJsSandboxConfiguration = sESJSSandboxConfiguration;
             _conversationSummarizerAgent = conversationSummarizerAgent;
         }
 
@@ -202,6 +206,7 @@ namespace AgentMesh
 
         private void PrintConfigurations()
         {
+            Console.WriteLine("SESJSSandbox Url: " + _sesJsSandboxConfiguration.McpServerHost + ", AgentId: " + _sesJsSandboxConfiguration.MCPServerAgentId);
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgentConfiguration.AgentName, _contextAnalyzerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Translator", TranslatorAgentConfiguration.AgentName, _translatorConfiguration);
