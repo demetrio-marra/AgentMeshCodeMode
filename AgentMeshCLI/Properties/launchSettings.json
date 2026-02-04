@@ -10,15 +10,13 @@
     "MyCompany": {
       "commandName": "Project",
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development",
-        "SESJSSandbox__McpServerHost": "http://localhost:59000"
+        "DOTNET_ENVIRONMENT": "Development"
       }
     },
     "Mocked data": {
       "commandName": "Project",
       "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development",
-        "SESJSSandbox__McpServerHost": "http://localhost:8080"
+        "DOTNET_ENVIRONMENT": "Development"
       }
     }
   }
