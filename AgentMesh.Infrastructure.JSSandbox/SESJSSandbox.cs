@@ -103,6 +103,11 @@ namespace AgentMesh.Infrastructure.JSSandbox
                 CreateNoWindow = true,
             };
 
+            if (_configuration.NodeExtraCACertsPath != null)
+            {
+                startInfo.EnvironmentVariables["NODE_EXTRA_CA_CERTS"] = Path.Combine(AppContext.BaseDirectory, _configuration.NodeExtraCACertsPath);
+            }
+
             if (!string.IsNullOrWhiteSpace(_configuration.McpServerHost))
             {
                 startInfo.EnvironmentVariables["MCP_SERVER_URL"] = _configuration.McpServerHost;
