@@ -17,6 +17,9 @@
     <None Update="Sandbox\package.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Sandbox\rootca.cer">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Sandbox\sandbox-runner.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
