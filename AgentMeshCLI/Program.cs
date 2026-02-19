@@ -222,29 +222,6 @@ namespace AgentMesh
 
             services.AddSingleton<ICodeStaticAnalyzer, CodeStaticAnalyzer>();
 
-            // CodeFixer agent config and client
-            services
-                .AddOptions<TranslatorAgentConfiguration>()
-                .Bind(configuration.GetSection(TranslatorAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<TranslatorAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(TranslatorAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<TranslatorAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-            services.AddSingleton<ITranslatorAgent, TranslatorAgent>();
-
             // ContextAnalyzer agent config and client
             services
                 .AddOptions<ContextAnalyzerAgentConfiguration>()

@@ -19,7 +19,6 @@ namespace AgentMesh
         private readonly CodeFixerAgentConfiguration _codeFixerConfiguration;
         private readonly ResultsPresenterAgentConfiguration _resultsPresenterConfiguration;
         private readonly ContextAnalyzerAgentConfiguration _contextAnalyzerConfiguration;
-        private readonly TranslatorAgentConfiguration _translatorConfiguration;
         private readonly RouterAgentConfiguration _routerConfiguration;
         private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
         private readonly LLMsConfiguration _llmsConfiguration;
@@ -37,7 +36,6 @@ namespace AgentMesh
             CodeFixerAgentConfiguration codeFixerConfiguration,
             ResultsPresenterAgentConfiguration resultsPresenterConfiguration,
             ContextAnalyzerAgentConfiguration contextAnalyzerConfiguration,
-            TranslatorAgentConfiguration translatorConfiguration,
             RouterAgentConfiguration routerConfiguration,
             PersonalAssistantAgentConfiguration personalAssistantConfiguration,
             LLMsConfiguration llmsConfiguration,
@@ -54,7 +52,6 @@ namespace AgentMesh
             _codeFixerConfiguration = codeFixerConfiguration;
             _resultsPresenterConfiguration = resultsPresenterConfiguration;
             _contextAnalyzerConfiguration = contextAnalyzerConfiguration;
-            _translatorConfiguration = translatorConfiguration;
             _routerConfiguration = routerConfiguration;
             _personalAssistantConfiguration = personalAssistantConfiguration;
             _llmsConfiguration = llmsConfiguration;
@@ -129,7 +126,6 @@ namespace AgentMesh
                 var agentInputCosts = new Dictionary<string, decimal>
                 {
                     { ContextAnalyzerAgentConfiguration.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
-                    { TranslatorAgentConfiguration.AgentName, _llmsConfiguration[_translatorConfiguration.LLM].CostPerMillionInputTokens },
                     { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionInputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionInputTokens },
                     { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionInputTokens },
@@ -144,7 +140,6 @@ namespace AgentMesh
                 var agentOutputCosts = new Dictionary<string, decimal>
                 {
                     { ContextAnalyzerAgentConfiguration.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionOutputTokens },
-                    { TranslatorAgentConfiguration.AgentName, _llmsConfiguration[_translatorConfiguration.LLM].CostPerMillionOutputTokens },
                     { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionOutputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionOutputTokens },
                     { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionOutputTokens },
@@ -209,7 +204,6 @@ namespace AgentMesh
             Console.WriteLine("SESJSSandbox Url: " + _sesJsSandboxConfiguration.McpServerHost + ", AgentId: " + _sesJsSandboxConfiguration.MCPServerAgentId);
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgentConfiguration.AgentName, _contextAnalyzerConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Translator", TranslatorAgentConfiguration.AgentName, _translatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Router", RouterAgentConfiguration.AgentName, _routerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Requirements Creator", BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Advisor", BusinessAdvisorAgentConfiguration.AgentName, _businessAdvisorConfiguration);

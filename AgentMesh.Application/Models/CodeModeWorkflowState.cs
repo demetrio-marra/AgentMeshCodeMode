@@ -12,12 +12,9 @@ namespace AgentMesh.Application.Models
             InitialContextMessages = contextMessages.ToList();
         }
 
-        public string OriginalUserRequest { get; }
-        public string? UserQuestionRelevantContext { get; set; }
-        public string? EnglishTranslatedUserRequest { get; set; }
-        public string? TranslatedContext { get; set; }
-        public string? DetectedOriginalLanguage { get; set; }
-        public string? RouterRecipient { get; set; }
+    public string OriginalUserRequest { get; }
+    public string? UserQuestionRelevantContext { get; set; }
+    public string? RouterRecipient { get; set; }
         public string? BusinessRequirements { get; set; }
         public bool ShouldEngageCoder { get; set; }
         public string? OutputForUserFromBusinessAnalyst { get; set; }
