@@ -62,11 +62,6 @@ class SandboxRunner {
             ...options
         };
 
-        // Set agent ID for MCP client if provided
-        if (this.agentId) {
-            mcpTools.mcpClient.setAgentId(this.agentId);
-        }
-
         // Initialize SES if not already done
         initializeSES();
     }
@@ -75,6 +70,23 @@ class SandboxRunner {
      * Create endowments (globals) available to sandboxed code
      */
     async createEndowments() {
+
+        // Retrieve backends from environment variable
+        const backendsJson = process.env.JSSandboxBackends;
+        if (!backendsJson) {
+            throw new Error('JSSandboxBackends environment variable is not set');
+        }
+
+        let backends;
+        try {
+            backends = JSON.parse(backendsJson);
+        } catch (error) {
+            throw new Error(`Failed to parse JSSandboxBackends environment variable: ${error.message}`);
+        }
+
+        // Ensure tools are initialized before creating endowments
+        await mcpTools.Initialize(this.agentId, backends);
+
         const endowments = {
             // Console for debugging (can be disabled)
             console: this.options.enableConsole ? console : {
@@ -86,56 +98,22 @@ class SandboxRunner {
             },
 
             // MCP tool functions - wrapped to ensure connection
-            MyPlatform_Statistics_GetRates: async (params) => {
-                await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyPlatform_Statistics_GetRates(params);
-            },
-            MyPlatform_CompanyInfo_GetAllProductNames: async (params) => {
-                await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyPlatform_CompanyInfo_GetAllProductNames(params);
-            },
-            MyPlatform_ProvisioningInfo: async (params) => {
-                await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyPlatform_ProvisioningInfo(params);
-            },
-            MyPlatform_Chart_GenerateChart: async (params) => {
-                await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyPlatform_Chart_GenerateChart(params);
-            },
-            MyPlatform_ProvisioningInfo_GetById: async (params) => {
-                await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyPlatform_ProvisioningInfo_GetById(params);
-            },
-            MyPlatform_Statistics_Get: async (params) => {
-                await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyPlatform_Statistics_Get(params);
-            },
-            MyPlatform_MyPermissions_Get: async (params) => {
-                await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyPlatform_MyPermissions_Get(params);
-            },
-            MyPlatform_CompanyInfo_GetProductsHierarchy: async (params) => {
-                await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyPlatform_CompanyInfo_GetProductsHierarchy(params);
-            },
-            MyPlatform_CompanyInfo_FindProductHierarchy: async (params) => {
-                await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyPlatform_CompanyInfo_FindProductHierarchy(params);
-            },
-            MyPlatform_Statistics_GetAverageDuration: async (params) => {
-                await mcpTools.mcpClient.ensureConnected();
-                return mcpTools.MyPlatform_Statistics_GetAverageDuration(params);
-            },
+            MyPlatform_Statistics_GetRates: async (params) => mcpTools.MyPlatform_Statistics_GetRates(params),
+            MyPlatform_CompanyInfo_GetAllProductNames: async (params) => mcpTools.MyPlatform_CompanyInfo_GetAllProductNames(params),
+            MyPlatform_ProvisioningInfo: async (params) => mcpTools.MyPlatform_ProvisioningInfo(params),
+            MyPlatform_Chart_GenerateChart: async (params) => mcpTools.MyPlatform_Chart_GenerateChart(params),
+            MyPlatform_ProvisioningInfo_GetById: async (params) => mcpTools.MyPlatform_ProvisioningInfo_GetById(params),
+            MyPlatform_Statistics_Get: async (params) => mcpTools.MyPlatform_Statistics_Get(params),
+            MyPlatform_MyPermissions_Get: async (params) => mcpTools.MyPlatform_MyPermissions_Get(params),
+            MyPlatform_CompanyInfo_GetProductsHierarchy: async (params) => mcpTools.MyPlatform_CompanyInfo_GetProductsHierarchy(params),
+            MyPlatform_CompanyInfo_FindProductHierarchy: async (params) => mcpTools.MyPlatform_CompanyInfo_FindProductHierarchy(params),
+            MyPlatform_Statistics_GetAverageDuration: async (params) => mcpTools.MyPlatform_Statistics_GetAverageDuration(params),
 
             // Utility globals
             JSON,
             Math,
             Date,
-            Promise,
-
-            // Common utilities
-            setTimeout,
-            clearTimeout,
+            Promise
         };
 
         return endowments;
@@ -238,7 +216,7 @@ class SandboxRunner {
      * Close MCP connection
      */
     async cleanup() {
-        await mcpTools.mcpClient.close();
+        await mcpTools.Deinitialize();
     }
 }
 

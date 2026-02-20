@@ -110,7 +110,11 @@ namespace AgentMesh.Infrastructure.JSSandbox
 
             if (!string.IsNullOrWhiteSpace(_configuration.McpServerHost))
             {
-                startInfo.EnvironmentVariables["MCP_SERVER_URL"] = _configuration.McpServerHost;
+                var backends = new Dictionary<string, string>
+                {
+                    { "mcp-server", _configuration.McpServerHost }
+                };
+                startInfo.EnvironmentVariables["JSSandboxBackends"] = System.Text.Json.JsonSerializer.Serialize(backends);
             }
 
             using (var process = System.Diagnostics.Process.Start(startInfo))
