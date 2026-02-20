@@ -118,10 +118,25 @@ class MCPClient {
     }
 }
 
-// Create singleton instance
-// You can set agent ID later using: mcpClient.setAgentId('your-agent-id')
-const serverUrl = process.env.MCP_SERVER_URL || 'http://localhost:8080';
-const mcpClient = new MCPClient(serverUrl); 
+let mcpClient;
+
+async function Deinitialize() {
+    await mcpClient.close();
+}
+
+async function Initialize(agentId, backends) {
+    if (!backends || typeof backends !== 'object') {
+        throw new Error('backends parameter is required and must be an object');
+    }
+
+    const serverUrl = backends['mcp-server'];
+    if (!serverUrl) {
+        throw new Error('mcp-server backend URL not found in backends configuration');
+    }
+
+    mcpClient = new MCPClient(serverUrl); 
+    mcpClient.setAgentId(agentId);
+}
 
 /**
  * @tool MyPlatform_CompanyInfo_FindProductHierarchy
@@ -131,6 +146,7 @@ const mcpClient = new MCPClient(serverUrl);
  * @errorSchema MCPToolError
  */
 async function MyPlatform_CompanyInfo_FindProductHierarchy(params = {}) {
+    await mcpClient.ensureConnected();
     try {
         return await mcpClient.callTool('MyPlatform_CompanyInfo_FindProductHierarchy', params);
     } catch (error) {
@@ -150,6 +166,7 @@ async function MyPlatform_CompanyInfo_FindProductHierarchy(params = {}) {
  * @errorSchema MCPToolError
  */
 async function MyPlatform_Statistics_GetRates(params = {}) {
+    await mcpClient.ensureConnected();
     try {
         return await mcpClient.callTool('MyPlatform_Statistics_GetRates', params);
     } catch (error) {
@@ -169,6 +186,7 @@ async function MyPlatform_Statistics_GetRates(params = {}) {
  * @errorSchema MCPToolError
  */
 async function MyPlatform_Statistics_Get(params = {}) {
+    await mcpClient.ensureConnected();
     try {
         return await mcpClient.callTool('MyPlatform_Statistics_Get', params);
     } catch (error) {
@@ -188,6 +206,7 @@ async function MyPlatform_Statistics_Get(params = {}) {
  * @errorSchema MCPToolError
  */
 async function MyPlatform_MyPermissions_Get(params = {}) {
+    await mcpClient.ensureConnected();
     try {
         return await mcpClient.callTool('MyPlatform_MyPermissions_Get', params);
     } catch (error) {
@@ -207,6 +226,7 @@ async function MyPlatform_MyPermissions_Get(params = {}) {
  * @errorSchema MCPToolError
  */
 async function MyPlatform_Statistics_GetAverageDuration(params = {}) {
+    await mcpClient.ensureConnected();
     try {
         return await mcpClient.callTool('MyPlatform_Statistics_GetAverageDuration', params);
     } catch (error) {
@@ -226,6 +246,7 @@ async function MyPlatform_Statistics_GetAverageDuration(params = {}) {
  * @errorSchema MCPToolError
  */
 async function MyPlatform_CompanyInfo_GetProductsHierarchy(params = {}) {
+    await mcpClient.ensureConnected();
     try {
         return await mcpClient.callTool('MyPlatform_CompanyInfo_GetProductsHierarchy', params);
     } catch (error) {
@@ -245,6 +266,7 @@ async function MyPlatform_CompanyInfo_GetProductsHierarchy(params = {}) {
  * @errorSchema MCPToolError
  */
 async function MyPlatform_Chart_GenerateChart(params = {}) {
+    await mcpClient.ensureConnected();
     try {
         return await mcpClient.callTool('MyPlatform_Chart_GenerateChart', params);
     } catch (error) {
@@ -264,6 +286,7 @@ async function MyPlatform_Chart_GenerateChart(params = {}) {
  * @errorSchema MCPToolError
  */
 async function MyPlatform_CompanyInfo_GetAllProductNames(params = {}) {
+    await mcpClient.ensureConnected();
     try {
         return await mcpClient.callTool('MyPlatform_CompanyInfo_GetAllProductNames', params);
     } catch (error) {
@@ -277,7 +300,8 @@ async function MyPlatform_CompanyInfo_GetAllProductNames(params = {}) {
 
 // Export the client and all tool functions
 module.exports = {
-    mcpClient,
+    Initialize,
+    Deinitialize,
     MyPlatform_CompanyInfo_FindProductHierarchy,
     MyPlatform_Statistics_GetRates,
     MyPlatform_Statistics_Get,
