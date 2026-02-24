@@ -10,19 +10,4 @@
     <ProjectReference Include="..\AgentMesh.Application\AgentMesh.Application.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Sandbox\mcp-tools-impl.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sandbox\package.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sandbox\rootca.cer">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Sandbox\sandbox-runner.js">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

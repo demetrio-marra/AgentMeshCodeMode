@@ -201,7 +201,7 @@ namespace AgentMesh
 
         private void PrintConfigurations()
         {
-            Console.WriteLine("SESJSSandbox Url: " + _sesJsSandboxConfiguration.McpServerHost + ", AgentId: " + _sesJsSandboxConfiguration.MCPServerAgentId);
+            Console.WriteLine("SESJSSandbox Url: " + _sesJsSandboxConfiguration.SandboxServiceURL + ", AgentId: " + _sesJsSandboxConfiguration.SandboxServiceUserAgent);
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgentConfiguration.AgentName, _contextAnalyzerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Router", RouterAgentConfiguration.AgentName, _routerConfiguration);

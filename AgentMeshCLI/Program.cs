@@ -316,7 +316,7 @@ namespace AgentMesh
 
 
             services.AddSingleton<IJSSandboxExecutor, JSSandboxExecutor>();
-            services.AddSingleton<IJSSandbox, SESJSSandbox>();
+            services.AddSingleton<IJSSandbox, SESJSSandboxClient>();
 
             services.AddSingleton<IWorkflowProgressNotifier, ConsoleWorkflowProgressNotifier>();
 
