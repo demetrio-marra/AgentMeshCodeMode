@@ -24,6 +24,7 @@ namespace AgentMesh
         private readonly LLMsConfiguration _llmsConfiguration;
         private readonly ConversationSummarizerAgentConfiguration _conversationSummarizerConfiguration;
         private readonly SESJSSandboxConfiguration _sesJsSandboxConfiguration;
+        private readonly UserConfiguration _userConfiguration;
         private readonly IConversationSummarizerAgent _conversationSummarizerAgent;
 
         public UserConsoleInputService(
@@ -41,6 +42,7 @@ namespace AgentMesh
             LLMsConfiguration llmsConfiguration,
             ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration,
             SESJSSandboxConfiguration sESJSSandboxConfiguration,
+            UserConfiguration userConfiguration,
             IConversationSummarizerAgent conversationSummarizerAgent)
         {
             _workflow = workflow;
@@ -57,6 +59,7 @@ namespace AgentMesh
             _llmsConfiguration = llmsConfiguration;
             _conversationSummarizerConfiguration = conversationSummarizerConfiguration;
             _sesJsSandboxConfiguration = sESJSSandboxConfiguration;
+            _userConfiguration = userConfiguration;
             _conversationSummarizerAgent = conversationSummarizerAgent;
         }
 
@@ -201,7 +204,7 @@ namespace AgentMesh
 
         private void PrintConfigurations()
         {
-            Console.WriteLine("SESJSSandbox Url: " + _sesJsSandboxConfiguration.SandboxServiceURL + ", AgentId: " + _sesJsSandboxConfiguration.SandboxServiceUserAgent);
+            Console.WriteLine("Sandbox Url: " + _sesJsSandboxConfiguration.SandboxServiceURL + ", SandboxName: " + _sesJsSandboxConfiguration.SandboxName + ", AgentId: " + _userConfiguration.AgentId);
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgentConfiguration.AgentName, _contextAnalyzerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Router", RouterAgentConfiguration.AgentName, _routerConfiguration);
