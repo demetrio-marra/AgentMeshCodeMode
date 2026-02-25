@@ -26,6 +26,7 @@
     <ProjectReference Include="..\AgentMesh.Application\AgentMesh.Application.csproj" />
     <ProjectReference Include="..\AgentMesh.Infrastructure.JSSandbox\AgentMesh.Infrastructure.JSSandbox.csproj" />
     <ProjectReference Include="..\AgentMesh.Infrastructure.OpenAIClient\AgentMesh.Infrastructure.OpenAIClient.csproj" />
+    <ProjectReference Include="..\AgentMesh.Infrastructure.SemanticSearch\AgentMesh.Infrastructure.SemanticSearch.csproj" />
     <ProjectReference Include="..\AgentMesh\AgentMesh.csproj" />
   </ItemGroup>
 

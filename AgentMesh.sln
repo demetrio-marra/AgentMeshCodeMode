@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.JS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.OpenAIClient", "AgentMesh.Infrastructure.OpenAIClient\AgentMesh.Infrastructure.OpenAIClient.csproj", "{23C51EC1-699F-42EB-A94E-60E36377ED2D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.SemanticSearch", "AgentMesh.Infrastructure.SemanticSearch\AgentMesh.Infrastructure.SemanticSearch.csproj", "{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{23C51EC1-699F-42EB-A94E-60E36377ED2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{23C51EC1-699F-42EB-A94E-60E36377ED2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{23C51EC1-699F-42EB-A94E-60E36377ED2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
