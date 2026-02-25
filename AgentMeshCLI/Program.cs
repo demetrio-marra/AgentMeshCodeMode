@@ -4,6 +4,7 @@ using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Infrastructure.OpenAIClient;
+using AgentMesh.Infrastructure.SemanticSearch;
 using AgentMesh.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +47,12 @@ namespace AgentMesh
             configuration.GetSection("Embedding").Bind(embeddingConfiguration);
             services.AddSingleton(embeddingConfiguration);
             services.AddHttpClient<IEmbeddingService, EmbeddingService>();
+
+            // Semantic Search service configuration
+            var semanticSearchConfig = new QDrantSemanticSearchServiceConfiguration();
+            configuration.GetSection("QDrantSemanticSearchService").Bind(semanticSearchConfig);
+            services.AddSingleton(semanticSearchConfig);
+            services.AddSingleton<ISemanticSearchService, QDrantSemanticSearchService>();
 
             // Configure JSSandbox options
             services
