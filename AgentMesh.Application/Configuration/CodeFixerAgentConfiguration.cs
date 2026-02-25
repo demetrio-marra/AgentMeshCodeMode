@@ -1,9 +1,9 @@
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Configuration
 {
-    public class CodeStaticAnalyzerConfiguration
+    public class CodeFixerAgentConfiguration
     {
-        public const string SectionName = "Agents:CodeStaticAnalyzer";
-        public const string AgentName = "CodeStaticAnalyzer";
+        public const string SectionName = "Agents:CodeFixer";
+        public const string AgentName = "CodeFixer";
 
         public string LLM { get; set; } = string.Empty;
         public string ModelTemperature { get; set; } = string.Empty;
