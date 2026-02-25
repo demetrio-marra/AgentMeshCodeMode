@@ -1,4 +1,5 @@
-﻿using AgentMesh.Application.Models;
+﻿using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Models;
 using AgentMesh.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

@@ -1,9 +1,9 @@
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Configuration
 {
-    public class PersonalAssistantAgentConfiguration
+    public class CodeStaticAnalyzerConfiguration
     {
-        public const string SectionName = "Agents:PersonalAssistant";
-        public const string AgentName = "PersonalAssistant";
+        public const string SectionName = "Agents:CodeStaticAnalyzer";
+        public const string AgentName = "CodeStaticAnalyzer";
 
         public string LLM { get; set; } = string.Empty;
         public string ModelTemperature { get; set; } = string.Empty;
