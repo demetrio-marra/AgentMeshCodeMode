@@ -152,10 +152,16 @@ namespace AgentMesh.Application.Workflows
             {
                 state.UserQuestionRelevantContext = contextAnalyzerOutput.RelevantContext;
             }
+            if (contextAnalyzerOutput.ActionableRequirements != null
+                && contextAnalyzerOutput.ActionableRequirements.Any())
+            {
+                state.UserRequestActionableRequirements = contextAnalyzerOutput.ActionableRequirements.ToList();
+            }
             state.AddTokenUsage(ContextAnalyzerAgentConfiguration.AgentName, contextAnalyzerOutput.TokenCount, contextAnalyzerOutput.InputTokenCount, contextAnalyzerOutput.OutputTokenCount);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", new Dictionary<string, string>
             {
-                { "RelevantContext", state.UserQuestionRelevantContext ?? "(No relevant context found)" }
+                { "RelevantContext", state.UserQuestionRelevantContext ?? "(No relevant context found)" },
+                { "ActionableRequirements", state.UserRequestActionableRequirements != null && state.UserRequestActionableRequirements.Any() ? string.Join(", ", state.UserRequestActionableRequirements) : "(No actionable requirements found)" }
             });
         }
 

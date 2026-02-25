@@ -3,6 +3,7 @@ namespace AgentMesh.Models
     public class ContextAnalyzerAgentOutput : IAgentOutput
     {
         public string? RelevantContext { get; set; }
+        public IEnumerable<string> ActionableRequirements { get; set; } = Enumerable.Empty<string>();
         public int TokenCount { get; set; }
         public int InputTokenCount { get; set; }
         public int OutputTokenCount { get; set; }

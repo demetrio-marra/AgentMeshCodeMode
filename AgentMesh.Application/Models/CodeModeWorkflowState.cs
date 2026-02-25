@@ -14,7 +14,8 @@ namespace AgentMesh.Application.Models
 
     public string OriginalUserRequest { get; }
     public string? UserQuestionRelevantContext { get; set; }
-    public string? RouterRecipient { get; set; }
+        public IEnumerable<string> UserRequestActionableRequirements { get; set; } = Enumerable.Empty<string>();
+        public string? RouterRecipient { get; set; }
         public string? BusinessRequirements { get; set; }
         public bool ShouldEngageCoder { get; set; }
         public string? OutputForUserFromBusinessAnalyst { get; set; }

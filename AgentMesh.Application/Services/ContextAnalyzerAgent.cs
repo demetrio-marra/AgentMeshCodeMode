@@ -1,9 +1,9 @@
-﻿using AgentMesh.Application.Configuration;
-using AgentMesh.Models;
+﻿using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace AgentMesh.Application.Services
 {
@@ -51,9 +51,12 @@ namespace AgentMesh.Application.Services
                     throw new EmptyAgentResponseException();
                 }
 
+                var (relevantContext, actionableRequirements) = ParseStructuredResponse(responseText);
+
                 return new ContextAnalyzerAgentOutput
                 {
-                    RelevantContext = responseText,
+                    RelevantContext = relevantContext,
+                    ActionableRequirements = actionableRequirements,
                     TokenCount = response.TotalTokenCount,
                     InputTokenCount = response.InputTokenCount,
                     OutputTokenCount = response.OutputTokenCount
@@ -68,6 +71,64 @@ namespace AgentMesh.Application.Services
 
             _logger.LogDebug("ContextAnalyzerAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(result));
             return result;
+        }
+
+
+        private (string RelevantContext, IEnumerable<string> ActionableRequirements) ParseStructuredResponse(string responseText)
+        {
+            try
+            {
+                var jsonDoc = JsonDocument.Parse(responseText);
+                var root = jsonDoc.RootElement;
+
+                if (!root.TryGetProperty("relevantContext", out var relevantContextElement) ||
+                    !root.TryGetProperty("actionableRequirements", out var actionableReqElement))
+                {
+                    throw new BadStructuredResponseException(responseText, "The model's response is not in the expected JSON format. Expected properties 'relevantContext' and 'actionableRequirements' were not found.");
+                }
+
+                var relevantContextItems = new List<string>();
+                if (relevantContextElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in relevantContextElement.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.String)
+                        {
+                            var value = item.GetString();
+                            if (!string.IsNullOrWhiteSpace(value))
+                            {
+                                relevantContextItems.Add(value);
+                            }
+                        }
+                    }
+                }
+
+                var relevantContext = relevantContextItems.Count > 0
+                    ? string.Join("\n", relevantContextItems.Select(item => $"• {item}"))
+                    : string.Empty;
+
+                var actionableRequirements = new List<string>();
+                if (actionableReqElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in actionableReqElement.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.String)
+                        {
+                            var value = item.GetString();
+                            if (!string.IsNullOrWhiteSpace(value))
+                            {
+                                actionableRequirements.Add(value);
+                            }
+                        }
+                    }
+                }
+
+                return (relevantContext, actionableRequirements);
+            }
+            catch (JsonException ex)
+            {
+                throw new BadStructuredResponseException(responseText, $"Failed to parse JSON response: {ex.Message}");
+            }
         }
     }
 }
