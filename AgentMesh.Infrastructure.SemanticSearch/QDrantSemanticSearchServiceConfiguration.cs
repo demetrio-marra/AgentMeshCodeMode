@@ -7,5 +7,6 @@
         public bool Https { get; set; }
         public int VectorSize { get; set; }
         public int MaxResults { get; set; }
+        public string BusinessProcessesCollectionName { get; set; } = string.Empty;
     }
 }

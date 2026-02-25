@@ -12,6 +12,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         private readonly IEmbeddingService _embeddingService;
         private readonly ILogger<QDrantSemanticSearchService> _logger;
         private readonly int _maxExtractedResults;
+        private readonly string _businessProcessesCollectionName;
 
         public QDrantSemanticSearchService(QDrantSemanticSearchServiceConfiguration configuration,
             IEmbeddingService embeddingService,
@@ -25,15 +26,60 @@ namespace AgentMesh.Infrastructure.SemanticSearch
                port: configuration.Port
            );
             _maxExtractedResults = configuration.MaxResults;
+            _businessProcessesCollectionName = configuration.BusinessProcessesCollectionName;
+
+            _ = EnsureAgentRoleIndexAsync();
         }
 
-        public async Task<IEnumerable<SemanticSearchResult>> SearchByActionableRequirements(string agentRole,
-            IEnumerable<string> actionableRequirements,
+        private async Task EnsureAgentRoleIndexAsync()
+        {
+            try
+            {
+                _logger.LogInformation("Creating payload index on 'agentRole' field for collection '{CollectionName}'...", _businessProcessesCollectionName);
+                
+                await _qdrantClient.CreatePayloadIndexAsync(
+                    collectionName: _businessProcessesCollectionName,
+                    fieldName: "agentRole",
+                    schemaType: PayloadSchemaType.Keyword
+                );
+
+                _logger.LogInformation("Successfully created payload index on 'agentRole' field.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to create payload index on 'agentRole' field. It may already exist or the collection may not be ready.");
+            }
+        }
+
+        public async Task<IEnumerable<SemanticSearchResult>> SearchByActionableRequirements(IEnumerable<string> actionableRequirements,
+            string? agentRole = null,
             CancellationToken cancellationToken = default)
         {
             var results = new List<string>();
 
             _logger.LogDebug("Fetching embeddings for agent {1} and actionable requirements: {0}...", string.Join(", ", actionableRequirements), agentRole);
+
+            Filter? filter = null;
+            if (agentRole != null)
+            {
+                filter = new Filter
+                {
+                    Must =
+                    {
+                        new Condition
+                        {
+                            Field = new FieldCondition
+                            {
+                                Key = "agentRole",
+                                Match = new Match
+                                {
+                                    Text = agentRole
+                                }
+                            }
+                        }
+                    }
+                };
+            }
 
             var embeddings = await _embeddingService.GetEmbeddingAsync(actionableRequirements);
             var searchPoints = embeddings.Select(vec => new SearchPoints
@@ -41,23 +87,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
                 WithPayload = true,
                 WithVectors = false,
                 Limit = (ulong)_maxExtractedResults,
-                //Filter = new Filter
-                //{
-                //    Must =
-                //    {
-                //        new Condition
-                //        {
-                //            Field = new FieldCondition
-                //            {
-                //                Key = "agentRole",
-                //                Match = new Match
-                //                {
-                //                    Text = agentRole
-                //                }
-                //            }
-                //        }
-                //    }
-                //}
+                Filter = filter
             }).ToList();
 
             var li = 0;
@@ -68,7 +98,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
             }
 
             var batchSearchResult = await _qdrantClient.SearchBatchAsync(
-                collectionName: "BusinessProcesses",
+                collectionName: _businessProcessesCollectionName,
                 searches: searchPoints,
                 cancellationToken: cancellationToken
             );

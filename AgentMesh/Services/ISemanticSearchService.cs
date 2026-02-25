@@ -10,10 +10,10 @@ namespace AgentMesh.Services
         /// <summary>
         /// Retrieves the available information that match the given requirements.
         /// </summary>
-        /// <param name="agentRole">The role of the agent requesting the information.</param>
         /// <param name="actionableRequirements">The requirements that need to be fulfilled by the available information.</param>
+        /// <param name="agentRole">The role of the agent requesting the information.</param>
         /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
         /// <returns>A collection of available information that match the given requirements.</returns>
-        Task<IEnumerable<SemanticSearchResult>> SearchByActionableRequirements(string agentRole, IEnumerable<string> actionableRequirements, CancellationToken cancellationToken = default);
+        Task<IEnumerable<SemanticSearchResult>> SearchByActionableRequirements(IEnumerable<string> actionableRequirements, string? agentRole = null, CancellationToken cancellationToken = default);
     }
 }

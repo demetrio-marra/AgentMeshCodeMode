@@ -9,6 +9,8 @@ namespace AgentMesh.Application.Services
 {
     public class BusinessRequirementsCreatorAgent : IBusinessRequirementsCreatorAgent
     {
+        private static readonly string AgentRole = "BusinessRequirementsCreator";
+
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<BusinessRequirementsCreatorAgent> _logger;
         private readonly ISemanticSearchService _semanticSearchService;
@@ -31,8 +33,13 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing BusinessRequirementsCreatorAgent.");
             _logger.LogDebug("BusinessRequirementsCreatorAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
-            var similarDocs = await _semanticSearchService.SearchByActionableRequirements("BusinessRequirementsCreator",
-                input.ActionableRequirements, cancellationToken);
+            IEnumerable<SemanticSearchResult> similarDocs = [];
+            if (input.ActionableRequirements != null && input.ActionableRequirements.Any())
+            {
+                similarDocs = await _semanticSearchService.SearchByActionableRequirements(input.ActionableRequirements,
+                    AgentRole,
+                    cancellationToken);
+            }
 
             var userMessage = MessageSerializationUtils.SerializeRequestAndContext(input.RequestContext, input.UserRequest);
 

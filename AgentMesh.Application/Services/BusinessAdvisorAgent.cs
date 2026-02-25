@@ -9,18 +9,21 @@ namespace AgentMesh.Application.Services
 {
     public class BusinessAdvisorAgent : IBusinessAdvisorAgent
     {
+        private static readonly string AgentRole = "BusinessAdvisor";
+
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<BusinessAdvisorAgent> _logger;
-        private readonly string _apiDocumentation;
+        private readonly ISemanticSearchService _semanticSearchService;
 
         public BusinessAdvisorAgent(
             [FromKeyedServices(BusinessAdvisorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
             BusinessAdvisorAgentConfiguration configuration,
-            ILogger<BusinessAdvisorAgent> logger)
+            ILogger<BusinessAdvisorAgent> logger,
+            ISemanticSearchService semanticSearchService)
         {
             _openAIClient = openAIClient;
             _logger = logger;
-            _apiDocumentation = configuration.ApiDocumentation;
+            _semanticSearchService = semanticSearchService;
         }
 
         public async Task<BusinessAdvisorAgentOutput> ExecuteAsync(
@@ -30,14 +33,24 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing BusinessAdvisorAgent.");
             _logger.LogDebug("BusinessAdvisorAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
+            IEnumerable<SemanticSearchResult> similarDocs = [];
+            if (input.ActionableRequirements != null && input.ActionableRequirements.Any())
+            {
+                similarDocs = await _semanticSearchService.SearchByActionableRequirements(input.ActionableRequirements,
+                    AgentRole,
+                    cancellationToken);
+            }
+
             var userMessage = MessageSerializationUtils.SerializeRequestAndContext(input.RequestContext, input.UserRequest);
 
-            var inputMessages = new List<AgentMessage>
+            var inputMessages = new List<AgentMessage>();
+            if (similarDocs.Any())
             {
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"API Documentation: {_apiDocumentation}" },
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.User, Content = userMessage }
-            };
+                var apiDocumentation = string.Join("\n\n", similarDocs.Select(d => d.FoundInformation));
+                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"API Documentation: {apiDocumentation}" });
+            }
+            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
+            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = userMessage });
 
             var stopwatch = Stopwatch.StartNew();
 
