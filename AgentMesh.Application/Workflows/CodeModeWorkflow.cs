@@ -202,7 +202,8 @@ namespace AgentMesh.Application.Workflows
             var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
             {
                 UserRequest = state.OriginalUserRequest,
-                RequestContext = state.UserQuestionRelevantContext ?? string.Empty
+                RequestContext = state.UserQuestionRelevantContext ?? string.Empty,
+                ActionableRequirements = state.UserRequestActionableRequirements
             });
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = brcOutput.BusinessRequirements;
@@ -408,7 +409,8 @@ namespace AgentMesh.Application.Workflows
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
                 UserRequest = state.OriginalUserRequest,
-                RequestContext = state.UserQuestionRelevantContext ?? string.Empty
+                RequestContext = state.UserQuestionRelevantContext ?? string.Empty,
+                ActionableRequirements = state.UserRequestActionableRequirements
             });
             state.BusinessAdvisorContent = baOutput.Content;
             state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
