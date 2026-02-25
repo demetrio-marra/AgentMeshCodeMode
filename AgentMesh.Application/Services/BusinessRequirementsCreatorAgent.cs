@@ -11,16 +11,17 @@ namespace AgentMesh.Application.Services
     {
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<BusinessRequirementsCreatorAgent> _logger;
-        private readonly string _apiDocumentation;
+        private readonly ISemanticSearchService _semanticSearchService;
 
         public BusinessRequirementsCreatorAgent(
             [FromKeyedServices(BusinessRequirementsCreatorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
             BusinessRequirementsCreatorAgentConfiguration configuration,
-            ILogger<BusinessRequirementsCreatorAgent> logger)
+            ILogger<BusinessRequirementsCreatorAgent> logger,
+            ISemanticSearchService semanticSearchService)
         {
             _openAIClient = openAIClient;
             _logger = logger;
-            _apiDocumentation = configuration.ApiDocumentation;
+            _semanticSearchService = semanticSearchService;
         }
 
         public async Task<BusinessRequirementsCreatorAgentOutput> ExecuteAsync(
@@ -30,10 +31,17 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing BusinessRequirementsCreatorAgent.");
             _logger.LogDebug("BusinessRequirementsCreatorAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
+            var similarDocs = await _semanticSearchService.SearchByActionableRequirements("BusinessRequirementsCreator",
+                input.ActionableRequirements, cancellationToken);
+
             var userMessage = MessageSerializationUtils.SerializeRequestAndContext(input.RequestContext, input.UserRequest);
 
             var inputMessages = new List<AgentMessage>();
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"API Documentation: {_apiDocumentation}" });
+            if (similarDocs.Any())
+            {
+                var apiDocumentation = string.Join("\n\n", similarDocs.Select(d => d.FoundInformation));
+                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"API Documentation: {apiDocumentation}" });
+            }
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = userMessage });
 
