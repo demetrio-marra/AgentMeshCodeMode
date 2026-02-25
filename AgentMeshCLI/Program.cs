@@ -40,6 +40,13 @@ namespace AgentMesh
                 builder.AddConsole();
             });
 
+
+            // Embedding configuration and service registration
+            var embeddingConfiguration = new EmbeddingServiceConfiguration();
+            configuration.GetSection("Embedding").Bind(embeddingConfiguration);
+            services.AddSingleton(embeddingConfiguration);
+            services.AddHttpClient<IEmbeddingService, EmbeddingService>();
+
             // Configure JSSandbox options
             services
                 .AddOptions<SESJSSandboxConfiguration>()
