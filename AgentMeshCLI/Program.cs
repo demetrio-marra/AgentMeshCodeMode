@@ -77,7 +77,6 @@ namespace AgentMesh
                 .PostConfigure(options =>
                 {
                     options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                    options.ApiDocumentation = ResolveConfigText(options.ApiDocumentation, options.ApiDocumentationFile);
                 })
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<BusinessRequirementsCreatorAgentConfiguration>>().Value);
@@ -101,7 +100,6 @@ namespace AgentMesh
                 .PostConfigure(options =>
                 {
                     options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                    options.ApiDocumentation = ResolveConfigText(options.ApiDocumentation, options.ApiDocumentationFile);
                 })
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<BusinessAdvisorAgentConfiguration>>().Value);
