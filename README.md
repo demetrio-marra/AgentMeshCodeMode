@@ -12,7 +12,7 @@ A multi-agent AI workflow that leverages **dynamic JavaScript code generation** 
 
 ---
 
-## Features
+## :sparkles: Features
 
 - **Multi-agent orchestrated workflow** — specialized agents collaborate in a pipeline: routing, context analysis, business requirements extraction, code generation, static analysis, code fixing, execution, failure detection, and result presentation.
 - **Dynamic code generation** — the Coder agent generates JavaScript code targeting your company's predefined API surface.
@@ -25,7 +25,7 @@ A multi-agent AI workflow that leverages **dynamic JavaScript code generation** 
 - **Per-agent configuration** — each agent has its own LLM model, temperature, and system prompt, all configurable via `appsettings.json`.
 - **Token usage tracking** — tracks input/output token consumption per agent for cost monitoring.
 
-## Architecture
+## :building_construction: Architecture
 
 ```
 ????????????????????????????????????????????????????????????????????????
@@ -74,7 +74,7 @@ A multi-agent AI workflow that leverages **dynamic JavaScript code generation** 
 
 A dedicated **Conversation Summarizer** agent runs in the background to compress conversation history when it exceeds a configurable token threshold, preserving the most recent messages while summarizing older context.
 
-## Project Structure
+## :file_folder: Project Structure
 
 | Project | Description |
 |---|---|
@@ -85,7 +85,7 @@ A dedicated **Conversation Summarizer** agent runs in the background to compress
 | `AgentMesh.Infrastructure.JSSandbox` | Client for the external [JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) service |
 | `AgentMesh.Infrastructure.SemanticSearch` | Qdrant vector database integration for semantic search |
 
-## Getting Started
+## :rocket: Getting Started
 
 ### Prerequisites
 
@@ -157,7 +157,7 @@ The system is configured entirely through `appsettings.json`. Key sections:
 
 Each agent can use a different LLM tier, allowing cost optimization by assigning cheaper/smaller models to simpler tasks and more capable models to complex reasoning.
 
-## Agents
+## :robot: Agents
 
 | Agent | Role |
 |---|---|
@@ -173,14 +173,14 @@ Each agent can use a different LLM tier, allowing cost optimization by assigning
 | **Personal Assistant** | Handles general conversational queries |
 | **Conversation Summarizer** | Compresses conversation history to stay within token limits |
 
-## External Dependencies
+## :link: External Dependencies
 
 | Service | Purpose | Repository |
 |---|---|---|
 | **JSCodeSandbox** | Sandboxed JavaScript execution environment | [github.com/demetrio-marra/JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) |
 | **Qdrant** | Vector database for semantic search | [qdrant.tech](https://qdrant.tech/) |
 
-## Tech Stack
+## :gear: Tech Stack
 
 - **.NET 8** / **C# 12**
 - **Microsoft.Extensions** (DI, Configuration, Logging, Options, HttpClient)
@@ -188,6 +188,6 @@ Each agent can use a different LLM tier, allowing cost optimization by assigning
 - **Qdrant.Client** for vector search
 - **Polly** for resilience and retry policies
 
-## License
+## :page_facing_up: License
 
 See [LICENSE](LICENSE) for details.
