@@ -53,7 +53,7 @@ A multi-agent AI workflow that leverages **dynamic JavaScript code generation** 
                           |  +------------------+  |
                           |          |             |
                           |  +------------------+  |
-                          |  |   Coder Agent     |  |
+                          |  |   Coder Agent    |  |
                           |  +------------------+  |
                           |          |             |
                           |  +------------------+  |----> Code Fixer
