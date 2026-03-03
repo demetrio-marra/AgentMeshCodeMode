@@ -238,7 +238,8 @@ namespace AgentMesh.Application.Workflows
 
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
             {
-                BusinessRequirements = state.BusinessRequirements!
+                BusinessRequirements = state.BusinessRequirements!,
+                MentionedApis = state.MentionedApis
             });
             state.GeneratedCode = coderAgentOutput.CodeToRun;
             state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);
