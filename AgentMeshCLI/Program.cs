@@ -54,6 +54,11 @@ namespace AgentMesh
             services.AddSingleton(semanticSearchConfig);
             services.AddSingleton<ISemanticSearchService, QDrantSemanticSearchService>();
 
+            // Api Documentation Database configuration
+            var apiDocumentationDatabaseConfig = new ApiDocumentationDatabaseConfiguration();
+            configuration.GetSection("ApiDocumentationDatabase").Bind(apiDocumentationDatabaseConfig);
+            services.AddSingleton(apiDocumentationDatabaseConfig);
+
             // Configure JSSandbox options
             services
                 .AddOptions<SESJSSandboxConfiguration>()
