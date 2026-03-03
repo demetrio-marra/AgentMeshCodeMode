@@ -3,6 +3,7 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.JSSandbox;
+using AgentMesh.Infrastructure.JSSandbox.Configuration;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.SemanticSearch;
 using AgentMesh.Services;
@@ -55,9 +56,9 @@ namespace AgentMesh
             services.AddSingleton<ISemanticSearchService, QDrantSemanticSearchService>();
 
             // Api Documentation Database configuration
-            var apiDocumentationDatabaseConfig = new ApiDocumentationDatabaseConfiguration();
-            configuration.GetSection("ApiDocumentationDatabase").Bind(apiDocumentationDatabaseConfig);
-            services.AddSingleton(apiDocumentationDatabaseConfig);
+            var apiDocumentationRepositoryConfig = new ApiDocumentationMongoRepositoryConfiguration();
+            configuration.GetSection("ApiDocumentationMongoRepository").Bind(apiDocumentationRepositoryConfig);
+            services.AddSingleton(apiDocumentationRepositoryConfig);
 
             // Configure JSSandbox options
             services

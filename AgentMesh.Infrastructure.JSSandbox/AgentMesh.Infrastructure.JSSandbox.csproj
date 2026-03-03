@@ -10,4 +10,8 @@
     <ProjectReference Include="..\AgentMesh.Application\AgentMesh.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>
