@@ -219,10 +219,12 @@ namespace AgentMesh.Application.Workflows
             });
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = brcOutput.BusinessRequirements;
+            state.MentionedApis = brcOutput.MentionedApis;
             state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Requirements Creator Agent", new Dictionary<string, string>
             {
-                { "BusinessRequirements", brcOutput.BusinessRequirements }
+                { "BusinessRequirements", brcOutput.BusinessRequirements },
+                { "MentionedApis", string.Join(", ", brcOutput.MentionedApis) }
             });
         }
 
@@ -236,7 +238,8 @@ namespace AgentMesh.Application.Workflows
 
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
             {
-                BusinessRequirements = state.BusinessRequirements!
+                BusinessRequirements = state.BusinessRequirements!,
+                MentionedApis = state.MentionedApis
             });
             state.GeneratedCode = coderAgentOutput.CodeToRun;
             state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);

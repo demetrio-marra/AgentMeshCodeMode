@@ -14,15 +14,16 @@ namespace AgentMesh.Application.Services
 
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<CoderAgent> _logger;
-        private readonly string _apiReference;
+        private readonly IApiDocumentationService _apiDocumentationService;
 
         public CoderAgent([FromKeyedServices(CoderAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
                           CoderAgentConfiguration configuration,
-                          ILogger<CoderAgent> logger)
+                          ILogger<CoderAgent> logger,
+                          IApiDocumentationService apiDocumentationService)
         {
             _openAIClient = openAIClient;
             _logger = logger;
-            _apiReference = configuration.ApiReference;
+            _apiDocumentationService = apiDocumentationService;
         }
 
         public async Task<CoderAgentOutput> ExecuteAsync(CoderAgentInput input, CancellationToken cancellationToken = default)
@@ -30,10 +31,26 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing CoderAgent.");
             _logger.LogDebug("CoderAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
+            // Fetch API documentation for mentioned APIs
+            var mentionedApis = new HashSet<string>(input.MentionedApis, StringComparer.OrdinalIgnoreCase);
+            var apiDocsTasks = await _apiDocumentationService.GetApiDocumentationAsync(mentionedApis);
+            _logger.LogDebug("Fetched {CountFound} documentation for {Count} APIs.", apiDocsTasks.Count(), mentionedApis.Count);
+
+            // check if apiDocsTasks contains ALL mentioned APIs, if not log a warning
+            foreach (var api in mentionedApis)
+            {
+                if (!apiDocsTasks.Any(doc => doc.ApiName.Equals(api, StringComparison.OrdinalIgnoreCase)))
+                {
+                    _logger.LogWarning("API documentation for '{Api}' was not found.", api);
+                }
+            }
+
+            var apiReference = string.Join("\n\n", apiDocsTasks.Select(doc => $"API: {doc.ApiName}\nDescription: {doc.Documentation}"));
+
             var inputMessages = new List<AgentMessage>
             {
                 new AgentMessage { Role = AgentMessageRole.System, Content = "Today date is " + DateTime.UtcNow.ToString("yyyy-MM-dd") + "." },
-                new AgentMessage { Role = AgentMessageRole.System, Content = "API Reference:\n" + _apiReference },
+                new AgentMessage { Role = AgentMessageRole.System, Content = "API Reference:\n" + apiReference },
                 new AgentMessage { Role = AgentMessageRole.User, Content = input.BusinessRequirements }
             };
 

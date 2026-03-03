@@ -4,6 +4,8 @@ using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
@@ -65,14 +67,44 @@ namespace AgentMesh.Application.Services
                     throw new EmptyAgentResponseException();
                 }
 
-                return new BusinessRequirementsCreatorAgentOutput
+                try
                 {
-                    BusinessRequirements = responseText,
-                    TokenCount = response.TotalTokenCount,
-                    InputTokenCount = response.InputTokenCount,
-                    OutputTokenCount = response.OutputTokenCount
-                };
-            }, BusinessRequirementsCreatorAgentConfiguration.AgentName, _logger);
+                    var responseDTO = JsonSerializer.Deserialize<BusinessRequirementsResponseDTO>(responseText);
+
+                    if (responseDTO == null)
+                    {
+                        _logger.LogWarning("The model's response could not be deserialized into the expected format. Response text: {ResponseText}", responseText);
+                        throw new BadStructuredResponseException(responseText, "The model's response could not be deserialized into the expected format.");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(responseDTO.BusinessRequirements))
+                    {
+                        _logger.LogWarning("The model's response contains empty business requirements. Response text: {ResponseText}", responseText);
+                        throw new BadStructuredResponseException(responseText, "The model's response contains empty business requirements.");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(responseDTO.BusinessRequirements))
+                    {
+                        _logger.LogWarning("The model's response is missing the 'businessRequirements' field or it is empty. Response text: {ResponseText}", responseText);
+                        throw new BadStructuredResponseException(responseText, "The model's response is missing the 'businessRequirements' field or it is empty.");
+                    }
+
+                    return new BusinessRequirementsCreatorAgentOutput
+                    {
+                        BusinessRequirements = responseDTO.BusinessRequirements,
+                        MentionedApis = responseDTO.MentionedApis,
+                        TokenCount = response.TotalTokenCount,
+                        InputTokenCount = response.InputTokenCount,
+                        OutputTokenCount = response.OutputTokenCount
+                    };
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogWarning(ex, "Failed to deserialize the model's response. Response text: {ResponseText}", responseText);
+                    throw new BadStructuredResponseException(responseText, "Failed to parse the model's response.", ex);
+                } 
+
+            }, BusinessRequirementsCreatorAgentConfiguration.AgentName, _logger); // polly ends here!
 
             stopwatch.Stop();
             _logger.LogDebug(
@@ -82,6 +114,16 @@ namespace AgentMesh.Application.Services
 
             _logger.LogDebug("BusinessRequirementsCreatorAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(result));
             return result;
+        }
+
+
+        private class BusinessRequirementsResponseDTO
+        {
+            [JsonPropertyName("businessRequirements")]
+            public string BusinessRequirements { get; set; } = string.Empty;
+
+            [JsonPropertyName("mentionedApis")]
+            public IEnumerable<string> MentionedApis { get; set; } = Enumerable.Empty<string>();
         }
     }
 }

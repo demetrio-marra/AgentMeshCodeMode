@@ -3,6 +3,8 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.JSSandbox;
+using AgentMesh.Infrastructure.JSSandbox.Configuration;
+using AgentMesh.Infrastructure.JSSandbox.Services;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.SemanticSearch;
 using AgentMesh.Services;
@@ -53,6 +55,17 @@ namespace AgentMesh
             configuration.GetSection("QDrantSemanticSearchService").Bind(semanticSearchConfig);
             services.AddSingleton(semanticSearchConfig);
             services.AddSingleton<ISemanticSearchService, QDrantSemanticSearchService>();
+
+            // Api Documentation Database configuration
+            var apiDocumentationRepositoryConfig = new ApiDocumentationMongoRepositoryConfiguration();
+            configuration.GetSection("ApiDocumentationMongoRepository").Bind(apiDocumentationRepositoryConfig);
+            services.AddSingleton(apiDocumentationRepositoryConfig);
+
+            // Configure AutoMapper
+            services.AddAutoMapper(typeof(ApiDocumentationMappingProfile));
+
+            // Register API Documentation Service
+            services.AddSingleton<IApiDocumentationService, MongoApiDocumentationRepository>();
 
             // Configure JSSandbox options
             services
@@ -123,7 +136,6 @@ namespace AgentMesh
                 .PostConfigure(options =>
                 {
                     options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                    options.ApiReference = ResolveConfigText(options.ApiReference, options.ApiReferenceFile);
                 })
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<CoderAgentConfiguration>>().Value);
