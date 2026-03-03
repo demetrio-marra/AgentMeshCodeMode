@@ -307,7 +307,7 @@ namespace AgentMesh.Application.Workflows
                     Code = state.GeneratedCode
                 });
                 state.SandboxResult = executionOutput.Result;
-                state.SandboxError = null;
+                state.IsSandboxResultError = false;
                 await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, new Dictionary<string, string>
                 {
                     { "Result", state.SandboxResult }
@@ -315,12 +315,12 @@ namespace AgentMesh.Application.Workflows
             }
             catch (Exception ex)
             {
-                state.SandboxError = ex.Message;
-                state.SandboxResult = null;
+                state.SandboxResult = ex.Message;
+                state.IsSandboxResultError = true;
                 sandBoxError = true;
                 await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, new Dictionary<string, string>
                 {
-                    { "Error", state.SandboxError }
+                    { "Error", state.SandboxResult }
                 });
             }
 
@@ -378,14 +378,14 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Results Presenter Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
             {
-                { "Data", sandBoxError ? state.SandboxError! : state.SandboxResult! },
+                { "Data", state.SandboxResult! },
                 { "UserRequest", state.OriginalUserRequest },
                 { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
             });
 
             var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
             {
-                Data = sandBoxError ? state.SandboxError! : state.SandboxResult!,
+                Data = state.SandboxResult!,
                 UserRequest = state.OriginalUserRequest,
                 RequestContext = state.UserQuestionRelevantContext ?? string.Empty
             });
