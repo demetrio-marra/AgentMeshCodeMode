@@ -83,27 +83,39 @@ namespace AgentMesh.Application.Workflows
 
                 bool sandBoxError = await ExecuteJSSandboxAsync(state, false);
 
-                for (int i = 0; i < 2 && state.CodeExecutionFailuresDetectorIterationCount < 2; i++)
+                if (state.CodeExecutionResultType == SandboxResultType.CallError)
                 {
-                    var analysis = await ExecuteCodeExecutionFailuresDetectorAsync(state, i + 1);
-
-                    if (analysis.Equals(JavascriptCodeExecutionFailuresDetectorAgent.NO_ERROR, StringComparison.OrdinalIgnoreCase))
-                    {
-                        break;
-                    }
-
-                    await ExecuteCodeFixerForRuntimeErrorsAsync(state, analysis, i + 1);
-
-                    sandBoxError = await ExecuteJSSandboxAsync(state, true);
-                    if (sandBoxError)
-                    {
-                        break;
-                    }
+                    await CompleteWorkflowAsync(state, state.SandboxResult);
                 }
+                else if (state.CodeExecutionResultType == SandboxResultType.ApplicationError || 
+                         state.CodeExecutionResultType == SandboxResultType.SyntaxError)
+                {
+                    for (int i = 0; i < 2 && state.CodeExecutionFailuresDetectorIterationCount < 2; i++)
+                    {
+                        var analysis = await ExecuteCodeExecutionFailuresDetectorAsync(state, i + 1);
 
-                await ExecuteResultsPresenterAsync(state, sandBoxError);
+                        if (analysis.Equals(JavascriptCodeExecutionFailuresDetectorAgent.NO_ERROR, StringComparison.OrdinalIgnoreCase))
+                        {
+                            break;
+                        }
 
-                await CompleteWorkflowAsync(state, state.PresenterOutput);
+                        await ExecuteCodeFixerForRuntimeErrorsAsync(state, analysis, i + 1);
+
+                        sandBoxError = await ExecuteJSSandboxAsync(state, true);
+                        if (sandBoxError)
+                        {
+                            break;
+                        }
+                    }
+
+                    await ExecuteResultsPresenterAsync(state, sandBoxError);
+                    await CompleteWorkflowAsync(state, state.PresenterOutput);
+                }
+                else
+                {
+                    await ExecuteResultsPresenterAsync(state, sandBoxError);
+                    await CompleteWorkflowAsync(state, state.PresenterOutput);
+                }
                 goto WorkflowEnd;
             }
             else if (routerRecipient?.Equals("BusinessAdvisor", StringComparison.OrdinalIgnoreCase) == true)
