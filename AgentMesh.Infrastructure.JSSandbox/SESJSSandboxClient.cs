@@ -1,6 +1,8 @@
 ﻿using AgentMesh.Application.Services;
+using System.Net;
 using System.Net.Http.Json;
 using AgentMesh.Infrastructure.JSSandbox.Models;
+using AgentMesh.Models;
 
 namespace AgentMesh.Infrastructure.JSSandbox
 {
@@ -28,6 +30,15 @@ namespace AgentMesh.Infrastructure.JSSandbox
 
             var response = await _httpClient.PostAsJsonAsync(
                 $"/api/Execution/{Uri.EscapeDataString(_sandboxName)}", request);
+
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                var errorResponse = await response.Content.ReadFromJsonAsync<SandboxErrorResponseDTO>();
+                
+                throw new CodeSandboxCallException(
+                    errorResponse?.ErrorType ?? "Unknown",
+                    errorResponse?.Error ?? "An unknown error occurred.");
+            }
 
             response.EnsureSuccessStatusCode();
 
