@@ -12,11 +12,12 @@ namespace AgentMesh.Application.Models
             InitialContextMessages = contextMessages.ToList();
         }
 
-    public string OriginalUserRequest { get; }
-    public string? UserQuestionRelevantContext { get; set; }
+        public string OriginalUserRequest { get; }
+        public string? UserQuestionRelevantContext { get; set; }
         public IEnumerable<string> UserRequestActionableRequirements { get; set; } = Enumerable.Empty<string>();
         public string? RouterRecipient { get; set; }
         public string? BusinessRequirements { get; set; }
+        public IEnumerable<string> MentionedApis { get; set; } = Enumerable.Empty<string>();
         public bool ShouldEngageCoder { get; set; }
         public string? OutputForUserFromBusinessAnalyst { get; set; }
         public string? BusinessAdvisorContent { get; set; }
