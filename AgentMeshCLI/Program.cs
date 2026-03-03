@@ -136,7 +136,6 @@ namespace AgentMesh
                 .PostConfigure(options =>
                 {
                     options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                    options.ApiReference = ResolveConfigText(options.ApiReference, options.ApiReferenceFile);
                 })
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<CoderAgentConfiguration>>().Value);

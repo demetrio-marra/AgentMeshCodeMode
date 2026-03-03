@@ -9,7 +9,5 @@ namespace AgentMesh.Application.Configuration
         public string ModelTemperature { get; set; } = string.Empty;
         public string SystemPrompt { get; set; } = string.Empty;
         public string? SystemPromptFile { get; set; }
-        public string ApiReference { get; set; } = string.Empty;
-        public string? ApiReferenceFile { get; set; }
     }
 }
