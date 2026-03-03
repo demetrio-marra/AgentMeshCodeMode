@@ -307,7 +307,7 @@ namespace AgentMesh.Application.Workflows
                     Code = state.GeneratedCode
                 });
                 state.SandboxResult = executionOutput.Result;
-                state.IsSandboxResultError = false;
+                state.CodeExecutionResultType = SandboxResultType.Success;
                 await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, new Dictionary<string, string>
                 {
                     { "Result", state.SandboxResult }
@@ -316,7 +316,7 @@ namespace AgentMesh.Application.Workflows
             catch (Exception ex)
             {
                 state.SandboxResult = ex.Message;
-                state.IsSandboxResultError = true;
+                state.CodeExecutionResultType = SandboxResultType.ApplicationError;
                 sandBoxError = true;
                 await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, new Dictionary<string, string>
                 {
