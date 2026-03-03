@@ -313,6 +313,21 @@ namespace AgentMesh.Application.Workflows
                     { "Result", state.SandboxResult }
                 });
             }
+            catch (CodeSandboxCallException ex)
+            {
+                state.SandboxResult = ex.Message;
+                state.CodeExecutionResultType = ex.ErrorType switch
+                {
+                    "CodeSyntaxError" => SandboxResultType.SyntaxError,
+                    "InvalidRequest" => SandboxResultType.CallError,
+                    _ => SandboxResultType.ApplicationError
+                };
+                sandBoxError = true;
+                await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, new Dictionary<string, string>
+                {
+                    { "Error", state.SandboxResult }
+                });
+            }
             catch (Exception ex)
             {
                 state.SandboxResult = ex.Message;
