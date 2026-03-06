@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace AgentMesh.Application.Services
 {
-    public class AgentMemoryExecutor : IAgentMemoryExecutor
+    public class AgentMemoryExecutor : IAgentMemoryRetriever, IAgentMemorySaver
     {
         private readonly ILogger<AgentMemoryExecutor> _logger;
         private readonly IAgentMemoryService _agentMemoryService;
@@ -21,10 +21,10 @@ namespace AgentMesh.Application.Services
         }
 
 
-        public async Task AddInteractionAsync(AgentMemoryExecutorAddInteractionInput input)
+        async Task IAgentMemorySaver.ExecuteAsync(AgentMemorySaverInput input)
         {
-            _logger.LogDebug("Executing AgentMemoryExecutor - AddInteractionAsync.");
-            _logger.LogDebug("AgentMemoryExecutor - AddInteractionAsync Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
+            _logger.LogDebug("Executing AgentMemorySaver - ExecuteAsync.");
+            _logger.LogDebug("AgentMemorySaver - ExecuteAsync Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
             var stopwatch = Stopwatch.StartNew();
 
@@ -34,13 +34,13 @@ namespace AgentMesh.Application.Services
 
             stopwatch.Stop();
 
-            _logger.LogDebug("AgentMemoryExecutor - AddInteractionAsync completed in {ElapsedMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
+            _logger.LogDebug("AgentMemorySaver - ExecuteAsync completed in {ElapsedMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
         }
 
-        public async Task<AgentMemoryExecutorOutput> SearchMemoryAsync(AgentMemoryExecutorSearchMemoryInput input)
+        async Task<AgentMemoryRetrieverOutput> IAgentMemoryRetriever.ExecuteAsync(AgentMemoryRetrieverInput input)
         {
-            _logger.LogDebug("Executing AgentMemoryExecutor - SearchMemoryAsync.");
-            _logger.LogDebug("AgentMemoryExecutor - SearchMemoryAsync Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
+            _logger.LogDebug("Executing AgentMemoryRetriever - ExecuteAsync.");
+            _logger.LogDebug("AgentMemoryRetriever - ExecuteAsync Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
             var stopwatch = Stopwatch.StartNew();
 
@@ -49,7 +49,7 @@ namespace AgentMesh.Application.Services
 
             stopwatch.Stop();
 
-            var output = new AgentMemoryExecutorOutput
+            var output = new AgentMemoryRetrieverOutput
             {
                 Items = ret.Select(r => new AgentMemoryItem
                 {
@@ -58,8 +58,8 @@ namespace AgentMesh.Application.Services
                 }).ToList()
             };
 
-            _logger.LogDebug("AgentMemoryExecutor - SearchMemoryAsync completed in {ElapsedMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
-            _logger.LogDebug("AgentMemoryExecutor - SearchMemoryAsync Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
+            _logger.LogDebug("AgentMemoryRetriever - ExecuteAsync completed in {ElapsedMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
+            _logger.LogDebug("AgentMemoryRetriever - ExecuteAsync Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
 
             return output;
         }

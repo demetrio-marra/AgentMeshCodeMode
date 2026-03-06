@@ -24,7 +24,8 @@ namespace AgentMesh.Application.Workflows
         private readonly IRouterAgent _routerAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent;
         private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
-        private readonly IAgentMemoryExecutor _agentMemoryExecutor;
+        private readonly IAgentMemoryRetriever _agentMemoryRetriever;
+        private readonly IAgentMemorySaver _agentMemorySaver;
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
@@ -40,7 +41,8 @@ namespace AgentMesh.Application.Workflows
             IRouterAgent routerAgent,
             IPersonalAssistantAgent personalAssistantAgent,
             IContextAnalyzerAgent contextAnalyzerAgent,
-            IAgentMemoryExecutor agentMemoryExecutor)
+            IAgentMemoryRetriever agentMemoryRetriever,
+            IAgentMemorySaver agentMemorySaver)
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -56,7 +58,8 @@ namespace AgentMesh.Application.Workflows
             _routerAgent = routerAgent;
             _personalAssistantAgent = personalAssistantAgent;
             _contextAnalyzerAgent = contextAnalyzerAgent;
-            _agentMemoryExecutor = agentMemoryExecutor;
+            _agentMemoryRetriever = agentMemoryRetriever;
+            _agentMemorySaver = agentMemorySaver;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
@@ -182,7 +185,7 @@ namespace AgentMesh.Application.Workflows
                 { "ExtractedIntent", state.ExtractedIntentQuery }
             });
 
-            var brcOutput = await _agentMemoryExecutor.SearchMemoryAsync(new AgentMemoryExecutorSearchMemoryInput
+            var brcOutput = await _agentMemoryRetriever.ExecuteAsync(new AgentMemoryRetrieverInput
             {
                 Query = state.ExtractedIntentQuery ?? string.Empty
             });
