@@ -2,6 +2,8 @@
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
+using AgentMesh.Infrastructure.AgentMemory.Configuration;
+using AgentMesh.Infrastructure.AgentMemory.Services;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Infrastructure.JSSandbox.Configuration;
 using AgentMesh.Infrastructure.JSSandbox.Services;
@@ -66,6 +68,12 @@ namespace AgentMesh
 
             // Register API Documentation Service
             services.AddSingleton<IApiDocumentationService, MongoApiDocumentationRepository>();
+
+            // Agent Memory Service configuration
+            var agentMemoryConfig = new AgentMemoryServiceConfiguration();
+            configuration.GetSection(AgentMemoryServiceConfiguration.SectionName).Bind(agentMemoryConfig);
+            services.AddSingleton(agentMemoryConfig);
+            services.AddHttpClient<IAgentMemoryService, Mem0AgentMemoryService>();
 
             // Configure JSSandbox options
             services
