@@ -144,6 +144,9 @@ namespace AgentMesh.Application.Workflows
             await CompleteWorkflowAsync(state);
 
         WorkflowEnd:
+
+            await ExecuteAgentMemorySaverAsync(state);
+
             await _workflowProgressNotifier.NotifyWorkflowEnd();
 
             return new WorkflowResult
@@ -512,6 +515,27 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Personal Assistant Agent", new Dictionary<string, string>
             {
                 { "Response", state.FinalAnswer }
+            });
+        }
+
+        private async Task ExecuteAgentMemorySaverAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Agent Memory Saver...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Saver", new Dictionary<string, string>
+            {
+                { "MessageByUser", state.OriginalUserRequest },
+                { "ResponseByAssistant", state.FinalAnswer ?? string.Empty }
+            });
+
+            await _agentMemorySaver.ExecuteAsync(new AgentMemorySaverInput
+            {
+                MessageByUser = state.OriginalUserRequest,
+                ResponseByAssistant = state.FinalAnswer ?? string.Empty
+            });
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", new Dictionary<string, string>
+            {
+                { "Status", "Memory saved successfully" }
             });
         }
 
