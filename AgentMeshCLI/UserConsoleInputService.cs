@@ -19,7 +19,7 @@ namespace AgentMesh
         private readonly CodeStaticAnalyzerConfiguration _codeStaticAnalyzerConfiguration;
         private readonly CodeFixerAgentConfiguration _codeFixerConfiguration;
         private readonly ResultsPresenterAgentConfiguration _resultsPresenterConfiguration;
-        private readonly ContextAnalyzerAgentConfiguration _contextAnalyzerConfiguration;
+        private readonly IntentExtractorAgentConfiguration _intentExtractorConfiguration;
         private readonly RouterAgentConfiguration _routerConfiguration;
         private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
         private readonly LLMsConfiguration _llmsConfiguration;
@@ -37,7 +37,7 @@ namespace AgentMesh
             CodeStaticAnalyzerConfiguration codeStaticAnalyzerConfiguration,
             CodeFixerAgentConfiguration codeFixerConfiguration,
             ResultsPresenterAgentConfiguration resultsPresenterConfiguration,
-            ContextAnalyzerAgentConfiguration contextAnalyzerConfiguration,
+            IntentExtractorAgentConfiguration intentExtractorConfiguration,
             RouterAgentConfiguration routerConfiguration,
             PersonalAssistantAgentConfiguration personalAssistantConfiguration,
             LLMsConfiguration llmsConfiguration,
@@ -54,7 +54,7 @@ namespace AgentMesh
             _codeStaticAnalyzerConfiguration = codeStaticAnalyzerConfiguration;
             _codeFixerConfiguration = codeFixerConfiguration;
             _resultsPresenterConfiguration = resultsPresenterConfiguration;
-            _contextAnalyzerConfiguration = contextAnalyzerConfiguration;
+            _intentExtractorConfiguration = intentExtractorConfiguration;
             _routerConfiguration = routerConfiguration;
             _personalAssistantConfiguration = personalAssistantConfiguration;
             _llmsConfiguration = llmsConfiguration;
@@ -129,7 +129,7 @@ namespace AgentMesh
 
                 var agentInputCosts = new Dictionary<string, decimal>
                 {
-                    { ContextAnalyzerAgentConfiguration.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
+                    { IntentExtractorAgentConfiguration.AgentName, _llmsConfiguration[_intentExtractorConfiguration.LLM].CostPerMillionInputTokens },
                     { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionInputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionInputTokens },
                     { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionInputTokens },
@@ -143,7 +143,7 @@ namespace AgentMesh
 
                 var agentOutputCosts = new Dictionary<string, decimal>
                 {
-                    { ContextAnalyzerAgentConfiguration.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionOutputTokens },
+                    { IntentExtractorAgentConfiguration.AgentName, _llmsConfiguration[_intentExtractorConfiguration.LLM].CostPerMillionOutputTokens },
                     { RouterAgentConfiguration.AgentName, _llmsConfiguration[_routerConfiguration.LLM].CostPerMillionOutputTokens },
                     { BusinessRequirementsCreatorAgentConfiguration.AgentName, _llmsConfiguration[_businessRequirementsCreatorConfiguration.LLM].CostPerMillionOutputTokens },
                     { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionOutputTokens },
@@ -207,7 +207,7 @@ namespace AgentMesh
         {
             Console.WriteLine("Sandbox Url: " + _sesJsSandboxConfiguration.SandboxServiceURL + ", SandboxName: " + _sesJsSandboxConfiguration.SandboxName + ", AgentId: " + _userConfiguration.AgentId);
             Console.WriteLine("Agent configurations:");
-            ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgentConfiguration.AgentName, _contextAnalyzerConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Intent Extractor", IntentExtractorAgentConfiguration.AgentName, _intentExtractorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Router", RouterAgentConfiguration.AgentName, _routerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Requirements Creator", BusinessRequirementsCreatorAgentConfiguration.AgentName, _businessRequirementsCreatorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Advisor", BusinessAdvisorAgentConfiguration.AgentName, _businessAdvisorConfiguration);

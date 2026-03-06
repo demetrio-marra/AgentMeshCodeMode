@@ -13,8 +13,7 @@ namespace AgentMesh.Application.Models
         }
 
         public string OriginalUserRequest { get; }
-        public string? UserQuestionRelevantContext { get; set; }
-        public IEnumerable<string> UserRequestActionableRequirements { get; set; } = Enumerable.Empty<string>();
+        public string? ExtractedIntentQuery { get; set; }
         public string? RouterRecipient { get; set; }
         public string? BusinessRequirements { get; set; }
         public IEnumerable<string> MentionedApis { get; set; } = Enumerable.Empty<string>();
