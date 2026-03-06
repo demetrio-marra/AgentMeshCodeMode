@@ -14,6 +14,7 @@ namespace AgentMesh.Application.Models
 
         public string OriginalUserRequest { get; }
         public string? ExtractedIntentQuery { get; set; }
+        public string EnrichedUserRequest { get; set; } = string.Empty;
         public string? RouterRecipient { get; set; }
         public string? BusinessRequirements { get; set; }
         public IEnumerable<string> MentionedApis { get; set; } = Enumerable.Empty<string>();
@@ -31,6 +32,8 @@ namespace AgentMesh.Application.Models
         public string? PresenterOutput { get; set; }
         public string? FinalAnswer { get; set; }
         public List<AgentTokenUsageEntry> TokenUsageEntries { get; set; }
+        public IEnumerable<AgentMemoryItem> ExtractedAgentMemories { get; set; } = Enumerable.Empty<AgentMemoryItem>();
+        public IEnumerable<string> ActionableRequirements { get; set; } = Enumerable.Empty<string>();
 
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
 

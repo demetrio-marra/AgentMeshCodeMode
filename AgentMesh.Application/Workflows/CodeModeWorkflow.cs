@@ -23,6 +23,8 @@ namespace AgentMesh.Application.Workflows
         private readonly IIntentExtractorAgent _intentExtractorAgent;
         private readonly IRouterAgent _routerAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent;
+        private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
+        private readonly IAgentMemoryExecutor _agentMemoryExecutor;
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
@@ -36,7 +38,9 @@ namespace AgentMesh.Application.Workflows
             IJSSandboxExecutor jsSandboxExecutor,
             IIntentExtractorAgent intentExtractorAgent,
             IRouterAgent routerAgent,
-            IPersonalAssistantAgent personalAssistantAgent)
+            IPersonalAssistantAgent personalAssistantAgent,
+            IContextAnalyzerAgent contextAnalyzerAgent,
+            IAgentMemoryExecutor agentMemoryExecutor)
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -51,6 +55,8 @@ namespace AgentMesh.Application.Workflows
             _intentExtractorAgent = intentExtractorAgent;
             _routerAgent = routerAgent;
             _personalAssistantAgent = personalAssistantAgent;
+            _contextAnalyzerAgent = contextAnalyzerAgent;
+            _agentMemoryExecutor = agentMemoryExecutor;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
@@ -62,6 +68,8 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Extracting user intent...");
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
+            await ExecuteAgentMemoryServiceAsync(state);
+            await ExecuteContextAnalyzerAsync(state);
 
             var routerRecipient = await ExecuteRouterAsync(state);
 
@@ -163,6 +171,57 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", new Dictionary<string, string>
             {
                 { "ExtractedIntent", state.ExtractedIntentQuery ?? "(No intent extracted)" }
+            });
+        }
+
+        private async Task ExecuteAgentMemoryServiceAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Agent Memory Service...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Service", new Dictionary<string, string>
+            {
+                { "ExtractedIntent", state.ExtractedIntentQuery }
+            });
+
+            var brcOutput = await _agentMemoryExecutor.SearchMemoryAsync(new AgentMemoryExecutorSearchMemoryInput
+            {
+                Query = state.ExtractedIntentQuery ?? string.Empty
+            });
+
+            state.ExtractedAgentMemories = brcOutput.Items.ToList();
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Service", new Dictionary<string, string>
+            {
+                { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories) }
+            });
+        }
+
+        private async Task ExecuteContextAnalyzerAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Context Analyzer Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", new Dictionary<string, string>
+            {
+                { "ExtranctedItent", state.ExtractedIntentQuery },
+                { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories) }
+            });
+
+            var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
+            {
+                Memories = state.ExtractedAgentMemories.ToList(),
+                UserIntent = state.ExtractedIntentQuery ?? string.Empty
+            });
+            
+            state.EnrichedUserRequest = contextAnalyzerOutput.EnrichedIntent;
+
+            if (contextAnalyzerOutput.ActionableRequirements != null
+                && contextAnalyzerOutput.ActionableRequirements.Any())
+            {
+                state.ActionableRequirements = contextAnalyzerOutput.ActionableRequirements.ToList();
+            }
+            state.AddTokenUsage(ContextAnalyzerAgentConfiguration.AgentName, contextAnalyzerOutput.TokenCount, contextAnalyzerOutput.InputTokenCount, contextAnalyzerOutput.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", new Dictionary<string, string>
+            {
+                { "EnrichedUserRequest", state.EnrichedUserRequest },
+                { "ActionableRequirements", state.ActionableRequirements != null && state.ActionableRequirements.Any() ? string.Join(", ", state.ActionableRequirements) : "(No actionable requirements found)" }
             });
         }
 
