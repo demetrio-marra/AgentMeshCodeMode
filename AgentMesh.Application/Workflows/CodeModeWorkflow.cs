@@ -197,7 +197,7 @@ namespace AgentMesh.Application.Workflows
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Service", new Dictionary<string, string>
             {
-                { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories) }
+                { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories.Select(m => m.Memory)) }
             });
         }
 
@@ -207,7 +207,7 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", new Dictionary<string, string>
             {
                 { "ExtranctedItent", state.ExtractedIntentQuery },
-                { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories) }
+                { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories.Select(m => m.Memory)) }
             });
 
             var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
