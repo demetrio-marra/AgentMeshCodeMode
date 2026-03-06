@@ -270,6 +270,29 @@ namespace AgentMesh
 
             services.AddSingleton<IContextAnalyzerAgent, ContextAnalyzerAgent>();
 
+            // IntentExtractor agent config and client
+            services
+                .AddOptions<IntentExtractorAgentConfiguration>()
+                .Bind(configuration.GetSection(IntentExtractorAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<IntentExtractorAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(IntentExtractorAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<IntentExtractorAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IIntentExtractorAgent, IntentExtractorAgent>();
+
             // Router agent config and client
             services
                 .AddOptions<RouterAgentConfiguration>()
