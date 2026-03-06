@@ -75,6 +75,9 @@ namespace AgentMesh
             services.AddSingleton(agentMemoryConfig);
             services.AddHttpClient<IAgentMemoryService, Mem0AgentMemoryService>();
 
+            // Register Agent Memory Executor
+            services.AddSingleton<IAgentMemoryExecutor, AgentMemoryExecutor>();
+
             // Configure JSSandbox options
             services
                 .AddOptions<SESJSSandboxConfiguration>()
