@@ -230,14 +230,12 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Router Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Router Agent", new Dictionary<string, string>
             {
-                { "UserRequest", state.OriginalUserRequest },
-                { "RequestContext", state.ExtractedIntentQuery ?? string.Empty }
+                { "EnrichedUserRequest", state.EnrichedUserRequest }
             });
 
             var routerOutput = await _routerAgent.ExecuteAsync(new RouterAgentInput
             {
-                UserRequest = state.OriginalUserRequest,
-                RequestContext = state.ExtractedIntentQuery ?? string.Empty
+                EnrichedUserRequest = state.EnrichedUserRequest
             });
             state.RouterRecipient = routerOutput.Recipient;
             state.AddTokenUsage(RouterAgentConfiguration.AgentName, routerOutput.TokenCount, routerOutput.InputTokenCount, routerOutput.OutputTokenCount);
@@ -255,14 +253,12 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Business Requirements Creator Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
             {
-                { "UserRequest", state.OriginalUserRequest },
-                { "RequestContext", state.ExtractedIntentQuery ?? string.Empty }
+                { "EnrichedUserRequest", state.EnrichedUserRequest }
             });
 
             var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
             {
-                UserRequest = state.OriginalUserRequest,
-                RequestContext = state.ExtractedIntentQuery ?? string.Empty,
+                EnrichedUserRequest = state.EnrichedUserRequest,
                 ActionableRequirements = Enumerable.Empty<string>()
             });
             state.ShouldEngageCoder = true;
@@ -457,15 +453,13 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
             {
                 { "Data", state.SandboxResult! },
-                { "UserRequest", state.OriginalUserRequest },
-                { "RequestContext", state.ExtractedIntentQuery ?? string.Empty }
+                { "EnrichedUserRequest", state.EnrichedUserRequest }
             });
 
             var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
             {
                 Data = state.SandboxResult!,
-                UserRequest = state.OriginalUserRequest,
-                RequestContext = state.ExtractedIntentQuery ?? string.Empty
+                EnrichedUserRequest = state.EnrichedUserRequest
             });
             state.PresenterOutput = resultsPresenterOutput.Content;
             state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
@@ -480,14 +474,12 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Business Advisor Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
             {
-                { "UserRequest", state.OriginalUserRequest },
-                { "RequestContext", state.ExtractedIntentQuery ?? string.Empty }
+                { "EnrichedUserRequest", state.EnrichedUserRequest }
             });
 
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
-                UserRequest = state.OriginalUserRequest,
-                RequestContext = state.ExtractedIntentQuery ?? string.Empty,
+                EnrichedUserRequest = state.EnrichedUserRequest,
                 ActionableRequirements = Enumerable.Empty<string>()
             });
             state.BusinessAdvisorContent = baOutput.Content;
@@ -504,15 +496,13 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Personal Assistant Agent", new Dictionary<string, string>
             {
                 { "Data", data ?? "(No data)" },
-                { "UserRequest", state.OriginalUserRequest },
-                { "RequestContext", state.ExtractedIntentQuery ?? string.Empty }
+                { "EnrichedUserRequest", state.EnrichedUserRequest }
             });
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
                 Data = data,
-                UserRequest = state.OriginalUserRequest,
-                RequestContext = state.ExtractedIntentQuery ?? string.Empty
+                EnrichedUserRequest = state.EnrichedUserRequest
             });
             state.FinalAnswer = personalAssistantOutput.Response;
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);

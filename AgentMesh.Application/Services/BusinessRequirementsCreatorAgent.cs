@@ -43,7 +43,7 @@ namespace AgentMesh.Application.Services
                     cancellationToken);
             }
 
-            var userMessage = MessageSerializationUtils.SerializeRequestAndContext(input.RequestContext, input.UserRequest);
+            var userMessage = input.EnrichedUserRequest;
 
             var inputMessages = new List<AgentMessage>();
             if (similarDocs.Any())
