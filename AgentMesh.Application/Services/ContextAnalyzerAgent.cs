@@ -30,12 +30,10 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing ContextAnalyzerAgent.");
             _logger.LogDebug("ContextAnalyzerAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
-            var userMessage = MessageSerializationUtils.SerializeConversationHistory(input.ContextMessages, input.UserLastRequest);
-
             var inputMessages = new List<AgentMessage>
             {
                 new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.User, Content = userMessage }
+                new AgentMessage { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(input) }
             };
 
             var stopwatch = Stopwatch.StartNew();
@@ -55,7 +53,7 @@ namespace AgentMesh.Application.Services
 
                 return new ContextAnalyzerAgentOutput
                 {
-                    RelevantContext = relevantContext,
+                    EnrichedIntent = relevantContext,
                     ActionableRequirements = actionableRequirements,
                     TokenCount = response.TotalTokenCount,
                     InputTokenCount = response.InputTokenCount,
@@ -81,31 +79,22 @@ namespace AgentMesh.Application.Services
                 var jsonDoc = JsonDocument.Parse(responseText);
                 var root = jsonDoc.RootElement;
 
-                if (!root.TryGetProperty("relevantContext", out var relevantContextElement) ||
+                if (!root.TryGetProperty("enrichedIntent", out var enrichedIntentElement) ||
                     !root.TryGetProperty("actionableRequirements", out var actionableReqElement))
                 {
-                    throw new BadStructuredResponseException(responseText, "The model's response is not in the expected JSON format. Expected properties 'relevantContext' and 'actionableRequirements' were not found.");
+                    throw new BadStructuredResponseException(responseText, "The model's response is not in the expected JSON format. Expected properties 'enrichedIntent' and 'actionableRequirements' were not found.");
                 }
 
-                var relevantContextItems = new List<string>();
-                if (relevantContextElement.ValueKind == JsonValueKind.Array)
+                if (enrichedIntentElement.ValueKind != JsonValueKind.String)
                 {
-                    foreach (var item in relevantContextElement.EnumerateArray())
-                    {
-                        if (item.ValueKind == JsonValueKind.String)
-                        {
-                            var value = item.GetString();
-                            if (!string.IsNullOrWhiteSpace(value))
-                            {
-                                relevantContextItems.Add(value);
-                            }
-                        }
-                    }
+                    throw new BadStructuredResponseException(responseText, "The 'enrichedIntent' property is expected to be a string.");
                 }
 
-                var relevantContext = relevantContextItems.Count > 0
-                    ? string.Join("\n", relevantContextItems.Select(item => $"• {item}"))
-                    : string.Empty;
+                var enrichedIntent = enrichedIntentElement.GetString() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(enrichedIntent))
+                {
+                    throw new BadStructuredResponseException(responseText, "The 'enrichedIntent' property is empty.");
+                }
 
                 var actionableRequirements = new List<string>();
                 if (actionableReqElement.ValueKind == JsonValueKind.Array)
@@ -123,7 +112,7 @@ namespace AgentMesh.Application.Services
                     }
                 }
 
-                return (relevantContext, actionableRequirements);
+                return (enrichedIntent, actionableRequirements);
             }
             catch (JsonException ex)
             {

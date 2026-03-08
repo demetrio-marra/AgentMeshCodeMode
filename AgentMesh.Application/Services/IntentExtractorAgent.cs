@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,33 +7,32 @@ using System.Text.Json;
 
 namespace AgentMesh.Application.Services
 {
-    public class PersonalAssistantAgent : IPersonalAssistantAgent
+    public class IntentExtractorAgent : IIntentExtractorAgent
     {
         private readonly IOpenAIClient _openAIClient;
-        private readonly ILogger<PersonalAssistantAgent> _logger;
+        private readonly ILogger<IntentExtractorAgent> _logger;
 
-        public PersonalAssistantAgent(
-            [FromKeyedServices(PersonalAssistantAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            ILogger<PersonalAssistantAgent> logger)
+        public IntentExtractorAgent(
+            [FromKeyedServices(IntentExtractorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+            IntentExtractorAgentConfiguration configuration,
+            ILogger<IntentExtractorAgent> logger)
         {
             _openAIClient = openAIClient;
             _logger = logger;
         }
 
-        public async Task<PersonalAssistantAgentOutput> ExecuteAsync(
-            PersonalAssistantAgentInput input,
+        public async Task<IntentExtractorAgentOutput> ExecuteAsync(
+            IntentExtractorAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            _logger.LogDebug("Executing PersonalAssistantAgent.");
-            _logger.LogDebug("PersonalAssistantAgent Input: {Input}", JsonSerializer.Serialize(input));
+            _logger.LogDebug("Executing IntentExtractorAgent.");
+            _logger.LogDebug("IntentExtractorAgent Input: {Input}", JsonSerializer.Serialize(input));
 
-            var userMessage = input.EnrichedUserRequest;
+            var userMessage = MessageSerializationUtils.SerializeConversationHistory(input.ContextMessages, input.UserLastRequest);
 
             var inputMessages = new List<AgentMessage>
             {
                 new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Respond in {input.OutputLanguage}." },
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Respond about this data:\n" + input.Data },
                 new AgentMessage { Role = AgentMessageRole.User, Content = userMessage }
             };
 
@@ -51,23 +49,22 @@ namespace AgentMesh.Application.Services
                     throw new EmptyAgentResponseException();
                 }
 
-                return new PersonalAssistantAgentOutput
+                return new IntentExtractorAgentOutput
                 {
-                    Response = responseText,
+                    Query = responseText,
                     TokenCount = response.TotalTokenCount,
                     InputTokenCount = response.InputTokenCount,
                     OutputTokenCount = response.OutputTokenCount
                 };
-            }, PersonalAssistantAgentConfiguration.AgentName, _logger);
+            }, IntentExtractorAgentConfiguration.AgentName, _logger);
 
             stopwatch.Stop();
             _logger.LogDebug(
-                "PersonalAssistantAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
+                "IntentExtractorAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
                 stopwatch.ElapsedMilliseconds,
                 result.TokenCount);
 
-            var output = result;
-            _logger.LogDebug("PersonalAssistantAgent Output: {Output}", JsonSerializer.Serialize(result));
+            _logger.LogDebug("IntentExtractorAgent Output: {Output}", JsonSerializer.Serialize(result));
             return result;
         }
     }

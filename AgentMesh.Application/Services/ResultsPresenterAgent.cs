@@ -27,7 +27,7 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("Executing ResultsPresenterAgent.");
             _logger.LogDebug("ResultsPresenterAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
-            var userMessage = MessageSerializationUtils.SerializeRequestAndContext(input.RequestContext, input.UserRequest);
+            var userMessage = input.EnrichedUserRequest;
 
             var inputs = new List<AgentMessage>
             {

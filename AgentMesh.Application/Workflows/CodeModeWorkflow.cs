@@ -20,9 +20,12 @@ namespace AgentMesh.Application.Workflows
         private readonly ICodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent;
         private readonly IResultsPresenterAgent _resultsPresenterAgent;
         private readonly IJSSandboxExecutor _jsSandboxExecutor;
-        private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
+        private readonly IIntentExtractorAgent _intentExtractorAgent;
         private readonly IRouterAgent _routerAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent;
+        private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
+        private readonly IAgentMemoryRetriever _agentMemoryRetriever;
+        private readonly IAgentMemorySaver _agentMemorySaver;
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
@@ -34,9 +37,12 @@ namespace AgentMesh.Application.Workflows
             ICodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent,
             IResultsPresenterAgent resultsPresenterAgent,
             IJSSandboxExecutor jsSandboxExecutor,
-            IContextAnalyzerAgent contextAnalyzerAgent,
+            IIntentExtractorAgent intentExtractorAgent,
             IRouterAgent routerAgent,
-            IPersonalAssistantAgent personalAssistantAgent)
+            IPersonalAssistantAgent personalAssistantAgent,
+            IContextAnalyzerAgent contextAnalyzerAgent,
+            IAgentMemoryRetriever agentMemoryRetriever,
+            IAgentMemorySaver agentMemorySaver)
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -48,9 +54,12 @@ namespace AgentMesh.Application.Workflows
             _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
             _resultsPresenterAgent = resultsPresenterAgent;
             _jsSandboxExecutor = jsSandboxExecutor;
-            _contextAnalyzerAgent = contextAnalyzerAgent;
+            _intentExtractorAgent = intentExtractorAgent;
             _routerAgent = routerAgent;
             _personalAssistantAgent = personalAssistantAgent;
+            _contextAnalyzerAgent = contextAnalyzerAgent;
+            _agentMemoryRetriever = agentMemoryRetriever;
+            _agentMemorySaver = agentMemorySaver;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
@@ -59,9 +68,11 @@ namespace AgentMesh.Application.Workflows
 
             var state = new CodeModeWorkflowState(userInput, chatHistory);
 
-            _logger.LogDebug("Loading conversation history from Context Manager Agent...");
+            _logger.LogDebug("Extracting user intent...");
 
-            await ExecuteContextAnalyzerAsync(state, chatHistory);
+            await ExecuteIntentExtractorAsync(state, chatHistory);
+            await ExecuteAgentMemoryServiceAsync(state);
+            await ExecuteContextAnalyzerAsync(state);
 
             var routerRecipient = await ExecuteRouterAsync(state);
 
@@ -133,6 +144,9 @@ namespace AgentMesh.Application.Workflows
             await CompleteWorkflowAsync(state);
 
         WorkflowEnd:
+
+            await ExecuteAgentMemorySaverAsync(state);
+
             await _workflowProgressNotifier.NotifyWorkflowEnd();
 
             return new WorkflowResult
@@ -142,38 +156,78 @@ namespace AgentMesh.Application.Workflows
             };
         }
 
-        private async Task ExecuteContextAnalyzerAsync(CodeModeWorkflowState state, IEnumerable<ContextMessage> chatHistory)
+        private async Task ExecuteIntentExtractorAsync(CodeModeWorkflowState state, IEnumerable<ContextMessage> chatHistory)
         {
-            _logger.LogDebug("Engaging Context Analyzer Agent...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", new Dictionary<string, string>
+            _logger.LogDebug("Engaging Intent Extractor Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Intent Extractor Agent", new Dictionary<string, string>
             {
                 { "ContextMessages", "<omitted for brevity>. Total: " + chatHistory.Count().ToString() },
                 { "UserLastRequest", state.OriginalUserRequest }
             });
 
-            var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
+            var intentExtractorOutput = await _intentExtractorAgent.ExecuteAsync(new IntentExtractorAgentInput
             {
                 ContextMessages = state.InitialContextMessages.ToList(),
                 UserLastRequest = state.OriginalUserRequest
             });
-            if (contextAnalyzerOutput.RelevantContext == ContextAnalyzerAgent.NO_RELEVANT_CONTEXT_FOUND)
+            
+            state.ExtractedIntentQuery = intentExtractorOutput.Query;
+            
+            state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.TokenCount, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", new Dictionary<string, string>
             {
-                state.UserQuestionRelevantContext = null;
-            }
-            else
+                { "ExtractedIntent", state.ExtractedIntentQuery ?? "(No intent extracted)" }
+            });
+        }
+
+        private async Task ExecuteAgentMemoryServiceAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Agent Memory Service...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Service", new Dictionary<string, string>
             {
-                state.UserQuestionRelevantContext = contextAnalyzerOutput.RelevantContext;
-            }
+                { "ExtractedIntent", state.ExtractedIntentQuery }
+            });
+
+            var brcOutput = await _agentMemoryRetriever.ExecuteAsync(new AgentMemoryRetrieverInput
+            {
+                Query = state.ExtractedIntentQuery ?? string.Empty
+            });
+
+            state.ExtractedAgentMemories = brcOutput.Items.ToList();
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Service", new Dictionary<string, string>
+            {
+                { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories.Select(m => m.Memory)) }
+            });
+        }
+
+        private async Task ExecuteContextAnalyzerAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Context Analyzer Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", new Dictionary<string, string>
+            {
+                { "ExtranctedItent", state.ExtractedIntentQuery },
+                { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories.Select(m => m.Memory)) }
+            });
+
+            var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
+            {
+                Memories = state.ExtractedAgentMemories.ToList(),
+                UserIntent = state.ExtractedIntentQuery ?? string.Empty
+            });
+            
+            state.EnrichedUserRequest = contextAnalyzerOutput.EnrichedIntent;
+
             if (contextAnalyzerOutput.ActionableRequirements != null
                 && contextAnalyzerOutput.ActionableRequirements.Any())
             {
-                state.UserRequestActionableRequirements = contextAnalyzerOutput.ActionableRequirements.ToList();
+                state.ActionableRequirements = contextAnalyzerOutput.ActionableRequirements.ToList();
             }
             state.AddTokenUsage(ContextAnalyzerAgentConfiguration.AgentName, contextAnalyzerOutput.TokenCount, contextAnalyzerOutput.InputTokenCount, contextAnalyzerOutput.OutputTokenCount);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", new Dictionary<string, string>
             {
-                { "RelevantContext", state.UserQuestionRelevantContext ?? "(No relevant context found)" },
-                { "ActionableRequirements", state.UserRequestActionableRequirements != null && state.UserRequestActionableRequirements.Any() ? string.Join(", ", state.UserRequestActionableRequirements) : "(No actionable requirements found)" }
+                { "EnrichedUserRequest", state.EnrichedUserRequest },
+                { "ActionableRequirements", state.ActionableRequirements != null && state.ActionableRequirements.Any() ? string.Join(", ", state.ActionableRequirements) : "(No actionable requirements found)" }
             });
         }
 
@@ -182,14 +236,12 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Router Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Router Agent", new Dictionary<string, string>
             {
-                { "UserRequest", state.OriginalUserRequest },
-                { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
+                { "EnrichedUserRequest", state.EnrichedUserRequest }
             });
 
             var routerOutput = await _routerAgent.ExecuteAsync(new RouterAgentInput
             {
-                UserRequest = state.OriginalUserRequest,
-                RequestContext = state.UserQuestionRelevantContext ?? string.Empty
+                EnrichedUserRequest = state.EnrichedUserRequest
             });
             state.RouterRecipient = routerOutput.Recipient;
             state.AddTokenUsage(RouterAgentConfiguration.AgentName, routerOutput.TokenCount, routerOutput.InputTokenCount, routerOutput.OutputTokenCount);
@@ -207,15 +259,13 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Business Requirements Creator Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
             {
-                { "UserRequest", state.OriginalUserRequest },
-                { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
+                { "EnrichedUserRequest", state.EnrichedUserRequest }
             });
 
             var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
             {
-                UserRequest = state.OriginalUserRequest,
-                RequestContext = state.UserQuestionRelevantContext ?? string.Empty,
-                ActionableRequirements = state.UserRequestActionableRequirements
+                EnrichedUserRequest = state.EnrichedUserRequest,
+                ActionableRequirements = state.ActionableRequirements.ToList()
             });
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = brcOutput.BusinessRequirements;
@@ -409,15 +459,13 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
             {
                 { "Data", state.SandboxResult! },
-                { "UserRequest", state.OriginalUserRequest },
-                { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
+                { "EnrichedUserRequest", state.EnrichedUserRequest }
             });
 
             var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
             {
                 Data = state.SandboxResult!,
-                UserRequest = state.OriginalUserRequest,
-                RequestContext = state.UserQuestionRelevantContext ?? string.Empty
+                EnrichedUserRequest = state.EnrichedUserRequest
             });
             state.PresenterOutput = resultsPresenterOutput.Content;
             state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
@@ -432,15 +480,13 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Business Advisor Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
             {
-                { "UserRequest", state.OriginalUserRequest },
-                { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
+                { "EnrichedUserRequest", state.EnrichedUserRequest }
             });
 
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
-                UserRequest = state.OriginalUserRequest,
-                RequestContext = state.UserQuestionRelevantContext ?? string.Empty,
-                ActionableRequirements = state.UserRequestActionableRequirements
+                EnrichedUserRequest = state.EnrichedUserRequest,
+                ActionableRequirements = state.ActionableRequirements.ToList()
             });
             state.BusinessAdvisorContent = baOutput.Content;
             state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
@@ -456,15 +502,13 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Personal Assistant Agent", new Dictionary<string, string>
             {
                 { "Data", data ?? "(No data)" },
-                { "UserRequest", state.OriginalUserRequest },
-                { "RequestContext", state.UserQuestionRelevantContext ?? string.Empty }
+                { "EnrichedUserRequest", state.EnrichedUserRequest }
             });
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
                 Data = data,
-                UserRequest = state.OriginalUserRequest,
-                RequestContext = state.UserQuestionRelevantContext ?? string.Empty
+                EnrichedUserRequest = state.EnrichedUserRequest
             });
             state.FinalAnswer = personalAssistantOutput.Response;
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
@@ -474,8 +518,29 @@ namespace AgentMesh.Application.Workflows
             });
         }
 
+        private async Task ExecuteAgentMemorySaverAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Agent Memory Saver...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Saver", new Dictionary<string, string>
+            {
+                { "MessageByUser", state.OriginalUserRequest },
+                { "ResponseByAssistant", state.FinalAnswer ?? string.Empty }
+            });
 
-        public string GetIngressAgentName() => ContextAnalyzerAgentConfiguration.AgentName;
+            await _agentMemorySaver.ExecuteAsync(new AgentMemorySaverInput
+            {
+                MessageByUser = state.OriginalUserRequest,
+                ResponseByAssistant = state.FinalAnswer ?? string.Empty
+            });
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", new Dictionary<string, string>
+            {
+                { "Status", "Memory saved successfully" }
+            });
+        }
+
+
+        public string GetIngressAgentName() => IntentExtractorAgentConfiguration.AgentName;
 
         public string GetEgressAgentName() => PersonalAssistantAgentConfiguration.AgentName;
     }

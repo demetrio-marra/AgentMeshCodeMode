@@ -2,7 +2,7 @@ namespace AgentMesh.Models
 {
     public class ContextAnalyzerAgentInput
     {
-        public List<ContextMessage> ContextMessages { get; set; } = new List<ContextMessage>();
-        public string UserLastRequest { get; set; } = string.Empty;
+        public string UserIntent { get; set; } = string.Empty;
+        public IEnumerable<AgentMemoryItem> Memories { get; set; } = Enumerable.Empty<AgentMemoryItem>();
     }
 }

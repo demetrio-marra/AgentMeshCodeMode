@@ -2,6 +2,8 @@
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
+using AgentMesh.Infrastructure.AgentMemory.Configuration;
+using AgentMesh.Infrastructure.AgentMemory.Services;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Infrastructure.JSSandbox.Configuration;
 using AgentMesh.Infrastructure.JSSandbox.Services;
@@ -66,6 +68,17 @@ namespace AgentMesh
 
             // Register API Documentation Service
             services.AddSingleton<IApiDocumentationService, MongoApiDocumentationRepository>();
+
+            // Agent Memory Service configuration
+            var agentMemoryConfig = new AgentMemoryServiceConfiguration();
+            configuration.GetSection(AgentMemoryServiceConfiguration.SectionName).Bind(agentMemoryConfig);
+            services.AddSingleton(agentMemoryConfig);
+            services.AddHttpClient<IAgentMemoryService, Mem0AgentMemoryService>();
+
+            // Register Agent Memory Executor - single implementation for both interfaces
+            services.AddSingleton<AgentMemoryExecutor>();
+            services.AddSingleton<IAgentMemoryRetriever>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
+            services.AddSingleton<IAgentMemorySaver>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
 
             // Configure JSSandbox options
             services
@@ -269,6 +282,29 @@ namespace AgentMesh
             });
 
             services.AddSingleton<IContextAnalyzerAgent, ContextAnalyzerAgent>();
+
+            // IntentExtractor agent config and client
+            services
+                .AddOptions<IntentExtractorAgentConfiguration>()
+                .Bind(configuration.GetSection(IntentExtractorAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<IntentExtractorAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(IntentExtractorAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<IntentExtractorAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IIntentExtractorAgent, IntentExtractorAgent>();
 
             // Router agent config and client
             services
