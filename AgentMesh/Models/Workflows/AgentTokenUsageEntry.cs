@@ -1,4 +1,4 @@
-namespace AgentMesh.Application.Models
+namespace AgentMesh.Models.Workflows
 {
     public class AgentTokenUsageEntry
     {

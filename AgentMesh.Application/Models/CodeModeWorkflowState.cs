@@ -1,5 +1,6 @@
 ﻿using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.IntentExtractor;
+using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Models
 {

@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Models.Workflows;
 
 namespace AgentMesh
 {

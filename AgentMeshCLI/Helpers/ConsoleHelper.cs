@@ -1,4 +1,4 @@
-﻿using AgentMesh.Application.Models;
+﻿using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Helpers
 {
