@@ -1,8 +1,8 @@
-using AgentMesh.Models;
+using AgentMesh.Models.Router;
 
 namespace AgentMesh.Services
 {
-    public interface IRouterAgent : IAgent<RouterAgentInput, RouterAgentOutput>
+    public interface IRouterAgent : IExecutor<RouterAgentInput, RouterAgentOutput>
     {
     }
 }

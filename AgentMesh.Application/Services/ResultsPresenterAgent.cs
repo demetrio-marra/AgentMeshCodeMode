@@ -1,72 +1,43 @@
 using AgentMesh.Application.Configuration;
-using AgentMesh.Models;
+using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models;
+using AgentMesh.Models.ResultsPresenter;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 
 namespace AgentMesh.Application.Services
 {
-    public class ResultsPresenterAgent : IResultsPresenterAgent
+    public class ResultsPresenterAgent : AgentBase<string>, IResultsPresenterAgent
     {
-        private readonly IOpenAIClient _openAIClient;
-        private readonly ILogger<ResultsPresenterAgent> _logger;
-
         public ResultsPresenterAgent(
             [FromKeyedServices(ResultsPresenterAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            ILogger<ResultsPresenterAgent> logger)
+            ILogger<ResultsPresenterAgent> logger) : base(logger, ResultsPresenterAgentConfiguration.AgentName, openAIClient)
         {
-            _openAIClient = openAIClient;
-            _logger = logger;
         }
 
         public async Task<ResultsPresenterAgentOutput> ExecuteAsync(
             ResultsPresenterAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            _logger.LogDebug("Executing ResultsPresenterAgent.");
-            _logger.LogDebug("ResultsPresenterAgent Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
-
-            var userMessage = input.EnrichedUserRequest;
-
-            var inputs = new List<AgentMessage>
+            var inputMessages = new List<AgentMessage>
             {
-                new AgentMessage { Role = AgentMessageRole.System, Content = "Today date is " + DateTime.UtcNow.ToString("yyyy-MM-dd") + "." },
+                new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
                 new AgentMessage { Role = AgentMessageRole.System, Content = "Data to present\n" + input.Data },
-                new AgentMessage { Role = AgentMessageRole.User, Content = userMessage },
+                new AgentMessage { Role = AgentMessageRole.User, Content = input.EnrichedUserRequest },
             };
 
-            var stopwatch = Stopwatch.StartNew();
+            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            var result = await Resilience.ExecuteWithRetryAsync(async () =>
+            return new ResultsPresenterAgentOutput
             {
-                var response = await _openAIClient.GenerateResponseAsync(inputs);
-                var responseText = response.Text?.Trim() ?? string.Empty;
-
-                if (string.IsNullOrWhiteSpace(responseText))
-                {
-                    _logger.LogWarning("The model's response is empty");
-                    throw new EmptyAgentResponseException();
-                }
-
-                return new ResultsPresenterAgentOutput
-                {
-                    Content = responseText,
-                    TokenCount = response.TotalTokenCount,
-                    InputTokenCount = response.InputTokenCount,
-                    OutputTokenCount = response.OutputTokenCount
-                };
-            }, ResultsPresenterAgentConfiguration.AgentName, _logger);
-
-            stopwatch.Stop();
-            _logger.LogDebug(
-                "ResultsPresenterAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
-                stopwatch.ElapsedMilliseconds,
-                result.TokenCount);
-
-            var output = result;
-            _logger.LogDebug("ResultsPresenterAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(result));
-            return result;
+                Content = result.Result,
+                TokenCount = result.TotalTokenCount,
+                InputTokenCount = result.InputTokenCount,
+                OutputTokenCount = result.OutputTokenCount
+            };
         }
+
+        protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
     }
 }

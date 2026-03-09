@@ -1,7 +1,24 @@
 using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models;
+using AgentMesh.Models.ApiDocumentation;
+using AgentMesh.Models.BusinessAdvisor;
+using AgentMesh.Models.SemanticSearch;
+using AgentMesh.Models.BusinessRequirementsCreator;
+using AgentMesh.Models.CodeExecutionFailuresDetector;
+using AgentMesh.Models.CodeFixer;
+using AgentMesh.Models.Coder;
+using AgentMesh.Models.CodeSandbox;
+using AgentMesh.Models.CodeStaticAnalyzer;
+using AgentMesh.Models.ContextAnalyzer;
+using AgentMesh.Models.IntentExtractor;
+using AgentMesh.Models.PersonalAssistant;
+using AgentMesh.Models.ResultsPresenter;
+using AgentMesh.Models.Router;
+using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 
@@ -15,7 +32,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IBusinessRequirementsCreatorAgent _businessRequirementsCreatorAgent;
         private readonly IBusinessAdvisorAgent _businessAdvisorAgent;
         private readonly ICoderAgent _coderAgent;
-        private readonly ICodeStaticAnalyzer _codeStaticAnalyzer;
+        private readonly ICodeStaticAnalyzerAgent _codeStaticAnalyzer;
         private readonly ICodeFixerAgent _codeFixerAgent;
         private readonly ICodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent;
         private readonly IResultsPresenterAgent _resultsPresenterAgent;
@@ -26,13 +43,15 @@ namespace AgentMesh.Application.Workflows
         private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
         private readonly IAgentMemoryRetriever _agentMemoryRetriever;
         private readonly IAgentMemorySaver _agentMemorySaver;
+        private readonly ISemanticSearchExecutor _semanticSearchExecutor;
+        private readonly IApiDocumentationExecutor _apiDocumentationExecutor;
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
             IBusinessRequirementsCreatorAgent businessRequirementsCreatorAgent,
             IBusinessAdvisorAgent businessAdvisorAgent,
             ICoderAgent coderAgent,
-            ICodeStaticAnalyzer codeStaticAnalyzer,
+            ICodeStaticAnalyzerAgent codeStaticAnalyzer,
             ICodeFixerAgent codeFixerAgent,
             ICodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent,
             IResultsPresenterAgent resultsPresenterAgent,
@@ -42,7 +61,9 @@ namespace AgentMesh.Application.Workflows
             IPersonalAssistantAgent personalAssistantAgent,
             IContextAnalyzerAgent contextAnalyzerAgent,
             IAgentMemoryRetriever agentMemoryRetriever,
-            IAgentMemorySaver agentMemorySaver)
+            IAgentMemorySaver agentMemorySaver,
+            ISemanticSearchExecutor semanticSearchExecutor,
+            IApiDocumentationExecutor apiDocumentationExecutor)
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -60,6 +81,8 @@ namespace AgentMesh.Application.Workflows
             _contextAnalyzerAgent = contextAnalyzerAgent;
             _agentMemoryRetriever = agentMemoryRetriever;
             _agentMemorySaver = agentMemorySaver;
+            _semanticSearchExecutor = semanticSearchExecutor;
+            _apiDocumentationExecutor = apiDocumentationExecutor;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
@@ -83,6 +106,7 @@ namespace AgentMesh.Application.Workflows
             else if (routerRecipient?.Equals("BusinessRequirementsCreator", StringComparison.OrdinalIgnoreCase) == true)
             {
                 await ExecuteBusinessRequirementsCreatorAsync(state);
+                await ExecuteApiDocumentationExecutorAsync(state);
                 await ExecuteCoderAsync(state);
                 await ExecuteCodeStaticAnalyzerAsync(state);
 
@@ -254,8 +278,10 @@ namespace AgentMesh.Application.Workflows
             return routerOutput.Recipient;
         }
 
-        private async Task ExecuteBusinessRequirementsCreatorAsync(CodeModeWorkflowState state)
+        private async Task ExecuteBusinessRequirementsCreatorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
+            await ExecuteSemanticSearchAsync(state, BusinessRequirementsCreatorAgentConfiguration.AgentName, cancellationToken);
+
             _logger.LogDebug("Engaging Business Requirements Creator Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
             {
@@ -265,8 +291,8 @@ namespace AgentMesh.Application.Workflows
             var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
             {
                 EnrichedUserRequest = state.EnrichedUserRequest,
-                ActionableRequirements = state.ActionableRequirements.ToList()
-            });
+                ApiDocumentation = state.SemanticSearchApiDocumentation
+            }, cancellationToken);
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = brcOutput.BusinessRequirements;
             state.MentionedApis = brcOutput.MentionedApis;
@@ -289,13 +315,34 @@ namespace AgentMesh.Application.Workflows
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
             {
                 BusinessRequirements = state.BusinessRequirements!,
-                MentionedApis = state.MentionedApis
+                ApiDocumentation = state.ApiDocumentation
             });
             state.GeneratedCode = coderAgentOutput.CodeToRun;
             state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Coder Agent", new Dictionary<string, string>
             {
                 { "CodeToRun", state.GeneratedCode }
+            });
+        }
+
+        private async Task ExecuteApiDocumentationExecutorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
+        {
+            _logger.LogDebug("Engaging API Documentation Executor...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("API Documentation Executor", new Dictionary<string, string>
+            {
+                { "MentionedApis", string.Join(", ", state.MentionedApis) }
+            });
+
+            var apiDocOutput = await _apiDocumentationExecutor.ExecuteAsync(new ApiDocumentationExecutorInput
+            {
+                MentionedApis = state.MentionedApis
+            }, cancellationToken);
+
+            state.ApiDocumentation = apiDocOutput.ApiDocumentation;
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("API Documentation Executor", new Dictionary<string, string>
+            {
+                { "ApiDocumentationLength", state.ApiDocumentation.Length.ToString() }
             });
         }
 
@@ -367,7 +414,7 @@ namespace AgentMesh.Application.Workflows
                     { "Code", state.GeneratedCode }
                 });
 
-                var executionOutput = await _jsSandboxExecutor.ExecuteAsync(new JSSandboxInput
+                var executionOutput = await _jsSandboxExecutor.ExecuteAsync(new CodeSandboxInput
                 {
                     Code = state.GeneratedCode
                 });
@@ -475,8 +522,33 @@ namespace AgentMesh.Application.Workflows
             });
         }
 
-        private async Task ExecuteBusinessAdvisorAsync(CodeModeWorkflowState state)
+        private async Task ExecuteSemanticSearchAsync(CodeModeWorkflowState state, string agentRole, CancellationToken cancellationToken = default)
         {
+            _logger.LogDebug("Engaging Semantic Search Executor...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Semantic Search Executor", new Dictionary<string, string>
+            {
+                { "ActionableRequirements", string.Join(", ", state.ActionableRequirements) },
+                { "AgentRole", agentRole }
+            });
+
+            var searchOutput = await _semanticSearchExecutor.ExecuteAsync(new SemanticSearchExecutorInput
+            {
+                ActionableRequirements = state.ActionableRequirements,
+                AgentRole = agentRole
+            }, cancellationToken);
+
+            state.SemanticSearchApiDocumentation = searchOutput.ApiDocumentation;
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Semantic Search Executor", new Dictionary<string, string>
+            {
+                { "ApiDocumentationLength", state.SemanticSearchApiDocumentation.Length.ToString() }
+            });
+        }
+
+        private async Task ExecuteBusinessAdvisorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
+        {
+            await ExecuteSemanticSearchAsync(state, BusinessAdvisorAgentConfiguration.AgentName, cancellationToken);
+
             _logger.LogDebug("Engaging Business Advisor Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
             {
@@ -486,8 +558,8 @@ namespace AgentMesh.Application.Workflows
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
                 EnrichedUserRequest = state.EnrichedUserRequest,
-                ActionableRequirements = state.ActionableRequirements.ToList()
-            });
+                ApiDocumentation = state.SemanticSearchApiDocumentation
+            }, cancellationToken);
             state.BusinessAdvisorContent = baOutput.Content;
             state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Advisor Agent", new Dictionary<string, string>
@@ -540,8 +612,8 @@ namespace AgentMesh.Application.Workflows
         }
 
 
-        public string GetIngressAgentName() => IntentExtractorAgentConfiguration.AgentName;
+        public string GetIngressExecutorName() => IntentExtractorAgentConfiguration.AgentName;
 
-        public string GetEgressAgentName() => PersonalAssistantAgentConfiguration.AgentName;
+        public string GetEgressExecutorName() => PersonalAssistantAgentConfiguration.AgentName;
     }
 }

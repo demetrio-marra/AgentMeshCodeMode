@@ -1,4 +1,6 @@
 ﻿using AgentMesh.Models;
+using AgentMesh.Models.AgentMemory;
+using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Models
 {
@@ -34,6 +36,8 @@ namespace AgentMesh.Application.Models
         public List<AgentTokenUsageEntry> TokenUsageEntries { get; set; }
         public IEnumerable<AgentMemoryItem> ExtractedAgentMemories { get; set; } = Enumerable.Empty<AgentMemoryItem>();
         public IEnumerable<string> ActionableRequirements { get; set; } = Enumerable.Empty<string>();
+        public string SemanticSearchApiDocumentation { get; set; } = string.Empty;
+        public string ApiDocumentation { get; set; } = string.Empty;
 
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
 

@@ -1,6 +1,6 @@
-﻿using AgentMesh.Application.Models;
-using AgentMesh.Application.Services;
-using AgentMesh.Models;
+﻿using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Exceptions;
+using AgentMesh.Application.Models;
 using OpenAI;
 using OpenAI.Chat;
 using System.ClientModel;
@@ -36,7 +36,7 @@ namespace AgentMesh.Infrastructure.OpenAIClient
         }
 
 
-        public async Task<OpenAIClientResponse> GenerateResponseAsync(IEnumerable<string> userInput)
+        public async Task<OpenAIClientResponse> GenerateResponseAsync(IEnumerable<string> userInput, CancellationToken cancellationToken = default)
         {
             var messages = userInput.Select(input => new AgentMessage
             {
@@ -44,11 +44,11 @@ namespace AgentMesh.Infrastructure.OpenAIClient
                 Content = input
             });
 
-            return await GenerateResponseAsync(messages);
+            return await GenerateResponseAsync(messages, cancellationToken);
         }
 
 
-        public async Task<OpenAIClientResponse> GenerateResponseAsync(IEnumerable<AgentMessage> messages)
+        public async Task<OpenAIClientResponse> GenerateResponseAsync(IEnumerable<AgentMessage> messages, CancellationToken cancellationToken = default)
         {
             var chatMessages = new List<ChatMessage>();
 
@@ -90,7 +90,7 @@ namespace AgentMesh.Infrastructure.OpenAIClient
             ClientResult<ChatCompletion> chatCompletionResult;
             try
             {
-                chatCompletionResult = await _client.CompleteChatAsync(chatMessages, chatCompletionOptions);
+                chatCompletionResult = await _client.CompleteChatAsync(chatMessages, chatCompletionOptions, cancellationToken);
             }
             catch (ClientResultException ex) when (ex.Message.Contains("Tool choice is none, but model called a tool"))
             {

@@ -1,11 +1,11 @@
 using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
-using AgentMesh.Application.Workflows;
 using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Models;
-using AgentMesh.Services;
+using AgentMesh.Models.Workflows;
 
 namespace AgentMesh
 {
@@ -92,11 +92,11 @@ namespace AgentMesh
                 var result = await _workflow.ExecuteAsync(question!, conversationContext.Conversation.ToList());
 
                 var inputMessageTokens = result.TokenUsageEntries
-                    .Where(e => e.AgentName == _workflow.GetIngressAgentName())
+                    .Where(e => e.AgentName == _workflow.GetIngressExecutorName())
                     .Sum(e => e.InputTokens);
 
                 var outputMessageTokens = result.TokenUsageEntries
-                    .Where(e => e.AgentName == _workflow.GetEgressAgentName())
+                    .Where(e => e.AgentName == _workflow.GetEgressExecutorName())
                     .Sum(e => e.OutputTokens);
 
                 var answerDateTime = DateTime.UtcNow;

@@ -1,8 +1,8 @@
-using AgentMesh.Models;
+using AgentMesh.Models.Coder;
 
 namespace AgentMesh.Services
 {
-    public interface ICoderAgent : IAgent<CoderAgentInput, CoderAgentOutput>
+    public interface ICoderAgent : IExecutor<CoderAgentInput, CoderAgentOutput>
     {
     }
 }

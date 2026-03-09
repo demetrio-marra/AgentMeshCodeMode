@@ -1,8 +1,8 @@
-using AgentMesh.Models;
+using AgentMesh.Models.CodeFixer;
 
 namespace AgentMesh.Services
 {
-    public interface ICodeFixerAgent : IAgent<CodeFixerAgentInput, CodeFixerAgentOutput>
+    public interface ICodeFixerAgent : IExecutor<CodeFixerAgentInput, CodeFixerAgentOutput>
     {
     }
 }

@@ -1,8 +1,8 @@
-﻿using AgentMesh.Models;
+﻿using AgentMesh.Models.BusinessRequirementsCreator;
 
 namespace AgentMesh.Services
 {
-    public interface IBusinessRequirementsCreatorAgent : IAgent<BusinessRequirementsCreatorAgentInput, BusinessRequirementsCreatorAgentOutput>
+    public interface IBusinessRequirementsCreatorAgent : IExecutor<BusinessRequirementsCreatorAgentInput, BusinessRequirementsCreatorAgentOutput>
     {
     }
 }

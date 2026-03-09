@@ -1,9 +1,9 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using AgentMesh.Application.Contracts;
 using AgentMesh.Infrastructure.AgentMemory.Configuration;
 using AgentMesh.Infrastructure.AgentMemory.Models;
-using AgentMesh.Models;
-using AgentMesh.Services;
+using AgentMesh.Models.AgentMemory;
 
 namespace AgentMesh.Infrastructure.AgentMemory.Services
 {

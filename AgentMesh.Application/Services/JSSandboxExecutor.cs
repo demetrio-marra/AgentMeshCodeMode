@@ -1,4 +1,5 @@
-﻿using AgentMesh.Models;
+﻿using AgentMesh.Application.Contracts;
+using AgentMesh.Models.CodeSandbox;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -19,7 +20,7 @@ namespace AgentMesh.Application.Services
         }
 
 
-        public async Task<JSSandboxOutput> ExecuteAsync(JSSandboxInput input, CancellationToken cancellationToken = default)
+        public async Task<CodeSandboxOutput> ExecuteAsync(CodeSandboxInput input, CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing JSSandboxExecutor.");
             _logger.LogDebug("JSSandboxExecutor Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
@@ -30,7 +31,7 @@ namespace AgentMesh.Application.Services
 
             stopwatch.Stop();
 
-            var output = new JSSandboxOutput
+            var output = new CodeSandboxOutput
             {
                 Result = ret
             };

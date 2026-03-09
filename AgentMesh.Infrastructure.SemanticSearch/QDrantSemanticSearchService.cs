@@ -1,5 +1,5 @@
-﻿using AgentMesh.Models;
-using AgentMesh.Services;
+﻿using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models;
 using Microsoft.Extensions.Logging;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;

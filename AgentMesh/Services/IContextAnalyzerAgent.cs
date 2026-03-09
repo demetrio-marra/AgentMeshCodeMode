@@ -1,8 +1,8 @@
-using AgentMesh.Models;
+using AgentMesh.Models.ContextAnalyzer;
 
 namespace AgentMesh.Services
 {
-    public interface IContextAnalyzerAgent : IAgent<ContextAnalyzerAgentInput, ContextAnalyzerAgentOutput>
+    public interface IContextAnalyzerAgent : IExecutor<ContextAnalyzerAgentInput, ContextAnalyzerAgentOutput>
     {
     }
 }

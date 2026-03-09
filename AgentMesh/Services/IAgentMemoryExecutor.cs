@@ -1,4 +1,4 @@
-﻿using AgentMesh.Models;
+﻿using AgentMesh.Models.AgentMemory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ namespace AgentMesh.Services
     public interface IAgentMemoryExecutor
     {
 
-        Task<AgentMemoryExecutorOutput> SearchMemoryAsync(AgentMemoryExecutorSearchMemoryInput input);
+        Task<AgentMemoryExecutorSearchMemoryOutput> SearchMemoryAsync(AgentMemoryExecutorSearchMemoryInput input);
 
 
         Task AddInteractionAsync(AgentMemoryExecutorAddInteractionInput input);

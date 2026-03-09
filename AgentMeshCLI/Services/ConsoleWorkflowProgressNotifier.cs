@@ -1,4 +1,5 @@
-﻿using AgentMesh.Helpers;
+﻿using AgentMesh.Application.Contracts;
+using AgentMesh.Helpers;
 
 namespace AgentMesh.Services
 {

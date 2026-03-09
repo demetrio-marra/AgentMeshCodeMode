@@ -1,8 +1,8 @@
-using AgentMesh.Models;
+using AgentMesh.Models.BusinessAdvisor;
 
 namespace AgentMesh.Services
 {
-    public interface IBusinessAdvisorAgent : IAgent<BusinessAdvisorAgentInput, BusinessAdvisorAgentOutput>
+    public interface IBusinessAdvisorAgent : IExecutor<BusinessAdvisorAgentInput, BusinessAdvisorAgentOutput>
     {
     }
 }

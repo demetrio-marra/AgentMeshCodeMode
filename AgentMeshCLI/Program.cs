@@ -5,8 +5,8 @@ using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.AgentMemory.Configuration;
 using AgentMesh.Infrastructure.AgentMemory.Services;
 using AgentMesh.Infrastructure.JSSandbox;
-using AgentMesh.Infrastructure.JSSandbox.Configuration;
-using AgentMesh.Infrastructure.JSSandbox.Services;
+using AgentMesh.Infrastructure.Persistence.Configuration;
+using AgentMesh.Infrastructure.Persistence.Services;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.SemanticSearch;
 using AgentMesh.Services;
@@ -14,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using AgentMesh.Application.Contracts;
+using AgentMesh.Models.Workflows;
 
 namespace AgentMesh
 {
@@ -64,10 +66,14 @@ namespace AgentMesh
             services.AddSingleton(apiDocumentationRepositoryConfig);
 
             // Configure AutoMapper
-            services.AddAutoMapper(typeof(ApiDocumentationMappingProfile));
+            services.AddAutoMapper(typeof(AgentMesh.Infrastructure.Persistence.Configuration.ApiDocumentationMappingProfile));
 
             // Register API Documentation Service
             services.AddSingleton<IApiDocumentationService, MongoApiDocumentationRepository>();
+
+            // Register executors
+            services.AddSingleton<ISemanticSearchExecutor, SemanticSearchExecutor>();
+            services.AddSingleton<IApiDocumentationExecutor, ApiDocumentationExecutor>();
 
             // Agent Memory Service configuration
             var agentMemoryConfig = new AgentMemoryServiceConfiguration();
@@ -258,7 +264,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<ICodeStaticAnalyzer, CodeStaticAnalyzer>();
+            services.AddSingleton<ICodeStaticAnalyzerAgent, CodeStaticAnalyzer>();
 
             // ContextAnalyzer agent config and client
             services

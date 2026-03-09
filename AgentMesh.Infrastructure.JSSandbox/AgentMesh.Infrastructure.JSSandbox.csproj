@@ -1,5 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -7,12 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="12.0.1" />
-    <PackageReference Include="MongoDB.Driver" Version="2.28.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\AgentMesh.Application\AgentMesh.Application.csproj" />
   </ItemGroup>
 
 </Project>
+

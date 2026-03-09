@@ -1,8 +1,8 @@
-using AgentMesh.Models;
+using AgentMesh.Models.CodeExecutionFailuresDetector;
 
 namespace AgentMesh.Services
 {
-    public interface ICodeExecutionFailuresDetectorAgent : IAgent<CodeExecutionFailuresDetectorAgentInput, CodeExecutionFailuresDetectorAgentOutput>
+    public interface ICodeExecutionFailuresDetectorAgent : IExecutor<CodeExecutionFailuresDetectorAgentInput, CodeExecutionFailuresDetectorAgentOutput>
     {
     }
 }

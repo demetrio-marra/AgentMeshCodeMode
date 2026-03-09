@@ -1,4 +1,4 @@
-using AgentMesh.Application.Services;
+using AgentMesh.Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;

@@ -1,8 +1,8 @@
-using AgentMesh.Models;
+using AgentMesh.Models.PersonalAssistant;
 
 namespace AgentMesh.Services
 {
-    public interface IPersonalAssistantAgent : IAgent<PersonalAssistantAgentInput, PersonalAssistantAgentOutput>
+    public interface IPersonalAssistantAgent : IExecutor<PersonalAssistantAgentInput, PersonalAssistantAgentOutput>
     {
     }
 }

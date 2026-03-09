@@ -1,14 +1,15 @@
-using AgentMesh.Models;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 using System.Text.Json;
+using AgentMesh.Models.CodeStaticAnalyzer;
+using AgentMesh.Models.CodeSmellDetector;
+using AgentMesh.Application.Contracts;
 
 namespace AgentMesh.Application.Services
 {
-    public class CodeStaticAnalyzer : ICodeStaticAnalyzer
+    public class CodeStaticAnalyzer : ICodeStaticAnalyzerAgent
     {
         private readonly IOpenAIClient _openAIClient;
         private readonly ICodeSmellDetector _codeSmellDetector;
