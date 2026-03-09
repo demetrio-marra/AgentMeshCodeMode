@@ -27,7 +27,7 @@ namespace AgentMesh.Application.Services
         /// <param name="inputMessages"></param>
         /// <returns></returns>
         /// <exception cref="EmptyAgentResponseException"></exception>
-        public async Task<T> ExecuteWithRetryAsync(IEnumerable<AgentMessage> inputMessages)
+        public async Task<T> ExecuteWithRetryAsync(IEnumerable<AgentMessage> inputMessages, CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing {agentName} using Input: {Input}", _agentName, System.Text.Json.JsonSerializer.Serialize(inputMessages));
 
@@ -35,7 +35,7 @@ namespace AgentMesh.Application.Services
 
             var result = await Resilience.ExecuteWithRetryAsync(async () =>
             {
-                var response = await _openAIClient.GenerateResponseAsync(inputMessages);
+                var response = await _openAIClient.GenerateResponseAsync(inputMessages, cancellationToken);
                 var responseText = response.Text?.Trim() ?? string.Empty;
 
                 if (string.IsNullOrWhiteSpace(responseText))
