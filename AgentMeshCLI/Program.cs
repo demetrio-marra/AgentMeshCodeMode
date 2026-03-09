@@ -71,6 +71,10 @@ namespace AgentMesh
             // Register API Documentation Service
             services.AddSingleton<IApiDocumentationService, MongoApiDocumentationRepository>();
 
+            // Register executors
+            services.AddSingleton<ISemanticSearchExecutor, SemanticSearchExecutor>();
+            services.AddSingleton<IApiDocumentationExecutor, ApiDocumentationExecutor>();
+
             // Agent Memory Service configuration
             var agentMemoryConfig = new AgentMemoryServiceConfiguration();
             configuration.GetSection(AgentMemoryServiceConfiguration.SectionName).Bind(agentMemoryConfig);

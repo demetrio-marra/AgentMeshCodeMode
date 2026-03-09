@@ -4,6 +4,7 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models;
+using AgentMesh.Models.ApiDocumentation;
 using AgentMesh.Models.BusinessAdvisor;
 using AgentMesh.Models.SemanticSearch;
 using AgentMesh.Models.BusinessRequirementsCreator;
@@ -43,6 +44,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IAgentMemoryRetriever _agentMemoryRetriever;
         private readonly IAgentMemorySaver _agentMemorySaver;
         private readonly ISemanticSearchExecutor _semanticSearchExecutor;
+        private readonly IApiDocumentationExecutor _apiDocumentationExecutor;
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
@@ -60,7 +62,8 @@ namespace AgentMesh.Application.Workflows
             IContextAnalyzerAgent contextAnalyzerAgent,
             IAgentMemoryRetriever agentMemoryRetriever,
             IAgentMemorySaver agentMemorySaver,
-            ISemanticSearchExecutor semanticSearchExecutor)
+            ISemanticSearchExecutor semanticSearchExecutor,
+            IApiDocumentationExecutor apiDocumentationExecutor)
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -79,6 +82,7 @@ namespace AgentMesh.Application.Workflows
             _agentMemoryRetriever = agentMemoryRetriever;
             _agentMemorySaver = agentMemorySaver;
             _semanticSearchExecutor = semanticSearchExecutor;
+            _apiDocumentationExecutor = apiDocumentationExecutor;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
@@ -102,6 +106,7 @@ namespace AgentMesh.Application.Workflows
             else if (routerRecipient?.Equals("BusinessRequirementsCreator", StringComparison.OrdinalIgnoreCase) == true)
             {
                 await ExecuteBusinessRequirementsCreatorAsync(state);
+                await ExecuteApiDocumentationExecutorAsync(state);
                 await ExecuteCoderAsync(state);
                 await ExecuteCodeStaticAnalyzerAsync(state);
 
@@ -310,13 +315,34 @@ namespace AgentMesh.Application.Workflows
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
             {
                 BusinessRequirements = state.BusinessRequirements!,
-                MentionedApis = state.MentionedApis
+                ApiDocumentation = state.ApiDocumentation
             });
             state.GeneratedCode = coderAgentOutput.CodeToRun;
             state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Coder Agent", new Dictionary<string, string>
             {
                 { "CodeToRun", state.GeneratedCode }
+            });
+        }
+
+        private async Task ExecuteApiDocumentationExecutorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
+        {
+            _logger.LogDebug("Engaging API Documentation Executor...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("API Documentation Executor", new Dictionary<string, string>
+            {
+                { "MentionedApis", string.Join(", ", state.MentionedApis) }
+            });
+
+            var apiDocOutput = await _apiDocumentationExecutor.ExecuteAsync(new ApiDocumentationExecutorInput
+            {
+                MentionedApis = state.MentionedApis
+            }, cancellationToken);
+
+            state.ApiDocumentation = apiDocOutput.ApiDocumentation;
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("API Documentation Executor", new Dictionary<string, string>
+            {
+                { "ApiDocumentationLength", state.ApiDocumentation.Length.ToString() }
             });
         }
 
