@@ -1,5 +1,5 @@
-﻿using AgentMesh.Models;
-using AgentMesh.Models.AgentMemory;
+﻿using AgentMesh.Models.AgentMemory;
+using AgentMesh.Models.IntentExtractor;
 
 namespace AgentMesh.Application.Models
 {
