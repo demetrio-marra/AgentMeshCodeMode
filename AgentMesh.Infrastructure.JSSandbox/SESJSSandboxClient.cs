@@ -2,7 +2,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using AgentMesh.Infrastructure.JSSandbox.Models;
-using AgentMesh.Models;
+using AgentMesh.Application.Exceptions;
 
 namespace AgentMesh.Infrastructure.JSSandbox
 {
