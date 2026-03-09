@@ -10,7 +10,7 @@ namespace AgentMesh.Services
     public interface IAgentMemoryExecutor
     {
 
-        Task<AgentMemoryExecutorOutput> SearchMemoryAsync(AgentMemoryExecutorSearchMemoryInput input);
+        Task<AgentMemoryExecutorSearchMemoryOutput> SearchMemoryAsync(AgentMemoryExecutorSearchMemoryInput input);
 
 
         Task AddInteractionAsync(AgentMemoryExecutorAddInteractionInput input);
