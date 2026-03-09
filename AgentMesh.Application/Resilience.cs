@@ -1,4 +1,4 @@
-﻿using AgentMesh.Models;
+﻿using AgentMesh.Application.Exceptions;
 using Microsoft.Extensions.Logging;
 using Polly;
 

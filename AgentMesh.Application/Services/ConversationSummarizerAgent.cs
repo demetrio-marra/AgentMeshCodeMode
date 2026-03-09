@@ -1,4 +1,4 @@
-﻿using AgentMesh.Application.Configuration;
+﻿using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models;
 using Microsoft.Extensions.DependencyInjection;

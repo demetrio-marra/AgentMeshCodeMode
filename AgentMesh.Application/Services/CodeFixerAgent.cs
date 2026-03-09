@@ -1,6 +1,6 @@
 using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Models;
 using AgentMesh.Models.CodeFixer;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
