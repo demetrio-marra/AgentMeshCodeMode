@@ -1,6 +1,6 @@
-﻿using AgentMesh.Application.Exceptions;
+﻿using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Application.Services;
 using OpenAI;
 using OpenAI.Chat;
 using System.ClientModel;

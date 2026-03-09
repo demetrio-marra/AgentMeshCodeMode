@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using AgentMesh.Models.CodeStaticAnalyzer;
 using AgentMesh.Models.CodeSmellDetector;
+using AgentMesh.Application.Contracts;
 
 namespace AgentMesh.Application.Services
 {

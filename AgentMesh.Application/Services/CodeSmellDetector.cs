@@ -1,4 +1,5 @@
-﻿using AgentMesh.Models.CodeSmellDetector;
+﻿using AgentMesh.Application.Contracts;
+using AgentMesh.Models.CodeSmellDetector;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;

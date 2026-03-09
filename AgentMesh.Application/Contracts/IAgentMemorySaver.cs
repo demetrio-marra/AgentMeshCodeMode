@@ -1,6 +1,6 @@
 using AgentMesh.Application.Models;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Contracts
 {
     public interface IAgentMemorySaver
     {

@@ -1,6 +1,6 @@
 ﻿using AgentMesh.Models.CodeSmellDetector;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Contracts
 {
     public interface ICodeSmellDetector
     {
