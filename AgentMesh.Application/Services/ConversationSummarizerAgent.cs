@@ -1,7 +1,6 @@
 ﻿using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models;
 using AgentMesh.Models;
-using AgentMesh.Models.IntentExtractor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;

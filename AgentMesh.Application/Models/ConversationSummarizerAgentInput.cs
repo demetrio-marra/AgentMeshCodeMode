@@ -1,4 +1,4 @@
-using AgentMesh.Models.IntentExtractor;
+using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models
 {

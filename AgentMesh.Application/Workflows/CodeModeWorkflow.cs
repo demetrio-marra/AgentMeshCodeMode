@@ -554,8 +554,8 @@ namespace AgentMesh.Application.Workflows
         }
 
 
-        public string GetIngressAgentName() => IntentExtractorAgentConfiguration.AgentName;
+        public string GetIngressExecutorName() => IntentExtractorAgentConfiguration.AgentName;
 
-        public string GetEgressAgentName() => PersonalAssistantAgentConfiguration.AgentName;
+        public string GetEgressExecutorName() => PersonalAssistantAgentConfiguration.AgentName;
     }
 }

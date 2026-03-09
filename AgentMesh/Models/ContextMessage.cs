@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Models.IntentExtractor
+﻿namespace AgentMesh.Models
 {
     public class ContextMessage
     {
