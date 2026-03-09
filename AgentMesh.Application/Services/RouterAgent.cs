@@ -1,4 +1,5 @@
 using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Models;
 using AgentMesh.Models;
 using AgentMesh.Models.Router;
 using AgentMesh.Services;

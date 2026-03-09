@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Models
+﻿namespace AgentMesh.Application.Models
 {
     public class AgentMessage
     {

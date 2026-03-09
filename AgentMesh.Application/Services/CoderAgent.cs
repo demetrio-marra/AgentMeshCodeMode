@@ -1,5 +1,6 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models;
 using AgentMesh.Models;
 using AgentMesh.Models.Coder;
 using AgentMesh.Services;

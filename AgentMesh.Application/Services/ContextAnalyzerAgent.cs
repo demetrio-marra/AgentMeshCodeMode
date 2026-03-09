@@ -1,4 +1,6 @@
-﻿using AgentMesh.Models;
+﻿using AgentMesh.Application.Models;
+using AgentMesh.Application.Models;
+using AgentMesh.Models;
 using AgentMesh.Models.ContextAnalyzer;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;

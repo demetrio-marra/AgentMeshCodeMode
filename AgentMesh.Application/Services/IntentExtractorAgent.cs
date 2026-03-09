@@ -1,3 +1,4 @@
+using AgentMesh.Application.Models;
 using AgentMesh.Models;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Services;

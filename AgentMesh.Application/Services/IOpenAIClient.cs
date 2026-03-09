@@ -1,5 +1,4 @@
 ﻿using AgentMesh.Application.Models;
-using AgentMesh.Models;
 
 namespace AgentMesh.Application.Services
 {
