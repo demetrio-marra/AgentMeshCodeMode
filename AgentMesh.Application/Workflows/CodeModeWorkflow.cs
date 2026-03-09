@@ -273,8 +273,10 @@ namespace AgentMesh.Application.Workflows
             return routerOutput.Recipient;
         }
 
-        private async Task ExecuteBusinessRequirementsCreatorAsync(CodeModeWorkflowState state)
+        private async Task ExecuteBusinessRequirementsCreatorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
+            await ExecuteSemanticSearchAsync(state, BusinessRequirementsCreatorAgentConfiguration.AgentName, cancellationToken);
+
             _logger.LogDebug("Engaging Business Requirements Creator Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
             {
@@ -284,8 +286,8 @@ namespace AgentMesh.Application.Workflows
             var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
             {
                 EnrichedUserRequest = state.EnrichedUserRequest,
-                ActionableRequirements = state.ActionableRequirements.ToList()
-            });
+                ApiDocumentation = state.SemanticSearchApiDocumentation
+            }, cancellationToken);
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = brcOutput.BusinessRequirements;
             state.MentionedApis = brcOutput.MentionedApis;

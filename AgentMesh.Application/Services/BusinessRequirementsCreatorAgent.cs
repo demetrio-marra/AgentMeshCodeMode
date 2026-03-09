@@ -13,39 +13,27 @@ namespace AgentMesh.Application.Services
 {
     public class BusinessRequirementsCreatorAgent : AgentBase<BusinessRequirementsCreatorAgent.ParsedResponse>, IBusinessRequirementsCreatorAgent
     {
-        private static readonly string AgentRole = "BusinessRequirementsCreator";
-
         private readonly ILogger<BusinessRequirementsCreatorAgent> _logger;
-        private readonly ISemanticSearchService _semanticSearchService;
 
         public BusinessRequirementsCreatorAgent(
             [FromKeyedServices(BusinessRequirementsCreatorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
             BusinessRequirementsCreatorAgentConfiguration configuration,
-            ILogger<BusinessRequirementsCreatorAgent> logger,
-            ISemanticSearchService semanticSearchService) : base(logger, BusinessRequirementsCreatorAgentConfiguration.AgentName, openAIClient)
+            ILogger<BusinessRequirementsCreatorAgent> logger) : base(logger, BusinessRequirementsCreatorAgentConfiguration.AgentName, openAIClient)
         {
             _logger = logger;
-            _semanticSearchService = semanticSearchService;
         }
 
         public async Task<BusinessRequirementsCreatorAgentOutput> ExecuteAsync(
             BusinessRequirementsCreatorAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            IEnumerable<SemanticSearchResult> similarDocs = [];
-            if (input.ActionableRequirements != null && input.ActionableRequirements.Any())
+            var inputMessages = new List<AgentMessage>();
+
+            if (!string.IsNullOrWhiteSpace(input.ApiDocumentation))
             {
-                similarDocs = await _semanticSearchService.SearchByActionableRequirements(input.ActionableRequirements,
-                    AgentRole,
-                    cancellationToken);
+                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"API Documentation: {input.ApiDocumentation}" });
             }
 
-            var inputMessages = new List<AgentMessage>();
-            if (similarDocs.Any())
-            {
-                var apiDocumentation = string.Join("\n\n", similarDocs.Select(d => d.FoundInformation));
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"API Documentation: {apiDocumentation}" });
-            }
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.EnrichedUserRequest });
 

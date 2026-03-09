@@ -3,6 +3,11 @@
     public class BusinessRequirementsCreatorAgentInput
     {
         public string EnrichedUserRequest { get; set; } = string.Empty;
-        public IEnumerable<string> ActionableRequirements { get; set; } = Enumerable.Empty<string>();
+
+        /// <summary>
+        /// Pre-fetched API documentation produced by <c>ISemanticSearchExecutor</c>.
+        /// Empty string when no relevant documentation was found.
+        /// </summary>
+        public string ApiDocumentation { get; set; } = string.Empty;
     }
 }
