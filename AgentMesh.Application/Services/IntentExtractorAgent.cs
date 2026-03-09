@@ -10,7 +10,7 @@ using System.Text.Json;
 
 namespace AgentMesh.Application.Services
 {
-    public class IntentExtractorAgent : IIntentExtractorAgent
+    public class IntentExtractorAgent : AgentBase<string>, IIntentExtractorAgent
     {
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<IntentExtractorAgent> _logger;
@@ -18,7 +18,7 @@ namespace AgentMesh.Application.Services
         public IntentExtractorAgent(
             [FromKeyedServices(IntentExtractorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
             IntentExtractorAgentConfiguration configuration,
-            ILogger<IntentExtractorAgent> logger)
+            ILogger<IntentExtractorAgent> logger) : base(logger, IntentExtractorAgentConfiguration.AgentName, openAIClient)
         {
             _openAIClient = openAIClient;
             _logger = logger;
@@ -28,9 +28,6 @@ namespace AgentMesh.Application.Services
             IntentExtractorAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            _logger.LogDebug("Executing IntentExtractorAgent.");
-            _logger.LogDebug("IntentExtractorAgent Input: {Input}", JsonSerializer.Serialize(input));
-
             var userMessage = MessageSerializationUtils.SerializeConversationHistory(input.ContextMessages, input.UserLastRequest);
 
             var inputMessages = new List<AgentMessage>
@@ -39,36 +36,19 @@ namespace AgentMesh.Application.Services
                 new AgentMessage { Role = AgentMessageRole.User, Content = userMessage }
             };
 
-            var stopwatch = Stopwatch.StartNew();
+            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            var result = await Resilience.ExecuteWithRetryAsync(async () =>
+            var ret = new IntentExtractorAgentOutput
             {
-                var response = await _openAIClient.GenerateResponseAsync(inputMessages);
-                var responseText = response.Text?.Trim() ?? string.Empty;
+                Query = result.Result,
+                InputTokenCount = result.InputTokenCount,
+                OutputTokenCount = result.OutputTokenCount,
+                TokenCount = result.TotalTokenCount
+            };
 
-                if (string.IsNullOrWhiteSpace(responseText))
-                {
-                    _logger.LogWarning("The model's response is empty");
-                    throw new EmptyAgentResponseException();
-                }
-
-                return new IntentExtractorAgentOutput
-                {
-                    Query = responseText,
-                    TokenCount = response.TotalTokenCount,
-                    InputTokenCount = response.InputTokenCount,
-                    OutputTokenCount = response.OutputTokenCount
-                };
-            }, IntentExtractorAgentConfiguration.AgentName, _logger);
-
-            stopwatch.Stop();
-            _logger.LogDebug(
-                "IntentExtractorAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
-                stopwatch.ElapsedMilliseconds,
-                result.TokenCount);
-
-            _logger.LogDebug("IntentExtractorAgent Output: {Output}", JsonSerializer.Serialize(result));
-            return result;
+            return ret;
         }
+
+        protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
     }
 }

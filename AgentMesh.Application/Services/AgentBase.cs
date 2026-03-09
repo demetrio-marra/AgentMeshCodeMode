@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace AgentMesh.Application.Services
 {
-    internal abstract class AgentBase<T>
+    public abstract class AgentBase<T>
     {
         private readonly ILogger _logger;
         private readonly string _agentName;
@@ -27,7 +27,7 @@ namespace AgentMesh.Application.Services
         /// <param name="inputMessages"></param>
         /// <returns></returns>
         /// <exception cref="EmptyAgentResponseException"></exception>
-        public async Task<T> ExecuteWithRetryAsync(IEnumerable<AgentMessage> inputMessages, CancellationToken cancellationToken = default)
+        public async Task<AgentResponse<T>> ExecuteWithRetryAsync(IEnumerable<AgentMessage> inputMessages, CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Executing {agentName} using Input: {Input}", _agentName, System.Text.Json.JsonSerializer.Serialize(inputMessages));
 
@@ -44,7 +44,15 @@ namespace AgentMesh.Application.Services
                     throw new EmptyAgentResponseException();
                 }
 
-                var ret = ParseStructuredResponse(responseText);
+                var parsedResult = ParseStructuredResponse(responseText);
+
+                var ret = new AgentResponse<T>
+                {
+                    Result = parsedResult,
+                    TotalTokenCount = response.TotalTokenCount,
+                    InputTokenCount = response.InputTokenCount,
+                    OutputTokenCount = response.OutputTokenCount
+                };
                 return ret;
 
             }, _agentName, _logger);
