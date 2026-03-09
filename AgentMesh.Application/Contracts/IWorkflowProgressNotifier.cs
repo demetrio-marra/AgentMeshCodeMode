@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Services
+﻿namespace AgentMesh.Application.Contracts
 {
     public interface IWorkflowProgressNotifier
     {

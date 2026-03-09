@@ -1,11 +1,11 @@
 using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Models;
-using AgentMesh.Services;
 
 namespace AgentMesh
 {

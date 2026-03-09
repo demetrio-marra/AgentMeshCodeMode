@@ -1,6 +1,6 @@
 ﻿using AgentMesh.Models;
 
-namespace AgentMesh.Services
+namespace AgentMesh.Application.Contracts
 {
     /// <summary>
     /// An agentic memory service that allows adding chat interactions to the agent's memory and querying the memory for relevant information based on a search query.

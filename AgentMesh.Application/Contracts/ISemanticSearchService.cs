@@ -1,6 +1,6 @@
 ﻿using AgentMesh.Models;
 
-namespace AgentMesh.Services
+namespace AgentMesh.Application.Contracts
 {
     /// <summary>
     /// A service that provides semantic search capabilities to retrieve relevant information based on actionable requirements.

@@ -1,5 +1,5 @@
 ﻿using AgentMesh.Application.Configuration;
-using AgentMesh.Services;
+using AgentMesh.Application.Contracts;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 

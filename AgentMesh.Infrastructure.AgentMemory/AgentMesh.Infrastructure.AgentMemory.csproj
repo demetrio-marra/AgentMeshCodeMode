@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AgentMesh.Application\AgentMesh.Application.csproj" />
     <ProjectReference Include="..\AgentMesh\AgentMesh.csproj" />
   </ItemGroup>
 

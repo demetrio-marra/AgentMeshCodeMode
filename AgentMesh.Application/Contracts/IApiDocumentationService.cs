@@ -1,6 +1,6 @@
 ﻿using AgentMesh.Models;
 
-namespace AgentMesh.Services
+namespace AgentMesh.Application.Contracts
 {
     /// <summary>
     /// Provides functionality for managing and accessing API technical Javascript documentation.
