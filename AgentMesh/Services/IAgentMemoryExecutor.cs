@@ -1,4 +1,4 @@
-﻿using AgentMesh.Models;
+﻿using AgentMesh.Models.AgentMemory;
 using System;
 using System.Collections.Generic;
 using System.Linq;

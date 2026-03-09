@@ -1,5 +1,6 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Models;
+using AgentMesh.Models.PersonalAssistant;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

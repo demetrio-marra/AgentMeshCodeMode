@@ -1,4 +1,4 @@
-using AgentMesh.Models;
+using AgentMesh.Models.ContextAnalyzer;
 
 namespace AgentMesh.Services
 {

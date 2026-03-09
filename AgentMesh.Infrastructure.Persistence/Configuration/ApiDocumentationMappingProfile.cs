@@ -1,5 +1,5 @@
+using AgentMesh.Application.Models;
 using AgentMesh.Infrastructure.Persistence.Entities;
-using AgentMesh.Models;
 using AutoMapper;
 
 namespace AgentMesh.Infrastructure.Persistence.Configuration

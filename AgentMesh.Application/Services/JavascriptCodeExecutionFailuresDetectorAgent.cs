@@ -1,5 +1,5 @@
 using AgentMesh.Application.Configuration;
-using AgentMesh.Models;
+using AgentMesh.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

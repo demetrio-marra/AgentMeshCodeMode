@@ -1,10 +1,10 @@
-using AgentMesh.Models;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 using System.Text.Json;
+using AgentMesh.Models.CodeStaticAnalyzer;
+using AgentMesh.Models.CodeSmellDetector;
 
 namespace AgentMesh.Application.Services
 {

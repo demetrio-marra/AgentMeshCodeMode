@@ -1,6 +1,8 @@
-﻿namespace AgentMesh.Services
+﻿using AgentMesh.Models.CodeSandbox;
+
+namespace AgentMesh.Services
 {
-    public interface IJSSandboxExecutor : IExecutor<Models.JSSandboxInput, Models.JSSandboxOutput>
+    public interface IJSSandboxExecutor : IExecutor<CodeSandboxInput, CodeSandboxOutput>
     {
     }
 }

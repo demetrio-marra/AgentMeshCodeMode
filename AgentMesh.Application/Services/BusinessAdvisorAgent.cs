@@ -1,6 +1,8 @@
 ﻿using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models;
 using AgentMesh.Models;
+using AgentMesh.Models.BusinessAdvisor;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

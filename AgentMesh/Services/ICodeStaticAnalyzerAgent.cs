@@ -1,4 +1,4 @@
-using AgentMesh.Models;
+using AgentMesh.Models.CodeStaticAnalyzer;
 
 namespace AgentMesh.Services
 {

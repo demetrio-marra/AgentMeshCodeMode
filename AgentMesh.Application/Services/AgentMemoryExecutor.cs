@@ -1,6 +1,6 @@
 ﻿using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
-using AgentMesh.Models;
+using AgentMesh.Models.AgentMemory;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 

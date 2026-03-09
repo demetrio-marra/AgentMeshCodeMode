@@ -1,9 +1,20 @@
 using AgentMesh.Application.Configuration;
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models;
+using AgentMesh.Models.BusinessAdvisor;
+using AgentMesh.Models.BusinessRequirementsCreator;
+using AgentMesh.Models.CodeExecutionFailuresDetector;
+using AgentMesh.Models.CodeFixer;
+using AgentMesh.Models.Coder;
+using AgentMesh.Models.CodeSandbox;
+using AgentMesh.Models.CodeStaticAnalyzer;
+using AgentMesh.Models.ContextAnalyzer;
+using AgentMesh.Models.IntentExtractor;
+using AgentMesh.Models.PersonalAssistant;
+using AgentMesh.Models.ResultsPresenter;
+using AgentMesh.Models.Router;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 
@@ -369,7 +380,7 @@ namespace AgentMesh.Application.Workflows
                     { "Code", state.GeneratedCode }
                 });
 
-                var executionOutput = await _jsSandboxExecutor.ExecuteAsync(new JSSandboxInput
+                var executionOutput = await _jsSandboxExecutor.ExecuteAsync(new CodeSandboxInput
                 {
                     Code = state.GeneratedCode
                 });

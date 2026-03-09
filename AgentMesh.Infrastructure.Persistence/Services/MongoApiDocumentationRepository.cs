@@ -1,7 +1,7 @@
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models;
 using AgentMesh.Infrastructure.Persistence.Configuration;
 using AgentMesh.Infrastructure.Persistence.Entities;
-using AgentMesh.Models;
 using AutoMapper;
 using MongoDB.Driver;
 
