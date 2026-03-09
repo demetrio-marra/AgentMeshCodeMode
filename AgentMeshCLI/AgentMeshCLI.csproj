@@ -28,6 +28,7 @@
     <ProjectReference Include="..\AgentMesh.Infrastructure.AgentMemory\AgentMesh.Infrastructure.AgentMemory.csproj" />
     <ProjectReference Include="..\AgentMesh.Infrastructure.JSSandbox\AgentMesh.Infrastructure.JSSandbox.csproj" />
     <ProjectReference Include="..\AgentMesh.Infrastructure.OpenAIClient\AgentMesh.Infrastructure.OpenAIClient.csproj" />
+    <ProjectReference Include="..\AgentMesh.Infrastructure.Persistence\AgentMesh.Infrastructure.Persistence.csproj" />
     <ProjectReference Include="..\AgentMesh.Infrastructure.SemanticSearch\AgentMesh.Infrastructure.SemanticSearch.csproj" />
     <ProjectReference Include="..\AgentMesh\AgentMesh.csproj" />
   </ItemGroup>

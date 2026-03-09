@@ -1,11 +1,11 @@
-using AgentMesh.Infrastructure.JSSandbox.Configuration;
-using AgentMesh.Infrastructure.JSSandbox.Entities;
+using AgentMesh.Infrastructure.Persistence.Configuration;
+using AgentMesh.Infrastructure.Persistence.Entities;
 using AgentMesh.Models;
 using AgentMesh.Services;
 using AutoMapper;
 using MongoDB.Driver;
 
-namespace AgentMesh.Infrastructure.JSSandbox.Services
+namespace AgentMesh.Infrastructure.Persistence.Services
 {
     /// <summary>
     /// MongoDB implementation of the IApiDocumentationService interface.
@@ -75,7 +75,7 @@ namespace AgentMesh.Infrastructure.JSSandbox.Services
 
                 var existingIndexesCursor = await _collection.Indexes.ListAsync();
                 var indexList = await existingIndexesCursor.ToListAsync();
-                
+
                 var apiNameIndexExists = indexList.Any(index =>
                 {
                     var keysDoc = index["key"].AsBsonDocument;

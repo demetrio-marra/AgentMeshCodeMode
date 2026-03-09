@@ -1,7 +1,7 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace AgentMesh.Infrastructure.JSSandbox.Entities
+namespace AgentMesh.Infrastructure.Persistence.Entities
 {
     /// <summary>
     /// MongoDB entity representing API documentation.

@@ -1,4 +1,5 @@
-﻿using AgentMesh.Models;
+﻿using AgentMesh.Application.Models;
+using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;

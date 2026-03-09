@@ -1,8 +1,8 @@
-using AgentMesh.Infrastructure.JSSandbox.Entities;
+using AgentMesh.Infrastructure.Persistence.Entities;
 using AgentMesh.Models;
 using AutoMapper;
 
-namespace AgentMesh.Infrastructure.JSSandbox.Configuration
+namespace AgentMesh.Infrastructure.Persistence.Configuration
 {
     /// <summary>
     /// AutoMapper profile for mapping between ApiDocumentation domain model and ApiDocumentationEntity.

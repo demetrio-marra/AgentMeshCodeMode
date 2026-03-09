@@ -5,8 +5,8 @@ using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.AgentMemory.Configuration;
 using AgentMesh.Infrastructure.AgentMemory.Services;
 using AgentMesh.Infrastructure.JSSandbox;
-using AgentMesh.Infrastructure.JSSandbox.Configuration;
-using AgentMesh.Infrastructure.JSSandbox.Services;
+using AgentMesh.Infrastructure.Persistence.Configuration;
+using AgentMesh.Infrastructure.Persistence.Services;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.SemanticSearch;
 using AgentMesh.Services;
@@ -64,7 +64,7 @@ namespace AgentMesh
             services.AddSingleton(apiDocumentationRepositoryConfig);
 
             // Configure AutoMapper
-            services.AddAutoMapper(typeof(ApiDocumentationMappingProfile));
+            services.AddAutoMapper(typeof(AgentMesh.Infrastructure.Persistence.Configuration.ApiDocumentationMappingProfile));
 
             // Register API Documentation Service
             services.AddSingleton<IApiDocumentationService, MongoApiDocumentationRepository>();

@@ -1,6 +1,6 @@
-using AgentMesh.Models;
+using AgentMesh.Application.Models;
 
-namespace AgentMesh.Services
+namespace AgentMesh.Application.Services
 {
     public interface IAgentMemoryRetriever
     {

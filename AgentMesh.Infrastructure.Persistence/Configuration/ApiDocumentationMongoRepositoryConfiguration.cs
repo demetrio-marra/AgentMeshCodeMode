@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Infrastructure.JSSandbox.Configuration
+namespace AgentMesh.Infrastructure.Persistence.Configuration
 {
     public class ApiDocumentationMongoRepositoryConfiguration
     {
