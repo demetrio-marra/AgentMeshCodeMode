@@ -1,77 +1,44 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.PersonalAssistant;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using System.Text.Json;
 
 namespace AgentMesh.Application.Services
 {
-    public class PersonalAssistantAgent : IPersonalAssistantAgent
+    public class PersonalAssistantAgent : AgentBase<string>, IPersonalAssistantAgent
     {
-        private readonly IOpenAIClient _openAIClient;
-        private readonly ILogger<PersonalAssistantAgent> _logger;
-
         public PersonalAssistantAgent(
             [FromKeyedServices(PersonalAssistantAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            ILogger<PersonalAssistantAgent> logger)
+            ILogger<PersonalAssistantAgent> logger) : base(logger, PersonalAssistantAgentConfiguration.AgentName, openAIClient)
         {
-            _openAIClient = openAIClient;
-            _logger = logger;
         }
 
         public async Task<PersonalAssistantAgentOutput> ExecuteAsync(
             PersonalAssistantAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            _logger.LogDebug("Executing PersonalAssistantAgent.");
-            _logger.LogDebug("PersonalAssistantAgent Input: {Input}", JsonSerializer.Serialize(input));
-
-            var userMessage = input.EnrichedUserRequest;
-
             var inputMessages = new List<AgentMessage>
             {
                 new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
                 new AgentMessage { Role = AgentMessageRole.System, Content = $"Respond in {input.OutputLanguage}." },
                 new AgentMessage { Role = AgentMessageRole.System, Content = $"Respond about this data:\n" + input.Data },
-                new AgentMessage { Role = AgentMessageRole.User, Content = userMessage }
+                new AgentMessage { Role = AgentMessageRole.User, Content = input.EnrichedUserRequest }
             };
 
-            var stopwatch = Stopwatch.StartNew();
+            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            var result = await Resilience.ExecuteWithRetryAsync(async () =>
+            return new PersonalAssistantAgentOutput
             {
-                var response = await _openAIClient.GenerateResponseAsync(inputMessages);
-                var responseText = response.Text?.Trim() ?? string.Empty;
-
-                if (string.IsNullOrWhiteSpace(responseText))
-                {
-                    _logger.LogWarning("The model's response is empty");
-                    throw new EmptyAgentResponseException();
-                }
-
-                return new PersonalAssistantAgentOutput
-                {
-                    Response = responseText,
-                    TokenCount = response.TotalTokenCount,
-                    InputTokenCount = response.InputTokenCount,
-                    OutputTokenCount = response.OutputTokenCount
-                };
-            }, PersonalAssistantAgentConfiguration.AgentName, _logger);
-
-            stopwatch.Stop();
-            _logger.LogDebug(
-                "PersonalAssistantAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
-                stopwatch.ElapsedMilliseconds,
-                result.TokenCount);
-
-            var output = result;
-            _logger.LogDebug("PersonalAssistantAgent Output: {Output}", JsonSerializer.Serialize(result));
-            return result;
+                Response = result.Result,
+                TokenCount = result.TotalTokenCount,
+                InputTokenCount = result.InputTokenCount,
+                OutputTokenCount = result.OutputTokenCount
+            };
         }
+
+        protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
     }
 }

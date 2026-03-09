@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Services;
@@ -9,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services
 {
-    public class JavascriptCodeExecutionFailuresDetectorAgent : ICodeExecutionFailuresDetectorAgent
+    public class JavascriptCodeExecutionFailuresDetectorAgent : AgentBase<string>, ICodeExecutionFailuresDetectorAgent
     {
         public const string NO_ERROR = "NO_ERROR";
 
@@ -17,14 +16,12 @@ namespace AgentMesh.Application.Services
             @"(?i)stacktrace.*?(?:\r?\n\s*at\s+.+)+",
             RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase);
 
-        private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<JavascriptCodeExecutionFailuresDetectorAgent> _logger;
 
         public JavascriptCodeExecutionFailuresDetectorAgent(
             [FromKeyedServices(CodeExecutionFailuresDetectorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            ILogger<JavascriptCodeExecutionFailuresDetectorAgent> logger)
+            ILogger<JavascriptCodeExecutionFailuresDetectorAgent> logger) : base(logger, CodeExecutionFailuresDetectorAgentConfiguration.AgentName, openAIClient)
         {
-            _openAIClient = openAIClient;
             _logger = logger;
         }
 
@@ -58,38 +55,6 @@ namespace AgentMesh.Application.Services
                 OutputTokenCount = 0
             };
 
-            // Commented out LLM-based detection - currently using regex-only approach
-            /*
-            var inputMessages = new List<AgentMessage>
-            {
-                new AgentMessage
-                {
-                    Role = AgentMessageRole.User,
-                    Content = $"Source code with line numbers:\n\n{input.CodeWithLineNumbers}\n\nExecution result:\n\n{input.ExecutionResult}"
-                }
-            };
-
-            var result = await Resilience.ExecuteWithRetryAsync(async () =>
-            {
-                var response = await _openAIClient.GenerateResponseAsync(inputMessages);
-                var responseText = response.Text?.Trim() ?? string.Empty;
-
-                if (string.IsNullOrWhiteSpace(responseText))
-                {
-                    _logger.LogWarning("The model's response is empty");
-                    throw new EmptyAgentResponseException();
-                }
-
-                return new CodeExecutionFailuresDetectorAgentOutput
-                {
-                    Analysis = responseText,
-                    TokenCount = response.TotalTokenCount,
-                    InputTokenCount = response.InputTokenCount,
-                    OutputTokenCount = response.OutputTokenCount
-                };
-            }, CodeExecutionFailuresDetectorAgentConfiguration.AgentName, _logger);
-            */
-
             stopwatch.Stop();
             _logger.LogDebug("JavascriptCodeExecutionFailuresDetectorAgent completed in {ElapsedMilliseconds}ms with {TotalTokens} tokens.",
                 stopwatch.ElapsedMilliseconds, result.TokenCount);
@@ -97,5 +62,7 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("JavascriptCodeExecutionFailuresDetectorAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(result));
             return result;
         }
+
+        protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
     }
 }
