@@ -259,7 +259,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<ICodeStaticAnalyzer, CodeStaticAnalyzer>();
+            services.AddSingleton<ICodeStaticAnalyzerAgent, CodeStaticAnalyzer>();
 
             // ContextAnalyzer agent config and client
             services

@@ -17,7 +17,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IBusinessRequirementsCreatorAgent _businessRequirementsCreatorAgent;
         private readonly IBusinessAdvisorAgent _businessAdvisorAgent;
         private readonly ICoderAgent _coderAgent;
-        private readonly ICodeStaticAnalyzer _codeStaticAnalyzer;
+        private readonly ICodeStaticAnalyzerAgent _codeStaticAnalyzer;
         private readonly ICodeFixerAgent _codeFixerAgent;
         private readonly ICodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent;
         private readonly IResultsPresenterAgent _resultsPresenterAgent;
@@ -34,7 +34,7 @@ namespace AgentMesh.Application.Workflows
             IBusinessRequirementsCreatorAgent businessRequirementsCreatorAgent,
             IBusinessAdvisorAgent businessAdvisorAgent,
             ICoderAgent coderAgent,
-            ICodeStaticAnalyzer codeStaticAnalyzer,
+            ICodeStaticAnalyzerAgent codeStaticAnalyzer,
             ICodeFixerAgent codeFixerAgent,
             ICodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent,
             IResultsPresenterAgent resultsPresenterAgent,

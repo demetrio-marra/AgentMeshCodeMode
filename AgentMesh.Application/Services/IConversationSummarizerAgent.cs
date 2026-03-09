@@ -3,7 +3,7 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services
 {
-    public interface IConversationSummarizerAgent : IAgent<ConversationSummarizerAgentInput, ConversationSummarizerAgentOutput>
+    public interface IConversationSummarizerAgent : IExecutor<ConversationSummarizerAgentInput, ConversationSummarizerAgentOutput>
     {
     }
 }

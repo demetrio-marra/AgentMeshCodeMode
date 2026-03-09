@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace AgentMesh.Application.Services
 {
-    public class CodeStaticAnalyzer : ICodeStaticAnalyzer
+    public class CodeStaticAnalyzer : ICodeStaticAnalyzerAgent
     {
         private readonly IOpenAIClient _openAIClient;
         private readonly ICodeSmellDetector _codeSmellDetector;

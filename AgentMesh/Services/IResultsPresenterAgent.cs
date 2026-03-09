@@ -2,7 +2,7 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Services
 {
-    public interface IResultsPresenterAgent : IAgent<ResultsPresenterAgentInput, ResultsPresenterAgentOutput>
+    public interface IResultsPresenterAgent : IExecutor<ResultsPresenterAgentInput, ResultsPresenterAgentOutput>
     {
     }
 }

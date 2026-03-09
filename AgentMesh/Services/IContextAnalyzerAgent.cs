@@ -2,7 +2,7 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Services
 {
-    public interface IContextAnalyzerAgent : IAgent<ContextAnalyzerAgentInput, ContextAnalyzerAgentOutput>
+    public interface IContextAnalyzerAgent : IExecutor<ContextAnalyzerAgentInput, ContextAnalyzerAgentOutput>
     {
     }
 }
