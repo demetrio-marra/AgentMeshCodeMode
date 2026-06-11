@@ -94,7 +94,7 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Extracting user intent...");
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
-            //await ExecuteAgentMemoryServiceAsync(state);
+            await ExecuteAgentMemoryServiceAsync(state);
             await ExecuteContextAnalyzerAsync(state);
 
             var routerRecipient = await ExecuteRouterAsync(state);
@@ -169,7 +169,7 @@ namespace AgentMesh.Application.Workflows
 
         WorkflowEnd:
 
-            //await ExecuteAgentMemorySaverAsync(state);
+            await ExecuteAgentMemorySaverAsync(state);
 
             await _workflowProgressNotifier.NotifyWorkflowEnd();
 
