@@ -195,12 +195,12 @@ namespace AgentMesh.Application.Workflows
                 UserLastRequest = state.OriginalUserRequest
             });
             
-            state.ExtractedIntentQuery = intentExtractorOutput.Query;
+            state.UserIntent = intentExtractorOutput.UserIntent;
             
             state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.TokenCount, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", new Dictionary<string, string>
             {
-                { "ExtractedIntent", state.ExtractedIntentQuery ?? "(No intent extracted)" }
+                { "ExtractedIntent", state.UserIntent ?? "(No intent extracted)" }
             });
         }
 
@@ -209,12 +209,12 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Agent Memory Service...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Service", new Dictionary<string, string>
             {
-                { "ExtractedIntent", state.ExtractedIntentQuery }
+                { "ExtractedIntent", state.UserIntent }
             });
 
             var brcOutput = await _agentMemoryRetriever.ExecuteAsync(new AgentMemoryRetrieverInput
             {
-                Query = state.ExtractedIntentQuery ?? string.Empty
+                Query = state.UserIntent ?? string.Empty
             });
 
             state.ExtractedAgentMemories = brcOutput.Items.ToList();
@@ -230,14 +230,14 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Context Analyzer Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", new Dictionary<string, string>
             {
-                { "ExtranctedItent", state.ExtractedIntentQuery },
+                { "ExtranctedItent", state.UserIntent },
                 { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories.Select(m => m.Memory)) }
             });
 
             var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
             {
                 Memories = state.ExtractedAgentMemories.ToList(),
-                UserIntent = state.ExtractedIntentQuery ?? string.Empty
+                UserIntent = state.UserIntent ?? string.Empty
             });
             
             state.EnrichedUserRequest = contextAnalyzerOutput.EnrichedIntent;

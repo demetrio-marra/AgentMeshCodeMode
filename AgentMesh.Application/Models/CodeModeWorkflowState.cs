@@ -15,7 +15,7 @@ namespace AgentMesh.Application.Models
         }
 
         public string OriginalUserRequest { get; }
-        public string? ExtractedIntentQuery { get; set; }
+        public string? UserIntent { get; set; }
         public string EnrichedUserRequest { get; set; } = string.Empty;
         public string? RouterRecipient { get; set; }
         public string? BusinessRequirements { get; set; }

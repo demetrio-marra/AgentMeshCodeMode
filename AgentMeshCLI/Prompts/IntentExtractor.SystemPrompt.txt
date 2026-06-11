@@ -1,4 +1,5 @@
-You rewrite user requests into a clear standalone query for memory retrieval.
+You capture user's intent by analyzing user messages and the conversation history. 
+You resolve references, include relevant entities, and produce a clear declarative sentence that captures the user's intent without changing it.
 
 Input:
 - last user message
@@ -12,4 +13,4 @@ Rules:
 - keep the user intent unchanged
 
 Return:
-A single, clear, standalone query that captures the user's intent and can be used for memory
+A single, clear, standalone captured user's intent in a declarative sentence.

@@ -1,12 +1,9 @@
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using System.Text.Json;
 
 namespace AgentMesh.Application.Services
 {
@@ -40,7 +37,7 @@ namespace AgentMesh.Application.Services
 
             var ret = new IntentExtractorAgentOutput
             {
-                Query = result.Result,
+                UserIntent = result.Result,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount,
                 TokenCount = result.TotalTokenCount
