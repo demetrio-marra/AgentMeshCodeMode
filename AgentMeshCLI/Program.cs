@@ -55,10 +55,7 @@ namespace AgentMesh
             services.AddHttpClient<IEmbeddingService, EmbeddingService>();
 
             // Semantic Search service configuration
-            var semanticSearchConfig = new QDrantSemanticSearchServiceConfiguration();
-            configuration.GetSection("QDrantSemanticSearchService").Bind(semanticSearchConfig);
-            services.AddSingleton(semanticSearchConfig);
-            services.AddSingleton<ISemanticSearchService, QDrantSemanticSearchService>();
+            services.AddSingleton<ISemanticSearchService, DummySemanticSearchService>();
 
             // Api Documentation Database configuration
             var apiDocumentationRepositoryConfig = new ApiDocumentationMongoRepositoryConfiguration();
