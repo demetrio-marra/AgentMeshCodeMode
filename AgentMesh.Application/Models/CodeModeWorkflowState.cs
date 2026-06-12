@@ -16,6 +16,8 @@ namespace AgentMesh.Application.Models
 
         public string OriginalUserRequest { get; }
         public string? UserIntent { get; set; }
+        public IEnumerable<string> MissingPastMemories { get; set; } = [];
+        public IEnumerable<string> MissingKnowledgeBaseEntries { get; set; } = [];
         public string EnrichedUserRequest { get; set; } = string.Empty;
         public string? RouterRecipient { get; set; }
         public string? BusinessRequirements { get; set; }

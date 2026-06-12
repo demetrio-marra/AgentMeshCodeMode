@@ -1,13 +1,16 @@
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class IntentExtractorAgent : AgentBase<string>, IIntentExtractorAgent
+    public class IntentExtractorAgent : AgentBase<IntentExtractorAgent.ParsedResponse>, IIntentExtractorAgent
     {
         private readonly IOpenAIClient _openAIClient;
         private readonly ILogger<IntentExtractorAgent> _logger;
@@ -37,7 +40,9 @@ namespace AgentMesh.Application.Services
 
             var ret = new IntentExtractorAgentOutput
             {
-                UserIntent = result.Result,
+                UserIntent = result.Result.UserIntent,
+                MissingKnowledgeBaseEntries = result.Result.MissingKnowledgeBaseEntries,
+                MissingPastMemories = result.Result.MissingPastMemories,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount,
                 TokenCount = result.TotalTokenCount
@@ -46,6 +51,42 @@ namespace AgentMesh.Application.Services
             return ret;
         }
 
-        protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
+        protected override ParsedResponse ParseStructuredResponse(string rawResponseText) {
+            try
+            {
+                var responseDTO = JsonSerializer.Deserialize<ParsedResponse>(rawResponseText);
+
+                if (responseDTO == null)
+                {
+                    _logger.LogWarning("The model's response could not be deserialized into the expected format. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
+                }
+
+                if (string.IsNullOrWhiteSpace(responseDTO.UserIntent))
+                {
+                    _logger.LogWarning("The model's response contains empty user intent. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty user intent.");
+                }
+
+                return responseDTO;
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to deserialize the model's response. Response text: {ResponseText}", rawResponseText);
+                throw new BadStructuredResponseException(rawResponseText, "Failed to parse the model's response.", ex);
+            }
+        }
+
+        public class ParsedResponse
+        {
+            [JsonPropertyName("userIntent")]
+            public string UserIntent { get; set; } = string.Empty;
+
+            [JsonPropertyName("missingPastMemories")]
+            public IEnumerable<string> MissingPastMemories { get; set; } = Enumerable.Empty<string>();
+
+            [JsonPropertyName("missingKnowledgeBaseEntries")]
+            public IEnumerable<string> MissingKnowledgeBaseEntries { get; set; } = Enumerable.Empty<string>();
+        }
     }
 }
