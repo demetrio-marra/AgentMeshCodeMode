@@ -57,16 +57,8 @@ namespace AgentMesh
             // Semantic Search service configuration
             services.AddSingleton<ISemanticSearchService, DummySemanticSearchService>();
 
-            // Api Documentation Database configuration
-            var apiDocumentationRepositoryConfig = new ApiDocumentationMongoRepositoryConfiguration();
-            configuration.GetSection("ApiDocumentationMongoRepository").Bind(apiDocumentationRepositoryConfig);
-            services.AddSingleton(apiDocumentationRepositoryConfig);
-
-            // Configure AutoMapper
-            services.AddAutoMapper(typeof(AgentMesh.Infrastructure.Persistence.Configuration.ApiDocumentationMappingProfile));
-
             // Register API Documentation Service
-            services.AddSingleton<IApiDocumentationService, MongoApiDocumentationRepository>();
+            services.AddSingleton<IApiDocumentationService, DummyApiDocumentationRepository>();
 
             // Register executors
             services.AddSingleton<ISemanticSearchExecutor, SemanticSearchExecutor>();
