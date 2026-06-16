@@ -45,6 +45,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IAgentMemorySaver _agentMemorySaver;
         private readonly ISemanticSearchExecutor _semanticSearchExecutor;
         private readonly IApiDocumentationExecutor _apiDocumentationExecutor;
+        private readonly IKnowledgeBaseService _knowledgeBaseService;
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
@@ -63,7 +64,8 @@ namespace AgentMesh.Application.Workflows
             IAgentMemoryRetriever agentMemoryRetriever,
             IAgentMemorySaver agentMemorySaver,
             ISemanticSearchExecutor semanticSearchExecutor,
-            IApiDocumentationExecutor apiDocumentationExecutor)
+            IApiDocumentationExecutor apiDocumentationExecutor,
+            IKnowledgeBaseService knowledgeBaseService)
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -83,6 +85,7 @@ namespace AgentMesh.Application.Workflows
             _agentMemorySaver = agentMemorySaver;
             _semanticSearchExecutor = semanticSearchExecutor;
             _apiDocumentationExecutor = apiDocumentationExecutor;
+            _knowledgeBaseService = knowledgeBaseService;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
