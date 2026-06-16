@@ -33,5 +33,14 @@ namespace AgentMesh.Application.Contracts
         /// cref="KnowledgeBaseQueryResult"/> objects matching the search terms. The collection is empty if no matches
         /// are found.</returns>
         Task<IEnumerable<KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, bool rerank = false, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Asynchronously retrieves the content of a knowledge base entry identified by the specified ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the knowledge base entry to retrieve. Cannot be null or empty.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the content of the knowledge
+        /// base entry as a string, or null if the entry does not exist.</returns>
+        Task<string> GetKnowledgeBaseEntryContentAsync(string id, CancellationToken cancellationToken = default);
     }
 }
