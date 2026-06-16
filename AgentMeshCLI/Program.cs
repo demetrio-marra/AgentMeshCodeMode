@@ -63,6 +63,7 @@ namespace AgentMesh
             // Register executors
             services.AddSingleton<ISemanticSearchExecutor, SemanticSearchExecutor>();
             services.AddSingleton<IApiDocumentationExecutor, ApiDocumentationExecutor>();
+            services.AddSingleton<IKnowledgeBaseService, DummyKnowledgeBaseService>();
 
             // Agent Memory Service configuration
             var agentMemoryConfig = new AgentMemoryServiceConfiguration();
