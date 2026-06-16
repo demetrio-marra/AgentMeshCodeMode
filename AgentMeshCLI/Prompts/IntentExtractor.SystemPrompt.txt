@@ -17,13 +17,13 @@ This can include general knowledge, facts, or any other relevant information.
 - last N conversation messages
 
 ## Output
-- `userIntent` [REQUIRED]: a single, clear, standalone captured user's intent in a declarative sentence.
+- `userIntent` [REQUIRED]: a single, clear, standalone captured user's intent in a natural language sentence.
 - `missingPastMemories` [OPTIONAL]: a list of past memories that are required to enrich the user's intent, if any.
 - `missingKnowledgeBaseEntries` [OPTIONAL]: a list of knowledge base entries that are required to enrich the user's intent, if any.
 
 ## Output format
 {
-  "userIntent": "Captured user's intent in a clear declarative sentence.",
+  "userIntent": "Captured user's intent in a natural language sentence.",
   "missingPastMemories": ["List of past memories required to enrich the user's intent, if any."],
   "missingKnowledgeBaseEntries": ["List of knowledge base entries required to enrich the user's intent, if any."]
 }

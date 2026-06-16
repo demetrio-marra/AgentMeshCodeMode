@@ -6,7 +6,7 @@ namespace AgentMesh.Application.Models
     public class AgentMemoryRetrieverInput
     {
         /// <summary>
-        /// The query or prompt that the agent will use to search its memory.
+        /// The sentence or query that the agent will use to search its memory. This should be a natural language request that describes what the user is looking for in the agent's memory.
         /// </summary>
         public string Query { get; set; } = string.Empty;
     }

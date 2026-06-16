@@ -94,7 +94,10 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Extracting user intent...");
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
-            await ExecuteAgentMemoryServiceAsync(state);
+            if (state.MissingPastMemories.Any())
+            {
+                await ExecuteAgentMemoryServiceAsync(state);
+            }
             await ExecuteContextAnalyzerAsync(state);
 
             var routerRecipient = await ExecuteRouterAsync(state);
@@ -169,7 +172,7 @@ namespace AgentMesh.Application.Workflows
 
         WorkflowEnd:
 
-            await ExecuteAgentMemorySaverAsync(state);
+            //await ExecuteAgentMemorySaverAsync(state);
 
             await _workflowProgressNotifier.NotifyWorkflowEnd();
 
@@ -196,12 +199,24 @@ namespace AgentMesh.Application.Workflows
             });
             
             state.UserIntent = intentExtractorOutput.UserIntent;
-            
+            state.MissingPastMemories = intentExtractorOutput.MissingPastMemories;
+            state.MissingKnowledgeBaseEntries = intentExtractorOutput.MissingKnowledgeBaseEntries;
+
             state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.TokenCount, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", new Dictionary<string, string>
+
+            var notifyDictionary = new Dictionary<string, string>
             {
                 { "ExtractedIntent", state.UserIntent ?? "(No intent extracted)" }
-            });
+            };
+            if (state.MissingPastMemories != null && state.MissingPastMemories.Any())
+            {
+                notifyDictionary.Add("MissingPastMemoriesDetails", string.Join("\n", state.MissingPastMemories.Select(m => $"- {m}")));
+            }
+            if (state.MissingKnowledgeBaseEntries != null && state.MissingKnowledgeBaseEntries.Any())
+            {
+                notifyDictionary.Add("MissingKnowledgeBaseEntriesDetails", string.Join("\n", state.MissingKnowledgeBaseEntries.Select(m => $"- {m}")));
+            }
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", notifyDictionary);
         }
 
         private async Task ExecuteAgentMemoryServiceAsync(CodeModeWorkflowState state)
@@ -209,12 +224,12 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Agent Memory Service...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Service", new Dictionary<string, string>
             {
-                { "ExtractedIntent", state.UserIntent }
+                { "MissingPastMemories", string.Join(", ", state.MissingPastMemories) }
             });
 
             var brcOutput = await _agentMemoryRetriever.ExecuteAsync(new AgentMemoryRetrieverInput
             {
-                Query = state.UserIntent ?? string.Empty
+                Query = state.UserIntent!
             });
 
             state.ExtractedAgentMemories = brcOutput.Items.ToList();
