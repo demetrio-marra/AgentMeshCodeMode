@@ -42,5 +42,14 @@ namespace AgentMesh.Application.Contracts
         /// <returns>A task that represents the asynchronous operation. The task result contains the content of the knowledge
         /// base entry as a string, or null if the entry does not exist.</returns>
         Task<string> GetKnowledgeBaseEntryContentAsync(string id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Asynchronously retrieves the content of multiple knowledge base entries identified by the specified IDs.
+        /// </summary>
+        /// <param name="ids">A collection of unique identifiers of the knowledge base entries to retrieve. Cannot be null or empty.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a dictionary mapping each
+        /// requested ID to its content, or <see langword="null"/> if the entry does not exist.</returns>
+        Task<IDictionary<string, string?>> GetKnowledgeBaseEntriesContentAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default);
     }
 }

@@ -34,5 +34,13 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         {
             return await Task.FromResult($"This is the content for knowledge base entry with ID '{id}'.");
         }
+
+        public async Task<IDictionary<string, string?>> GetKnowledgeBaseEntriesContentAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
+        {
+            var result = ids.ToDictionary(
+                id => id,
+                id => (string?)$"This is the content for knowledge base entry with ID '{id}'.");
+            return await Task.FromResult(result);
+        }
     }
 }
