@@ -43,6 +43,8 @@ namespace AgentMesh.Application.Models
 
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
 
+        public IEnumerable<KnowledgeBaseQueryResult> ExactKnowledgeBaseQueryResult = Enumerable.Empty<KnowledgeBaseQueryResult>();
+
         public void AddTokenUsage(string agentName, int tokenCount, int inputTokenCount, int outputTokenCount)
         {
             TokenUsageEntries.Add(new AgentTokenUsageEntry

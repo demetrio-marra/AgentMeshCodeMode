@@ -101,6 +101,11 @@ namespace AgentMesh.Application.Workflows
             {
                 await ExecuteAgentMemoryServiceAsync(state);
             }
+            if (state.MissingKnowledgeBaseEntries.Any())
+            {
+                await ExecuteKnowledgeBaseServiceExactSearchAsync(state);
+            }
+
             await ExecuteContextAnalyzerAsync(state);
 
             var routerRecipient = await ExecuteRouterAsync(state);
@@ -240,6 +245,24 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Service", new Dictionary<string, string>
             {
                 { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories.Select(m => m.Memory)) }
+            });
+        }
+
+        private async Task ExecuteKnowledgeBaseServiceExactSearchAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Knowledge Base Service...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Knowledge Base Service", new Dictionary<string, string>
+            {
+                { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
+            });
+
+            var brcOutput = await _knowledgeBaseService.ExactSearchAsync(state.MissingKnowledgeBaseEntries.ToList(), CancellationToken.None);
+
+            state.ExactKnowledgeBaseQueryResult = brcOutput.ToList();
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service", new Dictionary<string, string>
+            {
+                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}, Relevance: {m.RelevanceScore}")) }
             });
         }
 
