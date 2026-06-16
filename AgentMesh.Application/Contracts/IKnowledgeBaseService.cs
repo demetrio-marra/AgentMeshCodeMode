@@ -1,0 +1,37 @@
+﻿using AgentMesh.Application.Models;
+
+namespace AgentMesh.Application.Contracts
+{
+    /// <summary>
+    /// Provides service to access knowledge base information, such as retrieving relevant knowledge base entries based on different criteria (eg. keywords, semantic similarity, etc.).
+    /// This service can be used to enhance agent responses with relevant information from the knowledge base, improving the quality and relevance of the generated content.
+    /// </summary>
+    public interface IKnowledgeBaseService
+    {
+        /// <summary>
+        /// Searches the knowledge base for entries that exactly match the provided search terms. 
+        /// This method is useful for retrieving specific information based on keywords or phrases, ensuring that the results are directly relevant to the search query.
+        /// Use it for fast retrieval of information when you have specific terms in mind and want to find exact matches in the knowledge base.
+        /// </summary>
+        /// <param name="searchTerms">A collection of search terms to use for the exact search. Each term is matched exactly against the knowledge base entries.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A collection of <see
+        /// cref="KnowledgeBaseQueryResult"/> objects matching the search terms. The collection is empty if no matches
+        /// are found.</returns>
+        Task<IEnumerable<KnowledgeBaseQueryResult>> ExactSearchAsync(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Performs a semantic search using the specified search terms and returns matching knowledge base results
+        /// asynchronously.
+        /// </summary>
+        /// <param name="searchTerms">A collection of search terms to use for the semantic search. Each term is compared semantically against the
+        /// knowledge base.</param>
+        /// <param name="rerank">If <see langword="true"/>, the results are re-ranked for improved relevance; otherwise, the default ranking
+        /// is used.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A collection of <see
+        /// cref="KnowledgeBaseQueryResult"/> objects matching the search terms. The collection is empty if no matches
+        /// are found.</returns>
+        Task<IEnumerable<KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, bool rerank = false, CancellationToken cancellationToken = default);
+    }
+}
