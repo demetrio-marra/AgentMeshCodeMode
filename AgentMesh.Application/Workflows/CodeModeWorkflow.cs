@@ -229,7 +229,7 @@ namespace AgentMesh.Application.Workflows
 
             var brcOutput = await _agentMemoryRetriever.ExecuteAsync(new AgentMemoryRetrieverInput
             {
-                Query = state.UserIntent!
+                Query = string.Join(", ", state.MissingPastMemories)
             });
 
             state.ExtractedAgentMemories = brcOutput.Items.ToList();
