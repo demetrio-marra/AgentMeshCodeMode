@@ -5,26 +5,30 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 {
     public class DummyKnowledgeBaseService : IKnowledgeBaseService
     {
-        public async Task<IEnumerable<KnowledgeBaseQueryResult>> ExactSearchAsync(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default)
+        Guid fakeGuid1 = Guid.Parse("65d94efd-6bd3-43bd-89e0-69295d6ce87f");
+        Guid fakeGuid2 = Guid.Parse("db1d4b23-ff2d-4331-8b29-44de903ced30");
+
+        public async Task<IEnumerable<KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default)
         {
             var results = searchTerms.Select(term => new KnowledgeBaseQueryResult
             {
                 SearchTerm = term,
-                Id = Guid.NewGuid().ToString(),
-                Title = $"Exact match for '{term}'",
-                Summary = $"This is a dummy exact search result for the term '{term}'.",
+                Id = fakeGuid1.ToString(),
+                Title = $"GetSituazioneContabileCompleta API Description",
+                Summary = $"Restituisce la situazione contabile completa per un singolo Cliente di Studio, riferita ad un singolo periodo contabile.",
                 RelevanceScore = 1.0f
-            });
+            }).DistinctBy(r => r.Id);
             return await Task.FromResult(results);
         }
+
         public async Task<IEnumerable<KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, bool rerank = false, CancellationToken cancellationToken = default)
         {
             var results = searchTerms.Select(term => new KnowledgeBaseQueryResult
             {
                 SearchTerm = term,
                 Id = Guid.NewGuid().ToString(),
-                Title = $"Semantic match for '{term}'",
-                Summary = $"This is a dummy semantic search result for the term '{term}'.",
+                Title = "GetUserByUsername",
+                Summary = $"Restituisce i dati dell'utente dall'username",
                 RelevanceScore = 0.5f
             });
             return await Task.FromResult(results);

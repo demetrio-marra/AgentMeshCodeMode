@@ -9,16 +9,16 @@ namespace AgentMesh.Application.Contracts
     public interface IKnowledgeBaseService
     {
         /// <summary>
-        /// Searches the knowledge base for entries that exactly match the provided search terms. 
+        /// Searches the knowledge base for entries that match the provided keywords. 
         /// This method is useful for retrieving specific information based on keywords or phrases, ensuring that the results are directly relevant to the search query.
-        /// Use it for fast retrieval of information when you have specific terms in mind and want to find exact matches in the knowledge base.
+        /// Use it for fast retrieval of information when you have specific terms in mind and want to find matches in the knowledge base.
         /// </summary>
-        /// <param name="searchTerms">A collection of search terms to use for the exact search. Each term is matched exactly against the knowledge base entries.</param>
+        /// <param name="searchTerms">A collection of search terms to use for the keyword search. Each term is matched against the knowledge base entries.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns>A collection of <see
         /// cref="KnowledgeBaseQueryResult"/> objects matching the search terms. The collection is empty if no matches
         /// are found.</returns>
-        Task<IEnumerable<KnowledgeBaseQueryResult>> ExactSearchAsync(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default);
+        Task<IEnumerable<KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Performs a semantic search using the specified search terms and returns matching knowledge base results

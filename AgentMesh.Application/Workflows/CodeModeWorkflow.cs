@@ -105,6 +105,9 @@ namespace AgentMesh.Application.Workflows
 
             await ExecuteContextAnalyzerAsync(state);
 
+            // TODO: temporaneo
+            state.UserIntentCategoryValue = UserIntentCategoryValues.Other;
+
             if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
             {
                 goto CompleteWorkflow;
@@ -251,7 +254,7 @@ namespace AgentMesh.Application.Workflows
                 { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
             });
 
-            var brcOutput = await _knowledgeBaseService.ExactSearchAsync(state.MissingKnowledgeBaseEntries.ToList(), CancellationToken.None);
+            var brcOutput = await _knowledgeBaseService.KeywordsSearch(state.MissingKnowledgeBaseEntries.ToList(), CancellationToken.None);
 
             state.ExactKnowledgeBaseQueryResult = brcOutput.ToList();
 

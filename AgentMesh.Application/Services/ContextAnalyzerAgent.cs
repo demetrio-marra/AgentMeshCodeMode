@@ -69,7 +69,7 @@ namespace AgentMesh.Application.Services
                     FilteredKnowledgeBaseDocuments = responseDTO.FilteredKnowledgeBaseDocuments.Select(u => new FilteredKnowledgeBaseItem
                     {
                         Title = u.Title,
-                        DocumentId = u.Id
+                        DocumentId = u.DocumentId
                     }).ToList()
                 };
             }
@@ -88,7 +88,16 @@ namespace AgentMesh.Application.Services
             public string UserIntentCategory { get; set; } = string.Empty;
 
             [JsonPropertyName("filteredKnowledgeBaseDocuments")]
-            public List<KnowledgeBaseQueryResult> FilteredKnowledgeBaseDocuments { get; set; } = new List<KnowledgeBaseQueryResult>();
+            public List<FilteredKnowledgeBaseDTOItem> FilteredKnowledgeBaseDocuments { get; set; } = new List<FilteredKnowledgeBaseDTOItem>();
+        }
+
+        private class FilteredKnowledgeBaseDTOItem
+        {
+            [JsonPropertyName("title")]
+            public string Title { get; set; } = string.Empty;
+
+            [JsonPropertyName("documentId")]
+            public string DocumentId { get; set; } = string.Empty;
         }
     }
 }
