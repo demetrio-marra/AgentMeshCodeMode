@@ -46,6 +46,8 @@ namespace AgentMesh.Application.Models
 
         public IEnumerable<KnowledgeBaseQueryResult> ExactKnowledgeBaseQueryResult { get; set; } = [];
 
+        public Dictionary<string, string?> KnowledgeBaseDocumentsContent { get; set; } = [];
+
         public void AddTokenUsage(string agentName, int tokenCount, int inputTokenCount, int outputTokenCount)
         {
             TokenUsageEntries.Add(new AgentTokenUsageEntry

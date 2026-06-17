@@ -100,19 +100,42 @@ namespace AgentMesh.Application.Workflows
             }
             if (state.MissingKnowledgeBaseEntries.Any())
             {
-                await ExecuteKnowledgeBaseServiceExactSearchAsync(state);
+                await ExecuteKnowledgeBaseServiceKeywordsSearchAsync(state);
             }
 
             await ExecuteContextAnalyzerAsync(state);
-
-            // TODO: temporaneo
-            state.UserIntentCategoryValue = UserIntentCategoryValues.Other;
 
             if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
             {
                 goto CompleteWorkflow;
             }
-            else if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
+
+            // FROM NOW ON, the workflow will be based on the user intent category (TaskExecution or Documentation)
+
+            // if there are no knowledge base documents after filtering, search them again using semantic search
+            if (!state.KnowledgeBaseDocumentFilteredIds.Any())
+            {
+                await ExecuteKnowledgeBaseServiceSemanticSearchAsync(state);    // overwrite the previous knowledge base query result with the new one
+                await ExecuteContextAnalyzerAsync(state);
+
+                if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
+                {
+                    goto CompleteWorkflow;
+                }
+            }
+
+            // now if we have knowledge base documents after filtering, we can fetch the whole documents content and store it in the state for later use
+            if (state.KnowledgeBaseDocumentFilteredIds.Any())
+            {
+                var knowledgeBaseDocuments = await _knowledgeBaseService.GetKnowledgeBaseEntriesContentAsync(state.KnowledgeBaseDocumentFilteredIds, CancellationToken.None);
+                state.KnowledgeBaseDocumentsContent = knowledgeBaseDocuments.ToDictionary();
+            }
+
+            // temporary override just for tests
+            state.UserIntentCategoryValue = UserIntentCategoryValues.Documentation;
+
+
+            if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
             {
                 await ExecuteBusinessRequirementsCreatorAsync(state);
                 await ExecuteApiDocumentationExecutorAsync(state);
@@ -246,10 +269,10 @@ namespace AgentMesh.Application.Workflows
             });
         }
 
-        private async Task ExecuteKnowledgeBaseServiceExactSearchAsync(CodeModeWorkflowState state)
+        private async Task ExecuteKnowledgeBaseServiceKeywordsSearchAsync(CodeModeWorkflowState state)
         {
-            _logger.LogDebug("Engaging Knowledge Base Service...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Knowledge Base Service", new Dictionary<string, string>
+            _logger.LogDebug("Engaging Knowledge Base Service (Keywords Search)...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Knowledge Base Service (Keywords Search)", new Dictionary<string, string>
             {
                 { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
             });
@@ -258,7 +281,25 @@ namespace AgentMesh.Application.Workflows
 
             state.ExactKnowledgeBaseQueryResult = brcOutput.ToList();
 
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service", new Dictionary<string, string>
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Keywords Search)", new Dictionary<string, string>
+            {
+                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}, Relevance: {m.RelevanceScore}")) }
+            });
+        }
+
+        private async Task ExecuteKnowledgeBaseServiceSemanticSearchAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Knowledge Base Service (Semantic Search)...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Knowledge Base Service (Semantic Search)", new Dictionary<string, string>
+            {
+                { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
+            });
+
+            var brcOutput = await _knowledgeBaseService.SemanticSearchAsync(state.MissingKnowledgeBaseEntries.ToList(), rerank: true, CancellationToken.None);
+
+            state.ExactKnowledgeBaseQueryResult = brcOutput.ToList();
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Semantic Search)", new Dictionary<string, string>
             {
                 { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}, Relevance: {m.RelevanceScore}")) }
             });
@@ -587,18 +628,17 @@ namespace AgentMesh.Application.Workflows
 
         private async Task ExecuteBusinessAdvisorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
-            await ExecuteSemanticSearchAsync(state, BusinessAdvisorAgentConfiguration.AgentName, cancellationToken);
-
             _logger.LogDebug("Engaging Business Advisor Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
             {
-                { "EnrichedUserRequest", state.EnrichedUserRequest }
+                { "EnrichedUserRequest", state.EnrichedUserRequest },
+                { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
                 EnrichedUserRequest = state.EnrichedUserRequest,
-                ApiDocumentation = state.SemanticSearchApiDocumentation
+                ApiDocumentation = string.Join(Environment.NewLine, state.KnowledgeBaseDocumentsContent.Values)
             }, cancellationToken);
             state.BusinessAdvisorContent = baOutput.Content;
             state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
