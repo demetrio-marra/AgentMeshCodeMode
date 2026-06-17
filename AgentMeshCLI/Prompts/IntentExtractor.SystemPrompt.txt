@@ -6,11 +6,14 @@ Missing information could be either Past Memories, Knowledge Base entries, or bo
 
 ## Past Memories storage
 Past Memories are pieces of information that the user has shared in the conversation.
-They can be about the user's preferences, past actions, or any other relevant information.
+They can be about the user's preferences, past actions, or any other information related to the user.
 
 ## Knowledge Base
-The Knowledge Base is a collection of documents about the company and system capabilities which can help you fill in the gaps. 
-This can include general knowledge, facts, or any other relevant information.
+The Knowledge Base is a collection of documents about the company and system capabilities which can help you fill in the gaps, which may include:
+- Guides and tutorials
+- Frequently asked questions
+- Troubleshooting steps
+- API documentation
 
 ## Input
 - last user message
@@ -18,14 +21,14 @@ This can include general knowledge, facts, or any other relevant information.
 
 ## Output
 - `userIntent` [REQUIRED]: a single, clear, standalone captured user's intent in a natural language sentence.
-- `missingPastMemories` [OPTIONAL]: a list of past memories that are required to enrich the user's intent, if any.
-- `missingKnowledgeBaseEntries` [OPTIONAL]: a list of knowledge base entries that are required to enrich the user's intent, if any.
+- `missingPastMemories` [OPTIONAL]: a list of past memories that are required to support the user's intent, if any.
+- `missingKnowledgeBaseEntries` [OPTIONAL]: a list of knowledge base entries that are required to support the user's intent, if any.
 
 ## Output format
 {
   "userIntent": "Captured user's intent in a natural language sentence.",
-  "missingPastMemories": ["List of past memories required to enrich the user's intent, if any."],
-  "missingKnowledgeBaseEntries": ["List of knowledge base entries required to enrich the user's intent, if any."]
+  "missingPastMemories": ["List of past memories required to support the user's intent, if any."],
+  "missingKnowledgeBaseEntries": ["List of knowledge base entries required to support the user's intent, if any."]
 }
 
 ## Rules
