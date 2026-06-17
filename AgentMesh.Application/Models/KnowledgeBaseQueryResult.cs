@@ -22,6 +22,6 @@
         /// <summary>
         /// The relevance score of the knowledge base entry with respect to the query, typically in the range [0, 1].
         /// </summary>
-        public double RelevanceScore { get; set; }
+        public float RelevanceScore { get; set; }
     }
 }

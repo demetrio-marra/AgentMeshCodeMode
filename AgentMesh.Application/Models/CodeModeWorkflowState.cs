@@ -1,6 +1,7 @@
 ﻿using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.Workflows;
+using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
 
 namespace AgentMesh.Application.Models
 {
@@ -19,7 +20,7 @@ namespace AgentMesh.Application.Models
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
         public IEnumerable<string> MissingKnowledgeBaseEntries { get; set; } = [];
         public string EnrichedUserRequest { get; set; } = string.Empty;
-        public string? RouterRecipient { get; set; }
+        public UserIntentCategoryValues UserIntentCategoryValue { get; set; }
         public string? BusinessRequirements { get; set; }
         public IEnumerable<string> MentionedApis { get; set; } = Enumerable.Empty<string>();
         public bool ShouldEngageCoder { get; set; }
@@ -37,13 +38,13 @@ namespace AgentMesh.Application.Models
         public string? FinalAnswer { get; set; }
         public List<AgentTokenUsageEntry> TokenUsageEntries { get; set; }
         public IEnumerable<AgentMemoryItem> ExtractedAgentMemories { get; set; } = Enumerable.Empty<AgentMemoryItem>();
-        public IEnumerable<string> ActionableRequirements { get; set; } = Enumerable.Empty<string>();
+        public IEnumerable<string> KnowledgeBaseDocumentFilteredIds { get; set; } = [];
         public string SemanticSearchApiDocumentation { get; set; } = string.Empty;
         public string ApiDocumentation { get; set; } = string.Empty;
 
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
 
-        public IEnumerable<KnowledgeBaseQueryResult> ExactKnowledgeBaseQueryResult = Enumerable.Empty<KnowledgeBaseQueryResult>();
+        public IEnumerable<KnowledgeBaseQueryResult> ExactKnowledgeBaseQueryResult { get; set; } = [];
 
         public void AddTokenUsage(string agentName, int tokenCount, int inputTokenCount, int outputTokenCount)
         {

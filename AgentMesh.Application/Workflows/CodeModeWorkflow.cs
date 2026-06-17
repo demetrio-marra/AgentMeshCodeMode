@@ -17,7 +17,7 @@ using AgentMesh.Models.ContextAnalyzer;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.PersonalAssistant;
 using AgentMesh.Models.ResultsPresenter;
-using AgentMesh.Models.Router;
+using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
@@ -38,7 +38,6 @@ namespace AgentMesh.Application.Workflows
         private readonly IResultsPresenterAgent _resultsPresenterAgent;
         private readonly IJSSandboxExecutor _jsSandboxExecutor;
         private readonly IIntentExtractorAgent _intentExtractorAgent;
-        private readonly IRouterAgent _routerAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent;
         private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
         private readonly IAgentMemoryRetriever _agentMemoryRetriever;
@@ -58,7 +57,6 @@ namespace AgentMesh.Application.Workflows
             IResultsPresenterAgent resultsPresenterAgent,
             IJSSandboxExecutor jsSandboxExecutor,
             IIntentExtractorAgent intentExtractorAgent,
-            IRouterAgent routerAgent,
             IPersonalAssistantAgent personalAssistantAgent,
             IContextAnalyzerAgent contextAnalyzerAgent,
             IAgentMemoryRetriever agentMemoryRetriever,
@@ -78,7 +76,6 @@ namespace AgentMesh.Application.Workflows
             _resultsPresenterAgent = resultsPresenterAgent;
             _jsSandboxExecutor = jsSandboxExecutor;
             _intentExtractorAgent = intentExtractorAgent;
-            _routerAgent = routerAgent;
             _personalAssistantAgent = personalAssistantAgent;
             _contextAnalyzerAgent = contextAnalyzerAgent;
             _agentMemoryRetriever = agentMemoryRetriever;
@@ -108,13 +105,11 @@ namespace AgentMesh.Application.Workflows
 
             await ExecuteContextAnalyzerAsync(state);
 
-            var routerRecipient = await ExecuteRouterAsync(state);
-
-            if (routerRecipient?.Equals("PersonalAssistant", StringComparison.OrdinalIgnoreCase) == true)
+            if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
             {
                 goto CompleteWorkflow;
             }
-            else if (routerRecipient?.Equals("BusinessRequirementsCreator", StringComparison.OrdinalIgnoreCase) == true)
+            else if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
             {
                 await ExecuteBusinessRequirementsCreatorAsync(state);
                 await ExecuteApiDocumentationExecutorAsync(state);
@@ -164,7 +159,7 @@ namespace AgentMesh.Application.Workflows
                 }
                 goto WorkflowEnd;
             }
-            else if (routerRecipient?.Equals("BusinessAdvisor", StringComparison.OrdinalIgnoreCase) == true)
+            else if (state.UserIntentCategoryValue == UserIntentCategoryValues.Documentation)
             {
                 await ExecuteBusinessAdvisorAsync(state);
                 await CompleteWorkflowAsync(state, state.BusinessAdvisorContent);
@@ -172,7 +167,7 @@ namespace AgentMesh.Application.Workflows
             }
             else
             {
-                throw new Exception($"Router Agent returned an unknown recipient: {routerRecipient}");
+                throw new Exception($"Unknown user intent category: {state.UserIntentCategoryValue}");
             }
 
         CompleteWorkflow:
@@ -269,54 +264,55 @@ namespace AgentMesh.Application.Workflows
         private async Task ExecuteContextAnalyzerAsync(CodeModeWorkflowState state)
         {
             _logger.LogDebug("Engaging Context Analyzer Agent...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", new Dictionary<string, string>
+            var contextAnalyzerInputLogEntries = new Dictionary<string, string>
             {
-                { "ExtranctedItent", state.UserIntent },
-                { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories.Select(m => m.Memory)) }
-            });
+                { "ExtranctedItent", state.UserIntent }
+            };
+            if (state.ExtractedAgentMemories.Any())
+            {
+                contextAnalyzerInputLogEntries.Add("ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories.Select(m => m.Memory)));
+            }
+            if (state.ExactKnowledgeBaseQueryResult.Any())
+            {
+                contextAnalyzerInputLogEntries.Add("ExtractedKnowledgeBaseDocuments", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}, Relevance: {m.RelevanceScore}")));
+            }
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", contextAnalyzerInputLogEntries);
 
             var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
             {
-                Memories = state.ExtractedAgentMemories.ToList(),
-                UserIntent = state.UserIntent ?? string.Empty
+                UserIntent = state.UserIntent ?? string.Empty,
+                ExtractedKnowledgeBase = state.ExactKnowledgeBaseQueryResult.Select(m => new ContextAnalyzerAgentInput.ExtractedKnowledgeItem
+                {
+                    DocumentId = m.Id,
+                    Title = m.Title,
+                    Summary = m.Summary,
+                    Relevance = m.RelevanceScore
+                }).ToList(),
+                ExtractedMemories = state.ExtractedAgentMemories.Select(m => m.Memory).ToList()
             });
             
-            state.EnrichedUserRequest = contextAnalyzerOutput.EnrichedIntent;
+            state.EnrichedUserRequest = contextAnalyzerOutput.CondensedUserIntent;
+            state.UserIntentCategoryValue = contextAnalyzerOutput.UserIntentCategory;
 
-            if (contextAnalyzerOutput.ActionableRequirements != null
-                && contextAnalyzerOutput.ActionableRequirements.Any())
+            if (contextAnalyzerOutput.FilteredKnowledgeBaseDocuments != null
+                && contextAnalyzerOutput.FilteredKnowledgeBaseDocuments.Any())
             {
-                state.ActionableRequirements = contextAnalyzerOutput.ActionableRequirements.ToList();
+                state.KnowledgeBaseDocumentFilteredIds = contextAnalyzerOutput.FilteredKnowledgeBaseDocuments.Select(d => d.DocumentId).ToList();
             }
             state.AddTokenUsage(ContextAnalyzerAgentConfiguration.AgentName, contextAnalyzerOutput.TokenCount, contextAnalyzerOutput.InputTokenCount, contextAnalyzerOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", new Dictionary<string, string>
+
+            var contextAnalyzerOutputLogEntries = new Dictionary<string, string>
             {
                 { "EnrichedUserRequest", state.EnrichedUserRequest },
-                { "ActionableRequirements", state.ActionableRequirements != null && state.ActionableRequirements.Any() ? string.Join(", ", state.ActionableRequirements) : "(No actionable requirements found)" }
-            });
-        }
+                { "UserIntentCategory", state.UserIntentCategoryValue.ToString() }
+            };
 
-        private async Task<string?> ExecuteRouterAsync(CodeModeWorkflowState state)
-        {
-            _logger.LogDebug("Engaging Router Agent...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Router Agent", new Dictionary<string, string>
+            if (state.KnowledgeBaseDocumentFilteredIds != null && state.KnowledgeBaseDocumentFilteredIds.Any())
             {
-                { "EnrichedUserRequest", state.EnrichedUserRequest }
-            });
+                contextAnalyzerOutputLogEntries.Add("KnowledgeBaseDocumentFilteredIds", string.Join(", ", state.KnowledgeBaseDocumentFilteredIds));
+            }
 
-            var routerOutput = await _routerAgent.ExecuteAsync(new RouterAgentInput
-            {
-                EnrichedUserRequest = state.EnrichedUserRequest
-            });
-            state.RouterRecipient = routerOutput.Recipient;
-            state.AddTokenUsage(RouterAgentConfiguration.AgentName, routerOutput.TokenCount, routerOutput.InputTokenCount, routerOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Router Agent", new Dictionary<string, string>
-            {
-                { "Recipient", routerOutput.Recipient ?? "(Unknown)" },
-                { "Rationale", routerOutput.Rationale ?? "(No rationale provided)" }
-            });
-
-            return routerOutput.Recipient;
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", contextAnalyzerOutputLogEntries);
         }
 
         private async Task ExecuteBusinessRequirementsCreatorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
@@ -565,25 +561,25 @@ namespace AgentMesh.Application.Workflows
 
         private async Task ExecuteSemanticSearchAsync(CodeModeWorkflowState state, string agentRole, CancellationToken cancellationToken = default)
         {
-            _logger.LogDebug("Engaging Semantic Search Executor...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Semantic Search Executor", new Dictionary<string, string>
-            {
-                { "ActionableRequirements", string.Join(", ", state.ActionableRequirements) },
-                { "AgentRole", agentRole }
-            });
+            //_logger.LogDebug("Engaging Semantic Search Executor...");
+            //await _workflowProgressNotifier.NotifyWorkflowStepStart("Semantic Search Executor", new Dictionary<string, string>
+            //{
+            //    { "ActionableRequirements", string.Join(", ", state.ActionableRequirements) },
+            //    { "AgentRole", agentRole }
+            //});
 
-            var searchOutput = await _semanticSearchExecutor.ExecuteAsync(new SemanticSearchExecutorInput
-            {
-                ActionableRequirements = state.ActionableRequirements,
-                AgentRole = agentRole
-            }, cancellationToken);
+            //var searchOutput = await _semanticSearchExecutor.ExecuteAsync(new SemanticSearchExecutorInput
+            //{
+            //    ActionableRequirements = state.ActionableRequirements,
+            //    AgentRole = agentRole
+            //}, cancellationToken);
 
-            state.SemanticSearchApiDocumentation = searchOutput.ApiDocumentation;
+            //state.SemanticSearchApiDocumentation = searchOutput.ApiDocumentation;
 
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Semantic Search Executor", new Dictionary<string, string>
-            {
-                { "ApiDocumentationLength", state.SemanticSearchApiDocumentation.Length.ToString() }
-            });
+            //await _workflowProgressNotifier.NotifyWorkflowStepEnd("Semantic Search Executor", new Dictionary<string, string>
+            //{
+            //    { "ApiDocumentationLength", state.SemanticSearchApiDocumentation.Length.ToString() }
+            //});
         }
 
         private async Task ExecuteBusinessAdvisorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)

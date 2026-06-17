@@ -302,29 +302,6 @@ namespace AgentMesh
 
             services.AddSingleton<IIntentExtractorAgent, IntentExtractorAgent>();
 
-            // Router agent config and client
-            services
-                .AddOptions<RouterAgentConfiguration>()
-                .Bind(configuration.GetSection(RouterAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<RouterAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(RouterAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<RouterAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-            services.AddSingleton<IRouterAgent, RouterAgent>();
-
             // PersonalAssistant agent config and client
             services
                 .AddOptions<PersonalAssistantAgentConfiguration>()

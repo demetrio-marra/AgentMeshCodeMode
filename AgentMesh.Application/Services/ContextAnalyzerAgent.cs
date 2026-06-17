@@ -6,12 +6,14 @@ using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
 
 namespace AgentMesh.Application.Services
 {
-    public class ContextAnalyzerAgent : AgentBase<(string EnrichedIntent, IEnumerable<string> ActionableRequirements)>, IContextAnalyzerAgent
+    public class ContextAnalyzerAgent : AgentBase<ContextAnalyzerAgentOutput>, IContextAnalyzerAgent
     {
-        public const string NO_RELEVANT_CONTEXT_FOUND = "NO RELEVANT CONTEXT FOUND";
+        public const string AgentName = "Context Analyzer";
 
         public ContextAnalyzerAgent(
             [FromKeyedServices(ContextAnalyzerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
@@ -34,60 +36,59 @@ namespace AgentMesh.Application.Services
 
             return new ContextAnalyzerAgentOutput
             {
-                EnrichedIntent = result.Result.EnrichedIntent,
-                ActionableRequirements = result.Result.ActionableRequirements,
+                CondensedUserIntent = result.Result.CondensedUserIntent,
+                UserIntentCategory = result.Result.UserIntentCategory,
+                FilteredKnowledgeBaseDocuments = result.Result.FilteredKnowledgeBaseDocuments,
+
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount
             };
         }
 
-        protected override (string EnrichedIntent, IEnumerable<string> ActionableRequirements) ParseStructuredResponse(string rawResponseText)
+        protected override ContextAnalyzerAgentOutput ParseStructuredResponse(string rawResponseText)
         {
             try
             {
-                var jsonDoc = JsonDocument.Parse(rawResponseText);
-                var root = jsonDoc.RootElement;
+                var responseDTO = JsonSerializer.Deserialize<ContextAnalyzerAgentOutputDTO>(rawResponseText);
 
-                if (!root.TryGetProperty("enrichedIntent", out var enrichedIntentElement) ||
-                    !root.TryGetProperty("actionableRequirements", out var actionableReqElement))
+                if (responseDTO == null)
                 {
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response is not in the expected JSON format. Expected properties 'enrichedIntent' and 'actionableRequirements' were not found.");
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                if (enrichedIntentElement.ValueKind != JsonValueKind.String)
+                if (string.IsNullOrWhiteSpace(responseDTO.CondensedUserIntent))
                 {
-                    throw new BadStructuredResponseException(rawResponseText, "The 'enrichedIntent' property is expected to be a string.");
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty condensed user intent.");
                 }
 
-                var enrichedIntent = enrichedIntentElement.GetString() ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(enrichedIntent))
+                return new ContextAnalyzerAgentOutput
                 {
-                    throw new BadStructuredResponseException(rawResponseText, "The 'enrichedIntent' property is empty.");
-                }
-
-                var actionableRequirements = new List<string>();
-                if (actionableReqElement.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var item in actionableReqElement.EnumerateArray())
+                    CondensedUserIntent = responseDTO.CondensedUserIntent,
+                    UserIntentCategory = Enum.Parse<UserIntentCategoryValues>(responseDTO.UserIntentCategory, true),
+                    FilteredKnowledgeBaseDocuments = responseDTO.FilteredKnowledgeBaseDocuments.Select(u => new FilteredKnowledgeBaseItem
                     {
-                        if (item.ValueKind == JsonValueKind.String)
-                        {
-                            var value = item.GetString();
-                            if (!string.IsNullOrWhiteSpace(value))
-                            {
-                                actionableRequirements.Add(value);
-                            }
-                        }
-                    }
-                }
-
-                return (enrichedIntent, actionableRequirements);
+                        Title = u.Title,
+                        DocumentId = u.Id
+                    }).ToList()
+                };
             }
             catch (JsonException ex)
             {
-                throw new BadStructuredResponseException(rawResponseText, $"Failed to parse JSON response: {ex.Message}");
+                throw new BadStructuredResponseException(rawResponseText, "Failed to parse the model's response.", ex);
             }
+        }
+
+        private class ContextAnalyzerAgentOutputDTO
+        {
+            [JsonPropertyName("condensedUserIntent")]
+            public string CondensedUserIntent { get; set; } = string.Empty;
+
+            [JsonPropertyName("userIntentCategory")]
+            public string UserIntentCategory { get; set; } = string.Empty;
+
+            [JsonPropertyName("filteredKnowledgeBaseDocuments")]
+            public List<KnowledgeBaseQueryResult> FilteredKnowledgeBaseDocuments { get; set; } = new List<KnowledgeBaseQueryResult>();
         }
     }
 }

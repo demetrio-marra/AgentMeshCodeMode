@@ -13,7 +13,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
                 Id = Guid.NewGuid().ToString(),
                 Title = $"Exact match for '{term}'",
                 Summary = $"This is a dummy exact search result for the term '{term}'.",
-                RelevanceScore = 1.0
+                RelevanceScore = 1.0f
             });
             return await Task.FromResult(results);
         }
@@ -25,7 +25,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
                 Id = Guid.NewGuid().ToString(),
                 Title = $"Semantic match for '{term}'",
                 Summary = $"This is a dummy semantic search result for the term '{term}'.",
-                RelevanceScore = 0.5
+                RelevanceScore = 0.5f
             });
             return await Task.FromResult(results);
         }
