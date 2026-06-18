@@ -7,6 +7,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
     {
         private const string KeywordsSearchType = "lex";
         private const string SemanticSearchType = "vec";
+        private const string SemanticWithRerankSearchType = "hyde";
 
         private readonly QMDHttpProxy _httpProxy;
 
@@ -15,11 +16,11 @@ namespace AgentMesh.Infrastructure.SemanticSearch
             _httpProxy = httpProxy;
         }
 
-        public async Task<IDictionary<string, string?>> GetKnowledgeBaseEntriesContentAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default)
+        public async Task<IDictionary<string, string?>> GetKnowledgeBaseEntriesContentAsync(IEnumerable<string> fileNames, CancellationToken cancellationToken = default)
         {
             var query = new DTOs.MultiGet.MultiGetToolRequest
             {
-                Pattern = string.Join(",", ids)
+                Pattern = string.Join(", ", fileNames)
             };
             var ret = await _httpProxy.MultiGetAsync(query, cancellationToken);
             return ret.Files.Where(f => f != null).Select(kv => new KeyValuePair<string, string?>(kv.File!, kv.Content)).ToDictionary(kv => kv.Key, kv => kv.Value);
@@ -31,14 +32,15 @@ namespace AgentMesh.Infrastructure.SemanticSearch
             return ret.Content;
         }
 
-        public async Task<IEnumerable<KnowledgeBaseKeywordsQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, CancellationToken cancellationToken = default)
         {
             var query = new DTOs.Query.QueryToolRequest
             {
-                 Searches = searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = KeywordsSearchType, Query = term }).ToList()
+                 Searches = searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = KeywordsSearchType, Query = term }).ToList(),
+                 Collections = collections?.ToList()
             };
             var ret = await _httpProxy.QueryAsync(query, cancellationToken);
-            return ret.Results.Select(r => new KnowledgeBaseKeywordsQueryResult
+            return ret.Results.Select(r => new KnowledgeBaseQueryResult
             {
                 Id = r.DocId!,
                 Title = r.Title!,
@@ -47,9 +49,22 @@ namespace AgentMesh.Infrastructure.SemanticSearch
             });
         }
 
-        public async Task<IEnumerable<KnowledgeBaseKeywordsQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, bool rerank = false, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = true, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            var query = new DTOs.Query.QueryToolRequest
+            {
+                Searches = searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = rerank ? SemanticWithRerankSearchType : SemanticSearchType, Query = term }).ToList(),
+                Collections = collections?.ToList()
+            };
+            var ret = await _httpProxy.QueryAsync(query, cancellationToken);
+            return ret.Results.Select(r => new KnowledgeBaseQueryResult
+            {
+                Id = r.DocId!,
+                Title = r.Title!,
+                Summary = r.Snippet,
+                File = r.File,
+                Relevance = r.Score
+            });
         }
     }
 }

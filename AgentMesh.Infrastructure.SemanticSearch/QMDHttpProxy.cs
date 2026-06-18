@@ -314,6 +314,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
                 }
             }
 
+
             // Fall back to the textual content array.
             var text = ExtractFirstText(toolResult);
             if (string.IsNullOrWhiteSpace(text))
@@ -360,6 +361,19 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
             foreach (var item in result.Content)
             {
+                if (item.Type == "resource")
+                {
+                    if (item.Extensions != null 
+                        && item.Extensions.ContainsKey("resource") 
+                        && item.Extensions["resource"].ValueKind == JsonValueKind.Object)
+                    {
+                        var resource = item.Extensions["resource"];
+                        if (resource.TryGetProperty("text", out var textProp) == true)
+                        {
+                            return textProp.GetString();
+                        }
+                    }
+                }
                 if (!string.IsNullOrEmpty(item.Text))
                 {
                     return item.Text;

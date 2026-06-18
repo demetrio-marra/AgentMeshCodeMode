@@ -38,15 +38,15 @@ namespace AgentMesh.Application.Models
         public string? FinalAnswer { get; set; }
         public List<AgentTokenUsageEntry> TokenUsageEntries { get; set; }
         public IEnumerable<AgentMemoryItem> ExtractedAgentMemories { get; set; } = Enumerable.Empty<AgentMemoryItem>();
-        public IEnumerable<string> KnowledgeBaseDocumentFilteredIds { get; set; } = [];
+        public IEnumerable<string> RelevantKnowledgeBaseFileNames { get; set; } = [];
         public string SemanticSearchApiDocumentation { get; set; } = string.Empty;
         public string ApiDocumentation { get; set; } = string.Empty;
 
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
 
-        public IEnumerable<KnowledgeBaseKeywordsQueryResult> ExactKnowledgeBaseQueryResult { get; set; } = [];
+        public IEnumerable<KnowledgeBaseQueryResult> KnowledgeBaseQueryResult { get; set; } = [];
 
-        public Dictionary<string, string?> KnowledgeBaseDocumentsContent { get; set; } = [];
+        public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseDocumentsContent { get; set; } = [];
 
         public void AddTokenUsage(string agentName, int tokenCount, int inputTokenCount, int outputTokenCount)
         {

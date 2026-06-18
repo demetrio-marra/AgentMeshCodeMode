@@ -14,11 +14,12 @@ namespace AgentMesh.Application.Contracts
         /// Use it for fast retrieval of information when you have specific terms in mind and want to find matches in the knowledge base.
         /// </summary>
         /// <param name="searchTerms">A collection of search terms to use for the keyword search. Each term is matched against the knowledge base entries.</param>
+        /// <param name="collections">An optional collection of knowledge base collections to limit the search scope. If null or empty, the search will be performed across all collections.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns>A collection of <see
-        /// cref="KnowledgeBaseKeywordsQueryResult"/> objects matching the search terms. The collection is empty if no matches
+        /// cref="KnowledgeBaseQueryResult"/> objects matching the search terms. The collection is empty if no matches
         /// are found.</returns>
-        Task<IEnumerable<KnowledgeBaseKeywordsQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default);
+        Task<IEnumerable<KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Performs a semantic search using the specified search terms and returns matching knowledge base results
@@ -26,13 +27,14 @@ namespace AgentMesh.Application.Contracts
         /// </summary>
         /// <param name="searchTerms">A collection of search terms to use for the semantic search. Each term is compared semantically against the
         /// knowledge base.</param>
+        /// <param name="collections">An optional collection of knowledge base collections to limit the search scope. If null or empty, the search will be performed across all collections.</param>
         /// <param name="rerank">If <see langword="true"/>, the results are re-ranked for improved relevance; otherwise, the default ranking
         /// is used.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns>A collection of <see
-        /// cref="KnowledgeBaseKeywordsQueryResult"/> objects matching the search terms. The collection is empty if no matches
+        /// cref="KnowledgeBaseQueryResult"/> objects matching the search terms. The collection is empty if no matches
         /// are found.</returns>
-        Task<IEnumerable<KnowledgeBaseKeywordsQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, bool rerank = false, CancellationToken cancellationToken = default);
+        Task<IEnumerable<KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = true, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Asynchronously retrieves the content of a knowledge base entry identified by the specified ID.
@@ -44,12 +46,12 @@ namespace AgentMesh.Application.Contracts
         Task<string> GetKnowledgeBaseEntryContentAsync(string id, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Asynchronously retrieves the content of multiple knowledge base entries identified by the specified IDs.
+        /// Asynchronously retrieves the content of multiple knowledge base entries identified by the specified file names.
         /// </summary>
-        /// <param name="ids">A collection of unique identifiers of the knowledge base entries to retrieve. Cannot be null or empty.</param>
+        /// <param name="fileNames">A collection of unique identifiers of the knowledge base entries to retrieve. Cannot be null or empty.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains a dictionary mapping each
-        /// requested ID to its content, or <see langword="null"/> if the entry does not exist.</returns>
-        Task<IDictionary<string, string?>> GetKnowledgeBaseEntriesContentAsync(IEnumerable<string> ids, CancellationToken cancellationToken = default);
+        /// requested file name to its content, or <see langword="null"/> if the entry does not exist.</returns>
+        Task<IDictionary<string, string?>> GetKnowledgeBaseEntriesContentAsync(IEnumerable<string> fileNames, CancellationToken cancellationToken = default);
     }
 }

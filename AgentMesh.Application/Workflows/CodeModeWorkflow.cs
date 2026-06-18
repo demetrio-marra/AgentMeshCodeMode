@@ -113,24 +113,42 @@ namespace AgentMesh.Application.Workflows
 
             // FROM NOW ON, the workflow will be based on the user intent category (TaskExecution or Documentation)
 
-            // TODO: questa parte è da definire meglio: quando usare la semantica? In base a cosa? La keywords con expander è sufficiente?
-            //// if there are no knowledge base documents after filtering, search them again using semantic search
-            //if (!state.KnowledgeBaseDocumentFilteredIds.Any())
-            //{
-            //    await ExecuteKnowledgeBaseServiceSemanticSearchAsync(state);    // overwrite the previous knowledge base query result with the new one
-            //    await ExecuteContextAnalyzerAsync(state);
+            // if there are no knowledge base documents after filtering, search them again using semantic search
+            if (!state.RelevantKnowledgeBaseFileNames.Any())
+            {
+                await ExecuteKnowledgeBaseServiceSemanticSearchAsync(state);    // overwrite the previous knowledge base query result with the new one
+                await ExecuteContextAnalyzerAsync(state);
 
-            //    if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
-            //    {
-            //        goto CompleteWorkflow;
-            //    }
-            //}
+                if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
+                {
+                    goto CompleteWorkflow;
+                }
+            }
 
             // now if we have knowledge base documents after filtering, we can fetch the whole documents content and store it in the state for later use
-            if (state.KnowledgeBaseDocumentFilteredIds.Any())
+            if (state.RelevantKnowledgeBaseFileNames.Any())
             {
-                var knowledgeBaseDocuments = await _knowledgeBaseService.GetKnowledgeBaseEntriesContentAsync(state.KnowledgeBaseDocumentFilteredIds, CancellationToken.None);
-                state.KnowledgeBaseDocumentsContent = knowledgeBaseDocuments.ToDictionary();
+                // TODO: non si capisce perchè ma la multiget non funziona. Proviamo a usare la singola
+                //var knowledgeBaseDocuments = await _knowledgeBaseService.GetKnowledgeBaseEntriesContentAsync(state.RelevantKnowledgeBaseFileNames, CancellationToken.None);
+
+                var fetchedFilesContent = new Dictionary<string, string?>();
+                foreach (var fileName in state.RelevantKnowledgeBaseFileNames)
+                {
+                    var document = await _knowledgeBaseService.GetKnowledgeBaseEntryContentAsync(fileName, CancellationToken.None);
+                    if (document != null)
+                    {
+                        fetchedFilesContent.Add(fileName, document);
+                    }
+                }
+
+                state.KnowledgeBaseDocumentsContent = state.KnowledgeBaseQueryResult
+                    .Where(kb => fetchedFilesContent.ContainsKey(kb.File!))
+                    .Select(kb => new KnowledgeBaseDocumentContent
+                    {
+                        Title = kb.Title,
+                        File = kb.File,
+                        Content = fetchedFilesContent[kb.File!] ?? string.Empty
+                    }).ToList();
             }
 
             // temporary override just for tests
@@ -279,13 +297,13 @@ namespace AgentMesh.Application.Workflows
                 { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
             });
 
-            var brcOutput = await _knowledgeBaseService.KeywordsSearch(state.MissingKnowledgeBaseEntries.ToList(), CancellationToken.None);
+            var brcOutput = await _knowledgeBaseService.KeywordsSearch(state.MissingKnowledgeBaseEntries.ToList(), new[] { "apis-documentation" }, CancellationToken.None);
 
-            state.ExactKnowledgeBaseQueryResult = brcOutput.ToList();
+            state.KnowledgeBaseQueryResult = brcOutput.ToList();
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Keywords Search)", new Dictionary<string, string>
             {
-                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")) }
+                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.KnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")) }
             });
         }
 
@@ -297,13 +315,13 @@ namespace AgentMesh.Application.Workflows
                 { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
             });
 
-            var brcOutput = await _knowledgeBaseService.SemanticSearchAsync(state.MissingKnowledgeBaseEntries.ToList(), rerank: true, CancellationToken.None);
+            var brcOutput = await _knowledgeBaseService.SemanticSearchAsync(state.MissingKnowledgeBaseEntries.ToList(), new[] { "apis-documentation" }, rerank: true, CancellationToken.None);
 
-            state.ExactKnowledgeBaseQueryResult = brcOutput.ToList();
+            state.KnowledgeBaseQueryResult = brcOutput.ToList();
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Semantic Search)", new Dictionary<string, string>
             {
-                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")) }
+                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.KnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")) }
             });
         }
 
@@ -318,20 +336,21 @@ namespace AgentMesh.Application.Workflows
             {
                 contextAnalyzerInputLogEntries.Add("ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories.Select(m => m.Memory)));
             }
-            if (state.ExactKnowledgeBaseQueryResult.Any())
+            if (state.KnowledgeBaseQueryResult.Any())
             {
-                contextAnalyzerInputLogEntries.Add("ExtractedKnowledgeBaseDocuments", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")));
+                contextAnalyzerInputLogEntries.Add("ExtractedKnowledgeBaseDocuments", string.Join(", ", state.KnowledgeBaseQueryResult.Select(m => $"File: {m.File}, Title: {m.Title}, Summary: {m.Summary}")));
             }
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", contextAnalyzerInputLogEntries);
 
             var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
             {
                 UserIntent = state.UserIntent ?? string.Empty,
-                ExtractedKnowledgeBase = state.ExactKnowledgeBaseQueryResult.Select(m => new ContextAnalyzerAgentInput.ExtractedKnowledgeItem
+                ExtractedKnowledgeBase = state.KnowledgeBaseQueryResult.Select(m => new ContextAnalyzerAgentInput.ExtractedKnowledgeItem
                 {
                     DocumentId = m.Id,
                     Title = m.Title,
-                    Summary = m.Summary
+                    Summary = m.Summary,
+                    Relevance = m.Relevance                     
                 }).ToList(),
                 ExtractedMemories = state.ExtractedAgentMemories.Select(m => m.Memory).ToList()
             });
@@ -342,7 +361,12 @@ namespace AgentMesh.Application.Workflows
             if (contextAnalyzerOutput.FilteredKnowledgeBaseDocuments != null
                 && contextAnalyzerOutput.FilteredKnowledgeBaseDocuments.Any())
             {
-                state.KnowledgeBaseDocumentFilteredIds = contextAnalyzerOutput.FilteredKnowledgeBaseDocuments.Select(d => d.DocumentId).ToList();
+                var filteredFileNames = state.KnowledgeBaseQueryResult.Where(kb => contextAnalyzerOutput.FilteredKnowledgeBaseDocuments.Select(f => f.DocumentId).Contains(kb.Id))
+                    .Select(kb => kb.File)
+                    .Distinct()
+                    .ToList();
+
+                state.RelevantKnowledgeBaseFileNames = filteredFileNames;
             }
             state.AddTokenUsage(ContextAnalyzerAgentConfiguration.AgentName, contextAnalyzerOutput.TokenCount, contextAnalyzerOutput.InputTokenCount, contextAnalyzerOutput.OutputTokenCount);
 
@@ -352,9 +376,9 @@ namespace AgentMesh.Application.Workflows
                 { "UserIntentCategory", state.UserIntentCategoryValue.ToString() }
             };
 
-            if (state.KnowledgeBaseDocumentFilteredIds != null && state.KnowledgeBaseDocumentFilteredIds.Any())
+            if (state.RelevantKnowledgeBaseFileNames != null && state.RelevantKnowledgeBaseFileNames.Any())
             {
-                contextAnalyzerOutputLogEntries.Add("KnowledgeBaseDocumentFilteredIds", string.Join(", ", state.KnowledgeBaseDocumentFilteredIds));
+                contextAnalyzerOutputLogEntries.Add("KnowledgeBaseDocumentFilteredIds", string.Join(", ", state.RelevantKnowledgeBaseFileNames));
             }
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", contextAnalyzerOutputLogEntries);
@@ -636,16 +660,10 @@ namespace AgentMesh.Application.Workflows
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
-            var documentationForBA = string.Empty;
-            if (state.KnowledgeBaseDocumentsContent.Values.Any())
-            {
-                documentationForBA = state.KnowledgeBaseDocumentsContent.Values.Select(s => DocumentationHelper.ExtractFor(s, "Business Analyst")).Aggregate((a, b) => a + Environment.NewLine + b);
-            }
-
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
                 EnrichedUserRequest = state.EnrichedUserRequest,
-                Documentation = documentationForBA
+                Documentation = string.Join(Environment.NewLine, state.KnowledgeBaseDocumentsContent.Select(kv => $"# {kv.Title}\n\n## File\n{kv.File}\n\n## Content:\n{kv.Content}\n"))
             }, cancellationToken);
             state.BusinessAdvisorContent = baOutput.Content;
             state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
