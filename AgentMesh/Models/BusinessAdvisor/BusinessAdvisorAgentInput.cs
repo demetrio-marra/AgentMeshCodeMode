@@ -5,9 +5,9 @@ namespace AgentMesh.Models.BusinessAdvisor
         public string EnrichedUserRequest { get; set; } = string.Empty;
 
         /// <summary>
-        /// Pre-fetched API documentation produced by <c>ISemanticSearchExecutor</c>.
+        /// Pre-fetched documentation produced by <c>ISemanticSearchExecutor</c>.
         /// Empty string when no relevant documentation was found.
         /// </summary>
-        public string ApiDocumentation { get; set; } = string.Empty;
+        public string Documentation { get; set; } = string.Empty;
     }
 }

@@ -26,9 +26,9 @@ namespace AgentMesh.Application.Services
         {
             var inputMessages = new List<AgentMessage>();
 
-            if (!string.IsNullOrWhiteSpace(input.ApiDocumentation))
+            if (!string.IsNullOrWhiteSpace(input.Documentation))
             {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"API Documentation: {input.ApiDocumentation}" });
+                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Documentation: {input.Documentation}" });
             }
             else
             {

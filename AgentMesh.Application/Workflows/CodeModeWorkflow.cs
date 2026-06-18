@@ -21,6 +21,7 @@ using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
+using AgentMesh.Utilities;
 
 namespace AgentMesh.Application.Workflows
 {
@@ -132,7 +133,7 @@ namespace AgentMesh.Application.Workflows
             }
 
             // temporary override just for tests
-            state.UserIntentCategoryValue = UserIntentCategoryValues.Documentation;
+            //state.UserIntentCategoryValue = UserIntentCategoryValues.Documentation;
 
 
             if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
@@ -635,10 +636,16 @@ namespace AgentMesh.Application.Workflows
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
+            var documentationForBA = string.Empty;
+            if (state.KnowledgeBaseDocumentsContent.Values.Any())
+            {
+                documentationForBA = state.KnowledgeBaseDocumentsContent.Values.Select(s => DocumentationHelper.ExtractFor(s, "Business Analyst")).Aggregate((a, b) => a + Environment.NewLine + b);
+            }
+
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
                 EnrichedUserRequest = state.EnrichedUserRequest,
-                ApiDocumentation = string.Join(Environment.NewLine, state.KnowledgeBaseDocumentsContent.Values)
+                Documentation = documentationForBA
             }, cancellationToken);
             state.BusinessAdvisorContent = baOutput.Content;
             state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
