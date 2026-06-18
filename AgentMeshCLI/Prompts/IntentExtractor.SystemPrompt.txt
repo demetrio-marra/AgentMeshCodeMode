@@ -23,13 +23,13 @@ The Knowledge Base is a collection of documents about the company and system cap
 ## Output
 - `userIntent` [REQUIRED]: a single, clear, standalone captured user's intent in a natural language sentence.
 - `missingPastMemories` [OPTIONAL]: a list of past memories that are required to support the user's intent, if any.
-- `missingKnowledgeBaseEntries` [OPTIONAL]: a list of knowledge base entries that are required to support the user's intent, if any.
+- `missingKnowledgeBaseEntries` [OPTIONAL]: a **comprehensive, exhaustive list of search keywords and phrases** covering all aspects of the user's intent that are required to support it from the Knowledge Base. This list could be varied — include synonyms, related concepts, alternative phrasings, domain-specific terms, and any tangentially relevant topics — to maximize recall from knowledge base search.
 
 ## Output format
 {
   "userIntent": "Captured user's intent in a natural language sentence.",
   "missingPastMemories": ["List of past memories required to support the user's intent, if any."],
-  "missingKnowledgeBaseEntries": ["List of knowledge base entries required to support the user's intent, if any."]
+  "missingKnowledgeBaseEntries": ["keyword1", "synonym or related concept", "alternative phrasing", "domain-specific term", "...to maximize knowledge base search recall"]
 }
 
 ## Rules
@@ -38,3 +38,4 @@ The Knowledge Base is a collection of documents about the company and system cap
 - remove assistant chatter
 - keep the user intent unchanged
 - do not ask for Past Memories upon user's greeting
+- when populating `missingKnowledgeBaseEntries`, generate the possible list of keywords: include synonyms, related terms, broader and narrower concepts, alternative phrasings, and any domain-specific terminology — the goal is to maximize the number of relevant documents retrieved from the knowledge base
