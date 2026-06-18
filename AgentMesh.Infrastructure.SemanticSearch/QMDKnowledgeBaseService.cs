@@ -31,23 +31,23 @@ namespace AgentMesh.Infrastructure.SemanticSearch
             return ret.Content;
         }
 
-        public async Task<IEnumerable<KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<KnowledgeBaseKeywordsQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default)
         {
             var query = new DTOs.Query.QueryToolRequest
             {
                  Searches = searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = KeywordsSearchType, Query = term }).ToList()
             };
             var ret = await _httpProxy.QueryAsync(query, cancellationToken);
-            return ret.Results.Select(r => new KnowledgeBaseQueryResult
+            return ret.Results.Select(r => new KnowledgeBaseKeywordsQueryResult
             {
-                SearchTerm = "",
                 Id = r.DocId!,
                 Title = r.Title!,
-                Summary = r.Snippet!
+                Summary = r.Snippet,
+                File = r.File
             });
         }
 
-        public async Task<IEnumerable<KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, bool rerank = false, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<KnowledgeBaseKeywordsQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, bool rerank = false, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

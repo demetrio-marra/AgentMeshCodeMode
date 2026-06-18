@@ -1,27 +1,28 @@
 ﻿namespace AgentMesh.Application.Models
 {
-    public class KnowledgeBaseQueryResult
+    /// <summary>
+    /// This class represents the result of a query for knowledge base keywords, containing the unique identifier, title, and summary of a knowledge base entry.
+    /// </summary>
+    public class KnowledgeBaseKeywordsQueryResult
     {
-        /// <summary>
-        /// Gets or sets the search term used to filter or query results.
-        /// </summary>
-        public string SearchTerm { get; set; } = string.Empty;
-
         /// <summary>
         /// The unique identifier of the knowledge base entry.
         /// </summary>
         public string Id { get; set; } = string.Empty;
+
         /// <summary>
         /// The title of the knowledge base entry.
         /// </summary>
         public string Title { get; set; } = string.Empty;
+
         /// <summary>
         /// A brief summary or description of the knowledge base entry.
         /// </summary>
-        public string Summary { get; set; } = string.Empty;
+        public string? Summary { get; set; }
+
         /// <summary>
-        /// The relevance score of the knowledge base entry with respect to the query, typically in the range [0, 1].
+        /// The original documentation file name associated with the knowledge base entry, if available.
         /// </summary>
-        public float RelevanceScore { get; set; }
+        public string? File { get; set; }
     }
 }

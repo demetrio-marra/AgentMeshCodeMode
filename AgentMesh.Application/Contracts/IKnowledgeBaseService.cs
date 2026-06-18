@@ -16,9 +16,9 @@ namespace AgentMesh.Application.Contracts
         /// <param name="searchTerms">A collection of search terms to use for the keyword search. Each term is matched against the knowledge base entries.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns>A collection of <see
-        /// cref="KnowledgeBaseQueryResult"/> objects matching the search terms. The collection is empty if no matches
+        /// cref="KnowledgeBaseKeywordsQueryResult"/> objects matching the search terms. The collection is empty if no matches
         /// are found.</returns>
-        Task<IEnumerable<KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default);
+        Task<IEnumerable<KnowledgeBaseKeywordsQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Performs a semantic search using the specified search terms and returns matching knowledge base results
@@ -30,9 +30,9 @@ namespace AgentMesh.Application.Contracts
         /// is used.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns>A collection of <see
-        /// cref="KnowledgeBaseQueryResult"/> objects matching the search terms. The collection is empty if no matches
+        /// cref="KnowledgeBaseKeywordsQueryResult"/> objects matching the search terms. The collection is empty if no matches
         /// are found.</returns>
-        Task<IEnumerable<KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, bool rerank = false, CancellationToken cancellationToken = default);
+        Task<IEnumerable<KnowledgeBaseKeywordsQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, bool rerank = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Asynchronously retrieves the content of a knowledge base entry identified by the specified ID.

@@ -113,17 +113,18 @@ namespace AgentMesh.Application.Workflows
 
             // FROM NOW ON, the workflow will be based on the user intent category (TaskExecution or Documentation)
 
-            // if there are no knowledge base documents after filtering, search them again using semantic search
-            if (!state.KnowledgeBaseDocumentFilteredIds.Any())
-            {
-                await ExecuteKnowledgeBaseServiceSemanticSearchAsync(state);    // overwrite the previous knowledge base query result with the new one
-                await ExecuteContextAnalyzerAsync(state);
+            // TODO: questa parte è da definire meglio: quando usare la semantica? In base a cosa? La keywords con expander è sufficiente?
+            //// if there are no knowledge base documents after filtering, search them again using semantic search
+            //if (!state.KnowledgeBaseDocumentFilteredIds.Any())
+            //{
+            //    await ExecuteKnowledgeBaseServiceSemanticSearchAsync(state);    // overwrite the previous knowledge base query result with the new one
+            //    await ExecuteContextAnalyzerAsync(state);
 
-                if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
-                {
-                    goto CompleteWorkflow;
-                }
-            }
+            //    if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
+            //    {
+            //        goto CompleteWorkflow;
+            //    }
+            //}
 
             // now if we have knowledge base documents after filtering, we can fetch the whole documents content and store it in the state for later use
             if (state.KnowledgeBaseDocumentFilteredIds.Any())
@@ -133,7 +134,7 @@ namespace AgentMesh.Application.Workflows
             }
 
             // temporary override just for tests
-            //state.UserIntentCategoryValue = UserIntentCategoryValues.Documentation;
+            state.UserIntentCategoryValue = UserIntentCategoryValues.Documentation;
 
 
             if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
@@ -284,7 +285,7 @@ namespace AgentMesh.Application.Workflows
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Keywords Search)", new Dictionary<string, string>
             {
-                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}, Relevance: {m.RelevanceScore}")) }
+                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")) }
             });
         }
 
@@ -302,7 +303,7 @@ namespace AgentMesh.Application.Workflows
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Semantic Search)", new Dictionary<string, string>
             {
-                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}, Relevance: {m.RelevanceScore}")) }
+                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")) }
             });
         }
 
@@ -319,7 +320,7 @@ namespace AgentMesh.Application.Workflows
             }
             if (state.ExactKnowledgeBaseQueryResult.Any())
             {
-                contextAnalyzerInputLogEntries.Add("ExtractedKnowledgeBaseDocuments", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}, Relevance: {m.RelevanceScore}")));
+                contextAnalyzerInputLogEntries.Add("ExtractedKnowledgeBaseDocuments", string.Join(", ", state.ExactKnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")));
             }
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", contextAnalyzerInputLogEntries);
 
@@ -330,8 +331,7 @@ namespace AgentMesh.Application.Workflows
                 {
                     DocumentId = m.Id,
                     Title = m.Title,
-                    Summary = m.Summary,
-                    Relevance = m.RelevanceScore
+                    Summary = m.Summary
                 }).ToList(),
                 ExtractedMemories = state.ExtractedAgentMemories.Select(m => m.Memory).ToList()
             });

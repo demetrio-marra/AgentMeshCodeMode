@@ -44,7 +44,7 @@ namespace AgentMesh.Application.Models
 
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
 
-        public IEnumerable<KnowledgeBaseQueryResult> ExactKnowledgeBaseQueryResult { get; set; } = [];
+        public IEnumerable<KnowledgeBaseKeywordsQueryResult> ExactKnowledgeBaseQueryResult { get; set; } = [];
 
         public Dictionary<string, string?> KnowledgeBaseDocumentsContent { get; set; } = [];
 

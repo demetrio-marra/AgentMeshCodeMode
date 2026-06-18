@@ -8,31 +8,27 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         static readonly Guid fakeGuid1 = Guid.Parse("65d94efd-6bd3-43bd-89e0-69295d6ce87f");
         static readonly Guid fakeGuid2 = Guid.Parse("db1d4b23-ff2d-4331-8b29-44de903ced30");
 
-        readonly IEnumerable<KnowledgeBaseQueryResult> dummyresults = new List<KnowledgeBaseQueryResult>() {
-            new KnowledgeBaseQueryResult {
-                 SearchTerm = "Situazione contabile",
+        readonly IEnumerable<KnowledgeBaseKeywordsQueryResult> dummyresults = new List<KnowledgeBaseKeywordsQueryResult>() {
+            new KnowledgeBaseKeywordsQueryResult {
                 Id = fakeGuid1.ToString(),
                 Title = $"GetSituazioneContabileCompleta API Description",
-                Summary = $"Restituisce la situazione contabile completa per un singolo Cliente di Studio, riferita ad un singolo periodo contabile.",
-                RelevanceScore = 1.0f
+                Summary = $"Restituisce la situazione contabile completa per un singolo Cliente di Studio, riferita ad un singolo periodo contabile."
             },
-            new KnowledgeBaseQueryResult {
-                 SearchTerm = "User data",
+            new KnowledgeBaseKeywordsQueryResult {
                 Id = fakeGuid2.ToString(),
                 Title = $"GetUserByUsername API Description",
-                Summary = $"Restituisce l'utente dall'username.",
-                RelevanceScore = 0.4f
+                Summary = $"Restituisce l'utente dall'username."
             }
-            };
+        };
 
 
-        public async Task<IEnumerable<KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<KnowledgeBaseKeywordsQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, CancellationToken cancellationToken = default)
         {
             var results = dummyresults;
             return await Task.FromResult(results);
         }
 
-        public async Task<IEnumerable<KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, bool rerank = false, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<KnowledgeBaseKeywordsQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, bool rerank = false, CancellationToken cancellationToken = default)
         {
             var results = dummyresults;
             return await Task.FromResult(results);
