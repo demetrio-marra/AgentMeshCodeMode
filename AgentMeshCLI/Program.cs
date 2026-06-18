@@ -9,6 +9,7 @@ using AgentMesh.Infrastructure.Persistence.Configuration;
 using AgentMesh.Infrastructure.Persistence.Services;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.SemanticSearch;
+using AgentMesh.Infrastructure.SemanticSearch.Configuration;
 using AgentMesh.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -75,6 +76,12 @@ namespace AgentMesh
             services.AddSingleton<AgentMemoryExecutor>();
             services.AddSingleton<IAgentMemoryRetriever>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
             services.AddSingleton<IAgentMemorySaver>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
+
+            // QMD MCP server proxy configuration and HTTP client
+            var qmdHttpProxyConfig = new QMDHttpProxyConfiguration();
+            configuration.GetSection(QMDHttpProxyConfiguration.SectionName).Bind(qmdHttpProxyConfig);
+            services.AddSingleton(qmdHttpProxyConfig);
+            services.AddHttpClient<QMDHttpProxy>();
 
             // Configure JSSandbox options
             services
