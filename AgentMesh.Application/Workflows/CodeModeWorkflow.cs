@@ -118,7 +118,8 @@ namespace AgentMesh.Application.Workflows
             // FROM NOW ON, the workflow will be based on the user intent category (TaskExecution or Documentation)
 
             // if there are no knowledge base documents after filtering, search them again using semantic search
-            if (!state.RelevantKnowledgeBaseFileNames.Any())
+            if (!state.RelevantKnowledgeBaseFileNames.Any() 
+                && state.MissingKnowledgeBaseEntries.Any())
             {
                 await ExecuteKnowledgeBaseServiceSemanticSearchAsync(state);    // overwrite the previous knowledge base query result with the new one
                 await ExecuteContextAnalyzerAsync(state);
