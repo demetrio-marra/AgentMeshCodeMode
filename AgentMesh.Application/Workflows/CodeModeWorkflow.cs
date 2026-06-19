@@ -667,10 +667,12 @@ namespace AgentMesh.Application.Workflows
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
+            var serializedDocumentation = SerializeDocumentationForBusinessAnalyst(state.KnowledgeBaseDocumentsContent);
+
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
                 EnrichedUserRequest = state.EnrichedUserRequest,
-                Documentation = SerializeDocumentationForBusinessAnalyst(state.KnowledgeBaseDocumentsContent)
+                Documentation = serializedDocumentation
             }, cancellationToken);
             state.BusinessAdvisorContent = baOutput.Content;
             state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
@@ -682,7 +684,8 @@ namespace AgentMesh.Application.Workflows
 
         private static string SerializeDocumentationForBusinessAnalyst(IEnumerable<KnowledgeBaseDocumentContent> documents)
         {
-            return string.Join(Environment.NewLine + "--------", documents.Select(kv => $"# {kv.Title}\n\n## File\n{kv.File}\n\n## Content:\n{MarkdownDocumentationHelper.GetMarkdownSection(kv.Content, DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE)}\n"));
+            var serializedDocs = documents.Select(kv => $"{MarkdownDocumentationHelper.GetMarkdownSection(kv.Content, DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE)}\n\nOriginal file: {kv.File}");
+            return string.Join(Environment.NewLine + "---" + Environment.NewLine + "---", serializedDocs);
         }
 
 
