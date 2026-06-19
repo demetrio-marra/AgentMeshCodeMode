@@ -45,7 +45,8 @@ namespace AgentMesh.Infrastructure.SemanticSearch
                 Id = r.DocId!,
                 Title = r.Title!,
                 Summary = r.Snippet,
-                File = r.File
+                File = r.File,
+                Relevance = r.Score
             });
         }
 
