@@ -268,6 +268,7 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", notifyDictionary);
         }
 
+
         private async Task ExecuteAgentMemoryServiceAsync(CodeModeWorkflowState state)
         {
             _logger.LogDebug("Engaging Agent Memory Service...");
@@ -289,6 +290,7 @@ namespace AgentMesh.Application.Workflows
             });
         }
 
+
         private async Task ExecuteKnowledgeBaseServiceKeywordsSearchAsync(CodeModeWorkflowState state)
         {
             _logger.LogDebug("Engaging Knowledge Base Service (Keywords Search)...");
@@ -306,6 +308,7 @@ namespace AgentMesh.Application.Workflows
                 { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.KnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")) }
             });
         }
+
 
         private async Task ExecuteKnowledgeBaseServiceSemanticSearchAsync(CodeModeWorkflowState state)
         {

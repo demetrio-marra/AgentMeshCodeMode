@@ -58,12 +58,6 @@ namespace AgentMesh.Infrastructure.SemanticSearch.DTOs.Query
         [JsonPropertyName("title")]
         public string? Title { get; set; }
 
-        /// <summary>
-        /// Collection this match belongs to, if returned by the server.
-        /// </summary>
-        [JsonPropertyName("collection")]
-        public string? Collection { get; set; }
-
         [JsonExtensionData]
         public Dictionary<string, JsonElement>? Extensions { get; set; }
     }
