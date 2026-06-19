@@ -39,7 +39,7 @@ Do not mention API names, internal workflow details, the Agentic AI pipeline, or
 Here are the key sections you will find in documentation for every feature/capability:
 - `Recommended Use Cases`: Describes the ideal use cases for the feature/capability
 - `Less Suitable Use Cases`: Describes additional use cases where the feature/capability can be applied, but may not be the best fit compared to other options, suggesting to consider alternative features/capabilities for those scenarios
-- `Required parameters`: Lists the necessary inputs or conditions needed to use the feature/capability effectively
+- `Information the user is required to provide`: Lists the necessary inputs or conditions needed to use the feature/capability effectively
 - `Returned data`: Describes the output or results that can be expected when using the feature/capability
 - `Optional capabilities`: Lists additional features or capabilities that can be used in conjunction with the main feature/capability to enhance its functionality or provide additional benefits
 - `Unsupported Use Cases`: Describes scenarios where the feature/capability does not support the requested operation

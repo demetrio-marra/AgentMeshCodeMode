@@ -21,12 +21,16 @@ using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
-using AgentMesh.Utilities;
+using AgentMesh.Application.Helpers;
 
 namespace AgentMesh.Application.Workflows
 {
     public class CodeModeWorkflow : IWorkflow
     {
+        private const string DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE = "Documentation";
+        private const string DOCUMENTATION_FOR_DEVELOPER_SECTIONTITLE = "Technical reference";
+        private const string DOCUMENTATION_COLLECTION_NAME = "documentation";
+
         private readonly ILogger<CodeModeWorkflow> _logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier;
 
@@ -299,7 +303,7 @@ namespace AgentMesh.Application.Workflows
                 { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
             });
 
-            var brcOutput = await _knowledgeBaseService.KeywordsSearch(state.MissingKnowledgeBaseEntries.ToList(), new[] { "apis-documentation" }, CancellationToken.None);
+            var brcOutput = await _knowledgeBaseService.KeywordsSearch(state.MissingKnowledgeBaseEntries.ToList(), new[] { DOCUMENTATION_COLLECTION_NAME }, CancellationToken.None);
 
             state.KnowledgeBaseQueryResult = brcOutput.ToList();
 
@@ -318,7 +322,7 @@ namespace AgentMesh.Application.Workflows
                 { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
             });
 
-            var brcOutput = await _knowledgeBaseService.SemanticSearchAsync(state.MissingKnowledgeBaseEntries.ToList(), new[] { "apis-documentation" }, rerank: true, CancellationToken.None);
+            var brcOutput = await _knowledgeBaseService.SemanticSearchAsync(state.MissingKnowledgeBaseEntries.ToList(), new[] { DOCUMENTATION_COLLECTION_NAME }, rerank: true, CancellationToken.None);
 
             state.KnowledgeBaseQueryResult = brcOutput.ToList();
 
@@ -666,7 +670,7 @@ namespace AgentMesh.Application.Workflows
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
                 EnrichedUserRequest = state.EnrichedUserRequest,
-                Documentation = string.Join(Environment.NewLine, state.KnowledgeBaseDocumentsContent.Select(kv => $"# {kv.Title}\n\n## File\n{kv.File}\n\n## Content:\n{kv.Content}\n"))
+                Documentation = SerializeDocumentationForBusinessAnalyst(state.KnowledgeBaseDocumentsContent)
             }, cancellationToken);
             state.BusinessAdvisorContent = baOutput.Content;
             state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
@@ -675,6 +679,12 @@ namespace AgentMesh.Application.Workflows
                 { "Content", state.BusinessAdvisorContent }
             });
         }
+
+        private static string SerializeDocumentationForBusinessAnalyst(IEnumerable<KnowledgeBaseDocumentContent> documents)
+        {
+            return string.Join(Environment.NewLine + "--------", documents.Select(kv => $"# {kv.Title}\n\n## File\n{kv.File}\n\n## Content:\n{MarkdownDocumentationHelper.GetMarkdownSection(kv.Content, DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE)}\n"));
+        }
+
 
         private async Task CompleteWorkflowAsync(CodeModeWorkflowState state, string? data = null)
         {
