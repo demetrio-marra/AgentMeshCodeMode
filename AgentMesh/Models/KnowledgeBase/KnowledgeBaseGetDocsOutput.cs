@@ -1,9 +1,11 @@
-﻿namespace AgentMesh.Application.Models
+﻿namespace AgentMesh.Models.KnowledgeBase
 {
-    /// <summary>
-    /// This class represents the content of a knowledge base document, including the title, original file name, and the extracted relevant content.
-    /// </summary>
-    public class KnowledgeBaseDocumentContent
+    public class KnowledgeBaseGetDocsOutput
+    {
+        public IEnumerable<KnowledgeBaseGetDocsOutputItem> Results { get; set; } = [];
+    }
+
+    public class KnowledgeBaseGetDocsOutputItem
     {
         /// <summary>
         /// The original documentation file name associated with the knowledge base entry, if available.

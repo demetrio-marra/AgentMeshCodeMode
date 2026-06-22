@@ -59,6 +59,9 @@ namespace AgentMesh
 
             services.AddSingleton<IApiDocumentationExecutor, ApiDocumentationExecutor>();
             services.AddSingleton<IKnowledgeBaseService, QMDKnowledgeBaseService>();
+            services.AddSingleton<KnowledgeBaseExecutor>();
+            services.AddSingleton<IKnowledgeBaseSearchExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
+            services.AddSingleton<IKnowledgeBaseGetDocsExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
 
             // Agent Memory Service configuration
             var agentMemoryConfig = new AgentMemoryServiceConfiguration();

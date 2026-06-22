@@ -6,7 +6,6 @@ using AgentMesh.Application.Services;
 using AgentMesh.Models;
 using AgentMesh.Models.ApiDocumentation;
 using AgentMesh.Models.BusinessAdvisor;
-using AgentMesh.Models.SemanticSearch;
 using AgentMesh.Models.BusinessRequirementsCreator;
 using AgentMesh.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Models.CodeFixer;
@@ -48,7 +47,8 @@ namespace AgentMesh.Application.Workflows
         private readonly IAgentMemoryRetriever _agentMemoryRetriever;
         private readonly IAgentMemorySaver _agentMemorySaver;
         private readonly IApiDocumentationExecutor _apiDocumentationExecutor;
-        private readonly IKnowledgeBaseService _knowledgeBaseService;
+        private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor;
+        private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor;
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
@@ -66,7 +66,8 @@ namespace AgentMesh.Application.Workflows
             IAgentMemoryRetriever agentMemoryRetriever,
             IAgentMemorySaver agentMemorySaver,
             IApiDocumentationExecutor apiDocumentationExecutor,
-            IKnowledgeBaseService knowledgeBaseService)
+            IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
+            IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor) 
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -84,7 +85,8 @@ namespace AgentMesh.Application.Workflows
             _agentMemoryRetriever = agentMemoryRetriever;
             _agentMemorySaver = agentMemorySaver;
             _apiDocumentationExecutor = apiDocumentationExecutor;
-            _knowledgeBaseService = knowledgeBaseService;
+            _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
+            _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
@@ -130,15 +132,17 @@ namespace AgentMesh.Application.Workflows
             // now if we have knowledge base documents after filtering, we can fetch the whole documents content and store it in the state for later use
             if (state.RelevantKnowledgeBaseFileNames.Any())
             {
-                var fetchedFilesContent = await _knowledgeBaseService.GetKnowledgeBaseEntriesContentAsync(state.RelevantKnowledgeBaseFileNames, CancellationToken.None);
+                var fetchedFilesContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
+                {
+                    FilePaths = state.RelevantKnowledgeBaseFileNames
+                });
 
                 state.KnowledgeBaseDocumentsContent = state.KnowledgeBaseQueryResult
-                    .Where(kb => fetchedFilesContent.ContainsKey(kb.File!))
+                    .Join(fetchedFilesContent.Results, kb => kb.File, fc => fc.File, (kb, fc) => new { kb, fc })
                     .Select(kb => new KnowledgeBaseDocumentContent
                     {
-                        Title = kb.Title,
-                        File = kb.File,
-                        Content = fetchedFilesContent[kb.File!] ?? string.Empty
+                        File = kb.kb.File,
+                        Content = kb.fc.Content
                     }).ToList();
             }
 
@@ -290,9 +294,22 @@ namespace AgentMesh.Application.Workflows
                 { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
             });
 
-            var brcOutput = await _knowledgeBaseService.KeywordsSearch(state.MissingKnowledgeBaseEntries.ToList(), new[] { DOCUMENTATION_COLLECTION_NAME }, false, CancellationToken.None);
 
-            state.KnowledgeBaseQueryResult = brcOutput.ToList();
+            var brcOutput = await _knowledgeBaseSearchExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseQueryInput
+            { 
+                Queries = state.MissingKnowledgeBaseEntries,
+                Collections = new[] { DOCUMENTATION_COLLECTION_NAME },
+                SearchType = AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.KeywordsOnly
+            }, CancellationToken.None);
+
+            state.KnowledgeBaseQueryResult = brcOutput.Results.Select(r => new KnowledgeBaseQueryResult
+            {
+                Id = r.Id,
+                File = r.File,
+                Title = r.Title,
+                Summary = r.Summary,
+                Relevance = r.Relevance
+            }).ToList();
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Keywords Search)", new Dictionary<string, string>
             {
@@ -309,15 +326,28 @@ namespace AgentMesh.Application.Workflows
                 { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
             });
 
-            var brcOutput = await _knowledgeBaseService.SemanticSearchAsync(state.MissingKnowledgeBaseEntries.ToList(), new[] { DOCUMENTATION_COLLECTION_NAME }, rerank: true, CancellationToken.None);
+            var brcOutput = await _knowledgeBaseSearchExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseQueryInput
+            {
+                Queries = state.MissingKnowledgeBaseEntries,
+                Collections = new[] { DOCUMENTATION_COLLECTION_NAME },
+                SearchType = AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.SemanticOnly
+            }, CancellationToken.None);
 
-            state.KnowledgeBaseQueryResult = brcOutput.ToList();
+            state.KnowledgeBaseQueryResult = brcOutput.Results.Select(r => new KnowledgeBaseQueryResult
+            {
+                Id = r.Id,
+                File = r.File,
+                Title = r.Title,
+                Summary = r.Summary,
+                Relevance = r.Relevance
+            }).ToList();
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Semantic Search)", new Dictionary<string, string>
             {
                 { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.KnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")) }
             });
         }
+
 
         private async Task ExecuteContextAnalyzerAsync(CodeModeWorkflowState state)
         {

@@ -16,7 +16,12 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         }
 
 
-        public async Task<IDictionary<string, string?>> GetKnowledgeBaseEntriesContentAsync(IEnumerable<string> fileNames, CancellationToken cancellationToken = default)
+        async Task<KnowledgeBaseDocumentContent> IKnowledgeBaseService.GetKnowledgeBaseEntryContentAsync(string id, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        async Task<IEnumerable<KnowledgeBaseDocumentContent>> IKnowledgeBaseService.GetKnowledgeBaseEntriesContentAsync(IEnumerable<string> fileNames, CancellationToken cancellationToken)
         {
             var query = new DTOs.MultiGet.MultiGetToolRequest
             {
@@ -25,7 +30,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
             var ret = await _httpProxy.MultiGetAsync(query, cancellationToken);
 
-            return ret.Files.Where(f => f != null).Select(kv => new KeyValuePair<string, string?>(kv.Uri!, kv.Text)).ToDictionary(kv => kv.Key, kv => kv.Value);
+            return ret.Files.Where(f => f != null).Select(kv => new KnowledgeBaseDocumentContent { File = kv.Uri, Content = kv.Text ?? string.Empty }).ToList();
         }
 
 
@@ -103,5 +108,6 @@ namespace AgentMesh.Infrastructure.SemanticSearch
                 Relevance = r.Score
             });
         }
+
     }
 }
