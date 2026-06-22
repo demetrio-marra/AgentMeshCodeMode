@@ -1,4 +1,3 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AgentMesh.Infrastructure.SemanticSearch.DTOs.MultiGet
@@ -8,34 +7,16 @@ namespace AgentMesh.Infrastructure.SemanticSearch.DTOs.MultiGet
     /// </summary>
     public class MultiGetToolResponse
     {
-        [JsonPropertyName("files")]
-        public List<MultiGetFileItem> Files { get; set; } = new();
-
-        /// <summary>
-        /// Files that were skipped (e.g. because they exceeded <c>maxBytes</c>).
-        /// </summary>
-        [JsonPropertyName("skipped")]
-        public List<string>? Skipped { get; set; }
-
-        [JsonExtensionData]
-        public Dictionary<string, JsonElement>? Extensions { get; set; }
+        public IEnumerable<MultiGetToolResponseItem> Files { get; set; } = [];
     }
 
-    public class MultiGetFileItem
+    public class MultiGetToolResponseItem
     {
-        [JsonPropertyName("file")]
-        public string? File { get; set; }
-
-        [JsonPropertyName("content")]
-        public string? Content { get; set; }
-
-        [JsonPropertyName("lines")]
-        public int? Lines { get; set; }
-
-        [JsonPropertyName("bytes")]
-        public long? Bytes { get; set; }
-
-        [JsonExtensionData]
-        public Dictionary<string, JsonElement>? Extensions { get; set; }
+        [JsonPropertyName("uri")]
+        public string Uri { get; set; } = string.Empty;
+        [JsonPropertyName("mimeType")]
+        public string MimeType { get; set; } = string.Empty;
+        [JsonPropertyName("text")]
+        public string Text { get; set; } = string.Empty;
     }
 }

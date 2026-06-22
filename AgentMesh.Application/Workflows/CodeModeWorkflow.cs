@@ -133,18 +133,7 @@ namespace AgentMesh.Application.Workflows
             // now if we have knowledge base documents after filtering, we can fetch the whole documents content and store it in the state for later use
             if (state.RelevantKnowledgeBaseFileNames.Any())
             {
-                // TODO: non si capisce perchè ma la multiget non funziona. Proviamo a usare la singola
-                //var knowledgeBaseDocuments = await _knowledgeBaseService.GetKnowledgeBaseEntriesContentAsync(state.RelevantKnowledgeBaseFileNames, CancellationToken.None);
-
-                var fetchedFilesContent = new Dictionary<string, string?>();
-                foreach (var fileName in state.RelevantKnowledgeBaseFileNames)
-                {
-                    var document = await _knowledgeBaseService.GetKnowledgeBaseEntryContentAsync(fileName, CancellationToken.None);
-                    if (document != null)
-                    {
-                        fetchedFilesContent.Add(fileName, document);
-                    }
-                }
+                var fetchedFilesContent = await _knowledgeBaseService.GetKnowledgeBaseEntriesContentAsync(state.RelevantKnowledgeBaseFileNames, CancellationToken.None);
 
                 state.KnowledgeBaseDocumentsContent = state.KnowledgeBaseQueryResult
                     .Where(kb => fetchedFilesContent.ContainsKey(kb.File!))

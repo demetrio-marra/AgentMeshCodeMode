@@ -25,14 +25,14 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
             var ret = await _httpProxy.MultiGetAsync(query, cancellationToken);
 
-            return ret.Files.Where(f => f != null).Select(kv => new KeyValuePair<string, string?>(kv.File!, kv.Content)).ToDictionary(kv => kv.Key, kv => kv.Value);
+            return ret.Files.Where(f => f != null).Select(kv => new KeyValuePair<string, string?>(kv.Uri!, kv.Text)).ToDictionary(kv => kv.Key, kv => kv.Value);
         }
 
 
         public async Task<string> GetKnowledgeBaseEntryContentAsync(string id, CancellationToken cancellationToken = default)
         {
             var ret = await _httpProxy.GetAsync(new DTOs.Get.GetToolRequest { File = id }, cancellationToken);
-            return ret.Content;
+            return ret.Text;
         }
 
 

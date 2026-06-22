@@ -57,20 +57,45 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         /// <summary>
         /// Invokes the MCP <c>query</c> tool.
         /// </summary>
-        public Task<QueryToolResponse> QueryAsync(QueryToolRequest request, CancellationToken cancellationToken = default)
-            => CallToolAsync<QueryToolRequest, QueryToolResponse>("query", request, cancellationToken);
+        public async Task<QueryToolResponse> QueryAsync(QueryToolRequest request, CancellationToken cancellationToken = default)
+            => await CallToolAsync<QueryToolRequest, QueryToolResponse>("query", request, cancellationToken).ConfigureAwait(false);
 
         /// <summary>
         /// Invokes the MCP <c>get</c> tool.
         /// </summary>
-        public Task<GetToolResponse> GetAsync(GetToolRequest request, CancellationToken cancellationToken = default)
-            => CallToolAsync<GetToolRequest, GetToolResponse>("get", request, cancellationToken);
+        public async Task<GetToolResponse?> GetAsync(GetToolRequest request, CancellationToken cancellationToken = default)
+        {
+            var tol = await CallToolAsync<GetToolRequest, List<MultiGetToolResponseItem>>("get", request, cancellationToken);
+            if (tol != null && tol.Count > 0)
+            {
+                var firstItem = tol[0];
+                return new GetToolResponse
+                {
+                    Uri = firstItem.Uri.Replace("qmd://", string.Empty, StringComparison.OrdinalIgnoreCase),
+                    MimeType = firstItem.MimeType,
+                    Text = firstItem.Text
+                };
+            }
+            return null;
+        }
 
         /// <summary>
         /// Invokes the MCP <c>multi_get</c> tool.
         /// </summary>
-        public Task<MultiGetToolResponse> MultiGetAsync(MultiGetToolRequest request, CancellationToken cancellationToken = default)
-            => CallToolAsync<MultiGetToolRequest, MultiGetToolResponse>("multi_get", request, cancellationToken);
+        public async Task<MultiGetToolResponse> MultiGetAsync(MultiGetToolRequest request, CancellationToken cancellationToken = default)
+        {
+            var tol = await CallToolAsync<MultiGetToolRequest, List<MultiGetToolResponseItem>>("multi_get", request, cancellationToken);
+            var retol = tol.Select(item => new MultiGetToolResponseItem
+            {
+                Uri = item.Uri.Replace("qmd://", string.Empty, StringComparison.OrdinalIgnoreCase),
+                MimeType = item.MimeType,
+                Text = item.Text
+            }).ToList();
+            return new MultiGetToolResponse
+            {
+                Files = retol
+            };
+        }
 
         /// <summary>
         /// Invokes the MCP <c>status</c> tool.
@@ -314,46 +339,52 @@ namespace AgentMesh.Infrastructure.SemanticSearch
                 }
             }
 
-
-            // Fall back to the textual content array.
-            var text = ExtractFirstText(toolResult);
-            if (string.IsNullOrWhiteSpace(text))
+            if (toolResult.Content != null && toolResult.Content.Any())
             {
-                _logger.LogWarning("MCP tool '{ToolName}' returned no content; returning default response.", toolName);
-                return new TResponse();
-            }
-
-            // Some servers serialise the payload as JSON inside the text item.
-            var trimmed = text.TrimStart();
-            if (trimmed.StartsWith('{') || trimmed.StartsWith('['))
-            {
-                try
+                var parsedContent = ParseToolContentItem(toolResult.Content ?? Enumerable.Empty<ToolContentItem>());
+                if (!string.IsNullOrEmpty(parsedContent))
                 {
-                    var fromText = JsonSerializer.Deserialize<TResponse>(text, _jsonOptions);
-                    if (fromText is not null)
+                    var fromContent = JsonSerializer.Deserialize<TResponse>(parsedContent, _jsonOptions);
+                    if (fromContent is not null)
                     {
-                        return fromText;
+                        return fromContent;
                     }
                 }
-                catch (JsonException ex)
+            }
+
+            throw new Exception($"MCP tool '{toolName}' returned content that could not be deserialized into the expected response type.");
+        }
+
+        private static string? ParseToolContentItem(IEnumerable<ToolContentItem> items)
+        {
+            var listOfItems = new List<string>();
+            foreach (var item in items)
+            {
+                if (!string.IsNullOrEmpty(item.Text))
                 {
-                    _logger.LogDebug(ex, "MCP tool '{ToolName}' text payload is not valid JSON for {Type}; returning raw text.", toolName, typeof(TResponse).Name);
+                    listOfItems.Add(item.Text);
+                }
+                else if (item.Extensions != null
+                    && item.Extensions.ContainsKey("resource")
+                    && item.Extensions["resource"].ValueKind == JsonValueKind.Object)
+                {
+                    var resource = item.Extensions["resource"];
+                    listOfItems.Add(resource.GetRawText());
                 }
             }
 
-            // Last resort: if TResponse exposes a string Content property, fill it with the raw text.
-            var response = new TResponse();
-            var contentProp = typeof(TResponse).GetProperty("Content");
-            if (contentProp is not null && contentProp.CanWrite && contentProp.PropertyType == typeof(string))
+            if (listOfItems.Count == 0)
             {
-                contentProp.SetValue(response, text);
+                return null;
             }
 
-            return response;
+            return "[" + string.Join(",", listOfItems) + "]";
         }
+
 
         private static string? ExtractFirstText(ToolCallResult result)
         {
+            var listOfItems = new List<string>();
             if (result.Content is null)
             {
                 return null;
@@ -370,17 +401,21 @@ namespace AgentMesh.Infrastructure.SemanticSearch
                         var resource = item.Extensions["resource"];
                         if (resource.TryGetProperty("text", out var textProp) == true)
                         {
-                            return textProp.GetString();
+                            var val = textProp.GetString();
+                            if (!string.IsNullOrEmpty(val))
+                            {
+                                listOfItems.Add(val);
+                            }
                         }
                     }
                 }
                 if (!string.IsNullOrEmpty(item.Text))
                 {
-                    return item.Text;
+                    listOfItems.Add(item.Text);
                 }
             }
 
-            return null;
+            return "[" + string.Join(", ", listOfItems) + "]";
         }
 
         private string NextId() => Interlocked.Increment(ref _requestId).ToString();
