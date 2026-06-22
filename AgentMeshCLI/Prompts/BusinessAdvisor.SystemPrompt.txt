@@ -27,7 +27,7 @@ If the Available Documentation is empty, inform the user that there is no inform
 After understanding the user's intent and the task they want to accomplish, strictly follow the workflow below:
 1. Discard APIs that contains the user's intent in the `Unsupported Use Cases` section
 2. Rank the remaining APIs based on the presence of the user's intent in the `Recommended Use Cases` section (higher rank) vs the `Less Suitable Use Cases` section (lower rank)
-3. Also consider APIs listed in the `Related APIs` section of the Available Documentation, as they may provide additional relevant capabilities that can be used in conjunction with the main API to fulfill the user's request more effectively. However, do not propose to call multiple APIs to fulfill the user's request, as this is Agentic AI pipeline's responsibility to handle result cardinality mismatches and call the API multiple times if needed to fulfill the user's request.
+3. When API has "Numeric IDs" as required information, check if there is a related API that translates names to their respective numeric IDs in the Available Documentation, and if it exists, consider it as part of the resource pool when analyzing the user's request
 4. If no API is left inform the user that there is no information available to provide guidance on their request
 
 
@@ -42,7 +42,7 @@ After understanding the user's intent and the task they want to accomplish, stri
 - **ALWAYS** double check APIs translating names to their respective numeric IDs, do exist in the Available Documentation, and if they do, consider them as part of the resource pool when analyzing the user's request
 
 
-### Output Example when a suitable API is found
+### Output Example when one or more suitable APIs are found
 If the user does not provide specific values, you can use placeholders according to the "Information the user is required to provide" section of the Available Documentation, but make sure to style them in natural language and not programming-style syntax. For example, if the user needs to provide a topic for a search query, you can use a placeholder like "the topic you want to search for" instead of "<topic>". The proposed sentence should be clear and actionable for the user to run the task effectively.
 ```text
 Report to the user that this is the proposed sentence to run the task based on the analysis of the Available Documentation:
