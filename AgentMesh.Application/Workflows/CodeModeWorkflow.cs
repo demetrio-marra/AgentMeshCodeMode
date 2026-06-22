@@ -30,6 +30,7 @@ namespace AgentMesh.Application.Workflows
         private const string DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE = "Documentation";
         private const string DOCUMENTATION_FOR_DEVELOPER_SECTIONTITLE = "Technical reference";
         private const string DOCUMENTATION_COLLECTION_NAME = "documentation";
+        private const bool AUTOMATICALLY_FETCH_RELATED_DOCUMENTATION = true;
 
         private readonly ILogger<CodeModeWorkflow> _logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier;
@@ -117,11 +118,46 @@ namespace AgentMesh.Application.Workflows
 
             // now if we have knowledge base documents after filtering, we can fetch the whole documents content and store it in the state for later use
             if (state.RelevantKnowledgeBaseFileNames.Any())
-            {
+            {             
                 var fetchedFilesContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
                 {
                     FilePaths = state.RelevantKnowledgeBaseFileNames
                 });
+
+                // additional feature
+                if (AUTOMATICALLY_FETCH_RELATED_DOCUMENTATION)
+                {
+                    var relatedDocs = new List<string>();
+                    foreach (var mainDoc in fetchedFilesContent.Results)
+                    {
+                        // find words within double square brackets [[...]] in the mainDoc.Content using regex
+                        var matches = System.Text.RegularExpressions.Regex.Matches(mainDoc.Content, @"\[\[(.*?)\]\]");
+                        foreach (System.Text.RegularExpressions.Match match in matches)
+                        {
+                            var relatedDocName = match.Groups[1].Value;
+                            if (!relatedDocs.Contains(relatedDocName))
+                            {
+                                relatedDocs.Add(relatedDocName);
+                            }
+                        }
+                    }
+
+                    // distinct on relatedDocs
+                    relatedDocs = relatedDocs.Distinct().ToList();
+
+                    // avoid extracting already fetched docs
+                    relatedDocs = relatedDocs.Except(fetchedFilesContent.Results.Select(r => r.File)).ToList();
+
+                    // fetch again the content of the related docs and add them to the fetchedFilesContent.Results
+                    if (relatedDocs.Any())
+                    {
+                        var relatedDocsContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
+                        {
+                            FilePaths = relatedDocs
+                        });
+                        fetchedFilesContent.Results = fetchedFilesContent.Results.Concat(relatedDocsContent.Results);
+                    }
+                }
 
                 state.KnowledgeBaseDocumentsContent = state.KnowledgeBaseQueryResult
                     .Join(fetchedFilesContent.Results, kb => kb.File, fc => fc.File, (kb, fc) => new { kb, fc })
