@@ -47,7 +47,6 @@ namespace AgentMesh.Application.Workflows
         private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
         private readonly IAgentMemoryRetriever _agentMemoryRetriever;
         private readonly IAgentMemorySaver _agentMemorySaver;
-        private readonly ISemanticSearchExecutor _semanticSearchExecutor;
         private readonly IApiDocumentationExecutor _apiDocumentationExecutor;
         private readonly IKnowledgeBaseService _knowledgeBaseService;
 
@@ -66,7 +65,6 @@ namespace AgentMesh.Application.Workflows
             IContextAnalyzerAgent contextAnalyzerAgent,
             IAgentMemoryRetriever agentMemoryRetriever,
             IAgentMemorySaver agentMemorySaver,
-            ISemanticSearchExecutor semanticSearchExecutor,
             IApiDocumentationExecutor apiDocumentationExecutor,
             IKnowledgeBaseService knowledgeBaseService)
         {
@@ -85,7 +83,6 @@ namespace AgentMesh.Application.Workflows
             _contextAnalyzerAgent = contextAnalyzerAgent;
             _agentMemoryRetriever = agentMemoryRetriever;
             _agentMemorySaver = agentMemorySaver;
-            _semanticSearchExecutor = semanticSearchExecutor;
             _apiDocumentationExecutor = apiDocumentationExecutor;
             _knowledgeBaseService = knowledgeBaseService;
         }
