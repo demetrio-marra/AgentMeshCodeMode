@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Router\" />
+    <Compile Remove="Models\Router\**" />
+    <EmbeddedResource Remove="Models\Router\**" />
+    <None Remove="Models\Router\**" />
   </ItemGroup>
 
 </Project>
