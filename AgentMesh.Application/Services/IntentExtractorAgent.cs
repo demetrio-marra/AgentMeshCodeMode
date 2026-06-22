@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
 
 namespace AgentMesh.Application.Services
 {
@@ -41,7 +42,7 @@ namespace AgentMesh.Application.Services
             var ret = new IntentExtractorAgentOutput
             {
                 UserIntent = result.Result.UserIntent,
-                MissingKnowledgeBaseEntries = result.Result.MissingKnowledgeBaseEntries,
+                MissingKnowledgeBaseSearchEntries = result.Result.MissingKnowledgeBaseSearchEntries,
                 MissingPastMemories = result.Result.MissingPastMemories,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount,
@@ -85,8 +86,8 @@ namespace AgentMesh.Application.Services
             [JsonPropertyName("missingPastMemories")]
             public IEnumerable<string> MissingPastMemories { get; set; } = Enumerable.Empty<string>();
 
-            [JsonPropertyName("missingKnowledgeBaseEntries")]
-            public IEnumerable<string> MissingKnowledgeBaseEntries { get; set; } = Enumerable.Empty<string>();
+            [JsonPropertyName("missingKnowledgeBaseSearchEntries")]
+            public IEnumerable<IntentExtractorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = Enumerable.Empty<IntentExtractorKnowledgeBase>();
         }
     }
 }

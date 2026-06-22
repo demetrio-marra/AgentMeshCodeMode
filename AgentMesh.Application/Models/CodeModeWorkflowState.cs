@@ -2,6 +2,7 @@
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.Workflows;
 using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
+using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
 
 namespace AgentMesh.Application.Models
 {
@@ -18,7 +19,7 @@ namespace AgentMesh.Application.Models
         public string OriginalUserRequest { get; }
         public string? UserIntent { get; set; }
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
-        public IEnumerable<string> MissingKnowledgeBaseEntries { get; set; } = [];
+        public IEnumerable<IntentExtractorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
         public string EnrichedUserRequest { get; set; } = string.Empty;
         public UserIntentCategoryValues UserIntentCategoryValue { get; set; }
         public string? BusinessRequirements { get; set; }

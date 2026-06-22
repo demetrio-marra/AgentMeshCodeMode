@@ -21,6 +21,7 @@ using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using AgentMesh.Application.Helpers;
+using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Workflows
 {
@@ -102,9 +103,9 @@ namespace AgentMesh.Application.Workflows
             {
                 await ExecuteAgentMemoryServiceAsync(state);
             }
-            if (state.MissingKnowledgeBaseEntries.Any())
+            if (state.MissingKnowledgeBaseSearchEntries.Any())
             {
-                await ExecuteKnowledgeBaseServiceKeywordsSearchAsync(state);
+                await ExecuteKnowledgeBaseServiceSearchAsync(state);
             }
 
             await ExecuteContextAnalyzerAsync(state);
@@ -112,21 +113,6 @@ namespace AgentMesh.Application.Workflows
             if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
             {
                 goto CompleteWorkflow;
-            }
-
-            // FROM NOW ON, the workflow will be based on the user intent category (TaskExecution or Documentation)
-
-            // if there are no knowledge base documents after filtering, search them again using semantic search
-            if (!state.RelevantKnowledgeBaseFileNames.Any() 
-                && state.MissingKnowledgeBaseEntries.Any())
-            {
-                await ExecuteKnowledgeBaseServiceSemanticSearchAsync(state);    // overwrite the previous knowledge base query result with the new one
-                await ExecuteContextAnalyzerAsync(state);
-
-                if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
-                {
-                    goto CompleteWorkflow;
-                }
             }
 
             // now if we have knowledge base documents after filtering, we can fetch the whole documents content and store it in the state for later use
@@ -244,7 +230,7 @@ namespace AgentMesh.Application.Workflows
             
             state.UserIntent = intentExtractorOutput.UserIntent;
             state.MissingPastMemories = intentExtractorOutput.MissingPastMemories;
-            state.MissingKnowledgeBaseEntries = intentExtractorOutput.MissingKnowledgeBaseEntries;
+            state.MissingKnowledgeBaseSearchEntries = intentExtractorOutput.MissingKnowledgeBaseSearchEntries;
 
             state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.TokenCount, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount);
 
@@ -256,9 +242,9 @@ namespace AgentMesh.Application.Workflows
             {
                 notifyDictionary.Add("MissingPastMemoriesDetails", string.Join("\n", state.MissingPastMemories.Select(m => $"- {m}")));
             }
-            if (state.MissingKnowledgeBaseEntries != null && state.MissingKnowledgeBaseEntries.Any())
+            if (state.MissingKnowledgeBaseSearchEntries != null && state.MissingKnowledgeBaseSearchEntries.Any())
             {
-                notifyDictionary.Add("MissingKnowledgeBaseEntriesDetails", string.Join("\n", state.MissingKnowledgeBaseEntries.Select(m => $"- {m}")));
+                notifyDictionary.Add("MissingKnowledgeBaseEntriesDetails", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")));
             }
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", notifyDictionary);
         }
@@ -286,23 +272,28 @@ namespace AgentMesh.Application.Workflows
         }
 
 
-        private async Task ExecuteKnowledgeBaseServiceKeywordsSearchAsync(CodeModeWorkflowState state)
+        private async Task ExecuteKnowledgeBaseServiceSearchAsync(CodeModeWorkflowState state)
         {
-            _logger.LogDebug("Engaging Knowledge Base Service (Keywords Search)...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Knowledge Base Service (Keywords Search)", new Dictionary<string, string>
+            _logger.LogDebug("Engaging Knowledge Base Service (Full Search)...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Knowledge Base Service (Full Search)", new Dictionary<string, string>
             {
-                { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
+                { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseSearchEntries) }
             });
 
-
-            var brcOutput = await _knowledgeBaseSearchExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseQueryInput
-            { 
-                Queries = state.MissingKnowledgeBaseEntries,
+            KnowledgeBaseQueryInput queryInput = new KnowledgeBaseQueryInput
+            {
                 Collections = new[] { DOCUMENTATION_COLLECTION_NAME },
-                SearchType = AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.KeywordsOnly
-            }, CancellationToken.None);
+                UserIntent = state.UserIntent,
+                Queries = state.MissingKnowledgeBaseSearchEntries.Select(entry => new KnowledgeBaseQueryInputItem
+                {
+                    Query = entry.Query,
+                    SearchType = entry.Query == "lex" ? AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.Keyword : entry.Query == "vec" ? AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.Semantic : AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.HypotethicalDocument
+                }).ToList()
+            };
 
-            state.KnowledgeBaseQueryResult = brcOutput.Results.Select(r => new KnowledgeBaseQueryResult
+            var brcOutput = await _knowledgeBaseSearchExecutor.ExecuteAsync(queryInput, CancellationToken.None);
+
+            state.KnowledgeBaseQueryResult = brcOutput.Results.Select(r => new Models.KnowledgeBaseQueryResult
             {
                 Id = r.Id,
                 File = r.File,
@@ -311,38 +302,7 @@ namespace AgentMesh.Application.Workflows
                 Relevance = r.Relevance
             }).ToList();
 
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Keywords Search)", new Dictionary<string, string>
-            {
-                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.KnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")) }
-            });
-        }
-
-
-        private async Task ExecuteKnowledgeBaseServiceSemanticSearchAsync(CodeModeWorkflowState state)
-        {
-            _logger.LogDebug("Engaging Knowledge Base Service (Semantic Search)...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Knowledge Base Service (Semantic Search)", new Dictionary<string, string>
-            {
-                { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
-            });
-
-            var brcOutput = await _knowledgeBaseSearchExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseQueryInput
-            {
-                Queries = state.MissingKnowledgeBaseEntries,
-                Collections = new[] { DOCUMENTATION_COLLECTION_NAME },
-                SearchType = AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.SemanticOnly
-            }, CancellationToken.None);
-
-            state.KnowledgeBaseQueryResult = brcOutput.Results.Select(r => new KnowledgeBaseQueryResult
-            {
-                Id = r.Id,
-                File = r.File,
-                Title = r.Title,
-                Summary = r.Summary,
-                Relevance = r.Relevance
-            }).ToList();
-
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Semantic Search)", new Dictionary<string, string>
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Full Search)", new Dictionary<string, string>
             {
                 { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.KnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")) }
             });
@@ -410,8 +370,6 @@ namespace AgentMesh.Application.Workflows
 
         private async Task ExecuteBusinessRequirementsCreatorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
-            await ExecuteSemanticSearchAsync(state, BusinessRequirementsCreatorAgentConfiguration.AgentName, cancellationToken);
-
             _logger.LogDebug("Engaging Business Requirements Creator Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
             {
@@ -652,29 +610,7 @@ namespace AgentMesh.Application.Workflows
             });
         }
 
-        private async Task ExecuteSemanticSearchAsync(CodeModeWorkflowState state, string agentRole, CancellationToken cancellationToken = default)
-        {
-            //_logger.LogDebug("Engaging Semantic Search Executor...");
-            //await _workflowProgressNotifier.NotifyWorkflowStepStart("Semantic Search Executor", new Dictionary<string, string>
-            //{
-            //    { "ActionableRequirements", string.Join(", ", state.ActionableRequirements) },
-            //    { "AgentRole", agentRole }
-            //});
-
-            //var searchOutput = await _semanticSearchExecutor.ExecuteAsync(new SemanticSearchExecutorInput
-            //{
-            //    ActionableRequirements = state.ActionableRequirements,
-            //    AgentRole = agentRole
-            //}, cancellationToken);
-
-            //state.SemanticSearchApiDocumentation = searchOutput.ApiDocumentation;
-
-            //await _workflowProgressNotifier.NotifyWorkflowStepEnd("Semantic Search Executor", new Dictionary<string, string>
-            //{
-            //    { "ApiDocumentationLength", state.SemanticSearchApiDocumentation.Length.ToString() }
-            //});
-        }
-
+     
         private async Task ExecuteBusinessAdvisorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Engaging Business Advisor Agent...");

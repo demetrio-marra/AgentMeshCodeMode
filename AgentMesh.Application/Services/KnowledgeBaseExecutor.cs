@@ -29,24 +29,12 @@ namespace AgentMesh.Application.Services
 
         async Task<KnowledgeBaseQueryResult> IExecutor<KnowledgeBaseQueryInput, KnowledgeBaseQueryResult>.ExecuteAsync(KnowledgeBaseQueryInput input, CancellationToken cancellationToken)
         {
-            if (input.Queries == null || !input.Queries.Any())
+            if (input == null)
             {
-                throw new ArgumentException("Queries cannot be null or empty.", nameof(input.Queries));
+                throw new ArgumentException("Input cannot be null or empty.", nameof(input));
             }
 
-            var result = Enumerable.Empty<Application.Models.KnowledgeBaseQueryResult>();
-            if (input.SearchType == KnowledgeBaseQuerySearchType.KeywordsOnly)
-            {
-                result = await _knowledgeBaseService.KeywordsSearch(input.Queries, input.Collections, false, cancellationToken);
-            }
-            else if (input.SearchType == KnowledgeBaseQuerySearchType.SemanticOnly)
-            {
-                result = await _knowledgeBaseService.SemanticSearchAsync(input.Queries, input.Collections, true, cancellationToken);
-            }
-            else if (input.SearchType == KnowledgeBaseQuerySearchType.Full)
-            {
-                result = await _knowledgeBaseService.FindAsync(input.Queries, input.Collections, cancellationToken);
-            }
+            var result = await _knowledgeBaseService.FindAsync(input, cancellationToken);
             
             return new KnowledgeBaseQueryResult { Results = result.Select(r => new KnowledgeBaseQueryResultItem
             {

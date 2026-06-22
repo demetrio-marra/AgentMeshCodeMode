@@ -1,5 +1,6 @@
 ﻿using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Infrastructure.SemanticSearch
 {
@@ -7,6 +8,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
     {
         private const string KEYWORDS_SEARCH_TYPE = "lex";
         private const string SEMANTIC_SEARCH_TYPE = "vec";
+        private const string HYPOTHETICAL_SEARCH_TYPE = "hyde";
 
         private readonly QMDHttpProxy _httpProxy;
 
@@ -41,7 +43,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         }
 
 
-        public async Task<IEnumerable<KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = false, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Application.Models.KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = false, CancellationToken cancellationToken = default)
         {
             var query = new DTOs.Query.QueryToolRequest
             {
@@ -52,7 +54,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
             var ret = await _httpProxy.QueryAsync(query, cancellationToken);
 
-            return ret.Results.Select(r => new KnowledgeBaseQueryResult
+            return ret.Results.Select(r => new Application.Models.KnowledgeBaseQueryResult
             {
                 Id = r.DocId!,
                 Title = r.Title!,
@@ -63,7 +65,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         }
 
 
-        public async Task<IEnumerable<KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = true, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Application.Models.KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = true, CancellationToken cancellationToken = default)
         {
             var query = new DTOs.Query.QueryToolRequest
             {
@@ -74,7 +76,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
             var ret = await _httpProxy.QueryAsync(query, cancellationToken);
 
-            return ret.Results.Select(r => new KnowledgeBaseQueryResult
+            return ret.Results.Select(r => new Application.Models.KnowledgeBaseQueryResult
             {
                 Id = r.DocId!,
                 Title = r.Title!,
@@ -85,21 +87,23 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         }
 
 
-        public async Task<IEnumerable<KnowledgeBaseQueryResult>> FindAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Application.Models.KnowledgeBaseQueryResult>> FindAsync(KnowledgeBaseQueryInput query, CancellationToken cancellationToken = default)
         {
-            var searches = searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = SEMANTIC_SEARCH_TYPE, Query = term }).ToList();
-            searches.AddRange(searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = KEYWORDS_SEARCH_TYPE, Query = term }));
-
-            var query = new DTOs.Query.QueryToolRequest
+            var dbQuery = new DTOs.Query.QueryToolRequest
             {
-                Searches = searches,
-                Collections = collections?.ToList(),
-                Rerank = true
+                Searches = query.Queries.Select(q => new DTOs.Query.QuerySubQuery
+                {
+                    Type = q.SearchType == KnowledgeBaseQuerySearchType.Keyword ? KEYWORDS_SEARCH_TYPE : q.SearchType == KnowledgeBaseQuerySearchType.Semantic ? SEMANTIC_SEARCH_TYPE : HYPOTHETICAL_SEARCH_TYPE,
+                    Query = q.Query
+                }).ToList(),
+                Collections = query.Collections.ToList(),
+                Rerank = true,
+                Intent = query.UserIntent
             };
 
-            var ret = await _httpProxy.QueryAsync(query, cancellationToken);
+            var ret = await _httpProxy.QueryAsync(dbQuery, cancellationToken);
 
-            return ret.Results.Select(r => new KnowledgeBaseQueryResult
+            return ret.Results.Select(r => new Application.Models.KnowledgeBaseQueryResult
             {
                 Id = r.DocId!,
                 Title = r.Title!,

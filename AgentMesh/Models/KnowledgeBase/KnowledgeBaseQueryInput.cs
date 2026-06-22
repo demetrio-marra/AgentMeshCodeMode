@@ -2,15 +2,21 @@
 {
     public class KnowledgeBaseQueryInput
     {
-        public IEnumerable<string> Queries { get; set; } = [];
         public IEnumerable<string> Collections { get; set; } = [];
+        public IEnumerable<KnowledgeBaseQueryInputItem> Queries { get; set; } = [];
+        public string? UserIntent { get; set; }
+    }
+
+    public class KnowledgeBaseQueryInputItem
+    {
+        public string Query { get; set; } = string.Empty;
         public KnowledgeBaseQuerySearchType SearchType { get; set; }
     }
 
     public enum KnowledgeBaseQuerySearchType
     {
-        KeywordsOnly,
-        SemanticOnly,
-        Full
+        Keyword,
+        Semantic,
+        HypotethicalDocument
     }
 }
