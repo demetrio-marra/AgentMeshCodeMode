@@ -304,7 +304,7 @@ namespace AgentMesh.Application.Workflows
                 { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseEntries) }
             });
 
-            var brcOutput = await _knowledgeBaseService.KeywordsSearch(state.MissingKnowledgeBaseEntries.ToList(), new[] { DOCUMENTATION_COLLECTION_NAME }, CancellationToken.None);
+            var brcOutput = await _knowledgeBaseService.KeywordsSearch(state.MissingKnowledgeBaseEntries.ToList(), new[] { DOCUMENTATION_COLLECTION_NAME }, false, CancellationToken.None);
 
             state.KnowledgeBaseQueryResult = brcOutput.ToList();
 

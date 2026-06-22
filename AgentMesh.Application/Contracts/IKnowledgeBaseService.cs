@@ -15,11 +15,13 @@ namespace AgentMesh.Application.Contracts
         /// </summary>
         /// <param name="searchTerms">A collection of search terms to use for the keyword search. Each term is matched against the knowledge base entries.</param>
         /// <param name="collections">An optional collection of knowledge base collections to limit the search scope. If null or empty, the search will be performed across all collections.</param>
+        /// <param name="rerank">If <see langword="true"/>, the results are re-ranked for improved relevance; otherwise, the default ranking
+        /// is used.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns>A collection of <see
         /// cref="KnowledgeBaseQueryResult"/> objects matching the search terms. The collection is empty if no matches
         /// are found.</returns>
-        Task<IEnumerable<KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, CancellationToken cancellationToken = default);
+        Task<IEnumerable<KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Performs a semantic search using the specified search terms and returns matching knowledge base results
@@ -35,6 +37,15 @@ namespace AgentMesh.Application.Contracts
         /// cref="KnowledgeBaseQueryResult"/> objects matching the search terms. The collection is empty if no matches
         /// are found.</returns>
         Task<IEnumerable<KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = true, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Performs both keyword and semantic search using the specified search terms and returns matching knowledge base results asynchronously. Also reranks automatically for improved relevance.
+        /// </summary>
+        /// <param name="searchTerms">A collection of search terms to use for the search. Each term is compared against the knowledge base.</param>
+        /// <param name="collections">An optional collection of knowledge base collections to limit the search scope. If null or empty, the search will be performed across all collections.</param>
+        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+        /// <returns>A collection of <see cref="KnowledgeBaseQueryResult"/> objects matching the search terms. The collection is empty if no matches are found.</returns>
+        Task<IEnumerable<KnowledgeBaseQueryResult>> FindAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Asynchronously retrieves the content of a knowledge base entry identified by the specified ID.
