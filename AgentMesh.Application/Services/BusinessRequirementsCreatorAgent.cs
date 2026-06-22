@@ -42,7 +42,6 @@ namespace AgentMesh.Application.Services
             return new BusinessRequirementsCreatorAgentOutput
             {
                 BusinessRequirements = result.Result.BusinessRequirements,
-                MentionedApis = result.Result.MentionedApis,
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount
@@ -80,9 +79,6 @@ namespace AgentMesh.Application.Services
         {
             [JsonPropertyName("businessRequirements")]
             public string BusinessRequirements { get; set; } = string.Empty;
-
-            [JsonPropertyName("mentionedApis")]
-            public IEnumerable<string> MentionedApis { get; set; } = Enumerable.Empty<string>();
         }
     }
 }

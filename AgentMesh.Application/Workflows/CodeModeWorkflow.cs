@@ -168,14 +168,9 @@ namespace AgentMesh.Application.Workflows
                     }).ToList();
             }
 
-            // temporary override just for tests
-            state.UserIntentCategoryValue = UserIntentCategoryValues.Documentation;
-
-
             if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
             {
                 await ExecuteBusinessRequirementsCreatorAsync(state);
-                await ExecuteApiDocumentationExecutorAsync(state);
                 await ExecuteCoderAsync(state);
                 await ExecuteCodeStaticAnalyzerAsync(state);
 
@@ -191,7 +186,7 @@ namespace AgentMesh.Application.Workflows
                 {
                     await CompleteWorkflowAsync(state, state.SandboxResult);
                 }
-                else if (state.CodeExecutionResultType == SandboxResultType.ApplicationError || 
+                else if (state.CodeExecutionResultType == SandboxResultType.ApplicationError ||
                          state.CodeExecutionResultType == SandboxResultType.SyntaxError)
                 {
                     for (int i = 0; i < 2 && state.CodeExecutionFailuresDetectorIterationCount < 2; i++)
@@ -291,7 +286,7 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Agent Memory Service...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Service", new Dictionary<string, string>
             {
-                { "MissingPastMemories", string.Join(", ", state.MissingPastMemories) }
+                { "MissingPastMemories", string.Join("\n", state.MissingPastMemories.Select(m => $"- {m}")) }
             });
 
             var brcOutput = await _agentMemoryRetriever.ExecuteAsync(new AgentMemoryRetrieverInput
@@ -303,7 +298,7 @@ namespace AgentMesh.Application.Workflows
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Service", new Dictionary<string, string>
             {
-                { "ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories.Select(m => m.Memory)) }
+                { "ExtractedAgentMemories", string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")) }
             });
         }
 
@@ -313,7 +308,7 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Knowledge Base Service (Full Search)...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Knowledge Base Service (Full Search)", new Dictionary<string, string>
             {
-                { "MissingKnowledgeBaseEntries", string.Join(", ", state.MissingKnowledgeBaseSearchEntries) }
+                { "MissingKnowledgeBaseEntries", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")) }
             });
 
             KnowledgeBaseQueryInput queryInput = new KnowledgeBaseQueryInput
@@ -340,7 +335,7 @@ namespace AgentMesh.Application.Workflows
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Full Search)", new Dictionary<string, string>
             {
-                { "ExtractedKnowledgeBaseEntries", string.Join(", ", state.KnowledgeBaseQueryResult.Select(m => $"ID: {m.Id}, Title: {m.Title}, Summary: {m.Summary}")) }
+                { "ExtractedKnowledgeBaseEntries", string.Join("\n", state.KnowledgeBaseQueryResult.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) }
             });
         }
 
@@ -354,11 +349,11 @@ namespace AgentMesh.Application.Workflows
             };
             if (state.ExtractedAgentMemories.Any())
             {
-                contextAnalyzerInputLogEntries.Add("ExtractedAgentMemories", string.Join(", ", state.ExtractedAgentMemories.Select(m => m.Memory)));
+                contextAnalyzerInputLogEntries.Add("ExtractedAgentMemories", string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")));
             }
             if (state.KnowledgeBaseQueryResult.Any())
             {
-                contextAnalyzerInputLogEntries.Add("ExtractedKnowledgeBaseDocuments", string.Join(", ", state.KnowledgeBaseQueryResult.Select(m => $"File: {m.File}, Title: {m.Title}, Summary: {m.Summary}")));
+                contextAnalyzerInputLogEntries.Add("ExtractedKnowledgeBaseDocuments", string.Join("\n", state.KnowledgeBaseQueryResult.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")));
             }
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", contextAnalyzerInputLogEntries);
 
@@ -398,7 +393,7 @@ namespace AgentMesh.Application.Workflows
 
             if (state.RelevantKnowledgeBaseFileNames != null && state.RelevantKnowledgeBaseFileNames.Any())
             {
-                contextAnalyzerOutputLogEntries.Add("KnowledgeBaseDocumentFilteredIds", string.Join(", ", state.RelevantKnowledgeBaseFileNames));
+                contextAnalyzerOutputLogEntries.Add("KnowledgeBaseDocumentFilteredFiles", string.Join("\n", state.RelevantKnowledgeBaseFileNames.Select(m => $"- {m}")));
             }
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", contextAnalyzerOutputLogEntries);
@@ -409,22 +404,23 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Business Requirements Creator Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
             {
-                { "EnrichedUserRequest", state.EnrichedUserRequest }
+                { "EnrichedUserRequest", state.EnrichedUserRequest },
+                { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
             });
+
+            var serializedDocumentation = SerializeDocumentationForBusinessAnalyst(state.KnowledgeBaseDocumentsContent);
 
             var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
             {
                 EnrichedUserRequest = state.EnrichedUserRequest,
-                ApiDocumentation = state.SemanticSearchApiDocumentation
+                ApiDocumentation = serializedDocumentation
             }, cancellationToken);
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = brcOutput.BusinessRequirements;
-            state.MentionedApis = brcOutput.MentionedApis;
             state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Requirements Creator Agent", new Dictionary<string, string>
             {
-                { "BusinessRequirements", brcOutput.BusinessRequirements },
-                { "MentionedApis", string.Join(", ", brcOutput.MentionedApis) }
+                { "BusinessRequirements", brcOutput.BusinessRequirements }
             });
         }
 
@@ -436,10 +432,12 @@ namespace AgentMesh.Application.Workflows
                 { "BusinessRequirements", state.BusinessRequirements! }
             });
 
+            var serializedDocumentation = SerializeDocumentationForCoder(state.KnowledgeBaseDocumentsContent);
+
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
             {
                 BusinessRequirements = state.BusinessRequirements!,
-                ApiDocumentation = state.ApiDocumentation
+                ApiDocumentation = serializedDocumentation
             });
             state.GeneratedCode = coderAgentOutput.CodeToRun;
             state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);
@@ -449,27 +447,7 @@ namespace AgentMesh.Application.Workflows
             });
         }
 
-        private async Task ExecuteApiDocumentationExecutorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
-        {
-            _logger.LogDebug("Engaging API Documentation Executor...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("API Documentation Executor", new Dictionary<string, string>
-            {
-                { "MentionedApis", string.Join(", ", state.MentionedApis) }
-            });
-
-            var apiDocOutput = await _apiDocumentationExecutor.ExecuteAsync(new ApiDocumentationExecutorInput
-            {
-                MentionedApis = state.MentionedApis
-            }, cancellationToken);
-
-            state.ApiDocumentation = apiDocOutput.ApiDocumentation;
-
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("API Documentation Executor", new Dictionary<string, string>
-            {
-                { "ApiDocumentationLength", state.ApiDocumentation.Length.ToString() }
-            });
-        }
-
+    
         private async Task ExecuteCodeStaticAnalyzerAsync(CodeModeWorkflowState state)
         {
             _logger.LogDebug("Engaging Code Static Analyzer Agent...");
@@ -671,12 +649,15 @@ namespace AgentMesh.Application.Workflows
             });
         }
 
-        private static string SerializeDocumentationForBusinessAnalyst(IEnumerable<KnowledgeBaseDocumentContent> documents)
+        private static string SerializeDocumentationForBusinessAnalyst(IEnumerable<KnowledgeBaseDocumentContent> documents) => SerializeDocumentationFor(documents, DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE);
+
+        private static string SerializeDocumentationForCoder(IEnumerable<KnowledgeBaseDocumentContent> documents) => SerializeDocumentationFor(documents, DOCUMENTATION_FOR_DEVELOPER_SECTIONTITLE);
+        
+        private static string SerializeDocumentationFor(IEnumerable<KnowledgeBaseDocumentContent> documents, string separator)
         {
-            var serializedDocs = documents.Select(kv => $"{MarkdownDocumentationHelper.GetMarkdownSection(kv.Content, DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE)}\n\nOriginal file: {kv.File}");
+            var serializedDocs = documents.Select(kv => $"{MarkdownDocumentationHelper.GetMarkdownSection(kv.Content, separator)}\n\nOriginal file: {kv.File}");
             return string.Join(Environment.NewLine + "---" + Environment.NewLine + "---", serializedDocs);
         }
-
 
         private async Task CompleteWorkflowAsync(CodeModeWorkflowState state, string? data = null)
         {

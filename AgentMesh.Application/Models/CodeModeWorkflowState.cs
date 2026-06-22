@@ -40,9 +40,6 @@ namespace AgentMesh.Application.Models
         public List<AgentTokenUsageEntry> TokenUsageEntries { get; set; }
         public IEnumerable<AgentMemoryItem> ExtractedAgentMemories { get; set; } = Enumerable.Empty<AgentMemoryItem>();
         public IEnumerable<string> RelevantKnowledgeBaseFileNames { get; set; } = [];
-        public string SemanticSearchApiDocumentation { get; set; } = string.Empty;
-        public string ApiDocumentation { get; set; } = string.Empty;
-
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
 
         public IEnumerable<KnowledgeBaseQueryResult> KnowledgeBaseQueryResult { get; set; } = [];

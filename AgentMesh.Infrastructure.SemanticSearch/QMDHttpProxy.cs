@@ -344,10 +344,16 @@ namespace AgentMesh.Infrastructure.SemanticSearch
                 var parsedContent = ParseToolContentItem(toolResult.Content ?? Enumerable.Empty<ToolContentItem>());
                 if (!string.IsNullOrEmpty(parsedContent))
                 {
-                    var fromContent = JsonSerializer.Deserialize<TResponse>(parsedContent, _jsonOptions);
-                    if (fromContent is not null)
+                    try
                     {
-                        return fromContent;
+                        var fromContent = JsonSerializer.Deserialize<TResponse>(parsedContent, _jsonOptions);
+                        if (fromContent is not null)
+                        {
+                            return fromContent;
+                        }
+                    } catch (Exception ex)
+                    {
+                        throw new Exception($"MCP tool '{toolName}' returned content that could not be deserialized into the expected response type. Content: {parsedContent}", ex);
                     }
                 }
             }
