@@ -7,6 +7,7 @@ namespace AgentMesh.Models.IntentExtractor
         public string UserIntent { get; set; } = string.Empty;
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
         public IEnumerable<IntentExtractorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
+        public string? LanguageOfTheUser { get; set; }
 
         public int TokenCount { get; set; }
         public int InputTokenCount { get; set; }

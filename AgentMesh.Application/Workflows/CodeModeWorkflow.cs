@@ -291,6 +291,7 @@ namespace AgentMesh.Application.Workflows
             state.UserIntent = intentExtractorOutput.UserIntent;
             state.MissingPastMemories = intentExtractorOutput.MissingPastMemories;
             state.MissingKnowledgeBaseSearchEntries = intentExtractorOutput.MissingKnowledgeBaseSearchEntries;
+            state.LanguageOfTheUser = intentExtractorOutput.LanguageOfTheUser;
 
             state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.TokenCount, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount, stopwatch.Elapsed, "Intent Extractor Agent");
 
@@ -298,6 +299,10 @@ namespace AgentMesh.Application.Workflows
             {
                 { "ExtractedIntent", state.UserIntent ?? "(No intent extracted)" }
             };
+            if (state.LanguageOfTheUser != null)
+            {
+                notifyDictionary.Add("LanguageOfTheUser", state.LanguageOfTheUser);
+            }
             if (state.MissingPastMemories != null && state.MissingPastMemories.Any())
             {
                 notifyDictionary.Add("MissingPastMemoriesDetails", string.Join("\n", state.MissingPastMemories.Select(m => $"- {m}")));
@@ -739,13 +744,15 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Personal Assistant Agent", new Dictionary<string, string>
             {
                 { "Data", data ?? "(No data)" },
-                { "EnrichedUserRequest", state.EnrichedUserRequest }
+                { "EnrichedUserRequest", state.EnrichedUserRequest },
+                { "LanguageOfTheUser", state.LanguageOfTheUser ?? "(No language specified)" }
             });
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
                 Data = data,
-                EnrichedUserRequest = state.EnrichedUserRequest
+                EnrichedUserRequest = state.EnrichedUserRequest,
+                LanguageOfTheUser = state.LanguageOfTheUser
             });
             state.FinalAnswer = personalAssistantOutput.Response;
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount, stopwatch.Elapsed, "Personal Assistant Agent");

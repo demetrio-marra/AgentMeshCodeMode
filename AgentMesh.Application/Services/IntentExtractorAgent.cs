@@ -44,6 +44,7 @@ namespace AgentMesh.Application.Services
                 UserIntent = result.Result.UserIntent,
                 MissingKnowledgeBaseSearchEntries = result.Result.MissingKnowledgeBaseSearchEntries,
                 MissingPastMemories = result.Result.MissingPastMemories,
+                LanguageOfTheUser = result.Result.LanguageOfTheUser,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount,
                 TokenCount = result.TotalTokenCount
@@ -88,6 +89,9 @@ namespace AgentMesh.Application.Services
 
             [JsonPropertyName("missingKnowledgeBaseSearchEntries")]
             public IEnumerable<IntentExtractorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = Enumerable.Empty<IntentExtractorKnowledgeBase>();
+
+            [JsonPropertyName("languageOfTheUser")]
+            public string? LanguageOfTheUser { get; set; }
         }
     }
 }

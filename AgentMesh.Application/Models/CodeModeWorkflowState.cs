@@ -17,6 +17,7 @@ namespace AgentMesh.Application.Models
         }
 
         public string OriginalUserRequest { get; }
+        public string? LanguageOfTheUser { get; set; }
         public string? UserIntent { get; set; }
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
         public IEnumerable<IntentExtractorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];

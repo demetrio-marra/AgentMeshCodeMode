@@ -23,7 +23,7 @@ namespace AgentMesh.Application.Services
             var inputMessages = new List<AgentMessage>
             {
                 new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Respond in {input.OutputLanguage}." },
+                new AgentMessage { Role = AgentMessageRole.System, Content = $"Respond in {input.LanguageOfTheUser}." },
                 new AgentMessage { Role = AgentMessageRole.System, Content = $"Respond about this data:\n" + input.Data },
                 new AgentMessage { Role = AgentMessageRole.User, Content = input.EnrichedUserRequest }
             };

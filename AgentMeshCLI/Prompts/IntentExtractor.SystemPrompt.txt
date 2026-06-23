@@ -52,6 +52,8 @@ Do NOT pad to reach a slot count. 4 strong slots outperform 8 diluted ones.
 Do NOT put full sentences in "lex" queries.
 Do NOT repeat the same semantic content across slots — each must cover different retrieval space.
 
+### Language of the user
+Output the language of the user.
 
 
 ## Output format
@@ -62,7 +64,8 @@ Do NOT repeat the same semantic content across slots — each must cover different
     { "type": "vec",  "query": "..." },
     { "type": "hyde", "query": "..." },
     { "type": "lex",  "query": "..." }
-  ]
+  ],
+  "languageOfTheUser": "Italian"
 }
 
 
