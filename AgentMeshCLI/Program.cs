@@ -46,13 +46,6 @@ namespace AgentMesh
                 builder.AddConsole();
             });
 
-
-            // Embedding configuration and service registration
-            var embeddingConfiguration = new EmbeddingServiceConfiguration();
-            configuration.GetSection("Embedding").Bind(embeddingConfiguration);
-            services.AddSingleton(embeddingConfiguration);
-            services.AddHttpClient<IEmbeddingService, EmbeddingService>();
-
             services.AddSingleton<IKnowledgeBaseService, QMDKnowledgeBaseService>();
             services.AddSingleton<KnowledgeBaseExecutor>();
             services.AddSingleton<IKnowledgeBaseSearchExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
