@@ -324,6 +324,29 @@ namespace AgentMesh
 
             services.AddSingleton<IPersonalAssistantAgent, PersonalAssistantAgent>();
 
+            // RelevantFactsEvaluator agent config and client
+            services
+                .AddOptions<RelevantFactsEvaluatorAgentConfiguration>()
+                .Bind(configuration.GetSection(RelevantFactsEvaluatorAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<RelevantFactsEvaluatorAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(RelevantFactsEvaluatorAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<RelevantFactsEvaluatorAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IRelevantFactsEvaluatorAgent, RelevantFactsEvaluatorAgent>();
+
             // conversation summarizer agent config and client
             services
                 .AddOptions<ConversationSummarizerAgentConfiguration>()

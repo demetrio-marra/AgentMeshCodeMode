@@ -21,6 +21,7 @@ Rules:
 - Always report all errors
 - Remove any stack traces or technical jargon if the data contains error messages
 - Keep informative error messages User-friendly
+- Always answer to greetings and trivial requests, even if the `data` field is empty
 - Answer you can't help the user with their request if the `data` field is empty and the user is saying anything other than greetings, farewells, or other non-informational requests
 
 4) Constraints:

@@ -21,6 +21,7 @@ using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using AgentMesh.Application.Helpers;
 using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Models.RelevantFactsEvaluator;
 
 namespace AgentMesh.Application.Workflows
 {
@@ -49,6 +50,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IAgentMemorySaver _agentMemorySaver;
         private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor;
         private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor;
+        private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent;
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
@@ -66,7 +68,8 @@ namespace AgentMesh.Application.Workflows
             IAgentMemoryRetriever agentMemoryRetriever,
             IAgentMemorySaver agentMemorySaver,
             IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
-            IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor) 
+            IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor,
+            IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent) 
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -85,6 +88,7 @@ namespace AgentMesh.Application.Workflows
             _agentMemorySaver = agentMemorySaver;
             _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
             _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
+            _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
@@ -228,6 +232,12 @@ namespace AgentMesh.Application.Workflows
             await CompleteWorkflowAsync(state);
 
         WorkflowEnd:
+
+            var isWorthSaving = await ExecuteRelevantFactsEvaluatorAsync(state);
+            if (isWorthSaving)
+            {
+                await ExecuteAgentMemorySaverAsync(state);
+            }
 
             //await ExecuteAgentMemorySaverAsync(state);
 
@@ -677,18 +687,42 @@ namespace AgentMesh.Application.Workflows
             });
         }
 
+        private async Task<bool> ExecuteRelevantFactsEvaluatorAsync(CodeModeWorkflowState state)
+        {
+            _logger.LogDebug("Engaging Relevant Facts Evaluator Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Relevant Facts Evaluator Agent", new Dictionary<string, string>
+            {
+                { "User's request", state.EnrichedUserRequest },
+                { "AI pipeline answer", state.FinalAnswer ?? string.Empty }
+            });
+
+            var output = await _relevantFactsEvaluatorAgent.ExecuteAsync(new RelevantFactsEvaluatorAgentInput
+            {
+                EnrichedUserRequest = state.EnrichedUserRequest,
+                FinalAnswer = state.FinalAnswer ?? string.Empty
+            });
+
+            state.AddTokenUsage(RelevantFactsEvaluatorAgentConfiguration.AgentName, output.TokenCount, output.InputTokenCount, output.OutputTokenCount);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Relevant Facts Evaluator Agent", new Dictionary<string, string>
+            {
+                { "IsWorthSaving", output.IsWorthSaving.ToString() }
+            });
+
+            return output.IsWorthSaving;
+        }
+
         private async Task ExecuteAgentMemorySaverAsync(CodeModeWorkflowState state)
         {
             _logger.LogDebug("Engaging Agent Memory Saver...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Saver", new Dictionary<string, string>
             {
-                { "MessageByUser", state.OriginalUserRequest },
-                { "ResponseByAssistant", state.FinalAnswer ?? string.Empty }
+                { "User's request", state.EnrichedUserRequest },
+                { "AI pipeline answer", state.FinalAnswer ?? string.Empty }
             });
 
             await _agentMemorySaver.ExecuteAsync(new AgentMemorySaverInput
             {
-                MessageByUser = state.OriginalUserRequest,
+                MessageByUser = state.EnrichedUserRequest,
                 ResponseByAssistant = state.FinalAnswer ?? string.Empty
             });
 
