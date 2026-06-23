@@ -87,17 +87,31 @@ namespace AgentMesh.Infrastructure.OpenAIClient
 
             // use ExecuteRetryAsync to handle transient errors
 
-            ClientResult<ChatCompletion> chatCompletionResult;
+            var responseTextBuilder = new System.Text.StringBuilder();
+            int totalTokenCount = 0, inputTokenCount = 0, outputTokenCount = 0;
+
             try
             {
-                chatCompletionResult = await _client.CompleteChatAsync(chatMessages, chatCompletionOptions, cancellationToken);
+                await foreach (var update in _client.CompleteChatStreamingAsync(chatMessages, chatCompletionOptions, cancellationToken))
+                {
+                    foreach (var part in update.ContentUpdate)
+                    {
+                        responseTextBuilder.Append(part.Text);
+                    }
+                    if (update.Usage != null)
+                    {
+                        totalTokenCount = update.Usage.TotalTokenCount;
+                        inputTokenCount = update.Usage.InputTokenCount;
+                        outputTokenCount = update.Usage.OutputTokenCount;
+                    }
+                }
             }
             catch (ClientResultException ex) when (ex.Message.Contains("Tool choice is none, but model called a tool"))
             {
                 throw new BadStructuredResponseException("", ex.Message, ex);
             }
 
-            var responseText = GetResponseText(chatCompletionResult);
+            var responseText = responseTextBuilder.ToString();
             if (string.IsNullOrWhiteSpace(responseText))
             {
                 throw new BadStructuredResponseException("", "The response text is empty.");
@@ -106,17 +120,11 @@ namespace AgentMesh.Infrastructure.OpenAIClient
             return new OpenAIClientResponse
             {
                 Text = responseText,
-                TotalTokenCount = chatCompletionResult.Value.Usage.TotalTokenCount,
-                InputTokenCount = chatCompletionResult.Value.Usage.InputTokenCount,
-                OutputTokenCount = chatCompletionResult.Value.Usage.OutputTokenCount
+                TotalTokenCount = totalTokenCount,
+                InputTokenCount = inputTokenCount,
+                OutputTokenCount = outputTokenCount
             };
         }
-
-        private static string? GetResponseText(ClientResult<ChatCompletion> result)
-        {
-            return result?.Value?.Content?.FirstOrDefault()?.Text;
-        }
-
 
         private static ChatMessage CreateMergedSystemPrompt(IEnumerable<AgentMessage> messages)
         {
