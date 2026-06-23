@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Qdrant.Client" Version="1.17.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\AgentMesh.Application\AgentMesh.Application.csproj" />
     <ProjectReference Include="..\AgentMesh\AgentMesh.csproj" />
   </ItemGroup>

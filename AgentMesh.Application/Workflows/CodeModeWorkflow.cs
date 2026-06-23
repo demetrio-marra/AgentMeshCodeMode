@@ -4,7 +4,6 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models;
-using AgentMesh.Models.ApiDocumentation;
 using AgentMesh.Models.BusinessAdvisor;
 using AgentMesh.Models.BusinessRequirementsCreator;
 using AgentMesh.Models.CodeExecutionFailuresDetector;
@@ -48,7 +47,6 @@ namespace AgentMesh.Application.Workflows
         private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
         private readonly IAgentMemoryRetriever _agentMemoryRetriever;
         private readonly IAgentMemorySaver _agentMemorySaver;
-        private readonly IApiDocumentationExecutor _apiDocumentationExecutor;
         private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor;
         private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor;
 
@@ -67,7 +65,6 @@ namespace AgentMesh.Application.Workflows
             IContextAnalyzerAgent contextAnalyzerAgent,
             IAgentMemoryRetriever agentMemoryRetriever,
             IAgentMemorySaver agentMemorySaver,
-            IApiDocumentationExecutor apiDocumentationExecutor,
             IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
             IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor) 
         {
@@ -86,7 +83,6 @@ namespace AgentMesh.Application.Workflows
             _contextAnalyzerAgent = contextAnalyzerAgent;
             _agentMemoryRetriever = agentMemoryRetriever;
             _agentMemorySaver = agentMemorySaver;
-            _apiDocumentationExecutor = apiDocumentationExecutor;
             _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
             _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
         }

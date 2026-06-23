@@ -5,7 +5,6 @@ using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.AgentMemory.Configuration;
 using AgentMesh.Infrastructure.AgentMemory.Services;
 using AgentMesh.Infrastructure.JSSandbox;
-using AgentMesh.Infrastructure.Persistence.Services;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.SemanticSearch;
 using AgentMesh.Infrastructure.SemanticSearch.Configuration;
@@ -54,10 +53,6 @@ namespace AgentMesh
             services.AddSingleton(embeddingConfiguration);
             services.AddHttpClient<IEmbeddingService, EmbeddingService>();
 
-            // Register API Documentation Service
-            services.AddSingleton<IApiDocumentationService, DummyApiDocumentationRepository>();
-
-            services.AddSingleton<IApiDocumentationExecutor, ApiDocumentationExecutor>();
             services.AddSingleton<IKnowledgeBaseService, QMDKnowledgeBaseService>();
             services.AddSingleton<KnowledgeBaseExecutor>();
             services.AddSingleton<IKnowledgeBaseSearchExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
