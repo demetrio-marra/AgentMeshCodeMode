@@ -56,6 +56,8 @@ namespace AgentMesh.Helpers
 
         public static void PrintTokenUsageSummary(List<WorkflowStepUsageEntry> tokenUsageEntries, Dictionary<string, decimal> agentInputCosts, Dictionary<string, decimal> agentOutputCosts)
         {
+            var totalElapsedWorkflow = TimeSpan.FromMilliseconds(tokenUsageEntries.Sum(e => e.Elapsed.TotalMilliseconds));
+
             var agenticEntries = tokenUsageEntries
                 .Where(e => e.IsAgentic && e.TokensUsage is not null)
                 .ToList();
@@ -119,6 +121,7 @@ namespace AgentMesh.Helpers
             WriteLineWithColor("╠═══════════════════════════════╬═══════════╬═══════════════╬═══════════════╬═══════════════════════════╬═══════════════╬═══════════════╬═══════════════════════════╬════════════════╣", ConsoleColor.Cyan);
             WriteLineWithColor($"║ TOTAL                         ║           ║ {totalInputTokensStr} ║               ║ {totalInputCostStr} ║ {totalOutputTokensStr} ║               ║ {totalOutputCostStr} ║ {grandTotalCostStr} ║", ConsoleColor.Yellow);
             WriteLineWithColor("╚═══════════════════════════════╩═══════════╩═══════════════╩═══════════════╩═══════════════════════════╩═══════════════╩═══════════════╩═══════════════════════════╩════════════════╝", ConsoleColor.Cyan);
+            WriteLineWithColor($"Total elapsed workflow time: {ToHumanReadableDuration(totalElapsedWorkflow)}", ConsoleColor.Yellow);
             Console.WriteLine();
         }
     }
