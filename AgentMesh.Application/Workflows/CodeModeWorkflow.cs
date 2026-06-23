@@ -22,6 +22,7 @@ using Microsoft.Extensions.Logging;
 using AgentMesh.Application.Helpers;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RelevantFactsEvaluator;
+using System.Diagnostics;
 
 namespace AgentMesh.Application.Workflows
 {
@@ -252,6 +253,7 @@ namespace AgentMesh.Application.Workflows
 
         private async Task ExecuteIntentExtractorAsync(CodeModeWorkflowState state, IEnumerable<ContextMessage> chatHistory)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Intent Extractor Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Intent Extractor Agent", new Dictionary<string, string>
             {
@@ -283,12 +285,14 @@ namespace AgentMesh.Application.Workflows
             {
                 notifyDictionary.Add("MissingKnowledgeBaseEntriesDetails", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")));
             }
+            notifyDictionary.Add("ELAPSED_TIME", GetElapsedTime(stopwatch));
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", notifyDictionary);
         }
 
 
         private async Task ExecuteAgentMemoryServiceAsync(CodeModeWorkflowState state)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Agent Memory Service...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Service", new Dictionary<string, string>
             {
@@ -302,15 +306,18 @@ namespace AgentMesh.Application.Workflows
 
             state.ExtractedAgentMemories = brcOutput.Items.ToList();
 
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Service", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "ExtractedAgentMemories", string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")) }
-            });
+                { "ExtractedAgentMemories", string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")) },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Service", notifyDictionary);
         }
 
 
         private async Task ExecuteKnowledgeBaseServiceSearchAsync(CodeModeWorkflowState state)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Knowledge Base Service (Full Search)...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Knowledge Base Service (Full Search)", new Dictionary<string, string>
             {
@@ -339,15 +346,18 @@ namespace AgentMesh.Application.Workflows
                 Relevance = r.Relevance
             }).ToList();
 
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Full Search)", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "ExtractedKnowledgeBaseEntries", string.Join("\n", state.KnowledgeBaseQueryResult.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) }
-            });
+                { "ExtractedKnowledgeBaseEntries", string.Join("\n", state.KnowledgeBaseQueryResult.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Full Search)", notifyDictionary);
         }
 
 
         private async Task ExecuteContextAnalyzerAsync(CodeModeWorkflowState state)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Context Analyzer Agent...");
             var contextAnalyzerInputLogEntries = new Dictionary<string, string>
             {
@@ -401,12 +411,14 @@ namespace AgentMesh.Application.Workflows
             {
                 contextAnalyzerOutputLogEntries.Add("KnowledgeBaseDocumentFilteredFiles", string.Join("\n", state.RelevantKnowledgeBaseFileNames.Select(m => $"- {m}")));
             }
+            contextAnalyzerOutputLogEntries.Add("ELAPSED_TIME", GetElapsedTime(stopwatch));
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", contextAnalyzerOutputLogEntries);
         }
 
         private async Task ExecuteBusinessRequirementsCreatorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Business Requirements Creator Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
             {
@@ -424,14 +436,17 @@ namespace AgentMesh.Application.Workflows
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = brcOutput.BusinessRequirements;
             state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Requirements Creator Agent", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "BusinessRequirements", brcOutput.BusinessRequirements }
-            });
+                { "BusinessRequirements", brcOutput.BusinessRequirements },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Requirements Creator Agent", notifyDictionary);
         }
 
         private async Task ExecuteCoderAsync(CodeModeWorkflowState state)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Coder Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Coder Agent", new Dictionary<string, string>
             {
@@ -447,15 +462,18 @@ namespace AgentMesh.Application.Workflows
             });
             state.GeneratedCode = coderAgentOutput.CodeToRun;
             state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Coder Agent", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "CodeToRun", state.GeneratedCode }
-            });
+                { "CodeToRun", state.GeneratedCode },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Coder Agent", notifyDictionary);
         }
 
     
         private async Task ExecuteCodeStaticAnalyzerAsync(CodeModeWorkflowState state)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Code Static Analyzer Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Code Static Analyzer Agent", new Dictionary<string, string>
             {
@@ -476,15 +494,18 @@ namespace AgentMesh.Application.Workflows
                 state.CodeIssues.Clear();
             }
             state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, staticAnalyzerOutput.TokenCount, staticAnalyzerOutput.InputTokenCount, staticAnalyzerOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Code Static Analyzer Agent", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
                 { "IsCodeValid", state.IsCodeValid.ToString() },
-                { "ViolationsCount", staticAnalyzerOutput.Violations.Count().ToString() }
-            });
+                { "ViolationsCount", staticAnalyzerOutput.Violations.Count().ToString() },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Code Static Analyzer Agent", notifyDictionary);
         }
 
         private async Task ExecuteCodeFixerAsync(CodeModeWorkflowState state, int iteration, bool isRuntimeFix)
         {
+            var stopwatch = Stopwatch.StartNew();
             var agentName = isRuntimeFix ? $"Code Fixer Agent for Runtime Errors (Iteration {iteration})" : $"Code Fixer Agent (Iteration {iteration})";
             
             _logger.LogDebug("Engaging Code Fixer Agent... Iteration {Iteration}", iteration);
@@ -502,14 +523,17 @@ namespace AgentMesh.Application.Workflows
             state.GeneratedCode = codeFixerOutput.FixedCode;
             state.CodeFixerIterationCount++;
             state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd(agentName, new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "FixedCode", state.GeneratedCode }
-            });
+                { "FixedCode", state.GeneratedCode },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd(agentName, notifyDictionary);
         }
 
         private async Task<bool> ExecuteJSSandboxAsync(CodeModeWorkflowState state, bool isReexecution)
         {
+            var stopwatch = Stopwatch.StartNew();
             var stepName = isReexecution ? "JS Sandbox Executor (Re-execution)" : "JS Sandbox Executor";
             var logMessage = isReexecution ? "Re-executing JS Sandbox Executor after runtime fix..." : "Engaging JS Sandbox Executor...";
 
@@ -528,10 +552,12 @@ namespace AgentMesh.Application.Workflows
                 });
                 state.SandboxResult = executionOutput.Result;
                 state.CodeExecutionResultType = SandboxResultType.Success;
-                await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, new Dictionary<string, string>
+                var notifyDictionary = new Dictionary<string, string>
                 {
-                    { "Result", state.SandboxResult }
-                });
+                    { "Result", state.SandboxResult },
+                    { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+                };
+                await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, notifyDictionary);
             }
             catch (CodeSandboxCallException ex)
             {
@@ -543,20 +569,24 @@ namespace AgentMesh.Application.Workflows
                     _ => SandboxResultType.ApplicationError
                 };
                 sandBoxError = true;
-                await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, new Dictionary<string, string>
+                var notifyDictionary = new Dictionary<string, string>
                 {
-                    { "Error", state.SandboxResult }
-                });
+                    { "Error", state.SandboxResult },
+                    { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+                };
+                await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, notifyDictionary);
             }
             catch (Exception ex)
             {
                 state.SandboxResult = ex.Message;
                 state.CodeExecutionResultType = SandboxResultType.ApplicationError;
                 sandBoxError = true;
-                await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, new Dictionary<string, string>
+                var notifyDictionary = new Dictionary<string, string>
                 {
-                    { "Error", state.SandboxResult }
-                });
+                    { "Error", state.SandboxResult },
+                    { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+                };
+                await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, notifyDictionary);
             }
 
             return sandBoxError;
@@ -564,6 +594,7 @@ namespace AgentMesh.Application.Workflows
 
         private async Task<string> ExecuteCodeExecutionFailuresDetectorAsync(CodeModeWorkflowState state, int iteration)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Code Execution Failures Detector Agent... Iteration {Iteration}", iteration);
             await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Execution Failures Detector Agent (Iteration {iteration})", new Dictionary<string, string>
             {
@@ -578,16 +609,19 @@ namespace AgentMesh.Application.Workflows
             });
             state.CodeExecutionFailuresDetectorIterationCount++;
             state.AddTokenUsage(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, detectorOutput.TokenCount, detectorOutput.InputTokenCount, detectorOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Execution Failures Detector Agent (Iteration {iteration})", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "Analysis", detectorOutput.Analysis }
-            });
+                { "Analysis", detectorOutput.Analysis },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Execution Failures Detector Agent (Iteration {iteration})", notifyDictionary);
 
             return detectorOutput.Analysis;
         }
 
         private async Task ExecuteCodeFixerForRuntimeErrorsAsync(CodeModeWorkflowState state, string analysis, int iteration)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Code Fixer Agent for runtime errors... Iteration {Iteration}", iteration);
             await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", new Dictionary<string, string>
             {
@@ -602,14 +636,17 @@ namespace AgentMesh.Application.Workflows
             });
             state.GeneratedCode = codeFixerOutput.FixedCode;
             state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "FixedCode", state.GeneratedCode }
-            });
+                { "FixedCode", state.GeneratedCode },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", notifyDictionary);
         }
 
         private async Task ExecuteResultsPresenterAsync(CodeModeWorkflowState state, bool sandBoxError)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Results Presenter Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
             {
@@ -624,15 +661,18 @@ namespace AgentMesh.Application.Workflows
             });
             state.PresenterOutput = resultsPresenterOutput.Content;
             state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Results Presenter Agent", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "Content", state.PresenterOutput }
-            });
+                { "Content", state.PresenterOutput },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Results Presenter Agent", notifyDictionary);
         }
 
      
         private async Task ExecuteBusinessAdvisorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Business Advisor Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
             {
@@ -649,10 +689,12 @@ namespace AgentMesh.Application.Workflows
             }, cancellationToken);
             state.BusinessAdvisorContent = baOutput.Content;
             state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Advisor Agent", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "Content", state.BusinessAdvisorContent }
-            });
+                { "Content", state.BusinessAdvisorContent },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Advisor Agent", notifyDictionary);
         }
 
         private static string SerializeDocumentationForBusinessAnalyst(IEnumerable<KnowledgeBaseDocumentContent> documents) => SerializeDocumentationFor(documents, DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE);
@@ -667,6 +709,7 @@ namespace AgentMesh.Application.Workflows
 
         private async Task CompleteWorkflowAsync(CodeModeWorkflowState state, string? data = null)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Personal Assistant Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Personal Assistant Agent", new Dictionary<string, string>
             {
@@ -681,14 +724,17 @@ namespace AgentMesh.Application.Workflows
             });
             state.FinalAnswer = personalAssistantOutput.Response;
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Personal Assistant Agent", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "Response", state.FinalAnswer }
-            });
+                { "Response", state.FinalAnswer },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Personal Assistant Agent", notifyDictionary);
         }
 
         private async Task<bool> ExecuteRelevantFactsEvaluatorAsync(CodeModeWorkflowState state)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Relevant Facts Evaluator Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Relevant Facts Evaluator Agent", new Dictionary<string, string>
             {
@@ -703,16 +749,21 @@ namespace AgentMesh.Application.Workflows
             });
 
             state.AddTokenUsage(RelevantFactsEvaluatorAgentConfiguration.AgentName, output.TokenCount, output.InputTokenCount, output.OutputTokenCount);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Relevant Facts Evaluator Agent", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "IsWorthSaving", output.IsWorthSaving.ToString() }
-            });
+                { "IsWorthSaving", output.IsWorthSaving.ToString() },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Relevant Facts Evaluator Agent", notifyDictionary);
 
             return output.IsWorthSaving;
         }
 
+        private static string GetElapsedTime(Stopwatch stopwatch) => $"{stopwatch.ElapsedMilliseconds}ms";
+
         private async Task ExecuteAgentMemorySaverAsync(CodeModeWorkflowState state)
         {
+            var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Agent Memory Saver...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Saver", new Dictionary<string, string>
             {
@@ -726,10 +777,12 @@ namespace AgentMesh.Application.Workflows
                 ResponseByAssistant = state.FinalAnswer ?? string.Empty
             });
 
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", new Dictionary<string, string>
+            var notifyDictionary = new Dictionary<string, string>
             {
-                { "Status", "Memory saved successfully" }
-            });
+                { "Status", "Memory saved successfully" },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", notifyDictionary);
         }
 
 
