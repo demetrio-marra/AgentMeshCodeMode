@@ -117,56 +117,9 @@ namespace AgentMesh.Application.Workflows
                 goto CompleteWorkflow;
             }
 
-            // now if we have knowledge base documents after filtering, we can fetch the whole documents content and store it in the state for later use
             if (state.RelevantKnowledgeBaseFileNames.Any())
-            {             
-                var fetchedFilesContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
-                {
-                    FilePaths = state.RelevantKnowledgeBaseFileNames
-                });
-
-                // additional feature
-                if (AUTOMATICALLY_FETCH_RELATED_DOCUMENTATION)
-                {
-                    var relatedDocs = new List<string>();
-                    foreach (var mainDoc in fetchedFilesContent.Results)
-                    {
-                        // find words within double square brackets [[...]] in the mainDoc.Content using regex
-                        var matches = System.Text.RegularExpressions.Regex.Matches(mainDoc.Content, @"\[\[(.*?)\]\]");
-                        foreach (System.Text.RegularExpressions.Match match in matches)
-                        {
-                            var relatedDocName = match.Groups[1].Value;
-                            if (!relatedDocs.Contains(relatedDocName))
-                            {
-                                relatedDocs.Add(relatedDocName);
-                            }
-                        }
-                    }
-
-                    // distinct on relatedDocs
-                    relatedDocs = relatedDocs.Distinct().ToList();
-
-                    // avoid extracting already fetched docs
-                    relatedDocs = relatedDocs.Except(fetchedFilesContent.Results.Select(r => r.File)).ToList();
-
-                    // fetch again the content of the related docs and add them to the fetchedFilesContent.Results
-                    if (relatedDocs.Any())
-                    {
-                        var relatedDocsContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
-                        {
-                            FilePaths = relatedDocs
-                        });
-                        fetchedFilesContent.Results = fetchedFilesContent.Results.Concat(relatedDocsContent.Results);
-                    }
-                }
-
-                state.KnowledgeBaseDocumentsContent = state.KnowledgeBaseQueryResult
-                    .Join(fetchedFilesContent.Results, kb => kb.File, fc => fc.File, (kb, fc) => new { kb, fc })
-                    .Select(kb => new KnowledgeBaseDocumentContent
-                    {
-                        File = kb.kb.File,
-                        Content = kb.fc.Content
-                    }).ToList();
+            {
+                await ExecuteKnowledgeBaseDocumentsExtractorAsync(state);
             }
 
             if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
@@ -251,6 +204,74 @@ namespace AgentMesh.Application.Workflows
             };
         }
 
+        private async Task ExecuteKnowledgeBaseDocumentsExtractorAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Knowledge Base Documents Extractor Service...");
+
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Documents Extractor Service", new Dictionary<string, string>
+            {
+                { "Documents", string.Join("\n", state.RelevantKnowledgeBaseFileNames.Select(s => $"- {s}")) }
+            });
+
+            var fetchedFilesContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
+            {
+                FilePaths = state.RelevantKnowledgeBaseFileNames
+            });
+
+            // additional feature
+            if (AUTOMATICALLY_FETCH_RELATED_DOCUMENTATION)
+            {
+                var relatedDocs = new List<string>();
+                foreach (var mainDoc in fetchedFilesContent.Results)
+                {
+                    // find words within double square brackets [[...]] in the mainDoc.Content using regex
+                    var matches = System.Text.RegularExpressions.Regex.Matches(mainDoc.Content, @"\[\[(.*?)\]\]");
+                    foreach (System.Text.RegularExpressions.Match match in matches)
+                    {
+                        var relatedDocName = match.Groups[1].Value;
+                        if (!relatedDocs.Contains(relatedDocName))
+                        {
+                            relatedDocs.Add(relatedDocName);
+                        }
+                    }
+                }
+
+                // distinct on relatedDocs
+                relatedDocs = relatedDocs.Distinct().ToList();
+
+                // avoid extracting already fetched docs
+                relatedDocs = relatedDocs.Except(fetchedFilesContent.Results.Select(r => r.File)).ToList();
+
+                // fetch again the content of the related docs and add them to the fetchedFilesContent.Results
+                if (relatedDocs.Any())
+                {
+                    var relatedDocsContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
+                    {
+                        FilePaths = relatedDocs
+                    });
+                    fetchedFilesContent.Results = fetchedFilesContent.Results.Concat(relatedDocsContent.Results);
+                }
+            }
+
+            state.KnowledgeBaseDocumentsContent = state.KnowledgeBaseQueryResult
+                .Join(fetchedFilesContent.Results, kb => kb.File, fc => fc.File, (kb, fc) => new { kb, fc })
+                .Select(kb => new KnowledgeBaseDocumentContent
+                {
+                    File = kb.kb.File,
+                    Content = kb.fc.Content
+                }).ToList();
+
+            state.AddStepUsage("KB Documents Extractor Service", stopwatch.Elapsed, false);
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "Total files extracted", state.KnowledgeBaseDocumentsContent.Count().ToString() },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Documents Extractor Service", notifyDictionary);
+        }
+
         private async Task ExecuteIntentExtractorAsync(CodeModeWorkflowState state, IEnumerable<ContextMessage> chatHistory)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -319,8 +340,8 @@ namespace AgentMesh.Application.Workflows
         private async Task ExecuteKnowledgeBaseServiceSearchAsync(CodeModeWorkflowState state)
         {
             var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Knowledge Base Service (Full Search)...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Knowledge Base Service (Full Search)", new Dictionary<string, string>
+            _logger.LogDebug("Engaging Knowledge Base Service...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Search Service", new Dictionary<string, string>
             {
                 { "MissingKnowledgeBaseEntries", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")) }
             });
@@ -346,14 +367,14 @@ namespace AgentMesh.Application.Workflows
                 Summary = r.Summary,
                 Relevance = r.Relevance
             }).ToList();
-            state.AddStepUsage("Knowledge Base Service (Full Search)", stopwatch.Elapsed, false);
+            state.AddStepUsage("KB Search Service", stopwatch.Elapsed, false);
 
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "ExtractedKnowledgeBaseEntries", string.Join("\n", state.KnowledgeBaseQueryResult.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Service (Full Search)", notifyDictionary);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Search Service", notifyDictionary);
         }
 
 
