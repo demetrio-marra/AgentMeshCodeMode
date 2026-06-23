@@ -11,7 +11,7 @@ namespace AgentMesh.Application.Models
         public CodeModeWorkflowState(string userQuestion, IEnumerable<ContextMessage> contextMessages)
         {
             OriginalUserRequest = userQuestion;
-            TokenUsageEntries = new List<AgentTokenUsageEntry>();
+            TokenUsageEntries = new List<WorkflowStepUsageEntry>();
             CodeIssues = new List<string>();
             InitialContextMessages = contextMessages.ToList();
         }
@@ -37,7 +37,7 @@ namespace AgentMesh.Application.Models
         public SandboxResultType CodeExecutionResultType { get; set; }
         public string? PresenterOutput { get; set; }
         public string? FinalAnswer { get; set; }
-        public List<AgentTokenUsageEntry> TokenUsageEntries { get; set; }
+        public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; }
         public IEnumerable<AgentMemoryItem> ExtractedAgentMemories { get; set; } = Enumerable.Empty<AgentMemoryItem>();
         public IEnumerable<string> RelevantKnowledgeBaseFileNames { get; set; } = [];
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
@@ -46,13 +46,30 @@ namespace AgentMesh.Application.Models
 
         public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseDocumentsContent { get; set; } = [];
 
-        public void AddTokenUsage(string agentName, int tokenCount, int inputTokenCount, int outputTokenCount)
+        public void AddTokenUsage(string agentName, int tokenCount, int inputTokenCount, int outputTokenCount, TimeSpan? elapsed = null, string? stepName = null)
         {
-            TokenUsageEntries.Add(new AgentTokenUsageEntry
+            TokenUsageEntries.Add(new WorkflowStepUsageEntry
             {
-                AgentName = agentName,
-                InputTokens = inputTokenCount,
-                OutputTokens = outputTokenCount
+                StepName = stepName ?? agentName,
+                Elapsed = elapsed ?? TimeSpan.Zero,
+                IsAgentic = true,
+                TokensUsage = new AgentTokenUsageEntry
+                {
+                    AgentName = agentName,
+                    InputTokens = inputTokenCount,
+                    OutputTokens = outputTokenCount
+                }
+            });
+        }
+
+        public void AddStepUsage(string stepName, TimeSpan elapsed, bool isAgentic, AgentTokenUsageEntry? tokensUsage = null)
+        {
+            TokenUsageEntries.Add(new WorkflowStepUsageEntry
+            {
+                StepName = stepName,
+                Elapsed = elapsed,
+                IsAgentic = isAgentic,
+                TokensUsage = tokensUsage
             });
         }
     }

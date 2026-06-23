@@ -91,13 +91,13 @@ namespace AgentMesh
                 var currentConversation = conversationContext.Conversation.ToList();
                 var result = await _workflow.ExecuteAsync(question!, conversationContext.Conversation.ToList());
 
-                var inputMessageTokens = result.TokenUsageEntries
-                    .Where(e => e.AgentName == _workflow.GetIngressExecutorName())
-                    .Sum(e => e.InputTokens);
+                var inputMessageTokens = result.UsageStatistics
+                    .Where(e => e.IsAgentic && e.TokensUsage?.AgentName == _workflow.GetIngressExecutorName())
+                    .Sum(e => e.TokensUsage?.InputTokens ?? 0);
 
-                var outputMessageTokens = result.TokenUsageEntries
-                    .Where(e => e.AgentName == _workflow.GetEgressExecutorName())
-                    .Sum(e => e.OutputTokens);
+                var outputMessageTokens = result.UsageStatistics
+                    .Where(e => e.IsAgentic && e.TokensUsage?.AgentName == _workflow.GetEgressExecutorName())
+                    .Sum(e => e.TokensUsage?.OutputTokens ?? 0);
 
                 var answerDateTime = DateTime.UtcNow;
 
@@ -176,7 +176,9 @@ namespace AgentMesh
                         { "SummaryLanguage", summarizerInput.SummaryLanguage ?? string.Empty }
                     });
 
+                    var summarizationStopwatch = System.Diagnostics.Stopwatch.StartNew();
                     var summarizationResult = await _conversationSummarizerAgent.ExecuteAsync(summarizerInput);
+                    summarizationStopwatch.Stop();
 
                     await _workflowProgressNotifier.NotifyWorkflowStepEnd("Conversation Summarizer Agent", new Dictionary<string, string>
                     {
@@ -189,17 +191,23 @@ namespace AgentMesh
 
                     var afterCountOfMessages = conversationContext.Conversation.Count();
 
-                    var summarizationTokenUsageEntry = new AgentTokenUsageEntry
+                    var summarizationTokenUsageEntry = new WorkflowStepUsageEntry
                     {
-                        AgentName = ConversationSummarizerAgent.AgentName,
-                        InputTokens = summarizationResult.InputTokenCount,
-                        OutputTokens = summarizationResult.OutputTokenCount
+                        StepName = "Conversation Summarizer Agent",
+                        Elapsed = summarizationStopwatch.Elapsed,
+                        IsAgentic = true,
+                        TokensUsage = new AgentTokenUsageEntry
+                        {
+                            AgentName = ConversationSummarizerAgent.AgentName,
+                            InputTokens = summarizationResult.InputTokenCount,
+                            OutputTokens = summarizationResult.OutputTokenCount
+                        }
                     };
                     
-                    result.TokenUsageEntries.Add(summarizationTokenUsageEntry);
+                    result.UsageStatistics.Add(summarizationTokenUsageEntry);
                 }
 
-                ConsoleHelper.PrintTokenUsageSummary(result.TokenUsageEntries, agentInputCosts, agentOutputCosts);
+                ConsoleHelper.PrintTokenUsageSummary(result.UsageStatistics, agentInputCosts, agentOutputCosts);
             }
         }
 

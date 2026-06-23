@@ -247,7 +247,7 @@ namespace AgentMesh.Application.Workflows
             return new WorkflowResult
             {
                 Response = state.FinalAnswer!,
-                TokenUsageEntries = state.TokenUsageEntries
+                UsageStatistics = state.TokenUsageEntries
             };
         }
 
@@ -271,7 +271,7 @@ namespace AgentMesh.Application.Workflows
             state.MissingPastMemories = intentExtractorOutput.MissingPastMemories;
             state.MissingKnowledgeBaseSearchEntries = intentExtractorOutput.MissingKnowledgeBaseSearchEntries;
 
-            state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.TokenCount, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount);
+            state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.TokenCount, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount, stopwatch.Elapsed, "Intent Extractor Agent");
 
             var notifyDictionary = new Dictionary<string, string>
             {
@@ -305,6 +305,7 @@ namespace AgentMesh.Application.Workflows
             });
 
             state.ExtractedAgentMemories = brcOutput.Items.ToList();
+            state.AddStepUsage("Agent Memory Service", stopwatch.Elapsed, false);
 
             var notifyDictionary = new Dictionary<string, string>
             {
@@ -345,6 +346,7 @@ namespace AgentMesh.Application.Workflows
                 Summary = r.Summary,
                 Relevance = r.Relevance
             }).ToList();
+            state.AddStepUsage("Knowledge Base Service (Full Search)", stopwatch.Elapsed, false);
 
             var notifyDictionary = new Dictionary<string, string>
             {
@@ -399,7 +401,7 @@ namespace AgentMesh.Application.Workflows
 
                 state.RelevantKnowledgeBaseFileNames = filteredFileNames;
             }
-            state.AddTokenUsage(ContextAnalyzerAgentConfiguration.AgentName, contextAnalyzerOutput.TokenCount, contextAnalyzerOutput.InputTokenCount, contextAnalyzerOutput.OutputTokenCount);
+            state.AddTokenUsage(ContextAnalyzerAgentConfiguration.AgentName, contextAnalyzerOutput.TokenCount, contextAnalyzerOutput.InputTokenCount, contextAnalyzerOutput.OutputTokenCount, stopwatch.Elapsed, "Context Analyzer Agent");
 
             var contextAnalyzerOutputLogEntries = new Dictionary<string, string>
             {
@@ -435,7 +437,7 @@ namespace AgentMesh.Application.Workflows
             }, cancellationToken);
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = brcOutput.BusinessRequirements;
-            state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount);
+            state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount, stopwatch.Elapsed, "Business Requirements Creator Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "BusinessRequirements", brcOutput.BusinessRequirements },
@@ -461,7 +463,7 @@ namespace AgentMesh.Application.Workflows
                 ApiDocumentation = serializedDocumentation
             });
             state.GeneratedCode = coderAgentOutput.CodeToRun;
-            state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount);
+            state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount, stopwatch.Elapsed, "Coder Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "CodeToRun", state.GeneratedCode },
@@ -493,7 +495,7 @@ namespace AgentMesh.Application.Workflows
             {
                 state.CodeIssues.Clear();
             }
-            state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, staticAnalyzerOutput.TokenCount, staticAnalyzerOutput.InputTokenCount, staticAnalyzerOutput.OutputTokenCount);
+            state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, staticAnalyzerOutput.TokenCount, staticAnalyzerOutput.InputTokenCount, staticAnalyzerOutput.OutputTokenCount, stopwatch.Elapsed, "Code Static Analyzer Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "IsCodeValid", state.IsCodeValid.ToString() },
@@ -522,7 +524,7 @@ namespace AgentMesh.Application.Workflows
             });
             state.GeneratedCode = codeFixerOutput.FixedCode;
             state.CodeFixerIterationCount++;
-            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
+            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, agentName);
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "FixedCode", state.GeneratedCode },
@@ -589,6 +591,8 @@ namespace AgentMesh.Application.Workflows
                 await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, notifyDictionary);
             }
 
+            state.AddStepUsage(stepName, stopwatch.Elapsed, false);
+
             return sandBoxError;
         }
 
@@ -608,7 +612,7 @@ namespace AgentMesh.Application.Workflows
                 ExecutionResult = state.SandboxResult!
             });
             state.CodeExecutionFailuresDetectorIterationCount++;
-            state.AddTokenUsage(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, detectorOutput.TokenCount, detectorOutput.InputTokenCount, detectorOutput.OutputTokenCount);
+            state.AddTokenUsage(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, detectorOutput.TokenCount, detectorOutput.InputTokenCount, detectorOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Execution Failures Detector Agent (Iteration {iteration})");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "Analysis", detectorOutput.Analysis },
@@ -635,7 +639,7 @@ namespace AgentMesh.Application.Workflows
                 Issues = new[] { analysis }
             });
             state.GeneratedCode = codeFixerOutput.FixedCode;
-            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount);
+            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Fixer Agent for Runtime Errors (Iteration {iteration})");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "FixedCode", state.GeneratedCode },
@@ -660,7 +664,7 @@ namespace AgentMesh.Application.Workflows
                 EnrichedUserRequest = state.EnrichedUserRequest
             });
             state.PresenterOutput = resultsPresenterOutput.Content;
-            state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount);
+            state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount, stopwatch.Elapsed, "Results Presenter Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "Content", state.PresenterOutput },
@@ -688,7 +692,7 @@ namespace AgentMesh.Application.Workflows
                 Documentation = serializedDocumentation
             }, cancellationToken);
             state.BusinessAdvisorContent = baOutput.Content;
-            state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount);
+            state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount, stopwatch.Elapsed, "Business Advisor Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "Content", state.BusinessAdvisorContent },
@@ -723,7 +727,7 @@ namespace AgentMesh.Application.Workflows
                 EnrichedUserRequest = state.EnrichedUserRequest
             });
             state.FinalAnswer = personalAssistantOutput.Response;
-            state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount);
+            state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount, stopwatch.Elapsed, "Personal Assistant Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "Response", state.FinalAnswer },
@@ -748,7 +752,7 @@ namespace AgentMesh.Application.Workflows
                 FinalAnswer = state.FinalAnswer ?? string.Empty
             });
 
-            state.AddTokenUsage(RelevantFactsEvaluatorAgentConfiguration.AgentName, output.TokenCount, output.InputTokenCount, output.OutputTokenCount);
+            state.AddTokenUsage(RelevantFactsEvaluatorAgentConfiguration.AgentName, output.TokenCount, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Relevant Facts Evaluator Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "IsWorthSaving", output.IsWorthSaving.ToString() },
@@ -782,6 +786,7 @@ namespace AgentMesh.Application.Workflows
                 { "Status", "Memory saved successfully" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
+            state.AddStepUsage("Agent Memory Saver", stopwatch.Elapsed, false);
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", notifyDictionary);
         }
 
