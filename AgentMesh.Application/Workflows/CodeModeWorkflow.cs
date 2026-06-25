@@ -1,5 +1,6 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
@@ -12,6 +13,7 @@ using AgentMesh.Models.Coder;
 using AgentMesh.Models.CodeSandbox;
 using AgentMesh.Models.CodeStaticAnalyzer;
 using AgentMesh.Models.ContextAnalyzer;
+using AgentMesh.Models.Documentation;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.PersonalAssistant;
 using AgentMesh.Models.ResultsPresenter;
@@ -38,6 +40,7 @@ namespace AgentMesh.Application.Workflows
 
         private readonly IBusinessRequirementsCreatorAgent _businessRequirementsCreatorAgent;
         private readonly IBusinessAdvisorAgent _businessAdvisorAgent;
+        private readonly IDocumentationAgent _documentationAgent;
         private readonly ICoderAgent _coderAgent;
         private readonly ICodeStaticAnalyzerAgent _codeStaticAnalyzer;
         private readonly ICodeFixerAgent _codeFixerAgent;
@@ -57,6 +60,7 @@ namespace AgentMesh.Application.Workflows
             IWorkflowProgressNotifier workflowProgressNotifier,
             IBusinessRequirementsCreatorAgent businessRequirementsCreatorAgent,
             IBusinessAdvisorAgent businessAdvisorAgent,
+            IDocumentationAgent documentationAgent,
             ICoderAgent coderAgent,
             ICodeStaticAnalyzerAgent codeStaticAnalyzer,
             ICodeFixerAgent codeFixerAgent,
@@ -76,6 +80,7 @@ namespace AgentMesh.Application.Workflows
             _workflowProgressNotifier = workflowProgressNotifier;
             _businessRequirementsCreatorAgent = businessRequirementsCreatorAgent;
             _businessAdvisorAgent = businessAdvisorAgent;
+            _documentationAgent = documentationAgent;
             _coderAgent = coderAgent;
             _codeStaticAnalyzer = codeStaticAnalyzer;
             _codeFixerAgent = codeFixerAgent;
@@ -171,10 +176,16 @@ namespace AgentMesh.Application.Workflows
                 }
                 goto WorkflowEnd;
             }
-            else if (state.UserIntentCategoryValue == UserIntentCategoryValues.Documentation)
+            else if (state.UserIntentCategoryValue == UserIntentCategoryValues.BusinessAdvisor)
             {
                 await ExecuteBusinessAdvisorAsync(state);
                 await CompleteWorkflowAsync(state, state.BusinessAdvisorContent);
+                goto WorkflowEnd;
+            }
+            else if (state.UserIntentCategoryValue == UserIntentCategoryValues.Documentation)
+            {
+                await ExecuteDocumentationAsync(state);
+                await CompleteWorkflowAsync(state, state.DocumentationContent);
                 goto WorkflowEnd;
             }
             else
@@ -725,6 +736,33 @@ namespace AgentMesh.Application.Workflows
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Advisor Agent", notifyDictionary);
+        }
+
+        private async Task ExecuteDocumentationAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Documentation Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Documentation Agent", new Dictionary<string, string>
+            {
+                { "EnrichedUserRequest", state.EnrichedUserRequest },
+                { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
+            });
+
+            var serializedDocumentation = SerializeDocumentationForBusinessAnalyst(state.KnowledgeBaseDocumentsContent);
+
+            var output = await _documentationAgent.ExecuteAsync(new DocumentationAgentInput
+            {
+                EnrichedUserRequest = state.EnrichedUserRequest,
+                Documentation = serializedDocumentation
+            }, cancellationToken);
+            state.DocumentationContent = output.Content;
+            state.AddTokenUsage(DocumentationAgentConfiguration.AgentName, output.TokenCount, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Documentation Agent");
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "Content", state.DocumentationContent },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Documentation Agent", notifyDictionary);
         }
 
         private static string SerializeDocumentationForBusinessAnalyst(IEnumerable<KnowledgeBaseDocumentContent> documents) => SerializeDocumentationFor(documents, DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE);

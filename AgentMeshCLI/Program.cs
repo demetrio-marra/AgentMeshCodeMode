@@ -130,6 +130,29 @@ namespace AgentMesh
 
             services.AddSingleton<IBusinessAdvisorAgent, BusinessAdvisorAgent>();
 
+            // Documentation agent config and client
+            services
+                .AddOptions<DocumentationAgentConfiguration>()
+                .Bind(configuration.GetSection(DocumentationAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<DocumentationAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(DocumentationAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<DocumentationAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IDocumentationAgent, DocumentationAgent>();
+
             // Coder agent config and client
             services
                 .AddOptions<CoderAgentConfiguration>()

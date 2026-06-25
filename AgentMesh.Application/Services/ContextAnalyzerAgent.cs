@@ -65,7 +65,7 @@ namespace AgentMesh.Application.Services
                 return new ContextAnalyzerAgentOutput
                 {
                     CondensedUserIntent = responseDTO.CondensedUserIntent,
-                    UserIntentCategory = Enum.Parse<UserIntentCategoryValues>(responseDTO.UserIntentCategory, true),
+                    UserIntentCategory = ParseUserIntentCategory(responseDTO.UserIntentCategory),
                     FilteredKnowledgeBaseDocuments = responseDTO.FilteredKnowledgeBaseDocuments.Select(u => new FilteredKnowledgeBaseItem
                     {
                         Title = u.Title,
@@ -77,6 +77,16 @@ namespace AgentMesh.Application.Services
             {
                 throw new BadStructuredResponseException(rawResponseText, "Failed to parse the model's response.", ex);
             }
+        }
+
+        private static UserIntentCategoryValues ParseUserIntentCategory(string userIntentCategory)
+        {
+            if (Enum.TryParse<UserIntentCategoryValues>(userIntentCategory, true, out var parsedCategory))
+            {
+                return parsedCategory;
+            }
+
+            throw new BadStructuredResponseException(userIntentCategory, $"Unknown user intent category: {userIntentCategory}");
         }
 
         private class ContextAnalyzerAgentOutputDTO

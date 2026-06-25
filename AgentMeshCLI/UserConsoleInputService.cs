@@ -26,6 +26,7 @@ namespace AgentMesh
         private readonly ContextAnalyzerAgentConfiguration _contextAnalyzerConfiguration;
         private readonly SESJSSandboxConfiguration _sesJsSandboxConfiguration;
         private readonly UserConfiguration _userConfiguration;
+        private readonly DocumentationAgentConfiguration _documentationAgentConfiguration;
         private readonly IConversationSummarizerAgent _conversationSummarizerAgent;
 
         public UserConsoleInputService(
@@ -44,6 +45,7 @@ namespace AgentMesh
             ContextAnalyzerAgentConfiguration contextAnalyzerConfiguration,
             SESJSSandboxConfiguration sESJSSandboxConfiguration,
             UserConfiguration userConfiguration,
+            DocumentationAgentConfiguration documentationAgentConfiguration,
             IConversationSummarizerAgent conversationSummarizerAgent)
         {
             _workflow = workflow;
@@ -61,6 +63,7 @@ namespace AgentMesh
             _contextAnalyzerConfiguration = contextAnalyzerConfiguration;
             _sesJsSandboxConfiguration = sESJSSandboxConfiguration;
             _userConfiguration = userConfiguration;
+            _documentationAgentConfiguration = documentationAgentConfiguration;
             _conversationSummarizerAgent = conversationSummarizerAgent;
         }
 
@@ -138,7 +141,8 @@ namespace AgentMesh
                     { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionInputTokens },
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionInputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens },
-                    { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionInputTokens }
+                    { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
+                    { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens }
                 };
 
                 var agentOutputCosts = new Dictionary<string, decimal>
@@ -152,7 +156,8 @@ namespace AgentMesh
                     { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionOutputTokens },
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionOutputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
-                    { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionOutputTokens }
+                    { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionOutputTokens },
+                    { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
                 ConsoleHelper.WriteLineWithColor($"\n\nConversation status: Count of messages {conversationContext.Conversation.Count()}. Count of tokens: {conversationContext.TokensCount}\n", ConsoleColor.Gray);
@@ -225,6 +230,7 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Conversation Summarizer", ConversationSummarizerAgent.AgentName, _conversationSummarizerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgent.AgentName, _contextAnalyzerConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Documentation", DocumentationAgent.AgentName, _documentationAgentConfiguration);
             Console.WriteLine();
         }
     }

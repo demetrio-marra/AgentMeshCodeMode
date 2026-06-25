@@ -13,6 +13,7 @@ namespace AgentMesh.Models.ContextAnalyzer
         public enum UserIntentCategoryValues
         {
             Other,
+            BusinessAdvisor,
             Documentation,
             TaskExecution
         }
