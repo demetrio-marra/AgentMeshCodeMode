@@ -78,3 +78,4 @@ Output the language of the user.
 - keep the user intent unchanged
 - do not ask for Past Memories upon user's greeting
 - the content of `missingKnowledgeBaseSearchEntries` MUST be in Italian ONLY!
+- if the user asks about Assistant capabilities, **ASSUME** it is talking about the system's capabilities and treat it as a business-related topic

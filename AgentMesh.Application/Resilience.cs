@@ -12,6 +12,7 @@ namespace AgentMesh.Application
                 .Handle<BadStructuredResponseException>()
                 .Or<EmptyAgentResponseException>()
                 .Or<Exception>(ex => ex.GetType().Name == "ClientResultException" && ex.Message.Contains("Tool choice is none, but model called a tool"))
+                .Or<Exception>(ex => ex.GetType().Name == "ClientResultException" && ex.Message.Contains("Service unavailable"))
                 .WaitAndRetryAsync(
                     retryCount: 2,
                     sleepDurationProvider: _ => TimeSpan.FromSeconds(5),

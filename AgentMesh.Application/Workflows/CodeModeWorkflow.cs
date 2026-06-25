@@ -30,7 +30,7 @@ namespace AgentMesh.Application.Workflows
     {
         private const string DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE = "Documentation";
         private const string DOCUMENTATION_FOR_DEVELOPER_SECTIONTITLE = "Technical reference";
-        private const string DOCUMENTATION_COLLECTION_NAME = "documentation";
+        private const string DOCUMENTATION_COLLECTION_NAME = "apis";
         private const bool AUTOMATICALLY_FETCH_RELATED_DOCUMENTATION = true;
 
         private readonly ILogger<CodeModeWorkflow> _logger;
@@ -358,7 +358,7 @@ namespace AgentMesh.Application.Workflows
                 Queries = state.MissingKnowledgeBaseSearchEntries.Select(entry => new KnowledgeBaseQueryInputItem
                 {
                     Query = entry.Query,
-                    SearchType = entry.Query == "lex" ? AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.Keyword : entry.Query == "vec" ? AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.Semantic : AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.HypotethicalDocument
+                    SearchType = entry.Type == "lex" ? KnowledgeBaseQuerySearchType.Keyword : entry.Type == "vec" ? KnowledgeBaseQuerySearchType.Semantic : KnowledgeBaseQuerySearchType.HypotethicalDocument
                 }).ToList()
             };
 
