@@ -33,7 +33,7 @@ namespace AgentMesh.Application.Services
 
             var stopwatch = Stopwatch.StartNew();
 
-            var result = await Resilience.ExecuteWithRetryAsync(async () =>
+            var result = await Resilience.AgentRunWithRetryAsync(async () =>
             {
                 var response = await _openAIClient.GenerateResponseAsync(inputMessages, cancellationToken);
                 var responseText = response.Text?.Trim() ?? string.Empty;

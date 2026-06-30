@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using AgentMesh.Application;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Infrastructure.AgentMemory.Configuration;
 using AgentMesh.Infrastructure.AgentMemory.Models;
@@ -45,11 +46,14 @@ namespace AgentMesh.Infrastructure.AgentMemory.Services
                 UserId = userId
             };
 
-            var response = await _httpClient.PostAsJsonAsync(
-                "/memories",
-                request,
-                _jsonOptions,
-                cancellationToken);
+            var response = await Resilience.SendWithRetryAsync(
+                async () => await _httpClient.PostAsJsonAsync(
+                    "/memories",
+                    request,
+                    _jsonOptions,
+                    cancellationToken),
+                "AddChatInteraction",
+                null);
 
             response.EnsureSuccessStatusCode();
         }
@@ -65,11 +69,14 @@ namespace AgentMesh.Infrastructure.AgentMemory.Services
                 UserId = userId
             };
 
-            var response = await _httpClient.PostAsJsonAsync(
-                "/search",
-                searchRequest,
-                _jsonOptions,
-                cancellationToken);
+            var response = await Resilience.SendWithRetryAsync(
+                async () => await _httpClient.PostAsJsonAsync(
+                    "/search",
+                    searchRequest,
+                    _jsonOptions,
+                    cancellationToken),
+                "Query",
+                null);
 
             response.EnsureSuccessStatusCode();
 
