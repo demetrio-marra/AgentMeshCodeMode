@@ -58,7 +58,17 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         /// Invokes the MCP <c>query</c> tool.
         /// </summary>
         public async Task<QueryToolResponse> QueryAsync(QueryToolRequest request, CancellationToken cancellationToken = default)
-            => await CallToolAsync<QueryToolRequest, QueryToolResponse>("query", request, cancellationToken).ConfigureAwait(false);
+        {
+            request.Searches.ForEach(search =>
+            {
+                if (search.Type == "hyde")
+                {
+                    search.Query = ReplaceNewLinesWithSpaces(search.Query);
+                }
+            });
+
+            return await CallToolAsync<QueryToolRequest, QueryToolResponse>("query", request, cancellationToken).ConfigureAwait(false);
+        }
 
         /// <summary>
         /// Invokes the MCP <c>get</c> tool.
@@ -422,6 +432,17 @@ namespace AgentMesh.Infrastructure.SemanticSearch
             }
 
             return "[" + string.Join(", ", listOfItems) + "]";
+        }
+
+        private static string ReplaceNewLinesWithSpaces(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+            return input.Replace(Environment.NewLine, " ", StringComparison.OrdinalIgnoreCase)
+                        .Replace("\n", " ", StringComparison.OrdinalIgnoreCase)
+                        .Replace("\r", " ", StringComparison.OrdinalIgnoreCase);
         }
 
         private string NextId() => Interlocked.Increment(ref _requestId).ToString();
