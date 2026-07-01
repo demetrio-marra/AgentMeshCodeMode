@@ -61,7 +61,7 @@ namespace AgentMesh.Infrastructure.AgentMemory.Services
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task<IEnumerable<AgentMemoryItem>> Query(
+        public async Task<IEnumerable<AgentMemoryQueryResultItem>> Query(
             string userId,
             string query,
             CancellationToken cancellationToken = default)
@@ -89,10 +89,10 @@ namespace AgentMesh.Infrastructure.AgentMemory.Services
 
             if (searchResponse?.Results == null)
             {
-                return Enumerable.Empty<AgentMemoryItem>();
+                return Enumerable.Empty<AgentMemoryQueryResultItem>();
             }
 
-            return searchResponse.Results.Select(r => new AgentMemoryItem
+            return searchResponse.Results.Select(r => new AgentMemoryQueryResultItem
             {
                 Memory = r.Memory,
                 Confidence = r.Score

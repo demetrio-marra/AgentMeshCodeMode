@@ -28,6 +28,6 @@ namespace AgentMesh.Application.Contracts
         /// <param name="query">The search query used to filter memory items.</param>
         /// <param name="cancellationToken">A token to cancel the operation.</param>
         /// <returns>A task representing the asynchronous operation, containing a collection of matching agent memory items.</returns>
-        Task<IEnumerable<AgentMemoryItem>> Query(string userId, string query, CancellationToken cancellationToken = default);
+        Task<IEnumerable<AgentMemoryQueryResultItem>> Query(string userId, string query, CancellationToken cancellationToken = default);
     }
 }

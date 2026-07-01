@@ -43,7 +43,7 @@ namespace AgentMesh.Application.Models
         public string? FinalAnswer { get; set; }
 
         public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; }
-        public IEnumerable<AgentMemoryItem> ExtractedAgentMemories { get; set; } = Enumerable.Empty<AgentMemoryItem>();
+        public IEnumerable<AgentMemoryQueryResultItem> ExtractedAgentMemories { get; set; } = Enumerable.Empty<AgentMemoryQueryResultItem>();
         public IEnumerable<string> RelevantKnowledgeBaseFileNames { get; set; } = [];
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
 

@@ -2,6 +2,6 @@
 {
     public class AgentMemoryQueryResult
     {
-        public IEnumerable<AgentMemoryItem> Results { get; set; } = [];
+        public IEnumerable<AgentMemoryQueryResultItem> Results { get; set; } = [];
     }
 }

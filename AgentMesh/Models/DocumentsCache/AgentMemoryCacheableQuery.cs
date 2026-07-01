@@ -9,7 +9,7 @@
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            return string.Equals(Query, other.Query, StringComparison.Ordinal);
+            return string.Equals(Query, other.Query, StringComparison.OrdinalIgnoreCase);
         }
 
         public override bool Equals(object? obj)
@@ -19,7 +19,7 @@
 
         public override int GetHashCode()
         {
-            return Query.GetHashCode(StringComparison.Ordinal);
+            return Query.GetHashCode(StringComparison.OrdinalIgnoreCase);
         }
 
         public static bool operator ==(AgentMemoryCacheableQuery? left, AgentMemoryCacheableQuery? right)

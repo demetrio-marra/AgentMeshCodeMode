@@ -12,7 +12,7 @@ namespace AgentMesh.Models.DocumentsCache
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            return string.Equals(Query, other.Query, StringComparison.Ordinal)
+            return string.Equals(Query, other.Query, StringComparison.OrdinalIgnoreCase)
                 && SearchType == other.SearchType;
         }
 
@@ -23,7 +23,7 @@ namespace AgentMesh.Models.DocumentsCache
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Query, SearchType);
+            return HashCode.Combine(Query.ToUpperInvariant(), SearchType);
         }
 
         public static bool operator ==(KnowledgeBaseCacheableQuery? left, KnowledgeBaseCacheableQuery? right)

@@ -10,6 +10,6 @@ namespace AgentMesh.Application.Models
         /// <summary>
         /// The list of memory items that match the search query.
         /// </summary>
-        public IEnumerable<AgentMemoryItem> Items { get; set; } = Enumerable.Empty<AgentMemoryItem>();
+        public IEnumerable<AgentMemoryQueryResultItem> Items { get; set; } = Enumerable.Empty<AgentMemoryQueryResultItem>();
     }
 }

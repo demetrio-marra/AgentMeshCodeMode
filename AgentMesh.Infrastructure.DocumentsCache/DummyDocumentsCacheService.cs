@@ -19,7 +19,7 @@ namespace AgentMesh.Infrastructure.DocumentsCache
 
             if (agentMemoryCachedQueries != null)
             {
-                var agentMemoryResults = new List<AgentMemoryItem>();
+                var agentMemoryResults = new List<AgentMemoryQueryResultItem>();
                 foreach (var query in agentMemoryCachedQueries)
                 {
                     if (_agentMemoryCache.TryGetValue(query, out var cachedAgentMemory))

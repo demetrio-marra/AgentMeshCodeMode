@@ -961,7 +961,7 @@ namespace AgentMesh.Application.Workflows
                 AgentMemoryCachedQueries = state.MissingPastMemories.Select(s =>  new AgentMemoryCacheableQuery { Query = s }).ToList(),
                 AgentMemoryCachedQueryResult = new AgentMemoryQueryResult
                 {
-                    Results = state.ExtractedAgentMemories.Select(m => new AgentMemoryItem
+                    Results = state.ExtractedAgentMemories.Select(m => new AgentMemoryQueryResultItem
                     {
                         Memory = m.Memory,
                         Confidence = m.Confidence
