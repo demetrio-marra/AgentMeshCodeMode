@@ -18,7 +18,8 @@ namespace AgentMesh.Application.Services
 
         public CoderAgent([FromKeyedServices(CoderAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
                           CoderAgentConfiguration configuration,
-                          ILogger<CoderAgent> logger) : base(logger, CoderAgentConfiguration.AgentName, openAIClient)
+                          Resilience resilience,
+                          ILogger<CoderAgent> logger) : base(logger, CoderAgentConfiguration.AgentName, openAIClient, resilience)
         {
             _logger = logger;
         }

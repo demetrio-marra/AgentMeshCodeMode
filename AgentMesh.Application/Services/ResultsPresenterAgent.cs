@@ -12,7 +12,8 @@ namespace AgentMesh.Application.Services
     {
         public ResultsPresenterAgent(
             [FromKeyedServices(ResultsPresenterAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            ILogger<ResultsPresenterAgent> logger) : base(logger, ResultsPresenterAgentConfiguration.AgentName, openAIClient)
+            Resilience resilience,
+            ILogger<ResultsPresenterAgent> logger) : base(logger, ResultsPresenterAgentConfiguration.AgentName, openAIClient, resilience)
         {
         }
 

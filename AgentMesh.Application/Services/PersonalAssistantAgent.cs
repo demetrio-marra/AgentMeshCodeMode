@@ -12,7 +12,8 @@ namespace AgentMesh.Application.Services
     {
         public PersonalAssistantAgent(
             [FromKeyedServices(PersonalAssistantAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            ILogger<PersonalAssistantAgent> logger) : base(logger, PersonalAssistantAgentConfiguration.AgentName, openAIClient)
+            Resilience resilience,
+            ILogger<PersonalAssistantAgent> logger) : base(logger, PersonalAssistantAgentConfiguration.AgentName, openAIClient, resilience)
         {
         }
 

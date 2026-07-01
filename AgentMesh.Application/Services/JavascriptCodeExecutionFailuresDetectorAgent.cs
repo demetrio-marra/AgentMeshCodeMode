@@ -20,7 +20,8 @@ namespace AgentMesh.Application.Services
 
         public JavascriptCodeExecutionFailuresDetectorAgent(
             [FromKeyedServices(CodeExecutionFailuresDetectorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            ILogger<JavascriptCodeExecutionFailuresDetectorAgent> logger) : base(logger, CodeExecutionFailuresDetectorAgentConfiguration.AgentName, openAIClient)
+            Resilience resilience,
+            ILogger<JavascriptCodeExecutionFailuresDetectorAgent> logger) : base(logger, CodeExecutionFailuresDetectorAgentConfiguration.AgentName, openAIClient, resilience)
         {
             _logger = logger;
         }

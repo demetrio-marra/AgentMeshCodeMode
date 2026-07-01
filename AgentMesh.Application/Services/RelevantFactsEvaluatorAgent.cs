@@ -15,7 +15,8 @@ namespace AgentMesh.Application.Services
 
         public RelevantFactsEvaluatorAgent(
             [FromKeyedServices(RelevantFactsEvaluatorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            ILogger<RelevantFactsEvaluatorAgent> logger) : base(logger, RelevantFactsEvaluatorAgentConfiguration.AgentName, openAIClient)
+            Resilience resilience,
+            ILogger<RelevantFactsEvaluatorAgent> logger) : base(logger, RelevantFactsEvaluatorAgentConfiguration.AgentName, openAIClient, resilience)
         {
             _logger = logger;
         }

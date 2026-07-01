@@ -12,14 +12,17 @@ namespace AgentMesh.Infrastructure.AgentMemory.Services
     {
         private readonly HttpClient _httpClient;
         private readonly AgentMemoryServiceConfiguration _configuration;
+        private readonly Resilience _resilience;
         private readonly JsonSerializerOptions _jsonOptions;
 
         public Mem0AgentMemoryService(
             HttpClient httpClient,
-            AgentMemoryServiceConfiguration configuration)
+            AgentMemoryServiceConfiguration configuration,
+            Resilience resilience)
         {
             _httpClient = httpClient;
             _configuration = configuration;
+            _resilience = resilience;
             _httpClient.BaseAddress = new Uri(_configuration.BaseUrl);
             _httpClient.Timeout = TimeSpan.FromSeconds(_configuration.TimeoutSeconds);
 
@@ -46,7 +49,7 @@ namespace AgentMesh.Infrastructure.AgentMemory.Services
                 UserId = userId
             };
 
-            var response = await Resilience.SendWithRetryAsync(
+            var response = await _resilience.SendWithRetryAsync(
                 async () => await _httpClient.PostAsJsonAsync(
                     "/memories",
                     request,
@@ -69,7 +72,7 @@ namespace AgentMesh.Infrastructure.AgentMemory.Services
                 UserId = userId
             };
 
-            var response = await Resilience.SendWithRetryAsync(
+            var response = await _resilience.SendWithRetryAsync(
                 async () => await _httpClient.PostAsJsonAsync(
                     "/search",
                     searchRequest,

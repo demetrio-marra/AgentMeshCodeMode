@@ -1,4 +1,5 @@
-﻿using AgentMesh.Application.Exceptions;
+﻿using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Exceptions;
 using Microsoft.Extensions.Logging;
 using Polly;
 using System.Net;
@@ -7,11 +8,19 @@ namespace AgentMesh.Application
 {
     public class Resilience
     {
-        public static Task<T> AgentRunWithRetryAsync<T>(Func<Task<T>> action, 
+        private readonly ResilienceConfiguration _configuration;
+
+        public Resilience(ResilienceConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
+        public Task<T> AgentRunWithRetryAsync<T>(Func<Task<T>> action, 
             string agentName, 
             ILogger? logger = null,
-            int retryCount = 3)
+            int? retryCount = null)
         {
+            var effectiveRetryCount = retryCount ?? _configuration.RetryCount;
             var jitterer = new Random();
 
             var policy = Policy
@@ -20,7 +29,7 @@ namespace AgentMesh.Application
                 .Or<Exception>(ex => ex.GetType().Name == "ClientResultException" && ex.Message.Contains("Tool choice is none, but model called a tool"))
                 .Or<Exception>(ex => ex.GetType().Name == "ClientResultException" && ex.Message.Contains("Service unavailable"))
                 .WaitAndRetryAsync(
-                    retryCount: retryCount,
+                    retryCount: effectiveRetryCount,
                     sleepDurationProvider: attempt =>
                     {
                         var backoff = TimeSpan.FromSeconds(Math.Pow(2, attempt)); // 2s, 4s...
@@ -41,12 +50,13 @@ namespace AgentMesh.Application
         /// and 5xx/408/429 responses. Mirrors AgentRunWithRetryAsync: exponential backoff + jitter,
         /// capped retries, structured logging on each attempt.
         /// </summary>
-        public static Task<HttpResponseMessage> SendWithRetryAsync(
+        public Task<HttpResponseMessage> SendWithRetryAsync(
             Func<Task<HttpResponseMessage>> action,
             string operationName,
             ILogger? logger = null,
-            int retryCount = 3)
+            int? retryCount = null)
         {
+            var effectiveRetryCount = retryCount ?? _configuration.RetryCount;
             var jitterer = new Random();
 
             var policy = Policy
@@ -58,7 +68,7 @@ namespace AgentMesh.Application
                     response.StatusCode == HttpStatusCode.RequestTimeout ||
                     response.StatusCode == HttpStatusCode.TooManyRequests)
                 .WaitAndRetryAsync(
-                    retryCount: retryCount,
+                    retryCount: effectiveRetryCount,
                     sleepDurationProvider: (attempt, outcome, context) =>
                     {
                         // Honor Retry-After when the server sends one (typical on 429/503)

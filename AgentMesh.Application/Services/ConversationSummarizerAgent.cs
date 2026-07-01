@@ -14,7 +14,8 @@ namespace AgentMesh.Application.Services
 
         public ConversationSummarizerAgent([FromKeyedServices(ConversationSummarizerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
                                           ConversationSummarizerAgentConfiguration configuration,
-                                          ILogger<ConversationSummarizerAgent> logger) : base(logger, ConversationSummarizerAgentConfiguration.AgentName, openAIClient)
+                                          Resilience resilience,
+                                          ILogger<ConversationSummarizerAgent> logger) : base(logger, ConversationSummarizerAgentConfiguration.AgentName, openAIClient, resilience)
         {
             _logger = logger;
         }

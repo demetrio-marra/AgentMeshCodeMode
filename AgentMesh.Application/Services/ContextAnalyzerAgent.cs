@@ -18,7 +18,8 @@ namespace AgentMesh.Application.Services
         public ContextAnalyzerAgent(
             [FromKeyedServices(ContextAnalyzerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
             ContextAnalyzerAgentConfiguration configuration,
-            ILogger<ContextAnalyzerAgent> logger) : base(logger, ContextAnalyzerAgentConfiguration.AgentName, openAIClient)
+            Resilience resilience,
+            ILogger<ContextAnalyzerAgent> logger) : base(logger, ContextAnalyzerAgentConfiguration.AgentName, openAIClient, resilience)
         {
         }
 

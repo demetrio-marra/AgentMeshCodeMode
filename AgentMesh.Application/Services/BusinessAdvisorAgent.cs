@@ -15,7 +15,8 @@ namespace AgentMesh.Application.Services
         public BusinessAdvisorAgent(
             [FromKeyedServices(BusinessAdvisorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
             BusinessAdvisorAgentConfiguration configuration,
-            ILogger<BusinessAdvisorAgent> logger) : base(logger, BusinessAdvisorAgentConfiguration.AgentName, openAIClient)
+            Resilience resilience,
+            ILogger<BusinessAdvisorAgent> logger) : base(logger, BusinessAdvisorAgentConfiguration.AgentName, openAIClient, resilience)
         {
             _logger = logger;
         }

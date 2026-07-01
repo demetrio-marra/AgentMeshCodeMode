@@ -11,14 +11,17 @@ namespace AgentMesh.Application.Services
         private readonly ILogger _logger;
         private readonly string _agentName;
         private readonly IOpenAIClient _openAIClient;
+        private readonly Resilience _resilience;
 
         protected AgentBase(ILogger logger,
             string agentName,
-            IOpenAIClient openAIClient)
+            IOpenAIClient openAIClient,
+            Resilience resilience)
         {
             _agentName = agentName;
             _logger = logger;
             _openAIClient = openAIClient;
+            _resilience = resilience;
         }
 
         /// <summary>
@@ -33,7 +36,7 @@ namespace AgentMesh.Application.Services
 
             var stopwatch = Stopwatch.StartNew();
 
-            var result = await Resilience.AgentRunWithRetryAsync(async () =>
+            var result = await _resilience.AgentRunWithRetryAsync(async () =>
             {
                 var response = await _openAIClient.GenerateResponseAsync(inputMessages, cancellationToken);
                 var responseText = response.Text?.Trim() ?? string.Empty;

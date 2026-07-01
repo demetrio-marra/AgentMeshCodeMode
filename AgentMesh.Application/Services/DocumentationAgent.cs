@@ -16,7 +16,8 @@ namespace AgentMesh.Application.Services
         public DocumentationAgent(
             [FromKeyedServices(DocumentationAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
             DocumentationAgentConfiguration configuration,
-            ILogger<DocumentationAgent> logger) : base(logger, DocumentationAgentConfiguration.AgentName, openAIClient)
+            Resilience resilience,
+            ILogger<DocumentationAgent> logger) : base(logger, DocumentationAgentConfiguration.AgentName, openAIClient, resilience)
         {
             _logger = logger;
         }

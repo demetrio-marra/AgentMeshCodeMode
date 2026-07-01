@@ -18,7 +18,8 @@ namespace AgentMesh.Application.Services
         public BusinessRequirementsCreatorAgent(
             [FromKeyedServices(BusinessRequirementsCreatorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
             BusinessRequirementsCreatorAgentConfiguration configuration,
-            ILogger<BusinessRequirementsCreatorAgent> logger) : base(logger, BusinessRequirementsCreatorAgentConfiguration.AgentName, openAIClient)
+            Resilience resilience,
+            ILogger<BusinessRequirementsCreatorAgent> logger) : base(logger, BusinessRequirementsCreatorAgentConfiguration.AgentName, openAIClient, resilience)
         {
             _logger = logger;
         }

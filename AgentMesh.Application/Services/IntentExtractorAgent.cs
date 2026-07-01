@@ -19,7 +19,8 @@ namespace AgentMesh.Application.Services
         public IntentExtractorAgent(
             [FromKeyedServices(IntentExtractorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
             IntentExtractorAgentConfiguration configuration,
-            ILogger<IntentExtractorAgent> logger) : base(logger, IntentExtractorAgentConfiguration.AgentName, openAIClient)
+            Resilience resilience,
+            ILogger<IntentExtractorAgent> logger) : base(logger, IntentExtractorAgentConfiguration.AgentName, openAIClient, resilience)
         {
             _openAIClient = openAIClient;
             _logger = logger;

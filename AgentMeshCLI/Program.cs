@@ -16,6 +16,8 @@ using Microsoft.Extensions.Options;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Infrastructure.DocumentsCache;
 using AgentMesh.Models.Workflows;
+using AgentMesh.Application.Configuration;
+using AgentMesh.Application;
 
 namespace AgentMesh
 {
@@ -84,6 +86,15 @@ namespace AgentMesh
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<SESJSSandboxConfiguration>>().Value);
 
             services.AddInferenceProviders(configuration);
+
+            // Resilience configuration
+            services
+                .AddOptions<ResilienceConfiguration>()
+                .Bind(configuration.GetSection(ResilienceConfiguration.SectionName))
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<ResilienceConfiguration>>().Value);
+
+            services.AddSingleton<Resilience>();
 
             // Load LLMs configuration
             services

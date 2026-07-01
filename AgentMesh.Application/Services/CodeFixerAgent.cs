@@ -18,7 +18,8 @@ namespace AgentMesh.Application.Services
 
         public CodeFixerAgent(
             [FromKeyedServices(CodeFixerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            ILogger<CodeFixerAgent> logger) : base(logger, CodeFixerAgentConfiguration.AgentName, openAIClient)
+            Resilience resilience,
+            ILogger<CodeFixerAgent> logger) : base(logger, CodeFixerAgentConfiguration.AgentName, openAIClient, resilience)
         {
             _logger = logger;
         }
