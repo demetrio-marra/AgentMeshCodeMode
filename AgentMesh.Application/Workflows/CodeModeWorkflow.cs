@@ -426,8 +426,6 @@ namespace AgentMesh.Application.Workflows
                 KnowledgeBaseCachedQuery = state.MissingKnowledgeBaseSearchEntries.Any()
                     ? new KnowledgeBaseCachedQuery
                     {
-                        Collections = new[] { DOCUMENTATION_COLLECTION_NAME },
-                        UserIntent = state.UserIntent,
                         Queries = state.MissingKnowledgeBaseSearchEntries.Select(entry => new KnowledgeBaseQueryInputItem
                         {
                             Query = entry.Query,
@@ -1007,8 +1005,6 @@ namespace AgentMesh.Application.Workflows
             {
                 KnowledgeBaseCachedQuery = new KnowledgeBaseCachedQuery
                 {
-                    Collections = new[] { DOCUMENTATION_COLLECTION_NAME },
-                    UserIntent = state.UserIntent,
                     Queries = state.MissingKnowledgeBaseSearchEntries.Select(entry => new KnowledgeBaseQueryInputItem
                     {
                         Query = entry.Query,
