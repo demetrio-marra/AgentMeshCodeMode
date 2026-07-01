@@ -127,16 +127,18 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStart();
 
             var state = new CodeModeWorkflowState(userInput, chatHistory);
-            await ExecuteGetAllCachedSearchesAsync(state);
-
-            _logger.LogDebug("Extracting user intent...");
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
 
-            if ((state.MissingPastMemories.Any() && state.AgentMemoryCachedQueries.Any())
-                || (state.MissingKnowledgeBaseSearchEntries.Any() && state.KnowledgeBaseCachedQueries.Any()))
+            if (state.MissingPastMemories.Any() 
+                || state.MissingKnowledgeBaseSearchEntries.Any())
             {
-                await ExecuteSearchQueriesConciliatorAsync(state);
+                await ExecuteGetAllCachedSearchesAsync(state);
+
+                if (state.AgentMemoryCachedQueries.Any() || state.KnowledgeBaseCachedQueries.Any())
+                {
+                    await ExecuteSearchQueriesConciliatorAsync(state);
+                }
             }
 
             if (state.MissingPastMemories.Any()
