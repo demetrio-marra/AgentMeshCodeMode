@@ -1,6 +1,6 @@
 using AgentMesh.Models.KnowledgeBase;
 
-namespace AgentMesh.Models.DocumentsCache
+namespace AgentMesh.Infrastructure.DocumentsCache.Models
 {
     public class CacheableKnowledgeBaseQueryResultItem : KnowledgeBaseQueryResultItem, IEquatable<CacheableKnowledgeBaseQueryResultItem>
     {

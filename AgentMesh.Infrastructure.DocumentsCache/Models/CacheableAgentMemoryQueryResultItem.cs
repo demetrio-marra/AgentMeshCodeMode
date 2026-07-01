@@ -1,6 +1,6 @@
 using AgentMesh.Models.AgentMemory;
 
-namespace AgentMesh.Models.DocumentsCache
+namespace AgentMesh.Infrastructure.DocumentsCache.Models
 {
     public class CacheableAgentMemoryQueryResultItem : AgentMemoryQueryResultItem, IEquatable<CacheableAgentMemoryQueryResultItem>
     {
