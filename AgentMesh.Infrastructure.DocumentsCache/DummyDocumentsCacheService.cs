@@ -1,4 +1,5 @@
 ﻿using AgentMesh.Application.Contracts;
+using AgentMesh.Infrastructure.DocumentsCache.Models;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.DocumentsCache;
 using AgentMesh.Models.KnowledgeBase;
@@ -7,8 +8,8 @@ namespace AgentMesh.Infrastructure.DocumentsCache
 {
     public class DummyDocumentsCacheService : IDocumentsCacheService
     {
-        private readonly Dictionary<AgentMemoryCacheableQuery, AgentMemoryQueryResult> _agentMemoryCache = new();
-        private readonly Dictionary<KnowledgeBaseCacheableQuery, KnowledgeBaseQueryResult> _knowledgeBaseCache = new();
+        private readonly Dictionary<AgentMemoryCacheableQuery, HashSet<CacheableAgentMemoryQueryResultItem>> _agentMemoryCache = new();
+        private readonly Dictionary<KnowledgeBaseCacheableQuery, HashSet<CacheableKnowledgeBaseQueryResultItem>> _knowledgeBaseCache = new();
 
         public async Task<Tuple<AgentMemoryQueryResult?, KnowledgeBaseQueryResult?>> ExecuteDocumentsCacheQueryAsync(
             IEnumerable<AgentMemoryCacheableQuery>? agentMemoryCachedQueries,
@@ -19,14 +20,15 @@ namespace AgentMesh.Infrastructure.DocumentsCache
 
             if (agentMemoryCachedQueries != null)
             {
-                var agentMemoryResults = new List<AgentMemoryQueryResultItem>();
+                var agentMemoryResults = new HashSet<CacheableAgentMemoryQueryResultItem>();
                 foreach (var query in agentMemoryCachedQueries)
                 {
-                    if (_agentMemoryCache.TryGetValue(query, out var cachedAgentMemory))
+                    if (_agentMemoryCache.TryGetValue(query, out var cachedAgentMemoryItems))
                     {
-                        agentMemoryResults.AddRange(cachedAgentMemory.Results);
+                        agentMemoryResults.UnionWith(cachedAgentMemoryItems);
                     }
                 }
+
                 if (agentMemoryResults.Count > 0)
                 {
                     agentMemoryResult = new AgentMemoryQueryResult { Results = agentMemoryResults };
@@ -35,14 +37,15 @@ namespace AgentMesh.Infrastructure.DocumentsCache
 
             if (knowledgeBaseCachedQueries != null)
             {
-                var knowledgeBaseResults = new List<KnowledgeBaseQueryResultItem>();
+                var knowledgeBaseResults = new HashSet<CacheableKnowledgeBaseQueryResultItem>();
                 foreach (var query in knowledgeBaseCachedQueries)
                 {
-                    if (_knowledgeBaseCache.TryGetValue(query, out var cachedKnowledgeBase))
+                    if (_knowledgeBaseCache.TryGetValue(query, out var cachedKnowledgeBaseItems))
                     {
-                        knowledgeBaseResults.AddRange(cachedKnowledgeBase.Results);
+                        knowledgeBaseResults.UnionWith(cachedKnowledgeBaseItems);
                     }
                 }
+
                 if (knowledgeBaseResults.Count > 0)
                 {
                     knowledgeBaseResult = new KnowledgeBaseQueryResult { Results = knowledgeBaseResults };
@@ -58,7 +61,17 @@ namespace AgentMesh.Infrastructure.DocumentsCache
             {
                 foreach (var query in agentMemoryCachedQueries)
                 {
-                    _agentMemoryCache[query] = agentMemoryQueryResults;
+                    var newItems = agentMemoryQueryResults.Results
+                        .Select(result => new CacheableAgentMemoryQueryResultItem(result));
+
+                    if (_agentMemoryCache.TryGetValue(query, out var cachedItems))
+                    {
+                        cachedItems.UnionWith(newItems);
+                    }
+                    else
+                    {
+                        _agentMemoryCache[query] = newItems.ToHashSet();
+                    }
                 }
             }
 
@@ -71,7 +84,17 @@ namespace AgentMesh.Infrastructure.DocumentsCache
             {
                 foreach (var query in knowledgeBaseCachedQueries)
                 {
-                    _knowledgeBaseCache[query] = knowledgeBaseQueryResults;
+                    var newItems = knowledgeBaseQueryResults.Results
+                        .Select(result => new CacheableKnowledgeBaseQueryResultItem(result));
+
+                    if (_knowledgeBaseCache.TryGetValue(query, out var cachedItems))
+                    {
+                        cachedItems.UnionWith(newItems);
+                    }
+                    else
+                    {
+                        _knowledgeBaseCache[query] = newItems.ToHashSet();
+                    }
                 }
             }
 

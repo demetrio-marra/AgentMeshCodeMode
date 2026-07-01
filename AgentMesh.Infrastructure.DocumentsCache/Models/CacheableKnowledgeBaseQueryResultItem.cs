@@ -2,8 +2,22 @@ using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Infrastructure.DocumentsCache.Models
 {
-    public class CacheableKnowledgeBaseQueryResultItem : KnowledgeBaseQueryResultItem, IEquatable<CacheableKnowledgeBaseQueryResultItem>
+    internal class CacheableKnowledgeBaseQueryResultItem : KnowledgeBaseQueryResultItem, IEquatable<CacheableKnowledgeBaseQueryResultItem>
     {
+        public CacheableKnowledgeBaseQueryResultItem()
+        {
+            
+        }
+
+        public CacheableKnowledgeBaseQueryResultItem(KnowledgeBaseQueryResultItem item)
+        {
+            Id = item.Id;
+            Title = item.Title;
+            Summary = item.Summary;
+            File = item.File;
+            Relevance = item.Relevance;
+        }
+
         public bool Equals(CacheableKnowledgeBaseQueryResultItem? other)
         {
             if (ReferenceEquals(null, other)) return false;

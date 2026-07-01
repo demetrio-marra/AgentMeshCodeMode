@@ -2,8 +2,19 @@ using AgentMesh.Models.AgentMemory;
 
 namespace AgentMesh.Infrastructure.DocumentsCache.Models
 {
-    public class CacheableAgentMemoryQueryResultItem : AgentMemoryQueryResultItem, IEquatable<CacheableAgentMemoryQueryResultItem>
+    internal class CacheableAgentMemoryQueryResultItem : AgentMemoryQueryResultItem, IEquatable<CacheableAgentMemoryQueryResultItem>
     {
+        public CacheableAgentMemoryQueryResultItem()
+        {
+
+        }
+
+        public CacheableAgentMemoryQueryResultItem(AgentMemoryQueryResultItem item)
+        {
+            Memory = item.Memory;
+            Confidence = item.Confidence;
+        }
+
         public bool Equals(CacheableAgentMemoryQueryResultItem? other)
         {
             if (ReferenceEquals(null, other)) return false;
