@@ -1,4 +1,5 @@
 ﻿using AgentMesh.Application.Contracts;
+using AgentMesh.Infrastructure.DocumentsCache.Configuration;
 using AgentMesh.Infrastructure.DocumentsCache.Models;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.DocumentsCache;
@@ -8,13 +9,24 @@ namespace AgentMesh.Infrastructure.DocumentsCache
 {
     public class DummyDocumentsCacheService : IDocumentsCacheService
     {
-        private readonly Dictionary<AgentMemoryCacheableQuery, HashSet<CacheableAgentMemoryQueryResultItem>> _agentMemoryCache = new();
-        private readonly Dictionary<KnowledgeBaseCacheableQuery, HashSet<CacheableKnowledgeBaseQueryResultItem>> _knowledgeBaseCache = new();
+        private readonly Dictionary<AgentMemoryCacheableQuery, CacheEntry<CacheableAgentMemoryQueryResultItem>> _agentMemoryCache = new();
+        private readonly Dictionary<KnowledgeBaseCacheableQuery, CacheEntry<CacheableKnowledgeBaseQueryResultItem>> _knowledgeBaseCache = new();
+        private readonly TimeSpan? _cacheExpiration;
+
+        public DummyDocumentsCacheService(DocumentsCacheServiceConfiguration configuration)
+        {
+            if (configuration.ExpirationMinutes > 0)
+            {
+                _cacheExpiration = TimeSpan.FromMinutes(configuration.ExpirationMinutes);
+            }
+        }
 
         public async Task<Tuple<AgentMemoryQueryResult?, KnowledgeBaseQueryResult?>> ExecuteDocumentsCacheQueryAsync(
             IEnumerable<AgentMemoryCacheableQuery>? agentMemoryCachedQueries,
             IEnumerable<KnowledgeBaseCacheableQuery>? knowledgeBaseCachedQueries)
         {
+            EvictExpiredEntries();
+
             AgentMemoryQueryResult? agentMemoryResult = null;
             KnowledgeBaseQueryResult? knowledgeBaseResult = null;
 
@@ -23,9 +35,9 @@ namespace AgentMesh.Infrastructure.DocumentsCache
                 var agentMemoryResults = new HashSet<CacheableAgentMemoryQueryResultItem>();
                 foreach (var query in agentMemoryCachedQueries)
                 {
-                    if (_agentMemoryCache.TryGetValue(query, out var cachedAgentMemoryItems))
+                    if (_agentMemoryCache.TryGetValue(query, out var cacheEntry))
                     {
-                        agentMemoryResults.UnionWith(cachedAgentMemoryItems);
+                        agentMemoryResults.UnionWith(cacheEntry.Items);
                     }
                 }
 
@@ -40,9 +52,9 @@ namespace AgentMesh.Infrastructure.DocumentsCache
                 var knowledgeBaseResults = new HashSet<CacheableKnowledgeBaseQueryResultItem>();
                 foreach (var query in knowledgeBaseCachedQueries)
                 {
-                    if (_knowledgeBaseCache.TryGetValue(query, out var cachedKnowledgeBaseItems))
+                    if (_knowledgeBaseCache.TryGetValue(query, out var cacheEntry))
                     {
-                        knowledgeBaseResults.UnionWith(cachedKnowledgeBaseItems);
+                        knowledgeBaseResults.UnionWith(cacheEntry.Items);
                     }
                 }
 
@@ -57,6 +69,8 @@ namespace AgentMesh.Infrastructure.DocumentsCache
 
         public Task SaveAgentMemory(IEnumerable<AgentMemoryCacheableQuery>? agentMemoryCachedQueries, AgentMemoryQueryResult agentMemoryQueryResults)
         {
+            EvictExpiredEntries();
+
             if (agentMemoryCachedQueries != null && agentMemoryQueryResults != null)
             {
                 foreach (var query in agentMemoryCachedQueries)
@@ -64,13 +78,14 @@ namespace AgentMesh.Infrastructure.DocumentsCache
                     var newItems = agentMemoryQueryResults.Results
                         .Select(result => new CacheableAgentMemoryQueryResultItem(result));
 
-                    if (_agentMemoryCache.TryGetValue(query, out var cachedItems))
+                    if (_agentMemoryCache.TryGetValue(query, out var cacheEntry))
                     {
-                        cachedItems.UnionWith(newItems);
+                        cacheEntry.Items.UnionWith(newItems);
+                        cacheEntry.ExpiresAtUtc = GetExpirationTime();
                     }
                     else
                     {
-                        _agentMemoryCache[query] = newItems.ToHashSet();
+                        _agentMemoryCache[query] = new CacheEntry<CacheableAgentMemoryQueryResultItem>(newItems.ToHashSet(), GetExpirationTime());
                     }
                 }
             }
@@ -80,6 +95,8 @@ namespace AgentMesh.Infrastructure.DocumentsCache
 
         public Task SaveKnowledgeBase(IEnumerable<KnowledgeBaseCacheableQuery> knowledgeBaseCachedQueries, KnowledgeBaseQueryResult knowledgeBaseQueryResults)
         {
+            EvictExpiredEntries();
+
             if (knowledgeBaseCachedQueries != null && knowledgeBaseQueryResults != null)
             {
                 foreach (var query in knowledgeBaseCachedQueries)
@@ -87,13 +104,14 @@ namespace AgentMesh.Infrastructure.DocumentsCache
                     var newItems = knowledgeBaseQueryResults.Results
                         .Select(result => new CacheableKnowledgeBaseQueryResultItem(result));
 
-                    if (_knowledgeBaseCache.TryGetValue(query, out var cachedItems))
+                    if (_knowledgeBaseCache.TryGetValue(query, out var cacheEntry))
                     {
-                        cachedItems.UnionWith(newItems);
+                        cacheEntry.Items.UnionWith(newItems);
+                        cacheEntry.ExpiresAtUtc = GetExpirationTime();
                     }
                     else
                     {
-                        _knowledgeBaseCache[query] = newItems.ToHashSet();
+                        _knowledgeBaseCache[query] = new CacheEntry<CacheableKnowledgeBaseQueryResultItem>(newItems.ToHashSet(), GetExpirationTime());
                     }
                 }
             }
@@ -103,9 +121,60 @@ namespace AgentMesh.Infrastructure.DocumentsCache
 
         public Task<Tuple<IEnumerable<AgentMemoryCacheableQuery>, IEnumerable<KnowledgeBaseCacheableQuery>>> GetAllCachedSearchesAsync()
         {
+            EvictExpiredEntries();
+
             return Task.FromResult(new Tuple<IEnumerable<AgentMemoryCacheableQuery>, IEnumerable<KnowledgeBaseCacheableQuery>>(
                 _agentMemoryCache.Keys,
                 _knowledgeBaseCache.Keys));
+        }
+
+        private DateTime? GetExpirationTime()
+        {
+            return _cacheExpiration.HasValue
+                ? DateTime.UtcNow.Add(_cacheExpiration.Value)
+                : null;
+        }
+
+        private void EvictExpiredEntries()
+        {
+            var now = DateTime.UtcNow;
+
+            var expiredAgentMemoryQueries = _agentMemoryCache
+                .Where(entry => IsExpired(entry.Value, now))
+                .Select(entry => entry.Key)
+                .ToList();
+
+            foreach (var query in expiredAgentMemoryQueries)
+            {
+                _agentMemoryCache.Remove(query);
+            }
+
+            var expiredKnowledgeBaseQueries = _knowledgeBaseCache
+                .Where(entry => IsExpired(entry.Value, now))
+                .Select(entry => entry.Key)
+                .ToList();
+
+            foreach (var query in expiredKnowledgeBaseQueries)
+            {
+                _knowledgeBaseCache.Remove(query);
+            }
+        }
+
+        private static bool IsExpired<TItem>(CacheEntry<TItem> entry, DateTime now)
+        {
+            return entry.ExpiresAtUtc.HasValue && entry.ExpiresAtUtc.Value <= now;
+        }
+
+        private sealed class CacheEntry<TItem>
+        {
+            public CacheEntry(HashSet<TItem> items, DateTime? expiresAtUtc)
+            {
+                Items = items;
+                ExpiresAtUtc = expiresAtUtc;
+            }
+
+            public HashSet<TItem> Items { get; }
+            public DateTime? ExpiresAtUtc { get; set; }
         }
     }
 }

@@ -5,6 +5,8 @@ using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.AgentMemory.Configuration;
 using AgentMesh.Infrastructure.AgentMemory.Services;
+using AgentMesh.Infrastructure.DocumentsCache;
+using AgentMesh.Infrastructure.DocumentsCache.Configuration;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.SemanticSearch;
@@ -15,7 +17,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Infrastructure.DocumentsCache;
 using AgentMesh.Models.Workflows;
 
 namespace AgentMesh
@@ -65,6 +66,9 @@ namespace AgentMesh
             services.AddSingleton<IAgentMemorySaver>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
 
             // Documents Cache Service and Executor
+            var documentsCacheConfig = new DocumentsCacheServiceConfiguration();
+            configuration.GetSection(DocumentsCacheServiceConfiguration.SectionName).Bind(documentsCacheConfig);
+            services.AddSingleton(documentsCacheConfig);
             services.AddSingleton<IDocumentsCacheService, DummyDocumentsCacheService>();
             services.AddSingleton<IDocumentsCacheExecutor, DocumentsCacheExecutor>();
             services.AddSingleton<IGetAllCachedSearchesExecutor, GetAllCachedSearchesExecutor>();
