@@ -20,8 +20,7 @@ namespace AgentMesh.Infrastructure.DocumentsCache.Models
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
-            return string.Equals(Memory, other.Memory, StringComparison.OrdinalIgnoreCase)
-                && Confidence.Equals(other.Confidence);
+            return string.Equals(Memory, other.Memory, StringComparison.OrdinalIgnoreCase);
         }
 
         public override bool Equals(object? obj)
@@ -31,7 +30,8 @@ namespace AgentMesh.Infrastructure.DocumentsCache.Models
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Memory.ToUpperInvariant(), Confidence);
+            // without confidence, because we want to consider two items with the same memory but different confidence as equal for caching purposes
+            return Memory?.ToUpperInvariant().GetHashCode() ?? 0;
         }
 
         public static bool operator ==(CacheableAgentMemoryQueryResultItem? left, CacheableAgentMemoryQueryResultItem? right)
