@@ -23,11 +23,11 @@ namespace AgentMesh.Infrastructure.DocumentsCache.Models
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
 
+            // ignor relevance
             return string.Equals(Id, other.Id, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(Title, other.Title, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(Summary, other.Summary, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(File, other.File, StringComparison.OrdinalIgnoreCase)
-                && Relevance == other.Relevance;
+                && string.Equals(File, other.File, StringComparison.OrdinalIgnoreCase);
         }
 
         public override bool Equals(object? obj)
@@ -37,12 +37,12 @@ namespace AgentMesh.Infrastructure.DocumentsCache.Models
 
         public override int GetHashCode()
         {
+            // ignor relevance
             return HashCode.Combine(
                 Id.ToUpperInvariant(),
                 Title.ToUpperInvariant(),
                 Summary?.ToUpperInvariant(),
-                File?.ToUpperInvariant(),
-                Relevance);
+                File?.ToUpperInvariant());
         }
 
         public static bool operator ==(CacheableKnowledgeBaseQueryResultItem? left, CacheableKnowledgeBaseQueryResultItem? right)
