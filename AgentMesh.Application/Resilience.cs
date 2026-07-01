@@ -7,19 +7,29 @@ namespace AgentMesh.Application
 {
     public class Resilience
     {
-        public static Task<T> AgentRunWithRetryAsync<T>(Func<Task<T>> action, string agentName, ILogger? logger = null)
+        public static Task<T> AgentRunWithRetryAsync<T>(Func<Task<T>> action, 
+            string agentName, 
+            ILogger? logger = null,
+            int retryCount = 3)
         {
+            var jitterer = new Random();
+
             var policy = Policy
                 .Handle<BadStructuredResponseException>()
                 .Or<EmptyAgentResponseException>()
                 .Or<Exception>(ex => ex.GetType().Name == "ClientResultException" && ex.Message.Contains("Tool choice is none, but model called a tool"))
                 .Or<Exception>(ex => ex.GetType().Name == "ClientResultException" && ex.Message.Contains("Service unavailable"))
                 .WaitAndRetryAsync(
-                    retryCount: 2,
-                    sleepDurationProvider: _ => TimeSpan.FromSeconds(5),
+                    retryCount: retryCount,
+                    sleepDurationProvider: attempt =>
+                    {
+                        var backoff = TimeSpan.FromSeconds(Math.Pow(2, attempt)); // 2s, 4s...
+                        var jitter = TimeSpan.FromMilliseconds(jitterer.Next(0, 500));
+                        return backoff + jitter;
+                    },
                     onRetry: (exception, timeSpan, retryCount, context) =>
                     {
-                        logger?.LogWarning(exception, "Retry {RetryCount} for agent {AgentName} due to error: {ErrorMessage}", retryCount, agentName, exception.Message);
+                        logger?.LogWarning(exception, "Retry {RetryCount} for agent {AgentName} after {DelaySeconds:F1}s due to error: {ErrorMessage}", retryCount, agentName, timeSpan.TotalSeconds, exception.Message);
                     });
 
             return policy.ExecuteAsync(action);
