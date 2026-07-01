@@ -21,6 +21,7 @@ namespace AgentMesh.Application.Models
         public string? UserIntent { get; set; }
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
         public IEnumerable<IntentExtractorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
+        public IEnumerable<IntentExtractorKnowledgeBase> CachedMissingKnowledgeBaseSearchEntries { get; set; } = [];
         public string EnrichedUserRequest { get; set; } = string.Empty;
         public UserIntentCategoryValues UserIntentCategoryValue { get; set; }
         public string? BusinessRequirements { get; set; }

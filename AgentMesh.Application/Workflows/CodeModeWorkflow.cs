@@ -56,6 +56,8 @@ namespace AgentMesh.Application.Workflows
         private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor;
         private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent;
 
+        private CodeModeWorkflowState? _lastExecutionState = null;
+
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
             IBusinessRequirementsCreatorAgent businessRequirementsCreatorAgent,
@@ -102,6 +104,10 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStart();
 
             var state = new CodeModeWorkflowState(userInput, chatHistory);
+            if (_lastExecutionState != null)
+            {
+                state.CachedMissingKnowledgeBaseSearchEntries = _lastExecutionState.MissingKnowledgeBaseSearchEntries;
+            }
 
             _logger.LogDebug("Extracting user intent...");
 
@@ -208,6 +214,8 @@ namespace AgentMesh.Application.Workflows
 
             await _workflowProgressNotifier.NotifyWorkflowEnd();
 
+            _lastExecutionState = state;
+
             return new WorkflowResult
             {
                 Response = state.FinalAnswer!,
@@ -290,13 +298,15 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Intent Extractor Agent", new Dictionary<string, string>
             {
                 { "ContextMessages", "<omitted for brevity>. Total: " + chatHistory.Count().ToString() },
-                { "UserLastRequest", state.OriginalUserRequest }
+                { "UserLastRequest", state.OriginalUserRequest },
+                { "PreviouslyExtractedKnowledgeBase", string.Join("\n", state.CachedMissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")) }
             });
 
             var intentExtractorOutput = await _intentExtractorAgent.ExecuteAsync(new IntentExtractorAgentInput
             {
                 ContextMessages = state.InitialContextMessages.ToList(),
-                UserLastRequest = state.OriginalUserRequest
+                UserLastRequest = state.OriginalUserRequest,
+                PreviouslyExtractedKnowledgeBase = state.CachedMissingKnowledgeBaseSearchEntries
             });
             
             state.UserIntent = intentExtractorOutput.UserIntent;
