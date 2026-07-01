@@ -16,7 +16,7 @@ namespace AgentMesh.Application.Services
 
         public async Task<KnowledgeBaseCacheSaveOutput> ExecuteAsync(KnowledgeBaseCacheSaveInput input, CancellationToken cancellationToken = default)
         {
-            await _documentsCacheService.SaveKnowledgeBase(input.KnowledgeBaseCachedQuery, input.KnowledgeBaseCachedQueryResult);
+            await _documentsCacheService.SaveKnowledgeBase(input.KnowledgeBaseCachedQueries, input.KnowledgeBaseCachedQueryResult);
             return new KnowledgeBaseCacheSaveOutput { Success = true };
         }
     }

@@ -1,6 +1,7 @@
 ﻿using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.DocumentsCache;
+using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
 using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
 using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
@@ -46,16 +47,14 @@ namespace AgentMesh.Application.Models
         public IEnumerable<string> RelevantKnowledgeBaseFileNames { get; set; } = [];
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
 
-        public IEnumerable<KnowledgeBaseQueryResult> KnowledgeBaseQueryResults { get; set; } = [];
+        public KnowledgeBaseQueryResult KnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 
         public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseDocumentsContent { get; set; } = [];
 
-        public IEnumerable<AgentMemoryCachedQuery> AgentMemoryCachedQueries { get; set; } = [];
-        public IEnumerable<KnowledgeBaseCachedQuery> KnowledgeBaseCachedQueries { get; set; } = [];
+        public IEnumerable<AgentMemoryCacheableQuery> AgentMemoryCachedQueries { get; set; } = [];
+        public IEnumerable<KnowledgeBaseCacheableQuery> KnowledgeBaseCachedQueries { get; set; } = [];
 
-        public AgentMemoryCachedQueryResult? AgentMemoryCachedQueryResult { get; set; }
         public bool AgentMemoryCacheHit { get; set; }
-        public KnowledgeBaseCachedQueryResult? KnowledgeBaseCachedQueryResult { get; set; }
         public bool KnowledgeBaseCacheHit { get; set; }
 
         public void AddTokenUsage(string agentName, int tokenCount, int inputTokenCount, int outputTokenCount, TimeSpan? elapsed = null, string? stepName = null)

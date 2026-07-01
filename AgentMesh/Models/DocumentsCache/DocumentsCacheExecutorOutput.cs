@@ -1,8 +1,11 @@
-﻿namespace AgentMesh.Models.DocumentsCache
+﻿using AgentMesh.Models.AgentMemory;
+using AgentMesh.Models.KnowledgeBase;
+
+namespace AgentMesh.Models.DocumentsCache
 {
     public class DocumentsCacheExecutorOutput
     {
-        public AgentMemoryCachedQueryResult? AgentMemoryCachedQueryResult { get; set; }
-        public KnowledgeBaseCachedQueryResult? KnowledgeBaseCachedQueryResult { get; set; }
+        public AgentMemoryQueryResult? AgentMemoryCachedQueryResult { get; set; }
+        public KnowledgeBaseQueryResult? KnowledgeBaseCachedQueryResult { get; set; }
     }
 }

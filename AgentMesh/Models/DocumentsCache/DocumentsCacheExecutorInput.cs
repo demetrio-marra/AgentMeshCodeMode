@@ -2,7 +2,7 @@
 {
     public class DocumentsCacheExecutorInput
     {
-        public AgentMemoryCachedQuery? AgentMemoryCachedQuery { get; set; } = null;
-        public KnowledgeBaseCachedQuery? KnowledgeBaseCachedQuery { get; set; } = null;
+        public IEnumerable<AgentMemoryCacheableQuery>? AgentMemoryCachedQueries { get; set; }
+        public IEnumerable<KnowledgeBaseCacheableQuery>? KnowledgeBaseCachedQueries { get; set; }
     }
 }

@@ -1,55 +1,86 @@
 ﻿using AgentMesh.Application.Contracts;
+using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.DocumentsCache;
+using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Infrastructure.DocumentsCache
 {
     public class DummyDocumentsCacheService : IDocumentsCacheService
     {
-        private readonly Dictionary<AgentMemoryCachedQuery, AgentMemoryCachedQueryResult> _agentMemoryCache = new();
-        private readonly Dictionary<KnowledgeBaseCachedQuery, KnowledgeBaseCachedQueryResult> _knowledgeBaseCache = new();
+        private readonly Dictionary<AgentMemoryCacheableQuery, AgentMemoryQueryResult> _agentMemoryCache = new();
+        private readonly Dictionary<KnowledgeBaseCacheableQuery, KnowledgeBaseQueryResult> _knowledgeBaseCache = new();
 
-        public async Task<Tuple<AgentMemoryCachedQueryResult?, KnowledgeBaseCachedQueryResult?>> ExecuteDocumentsCacheQueryAsync(AgentMemoryCachedQuery? agentMemoryCachedQuery, 
-            KnowledgeBaseCachedQuery? knowledgeBaseCachedQuery)
+        public async Task<Tuple<AgentMemoryQueryResult?, KnowledgeBaseQueryResult?>> ExecuteDocumentsCacheQueryAsync(
+            IEnumerable<AgentMemoryCacheableQuery>? agentMemoryCachedQueries,
+            IEnumerable<KnowledgeBaseCacheableQuery>? knowledgeBaseCachedQueries)
         {
-            AgentMemoryCachedQueryResult? agentMemoryResult = null;
-            KnowledgeBaseCachedQueryResult? knowledgeBaseResult = null;
+            AgentMemoryQueryResult? agentMemoryResult = null;
+            KnowledgeBaseQueryResult? knowledgeBaseResult = null;
 
-            if (agentMemoryCachedQuery != null && _agentMemoryCache.TryGetValue(agentMemoryCachedQuery, out var cachedAgentMemory))
+            if (agentMemoryCachedQueries != null)
             {
-                agentMemoryResult = cachedAgentMemory;
+                var agentMemoryResults = new List<AgentMemoryItem>();
+                foreach (var query in agentMemoryCachedQueries)
+                {
+                    if (_agentMemoryCache.TryGetValue(query, out var cachedAgentMemory))
+                    {
+                        agentMemoryResults.AddRange(cachedAgentMemory.Results);
+                    }
+                }
+                if (agentMemoryResults.Count > 0)
+                {
+                    agentMemoryResult = new AgentMemoryQueryResult { Results = agentMemoryResults };
+                }
             }
 
-            if (knowledgeBaseCachedQuery != null && _knowledgeBaseCache.TryGetValue(knowledgeBaseCachedQuery, out var cachedKnowledgeBase))
+            if (knowledgeBaseCachedQueries != null)
             {
-                knowledgeBaseResult = cachedKnowledgeBase;
+                var knowledgeBaseResults = new List<KnowledgeBaseQueryResultItem>();
+                foreach (var query in knowledgeBaseCachedQueries)
+                {
+                    if (_knowledgeBaseCache.TryGetValue(query, out var cachedKnowledgeBase))
+                    {
+                        knowledgeBaseResults.AddRange(cachedKnowledgeBase.Results);
+                    }
+                }
+                if (knowledgeBaseResults.Count > 0)
+                {
+                    knowledgeBaseResult = new KnowledgeBaseQueryResult { Results = knowledgeBaseResults };
+                }
             }
 
-            return await Task.FromResult(new Tuple<AgentMemoryCachedQueryResult?, KnowledgeBaseCachedQueryResult?>(agentMemoryResult, knowledgeBaseResult));
+            return await Task.FromResult(new Tuple<AgentMemoryQueryResult?, KnowledgeBaseQueryResult?>(agentMemoryResult, knowledgeBaseResult));
         }
 
-        public Task SaveAgentMemory(AgentMemoryCachedQuery? agentMemoryCachedQuery, AgentMemoryCachedQueryResult? agentMemoryCachedQueryResult)
+        public Task SaveAgentMemory(IEnumerable<AgentMemoryCacheableQuery>? agentMemoryCachedQueries, AgentMemoryQueryResult agentMemoryQueryResults)
         {
-            if (agentMemoryCachedQuery != null && agentMemoryCachedQueryResult != null)
+            if (agentMemoryCachedQueries != null && agentMemoryQueryResults != null)
             {
-                _agentMemoryCache[agentMemoryCachedQuery] = agentMemoryCachedQueryResult;
+                foreach (var query in agentMemoryCachedQueries)
+                {
+                    _agentMemoryCache[query] = agentMemoryQueryResults;
+                }
             }
 
             return Task.CompletedTask;
         }
 
-        public Task SaveKnowledgeBase(KnowledgeBaseCachedQuery? knowledgeBaseCachedQuery, KnowledgeBaseCachedQueryResult? knowledgeBaseCachedQueryResult)
+        public Task SaveKnowledgeBase(IEnumerable<KnowledgeBaseCacheableQuery> knowledgeBaseCachedQueries, KnowledgeBaseQueryResult knowledgeBaseQueryResults)
         {
-            if (knowledgeBaseCachedQuery != null && knowledgeBaseCachedQueryResult != null)
+            if (knowledgeBaseCachedQueries != null && knowledgeBaseQueryResults != null)
             {
-                _knowledgeBaseCache[knowledgeBaseCachedQuery] = knowledgeBaseCachedQueryResult;
+                foreach (var query in knowledgeBaseCachedQueries)
+                {
+                    _knowledgeBaseCache[query] = knowledgeBaseQueryResults;
+                }
             }
 
             return Task.CompletedTask;
         }
 
-        public Task<Tuple<IEnumerable<AgentMemoryCachedQuery>, IEnumerable<KnowledgeBaseCachedQuery>>> GetAllCachedSearchesAsync()
+        public Task<Tuple<IEnumerable<AgentMemoryCacheableQuery>, IEnumerable<KnowledgeBaseCacheableQuery>>> GetAllCachedSearchesAsync()
         {
-            return Task.FromResult(new Tuple<IEnumerable<AgentMemoryCachedQuery>, IEnumerable<KnowledgeBaseCachedQuery>>(
+            return Task.FromResult(new Tuple<IEnumerable<AgentMemoryCacheableQuery>, IEnumerable<KnowledgeBaseCacheableQuery>>(
                 _agentMemoryCache.Keys,
                 _knowledgeBaseCache.Keys));
         }

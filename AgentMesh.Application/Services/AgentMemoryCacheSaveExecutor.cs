@@ -16,7 +16,7 @@ namespace AgentMesh.Application.Services
 
         public async Task<AgentMemoryCacheSaveOutput> ExecuteAsync(AgentMemoryCacheSaveInput input, CancellationToken cancellationToken = default)
         {
-            await _documentsCacheService.SaveAgentMemory(input.AgentMemoryCachedQuery, input.AgentMemoryCachedQueryResult);
+            await _documentsCacheService.SaveAgentMemory(input.AgentMemoryCachedQueries, input.AgentMemoryCachedQueryResult);
             return new AgentMemoryCacheSaveOutput { Success = true };
         }
     }

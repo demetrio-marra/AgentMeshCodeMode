@@ -35,15 +35,18 @@ namespace AgentMesh.Application.Services
             }
 
             var result = await _knowledgeBaseService.FindAsync(input, cancellationToken);
-            
-            return new KnowledgeBaseQueryResult { Results = result.Select(r => new KnowledgeBaseQueryResultItem
+
+            return new KnowledgeBaseQueryResult
             {
-                File = r.File,
-                Id = r.Id,
-                Relevance = r.Relevance,
-                Summary = r.Summary,
-                Title = r.Title
-            }).ToList() };
+                Results = result.Results.Select(r => new KnowledgeBaseQueryResultItem
+                {
+                    File = r.File,
+                    Id = r.Id,
+                    Relevance = r.Relevance,
+                    Summary = r.Summary,
+                    Title = r.Title
+                }).ToList()
+            };
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Contracts;
 using AgentMesh.Models.DocumentsCache;
 using AgentMesh.Services;
 
@@ -15,7 +15,7 @@ namespace AgentMesh.Application.Services
 
         public async Task<DocumentsCacheExecutorOutput> ExecuteAsync(DocumentsCacheExecutorInput input, CancellationToken cancellationToken = default)
         {
-            var docs = await _documentsCacheService.ExecuteDocumentsCacheQueryAsync(input.AgentMemoryCachedQuery, input.KnowledgeBaseCachedQuery);
+            var docs = await _documentsCacheService.ExecuteDocumentsCacheQueryAsync(input.AgentMemoryCachedQueries, input.KnowledgeBaseCachedQueries);
             var ret = new DocumentsCacheExecutorOutput
             {
                 AgentMemoryCachedQueryResult = docs.Item1,

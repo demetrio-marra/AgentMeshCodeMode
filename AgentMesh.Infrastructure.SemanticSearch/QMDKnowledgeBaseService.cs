@@ -43,7 +43,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         }
 
 
-        public async Task<IEnumerable<Application.Models.KnowledgeBaseQueryResult>> KeywordsSearch(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = false, CancellationToken cancellationToken = default)
+        public async Task<KnowledgeBaseQueryResult> KeywordsSearch(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = false, CancellationToken cancellationToken = default)
         {
             var query = new DTOs.Query.QueryToolRequest
             {
@@ -54,18 +54,21 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
             var ret = await _httpProxy.QueryAsync(query, cancellationToken);
 
-            return ret.Results.Select(r => new Application.Models.KnowledgeBaseQueryResult
+            return new KnowledgeBaseQueryResult
             {
-                Id = r.DocId!,
-                Title = r.Title!,
-                Summary = r.Snippet,
-                File = r.File,
-                Relevance = r.Score
-            });
+                Results = ret.Results.Select(r => new KnowledgeBaseQueryResultItem
+                {
+                    Id = r.DocId!,
+                    Title = r.Title!,
+                    Summary = r.Snippet,
+                    File = r.File,
+                    Relevance = r.Score
+                }).ToList()
+            };
         }
 
 
-        public async Task<IEnumerable<Application.Models.KnowledgeBaseQueryResult>> SemanticSearchAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = true, CancellationToken cancellationToken = default)
+        public async Task<KnowledgeBaseQueryResult> SemanticSearchAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = true, CancellationToken cancellationToken = default)
         {
             var query = new DTOs.Query.QueryToolRequest
             {
@@ -76,18 +79,21 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
             var ret = await _httpProxy.QueryAsync(query, cancellationToken);
 
-            return ret.Results.Select(r => new Application.Models.KnowledgeBaseQueryResult
+            return new KnowledgeBaseQueryResult
             {
-                Id = r.DocId!,
-                Title = r.Title!,
-                Summary = r.Snippet,
-                File = r.File,
-                Relevance = r.Score
-            });
+                Results = ret.Results.Select(r => new KnowledgeBaseQueryResultItem
+                {
+                    Id = r.DocId!,
+                    Title = r.Title!,
+                    Summary = r.Snippet,
+                    File = r.File,
+                    Relevance = r.Score
+                }).ToList()
+            };
         }
 
 
-        public async Task<IEnumerable<Application.Models.KnowledgeBaseQueryResult>> FindAsync(KnowledgeBaseQueryInput query, CancellationToken cancellationToken = default)
+        public async Task<KnowledgeBaseQueryResult> FindAsync(KnowledgeBaseQueryInput query, CancellationToken cancellationToken = default)
         {
             var dbQuery = new DTOs.Query.QueryToolRequest
             {
@@ -103,14 +109,17 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
             var ret = await _httpProxy.QueryAsync(dbQuery, cancellationToken);
 
-            return ret.Results.Select(r => new Application.Models.KnowledgeBaseQueryResult
+            return new KnowledgeBaseQueryResult
             {
-                Id = r.DocId!,
-                Title = r.Title!,
-                Summary = r.Snippet,
-                File = r.File,
-                Relevance = r.Score
-            });
+                Results = ret.Results.Select(r => new KnowledgeBaseQueryResultItem
+                {
+                    Id = r.DocId!,
+                    Title = r.Title!,
+                    Summary = r.Snippet,
+                    File = r.File,
+                    Relevance = r.Score
+                }).ToList()
+            };
         }
 
     }
