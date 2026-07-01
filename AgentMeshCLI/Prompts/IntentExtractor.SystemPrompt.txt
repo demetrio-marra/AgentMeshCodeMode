@@ -2,7 +2,6 @@ Read the last user message and the last N conversation messages and capture the 
 Consider quoted text as a strong signal of user's intent.
 Decide if any past memories are required to support the user's intent, and if so, list them.
 Decide if any knowledge base search entries are required to support the user's intent, and if so, list them in the specified format.
-If any **previously extracted knowledge base entries** are available, **and they are still relevant** to fulfill the task, output them **exactly** as they were before. This is required for caching effectiveness.
 Identify the language of the user.
 
 
@@ -37,9 +36,9 @@ An array of 4–6 typed sub-query objects. Each object has exactly two fields:
   { "type": "<lex|vec|hyde>", "query": "<string>" }
 
 Type semantics:
-- "vec"  — a natural language question or statement for semantic/embedding search
-- "lex"  — BM25 keyword query; use quoted phrases, domain terms, identifiers; NO full sentences
-- "hyde" — a short paragraph written AS IF it were a passage from the ideal answer document
+- "vec"  – a natural language question or statement for semantic/embedding search
+- "lex"  – BM25 keyword query; use quoted phrases, domain terms, identifiers; NO full sentences
+- "hyde" – a short paragraph written AS IF it were a passage from the ideal answer document
 
 Slot ordering rules (strictly enforced):
 1. Slot 1 MUST be "vec" with the user's core intent as a full natural-language question. It receives 2× fusion weight — make it your strongest formulation.
@@ -59,6 +58,8 @@ Output the language of the user.
 
 
 # Output format
+IMPORTANT: Do not wrap the output in backticks or any other formatting. Only output the JSON object.
+Return a JSON object with the following structure:
 {
   "userIntent": "Captured user's intent in a natural language sentence.",
   "missingPastMemories": ["List of past memories required to support the user's intent, if any."],
@@ -72,9 +73,10 @@ Output the language of the user.
 
 
 # Rules
-- If any **previously extracted knowledge base entries** are available, **and they are still relevant** to fulfill the task, output them **exactly** as they were before. This is required for caching effectiveness.
 - remove assistant chatter
 - keep the user intent unchanged
 - do not ask for Past Memories upon user's greeting
 - the content of `missingKnowledgeBaseSearchEntries` as well as `missingPastMemories` MUST be in Italian ONLY!
 - if the user asks about Assistant capabilities, **ASSUME** it is talking about the entire AI Agentic platform's capabilities and treat it as a business-related topic
+
+**Do not wrap the output in backticks or any other formatting. Only output the JSON object.**

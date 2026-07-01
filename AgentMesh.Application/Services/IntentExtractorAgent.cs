@@ -35,7 +35,6 @@ namespace AgentMesh.Application.Services
             var inputMessages = new List<AgentMessage>
             {
                 new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Previously extracted knowledge base entries: {string.Join("\n", input.PreviouslyExtractedKnowledgeBase?.Select(kb => $"- {kb}") ?? Enumerable.Empty<string>())}" },
                 new AgentMessage { Role = AgentMessageRole.User, Content = userMessage },
             };
 

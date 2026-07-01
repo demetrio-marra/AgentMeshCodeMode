@@ -6,6 +6,5 @@ namespace AgentMesh.Models.IntentExtractor
     {
         public List<ContextMessage> ContextMessages { get; set; } = new List<ContextMessage>();
         public string UserLastRequest { get; set; } = string.Empty;
-        public IEnumerable<IntentExtractorKnowledgeBase>? PreviouslyExtractedKnowledgeBase { get; set; } = [];
     }
 }

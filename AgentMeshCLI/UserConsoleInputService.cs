@@ -24,6 +24,7 @@ namespace AgentMesh
         private readonly LLMsConfiguration _llmsConfiguration;
         private readonly ConversationSummarizerAgentConfiguration _conversationSummarizerConfiguration;
         private readonly ContextAnalyzerAgentConfiguration _contextAnalyzerConfiguration;
+        private readonly SearchQueriesConciliatorAgentConfiguration _searchQueriesConciliatorConfiguration;
         private readonly SESJSSandboxConfiguration _sesJsSandboxConfiguration;
         private readonly UserConfiguration _userConfiguration;
         private readonly DocumentationAgentConfiguration _documentationAgentConfiguration;
@@ -43,6 +44,7 @@ namespace AgentMesh
             LLMsConfiguration llmsConfiguration,
             ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration,
             ContextAnalyzerAgentConfiguration contextAnalyzerConfiguration,
+            SearchQueriesConciliatorAgentConfiguration searchQueriesConciliatorConfiguration,
             SESJSSandboxConfiguration sESJSSandboxConfiguration,
             UserConfiguration userConfiguration,
             DocumentationAgentConfiguration documentationAgentConfiguration,
@@ -61,6 +63,7 @@ namespace AgentMesh
             _llmsConfiguration = llmsConfiguration;
             _conversationSummarizerConfiguration = conversationSummarizerConfiguration;
             _contextAnalyzerConfiguration = contextAnalyzerConfiguration;
+            _searchQueriesConciliatorConfiguration = searchQueriesConciliatorConfiguration;
             _sesJsSandboxConfiguration = sESJSSandboxConfiguration;
             _userConfiguration = userConfiguration;
             _documentationAgentConfiguration = documentationAgentConfiguration;
@@ -142,7 +145,8 @@ namespace AgentMesh
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionInputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens },
                     { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
-                    { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens }
+                    { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
+                    { SearchQueriesConciliatorAgentConfiguration.AgentName, _llmsConfiguration[_searchQueriesConciliatorConfiguration.LLM].CostPerMillionInputTokens }
                 };
 
                 var agentOutputCosts = new Dictionary<string, decimal>
@@ -157,7 +161,8 @@ namespace AgentMesh
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionOutputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
                     { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionOutputTokens },
-                    { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens }
+                    { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens },
+                    { SearchQueriesConciliatorAgentConfiguration.AgentName, _llmsConfiguration[_searchQueriesConciliatorConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
                 ConsoleHelper.WriteLineWithColor($"\n\nConversation status: Count of messages {conversationContext.Conversation.Count()}. Count of tokens: {conversationContext.TokensCount}\n", ConsoleColor.Gray);
@@ -231,6 +236,7 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("Conversation Summarizer", ConversationSummarizerAgent.AgentName, _conversationSummarizerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgent.AgentName, _contextAnalyzerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Documentation", DocumentationAgent.AgentName, _documentationAgentConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Search Queries Conciliator", SearchQueriesConciliatorAgentConfiguration.AgentName, _searchQueriesConciliatorConfiguration);
             Console.WriteLine();
         }
     }

@@ -28,6 +28,9 @@ using AgentMesh.Models.AgentMemoryCacheSave;
 using AgentMesh.Models.KnowledgeBaseCacheSave;
 using System.Diagnostics;
 using AgentMesh.Models.AgentMemory;
+using AgentMesh.Models.SearchQueriesConciliator;
+using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
+using System.Data;
 
 namespace AgentMesh.Application.Workflows
 {
@@ -66,6 +69,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IGetAllCachedSearchesExecutor _getAllCachedSearchesExecutor;
         private readonly IAgentMemoryCacheSaveExecutor _agentMemoryCacheSaveExecutor;
         private readonly IKnowledgeBaseCacheSaveExecutor _knowledgeBaseCacheSaveExecutor;
+        private readonly ISearchQueriesConciliatorAgent _searchQueriesConciliatorAgent;
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
@@ -89,7 +93,8 @@ namespace AgentMesh.Application.Workflows
             IDocumentsCacheExecutor documentsCacheExecutor,
             IGetAllCachedSearchesExecutor getAllCachedSearchesExecutor,
             IAgentMemoryCacheSaveExecutor agentMemoryCacheSaveExecutor,
-            IKnowledgeBaseCacheSaveExecutor knowledgeBaseCacheSaveExecutor) 
+            IKnowledgeBaseCacheSaveExecutor knowledgeBaseCacheSaveExecutor,
+            ISearchQueriesConciliatorAgent searchQueriesConciliatorAgent) 
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -114,6 +119,7 @@ namespace AgentMesh.Application.Workflows
             _getAllCachedSearchesExecutor = getAllCachedSearchesExecutor;
             _agentMemoryCacheSaveExecutor = agentMemoryCacheSaveExecutor;
             _knowledgeBaseCacheSaveExecutor = knowledgeBaseCacheSaveExecutor;
+            _searchQueriesConciliatorAgent = searchQueriesConciliatorAgent;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
@@ -126,6 +132,12 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Extracting user intent...");
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
+
+            if ((state.MissingPastMemories.Any() && state.AgentMemoryCachedQueries.Any())
+                || (state.MissingKnowledgeBaseSearchEntries.Any() && state.KnowledgeBaseCachedQueries.Any()))
+            {
+                await ExecuteSearchQueriesConciliatorAsync(state);
+            }
 
             if (state.MissingPastMemories.Any()
                 || state.MissingKnowledgeBaseSearchEntries.Any())
@@ -318,24 +330,16 @@ namespace AgentMesh.Application.Workflows
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Intent Extractor Agent...");
 
-            var cachedKnowledgeBaseEntries = state.KnowledgeBaseCachedQueries.Select(q => new IntentExtractorAgentOutput.IntentExtractorKnowledgeBase
-                {
-                    Query = q.Query,
-                    Type = SearchTypeToString(q.SearchType)
-                }).ToList();
-
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Intent Extractor Agent", new Dictionary<string, string>
             {
                 { "ContextMessages", "<omitted for brevity>. Total: " + chatHistory.Count().ToString() },
-                { "UserLastRequest", state.OriginalUserRequest },
-                { "PreviouslyExtractedKnowledgeBase", string.Join("\n", cachedKnowledgeBaseEntries.Select(kb => $"- {kb.Query} ({kb.Type})")) }
+                { "UserLastRequest", state.OriginalUserRequest }
             });
 
             var intentExtractorOutput = await _intentExtractorAgent.ExecuteAsync(new IntentExtractorAgentInput
             {
                 ContextMessages = state.InitialContextMessages.ToList(),
-                UserLastRequest = state.OriginalUserRequest,
-                PreviouslyExtractedKnowledgeBase = cachedKnowledgeBaseEntries
+                UserLastRequest = state.OriginalUserRequest
             });
             
             state.UserIntent = intentExtractorOutput.UserIntent;
@@ -365,6 +369,81 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", notifyDictionary);
         }
 
+
+        private async Task ExecuteSearchQueriesConciliatorAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Search Queries Conciliator Agent...");
+            
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Search Queries Conciliator Agent", new Dictionary<string, string>
+            {
+                { "ExtractedKnowledgeBaseSearchQueries", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")) },
+                { "CachedKnowledgeBaseSearchQueries", string.Join("\n", state.KnowledgeBaseCachedQueries.Select(q => $"- {q.Query} ({q.SearchType})")) },
+                { "ExtractedMemorySearchQueries", string.Join("\n", state.MissingPastMemories.Select(m => $"- {m}")) },
+                { "CachedMemorySearchQueries", string.Join("\n", state.AgentMemoryCachedQueries.Select(q => $"- {q.Query}")) }
+            });
+
+            var extractedKbQueries = state.MissingKnowledgeBaseSearchEntries
+                .Select(kb => new SearchQueriesConciliatorAgentOutput.KnowledgeBaseSearchQuery
+                {
+                    Type = kb.Type,
+                    Query = kb.Query,
+                    Source = "extracted"
+                }).ToList();
+
+            var cachedKbQueries = state.KnowledgeBaseCachedQueries
+                .Select(q => new SearchQueriesConciliatorAgentOutput.KnowledgeBaseSearchQuery
+                {
+                    Type = SearchTypeToString(q.SearchType),
+                    Query = q.Query,
+                    Source = "cached"
+                }).ToList();
+
+            var extractedMemoryQueries = state.MissingPastMemories
+                .Select(m => new SearchQueriesConciliatorAgentOutput.MemorySearchQuery
+                {
+                    Query = m,
+                    Source = "extracted"
+                }).ToList();
+
+            var cachedMemoryQueries = state.AgentMemoryCachedQueries
+                .Select(q => new SearchQueriesConciliatorAgentOutput.MemorySearchQuery
+                {
+                    Query = q.Query,
+                    Source = "cached"
+                }).ToList();
+
+            var conciliatorInput = new SearchQueriesConciliatorAgentInput
+            {
+                ExtractedKnowledgeBaseSearchQueries = extractedKbQueries,
+                CachedKnowledgeBaseSearchQueries = cachedKbQueries,
+                ExtractedMemorySearchQueries = extractedMemoryQueries,
+                CachedMemorySearchQueries = cachedMemoryQueries
+            };
+
+            var conciliatorOutput = await _searchQueriesConciliatorAgent.ExecuteAsync(conciliatorInput);
+
+            // Update state with conciliated knowledge base search queries
+            state.MissingKnowledgeBaseSearchEntries = conciliatorOutput.ConciliatedKnowledgeBaseSearchQueries
+                .Select(q => new IntentExtractorKnowledgeBase 
+                { 
+                    Type = q.Type, 
+                    Query = q.Query 
+                }).ToList();
+
+            // Update state with conciliated memory search queries (extract just the query strings)
+            state.MissingPastMemories = conciliatorOutput.ConciliatedMemorySearchQueries.Select(m => m.Query);
+
+            state.AddTokenUsage(SearchQueriesConciliatorAgentConfiguration.AgentName, conciliatorOutput.TokenCount, conciliatorOutput.InputTokenCount, conciliatorOutput.OutputTokenCount, stopwatch.Elapsed, "Search Queries Conciliator Agent");
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "ConciliatedKnowledgeBaseSearchQueries", string.Join("\n", conciliatorOutput.ConciliatedKnowledgeBaseSearchQueries.Select(q => $"- {q.Query} ({q.Type}, {q.Source})")) },
+                { "ConciliatedMemorySearchQueries", string.Join("\n", conciliatorOutput.ConciliatedMemorySearchQueries.Select(m => $"- {m.Query} ({m.Source})")) },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Search Queries Conciliator Agent", notifyDictionary);
+        }
 
         private async Task ExecuteAgentMemoryServiceAsync(CodeModeWorkflowState state)
         {
@@ -1049,7 +1128,7 @@ namespace AgentMesh.Application.Workflows
         {
             KnowledgeBaseQuerySearchType.Keyword => KEYWORDS_SEARCH_TYPE,
             KnowledgeBaseQuerySearchType.Semantic => SEMANTIC_SEARCH_TYPE,
-            KnowledgeBaseQuerySearchType.HypotethicalDocument => HYPOTHETICAL_SEARCH_TYPE,
+            KnowledgeBaseQuerySearchType.HypotheticalDocument => HYPOTHETICAL_SEARCH_TYPE,
             _ => throw new ArgumentOutOfRangeException(nameof(searchType), $"Not expected search type value: {searchType}")
         };
 
@@ -1057,7 +1136,7 @@ namespace AgentMesh.Application.Workflows
         {
             KEYWORDS_SEARCH_TYPE => KnowledgeBaseQuerySearchType.Keyword,
             SEMANTIC_SEARCH_TYPE => KnowledgeBaseQuerySearchType.Semantic,
-            HYPOTHETICAL_SEARCH_TYPE => KnowledgeBaseQuerySearchType.HypotethicalDocument,
+            HYPOTHETICAL_SEARCH_TYPE => KnowledgeBaseQuerySearchType.HypotheticalDocument,
             _ => throw new ArgumentOutOfRangeException(nameof(searchType), $"Not expected search type value: {searchType}")
         };
 

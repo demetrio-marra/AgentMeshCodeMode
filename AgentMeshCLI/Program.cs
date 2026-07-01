@@ -1,4 +1,5 @@
-﻿using AgentMesh.Application.Configuration;
+﻿using AgentMesh.Application;
+using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
@@ -16,8 +17,6 @@ using Microsoft.Extensions.Options;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Infrastructure.DocumentsCache;
 using AgentMesh.Models.Workflows;
-using AgentMesh.Application.Configuration;
-using AgentMesh.Application;
 
 namespace AgentMesh
 {
@@ -405,6 +404,28 @@ namespace AgentMesh
 
             services.AddSingleton<IConversationSummarizerAgent, ConversationSummarizerAgent>();
 
+            // SearchQueriesConciliator agent config and client
+            services
+                .AddOptions<SearchQueriesConciliatorAgentConfiguration>()
+                .Bind(configuration.GetSection(SearchQueriesConciliatorAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<SearchQueriesConciliatorAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(SearchQueriesConciliatorAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<SearchQueriesConciliatorAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<ISearchQueriesConciliatorAgent, SearchQueriesConciliatorAgent>();
 
             services.AddSingleton<IJSSandboxExecutor, JSSandboxExecutor>();
             services.AddSingleton<IJSSandbox, SESJSSandboxClient>();

@@ -17,6 +17,6 @@
     {
         Keyword,
         Semantic,
-        HypotethicalDocument
+        HypotheticalDocument
     }
 }
