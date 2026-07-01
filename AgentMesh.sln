@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.Se
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.AgentMemory", "AgentMesh.Infrastructure.AgentMemory\AgentMesh.Infrastructure.AgentMemory.csproj", "{6495993B-79E4-4140-8EC5-AC5FFD784B97}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.DocumentsCache", "AgentMesh.Infrastructure.DocumentsCache\AgentMesh.Infrastructure.DocumentsCache.csproj", "{73DC0FF2-7FD8-472D-937B-7194080811A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,18 @@ Global
 		{6495993B-79E4-4140-8EC5-AC5FFD784B97}.Release|x64.Build.0 = Release|Any CPU
 		{6495993B-79E4-4140-8EC5-AC5FFD784B97}.Release|x86.ActiveCfg = Release|Any CPU
 		{6495993B-79E4-4140-8EC5-AC5FFD784B97}.Release|x86.Build.0 = Release|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|x64.Build.0 = Debug|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|x86.Build.0 = Debug|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|x64.ActiveCfg = Release|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|x64.Build.0 = Release|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|x86.ActiveCfg = Release|Any CPU
+		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

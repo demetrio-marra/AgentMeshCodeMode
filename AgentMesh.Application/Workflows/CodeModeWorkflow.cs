@@ -1,6 +1,5 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
@@ -22,9 +21,13 @@ using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using AgentMesh.Application.Helpers;
+using AgentMesh.Models.DocumentsCache;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RelevantFactsEvaluator;
+using AgentMesh.Models.AgentMemoryCacheSave;
+using AgentMesh.Models.KnowledgeBaseCacheSave;
 using System.Diagnostics;
+using AgentMesh.Models.AgentMemory;
 
 namespace AgentMesh.Application.Workflows
 {
@@ -55,6 +58,9 @@ namespace AgentMesh.Application.Workflows
         private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor;
         private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor;
         private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent;
+        private readonly IDocumentsCacheExecutor _documentsCacheExecutor;
+        private readonly IAgentMemoryCacheSaveExecutor _agentMemoryCacheSaveExecutor;
+        private readonly IKnowledgeBaseCacheSaveExecutor _knowledgeBaseCacheSaveExecutor;
 
         private CodeModeWorkflowState? _lastExecutionState = null;
 
@@ -76,7 +82,10 @@ namespace AgentMesh.Application.Workflows
             IAgentMemorySaver agentMemorySaver,
             IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
             IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor,
-            IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent) 
+            IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
+            IDocumentsCacheExecutor documentsCacheExecutor,
+            IAgentMemoryCacheSaveExecutor agentMemoryCacheSaveExecutor,
+            IKnowledgeBaseCacheSaveExecutor knowledgeBaseCacheSaveExecutor) 
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -97,6 +106,9 @@ namespace AgentMesh.Application.Workflows
             _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
             _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
             _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
+            _documentsCacheExecutor = documentsCacheExecutor;
+            _agentMemoryCacheSaveExecutor = agentMemoryCacheSaveExecutor;
+            _knowledgeBaseCacheSaveExecutor = knowledgeBaseCacheSaveExecutor;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
@@ -112,13 +124,46 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Extracting user intent...");
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
-            if (state.MissingPastMemories.Any())
+
+            if (state.MissingPastMemories.Any()
+                || state.MissingKnowledgeBaseSearchEntries.Any())
+            {
+                // call the cache
+                await ExecuteDocumentsCacheAsync(state);
+
+                if (state.AgentMemoryCachedQueryResult != null)
+                {
+                    state.ExtractedAgentMemories = state.AgentMemoryCachedQueryResult.Memories.Select(m => new AgentMemoryItem
+                    {
+                        Memory = m.Memory,
+                        Confidence = m.Confidence
+                    }).ToList();
+                }
+
+                if (state.KnowledgeBaseCachedQueryResult != null)
+                {
+                    state.KnowledgeBaseQueryResults = state.KnowledgeBaseCachedQueryResult.Results.Select(m => new Models.KnowledgeBaseQueryResult
+                    { 
+                        Id = m.Id,
+                        File = m.File,
+                        Title = m.Title,
+                        Summary = m.Summary,
+                        Relevance = m.Relevance
+                    }).ToList();
+                }
+            }
+
+            if (state.MissingPastMemories.Any()
+                && !state.AgentMemoryCacheHit)
             {
                 await ExecuteAgentMemoryServiceAsync(state);
+                await ExecuteAgentMemoryCacheSaveAsync(state);
             }
-            if (state.MissingKnowledgeBaseSearchEntries.Any())
+            if (state.MissingKnowledgeBaseSearchEntries.Any()
+                && !state.KnowledgeBaseCacheHit)
             {
                 await ExecuteKnowledgeBaseServiceSearchAsync(state);
+                await ExecuteKnowledgeBaseCacheSaveAsync(state);
             }
 
             await ExecuteContextAnalyzerAsync(state);
@@ -273,7 +318,7 @@ namespace AgentMesh.Application.Workflows
                 }
             }
 
-            state.KnowledgeBaseDocumentsContent = state.KnowledgeBaseQueryResult
+            state.KnowledgeBaseDocumentsContent = state.KnowledgeBaseQueryResults
                 .Join(fetchedFilesContent.Results, kb => kb.File, fc => fc.File, (kb, fc) => new { kb, fc })
                 .Select(kb => new KnowledgeBaseDocumentContent
                 {
@@ -363,6 +408,54 @@ namespace AgentMesh.Application.Workflows
         }
 
 
+        private async Task ExecuteDocumentsCacheAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Documents Cache Service...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Documents Cache Service", new Dictionary<string, string>
+            {
+                { "AgentMemoryQuery", string.Join(", ", state.MissingPastMemories) },
+                { "KnowledgeBaseQueries", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")) }
+            });
+
+            var input = new DocumentsCacheExecutorInput
+            {
+                AgentMemoryCachedQuery = state.MissingPastMemories.Any()
+                    ? new AgentMemoryCachedQuery { Query = string.Join(", ", state.MissingPastMemories) }
+                    : null,
+                KnowledgeBaseCachedQuery = state.MissingKnowledgeBaseSearchEntries.Any()
+                    ? new KnowledgeBaseCachedQuery
+                    {
+                        Collections = new[] { DOCUMENTATION_COLLECTION_NAME },
+                        UserIntent = state.UserIntent,
+                        Queries = state.MissingKnowledgeBaseSearchEntries.Select(entry => new KnowledgeBaseQueryInputItem
+                        {
+                            Query = entry.Query,
+                            SearchType = entry.Type == "lex" ? KnowledgeBaseQuerySearchType.Keyword : entry.Type == "vec" ? KnowledgeBaseQuerySearchType.Semantic : KnowledgeBaseQuerySearchType.HypotethicalDocument
+                        })
+                    }
+                    : null
+            };
+
+            var output = await _documentsCacheExecutor.ExecuteAsync(input);
+
+            state.AgentMemoryCacheHit = output.AgentMemoryCachedQueryResult != null;
+            state.KnowledgeBaseCacheHit = output.KnowledgeBaseCachedQueryResult != null;
+            state.AgentMemoryCachedQueryResult = output.AgentMemoryCachedQueryResult;
+            state.KnowledgeBaseCachedQueryResult = output.KnowledgeBaseCachedQueryResult;
+
+            state.AddStepUsage("Documents Cache Service", stopwatch.Elapsed, false);
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "AgentMemoryCacheHit", state.AgentMemoryCacheHit.ToString() },
+                { "KnowledgeBaseCacheHit", state.KnowledgeBaseCacheHit.ToString() },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Documents Cache Service", notifyDictionary);
+        }
+
+
         private async Task ExecuteKnowledgeBaseServiceSearchAsync(CodeModeWorkflowState state)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -385,7 +478,7 @@ namespace AgentMesh.Application.Workflows
 
             var brcOutput = await _knowledgeBaseSearchExecutor.ExecuteAsync(queryInput, CancellationToken.None);
 
-            state.KnowledgeBaseQueryResult = brcOutput.Results.Select(r => new Models.KnowledgeBaseQueryResult
+            state.KnowledgeBaseQueryResults = brcOutput.Results.Select(r => new Models.KnowledgeBaseQueryResult
             {
                 Id = r.Id,
                 File = r.File,
@@ -397,7 +490,7 @@ namespace AgentMesh.Application.Workflows
 
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "ExtractedKnowledgeBaseEntries", string.Join("\n", state.KnowledgeBaseQueryResult.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
+                { "ExtractedKnowledgeBaseEntries", string.Join("\n", state.KnowledgeBaseQueryResults.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Search Service", notifyDictionary);
@@ -416,16 +509,16 @@ namespace AgentMesh.Application.Workflows
             {
                 contextAnalyzerInputLogEntries.Add("ExtractedAgentMemories", string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")));
             }
-            if (state.KnowledgeBaseQueryResult.Any())
+            if (state.KnowledgeBaseQueryResults.Any())
             {
-                contextAnalyzerInputLogEntries.Add("ExtractedKnowledgeBaseDocuments", string.Join("\n", state.KnowledgeBaseQueryResult.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")));
+                contextAnalyzerInputLogEntries.Add("ExtractedKnowledgeBaseDocuments", string.Join("\n", state.KnowledgeBaseQueryResults.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")));
             }
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", contextAnalyzerInputLogEntries);
 
             var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
             {
                 UserIntent = state.UserIntent ?? string.Empty,
-                ExtractedKnowledgeBase = state.KnowledgeBaseQueryResult.Select(m => new ContextAnalyzerAgentInput.ExtractedKnowledgeItem
+                ExtractedKnowledgeBase = state.KnowledgeBaseQueryResults.Select(m => new ContextAnalyzerAgentInput.ExtractedKnowledgeItem
                 {
                     DocumentId = m.Id,
                     Title = m.Title,
@@ -441,7 +534,7 @@ namespace AgentMesh.Application.Workflows
             if (contextAnalyzerOutput.FilteredKnowledgeBaseDocuments != null
                 && contextAnalyzerOutput.FilteredKnowledgeBaseDocuments.Any())
             {
-                var filteredFileNames = state.KnowledgeBaseQueryResult.Where(kb => contextAnalyzerOutput.FilteredKnowledgeBaseDocuments.Select(f => f.DocumentId).Contains(kb.Id))
+                var filteredFileNames = state.KnowledgeBaseQueryResults.Where(kb => contextAnalyzerOutput.FilteredKnowledgeBaseDocuments.Select(f => f.DocumentId).Contains(kb.Id))
                     .Select(kb => kb.File)
                     .Distinct()
                     .ToList();
@@ -866,6 +959,86 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", notifyDictionary);
         }
 
+
+        private async Task ExecuteAgentMemoryCacheSaveAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Agent Memory Cache Save Service...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Cache Save Service", new Dictionary<string, string>
+            {
+                { "Query", string.Join(", ", state.MissingPastMemories) }
+            });
+
+            var input = new AgentMemoryCacheSaveInput
+            {
+                AgentMemoryCachedQuery = new AgentMemoryCachedQuery { Query = string.Join(", ", state.MissingPastMemories) },
+                AgentMemoryCachedQueryResult = new AgentMemoryCachedQueryResult
+                {
+                    Memories = state.ExtractedAgentMemories.Select(m => new AgentMemoryItem
+                    {
+                        Memory = m.Memory,
+                        Confidence = m.Confidence
+                    })
+                }
+            };
+
+            await _agentMemoryCacheSaveExecutor.ExecuteAsync(input);
+
+            state.AddStepUsage("Agent Memory Cache Save Service", stopwatch.Elapsed, false);
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "Status", "Agent memory cache saved successfully" },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Cache Save Service", notifyDictionary);
+        }
+
+        private async Task ExecuteKnowledgeBaseCacheSaveAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Knowledge Base Cache Save Service...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Cache Save Service", new Dictionary<string, string>
+            {
+                { "Queries", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")) }
+            });
+
+            var input = new KnowledgeBaseCacheSaveInput
+            {
+                KnowledgeBaseCachedQuery = new KnowledgeBaseCachedQuery
+                {
+                    Collections = new[] { DOCUMENTATION_COLLECTION_NAME },
+                    UserIntent = state.UserIntent,
+                    Queries = state.MissingKnowledgeBaseSearchEntries.Select(entry => new KnowledgeBaseQueryInputItem
+                    {
+                        Query = entry.Query,
+                        SearchType = entry.Type == "lex" ? KnowledgeBaseQuerySearchType.Keyword : entry.Type == "vec" ? KnowledgeBaseQuerySearchType.Semantic : KnowledgeBaseQuerySearchType.HypotethicalDocument
+                    })
+                },
+                KnowledgeBaseCachedQueryResult = new KnowledgeBaseCachedQueryResult
+                {
+                    Results = state.KnowledgeBaseQueryResults.Select(r => new KnowledgeBaseQueryResultItem
+                    {
+                        Id = r.Id,
+                        File = r.File,
+                        Title = r.Title,
+                        Summary = r.Summary,
+                        Relevance = r.Relevance
+                    })
+                }
+            };
+
+            await _knowledgeBaseCacheSaveExecutor.ExecuteAsync(input);
+
+            state.AddStepUsage("KB Cache Save Service", stopwatch.Elapsed, false);
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "Status", "Knowledge base cache saved successfully" },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Cache Save Service", notifyDictionary);
+        }
 
         public string GetIngressExecutorName() => IntentExtractorAgentConfiguration.AgentName;
 

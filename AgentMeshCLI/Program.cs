@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Infrastructure.DocumentsCache;
 using AgentMesh.Models.Workflows;
 
 namespace AgentMesh
@@ -61,6 +62,12 @@ namespace AgentMesh
             services.AddSingleton<AgentMemoryExecutor>();
             services.AddSingleton<IAgentMemoryRetriever>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
             services.AddSingleton<IAgentMemorySaver>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
+
+            // Documents Cache Service and Executor
+            services.AddSingleton<IDocumentsCacheService, DummyDocumentsCacheService>();
+            services.AddSingleton<IDocumentsCacheExecutor, DocumentsCacheExecutor>();
+            services.AddSingleton<IAgentMemoryCacheSaveExecutor, AgentMemoryCacheSaveExecutor>();
+            services.AddSingleton<IKnowledgeBaseCacheSaveExecutor, KnowledgeBaseCacheSaveExecutor>();
 
             // QMD MCP server proxy configuration and HTTP client
             var qmdHttpProxyConfig = new QMDHttpProxyConfiguration();

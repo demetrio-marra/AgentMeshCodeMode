@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AgentMesh.Models.AgentMemory;
 
 namespace AgentMesh.Models.DocumentsCache
 {
     public class AgentMemoryCachedQueryResult
     {
+        public IEnumerable<AgentMemoryItem> Memories { get; set; } = [];
     }
 }
