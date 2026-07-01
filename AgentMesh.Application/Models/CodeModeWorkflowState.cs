@@ -22,7 +22,6 @@ namespace AgentMesh.Application.Models
         public string? UserIntent { get; set; }
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
         public IEnumerable<IntentExtractorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
-        public IEnumerable<IntentExtractorKnowledgeBase> CachedMissingKnowledgeBaseSearchEntries { get; set; } = [];
         public string EnrichedUserRequest { get; set; } = string.Empty;
         public UserIntentCategoryValues UserIntentCategoryValue { get; set; }
         public string? BusinessRequirements { get; set; }
@@ -41,6 +40,7 @@ namespace AgentMesh.Application.Models
         public SandboxResultType CodeExecutionResultType { get; set; }
         public string? PresenterOutput { get; set; }
         public string? FinalAnswer { get; set; }
+
         public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; }
         public IEnumerable<AgentMemoryItem> ExtractedAgentMemories { get; set; } = Enumerable.Empty<AgentMemoryItem>();
         public IEnumerable<string> RelevantKnowledgeBaseFileNames { get; set; } = [];
@@ -49,6 +49,9 @@ namespace AgentMesh.Application.Models
         public IEnumerable<KnowledgeBaseQueryResult> KnowledgeBaseQueryResults { get; set; } = [];
 
         public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseDocumentsContent { get; set; } = [];
+
+        public IEnumerable<AgentMemoryCachedQuery> AgentMemoryCachedQueries { get; set; } = [];
+        public IEnumerable<KnowledgeBaseCachedQuery> KnowledgeBaseCachedQueries { get; set; } = [];
 
         public AgentMemoryCachedQueryResult? AgentMemoryCachedQueryResult { get; set; }
         public bool AgentMemoryCacheHit { get; set; }

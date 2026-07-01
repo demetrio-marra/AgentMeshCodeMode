@@ -59,10 +59,9 @@ namespace AgentMesh.Application.Workflows
         private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor;
         private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent;
         private readonly IDocumentsCacheExecutor _documentsCacheExecutor;
+        private readonly IGetAllCachedSearchesExecutor _getAllCachedSearchesExecutor;
         private readonly IAgentMemoryCacheSaveExecutor _agentMemoryCacheSaveExecutor;
         private readonly IKnowledgeBaseCacheSaveExecutor _knowledgeBaseCacheSaveExecutor;
-
-        private CodeModeWorkflowState? _lastExecutionState = null;
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
@@ -84,6 +83,7 @@ namespace AgentMesh.Application.Workflows
             IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor,
             IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
             IDocumentsCacheExecutor documentsCacheExecutor,
+            IGetAllCachedSearchesExecutor getAllCachedSearchesExecutor,
             IAgentMemoryCacheSaveExecutor agentMemoryCacheSaveExecutor,
             IKnowledgeBaseCacheSaveExecutor knowledgeBaseCacheSaveExecutor) 
         {
@@ -107,6 +107,7 @@ namespace AgentMesh.Application.Workflows
             _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
             _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
             _documentsCacheExecutor = documentsCacheExecutor;
+            _getAllCachedSearchesExecutor = getAllCachedSearchesExecutor;
             _agentMemoryCacheSaveExecutor = agentMemoryCacheSaveExecutor;
             _knowledgeBaseCacheSaveExecutor = knowledgeBaseCacheSaveExecutor;
         }
@@ -116,10 +117,7 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStart();
 
             var state = new CodeModeWorkflowState(userInput, chatHistory);
-            if (_lastExecutionState != null)
-            {
-                state.CachedMissingKnowledgeBaseSearchEntries = _lastExecutionState.MissingKnowledgeBaseSearchEntries;
-            }
+            await ExecuteGetAllCachedSearchesAsync(state);
 
             _logger.LogDebug("Extracting user intent...");
 
@@ -255,11 +253,7 @@ namespace AgentMesh.Application.Workflows
                 await ExecuteAgentMemorySaverAsync(state);
             }
 
-            //await ExecuteAgentMemorySaverAsync(state);
-
             await _workflowProgressNotifier.NotifyWorkflowEnd();
-
-            _lastExecutionState = state;
 
             return new WorkflowResult
             {
@@ -340,18 +334,25 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Intent Extractor Agent...");
+
+            var cachedKnowledgeBaseEntries = state.KnowledgeBaseCachedQueries.SelectMany(kb => kb.Queries).Select(q => new IntentExtractorAgentOutput.IntentExtractorKnowledgeBase
+                {
+                    Query = q.Query,
+                    Type = q.SearchType == KnowledgeBaseQuerySearchType.Keyword ? "lex" : q.SearchType == KnowledgeBaseQuerySearchType.Semantic ? "vec" : "hypothetical"
+                }).ToList();
+
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Intent Extractor Agent", new Dictionary<string, string>
             {
                 { "ContextMessages", "<omitted for brevity>. Total: " + chatHistory.Count().ToString() },
                 { "UserLastRequest", state.OriginalUserRequest },
-                { "PreviouslyExtractedKnowledgeBase", string.Join("\n", state.CachedMissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")) }
+                { "PreviouslyExtractedKnowledgeBase", string.Join("\n", cachedKnowledgeBaseEntries.Select(kb => $"- {kb.Query} ({kb.Type})")) }
             });
 
             var intentExtractorOutput = await _intentExtractorAgent.ExecuteAsync(new IntentExtractorAgentInput
             {
                 ContextMessages = state.InitialContextMessages.ToList(),
                 UserLastRequest = state.OriginalUserRequest,
-                PreviouslyExtractedKnowledgeBase = state.CachedMissingKnowledgeBaseSearchEntries
+                PreviouslyExtractedKnowledgeBase = cachedKnowledgeBaseEntries
             });
             
             state.UserIntent = intentExtractorOutput.UserIntent;
@@ -1034,6 +1035,39 @@ namespace AgentMesh.Application.Workflows
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Cache Save Service", notifyDictionary);
+        }
+
+        private async Task ExecuteGetAllCachedSearchesAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Get All Cached Searches Service...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Get All Cached Searches Service", new Dictionary<string, string>());
+
+            var output = await _getAllCachedSearchesExecutor.ExecuteAsync(new GetAllCachedSearchesExecutorInput());
+
+            state.AgentMemoryCachedQueries = output.AgentMemoryCachedQueries.Select(m => new AgentMemoryCachedQuery
+            {
+                Query = m.Query
+            }).ToList();
+
+            state.KnowledgeBaseCachedQueries = output.KnowledgeBaseCachedQueries.Select(kb => new KnowledgeBaseCachedQuery
+            {
+                Queries = kb.Queries.Select(q => new KnowledgeBaseQueryInputItem
+                {
+                    Query = q.Query,
+                    SearchType = q.SearchType
+                }).ToList()
+            }).ToList();
+
+            state.AddStepUsage("Get All Cached Searches Service", stopwatch.Elapsed, false);
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "AgentMemoryQueriesCount", output.AgentMemoryCachedQueries.Count().ToString() },
+                { "KnowledgeBaseQueriesCount", output.KnowledgeBaseCachedQueries.Count().ToString() },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Get All Cached Searches Service", notifyDictionary);
         }
 
         public string GetIngressExecutorName() => IntentExtractorAgentConfiguration.AgentName;

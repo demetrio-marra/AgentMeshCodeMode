@@ -46,5 +46,12 @@ namespace AgentMesh.Infrastructure.DocumentsCache
 
             return Task.CompletedTask;
         }
+
+        public Task<Tuple<IEnumerable<AgentMemoryCachedQuery>, IEnumerable<KnowledgeBaseCachedQuery>>> GetAllCachedSearchesAsync()
+        {
+            return Task.FromResult(new Tuple<IEnumerable<AgentMemoryCachedQuery>, IEnumerable<KnowledgeBaseCachedQuery>>(
+                _agentMemoryCache.Keys,
+                _knowledgeBaseCache.Keys));
+        }
     }
 }

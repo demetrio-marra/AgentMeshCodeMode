@@ -66,6 +66,7 @@ namespace AgentMesh
             // Documents Cache Service and Executor
             services.AddSingleton<IDocumentsCacheService, DummyDocumentsCacheService>();
             services.AddSingleton<IDocumentsCacheExecutor, DocumentsCacheExecutor>();
+            services.AddSingleton<IGetAllCachedSearchesExecutor, GetAllCachedSearchesExecutor>();
             services.AddSingleton<IAgentMemoryCacheSaveExecutor, AgentMemoryCacheSaveExecutor>();
             services.AddSingleton<IKnowledgeBaseCacheSaveExecutor, KnowledgeBaseCacheSaveExecutor>();
 
