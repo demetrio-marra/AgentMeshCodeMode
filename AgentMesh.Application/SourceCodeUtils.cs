@@ -2,8 +2,13 @@
 {
     public class SourceCodeUtils
     {
-        public static string GetSourceCodeWithLineNumbers(string sourceCode, bool useSpaceFiller = true)
+        public static string? GetSourceCodeWithLineNumbers(string? sourceCode, bool useSpaceFiller = true)
         {
+            if (sourceCode == null)
+            {
+                return null;
+            }
+
             var fillerChar = ' ';
             if (!useSpaceFiller)
             {

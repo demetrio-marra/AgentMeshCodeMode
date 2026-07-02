@@ -26,7 +26,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch.DTOs.Query
         /// Source file path of the match (relative to the knowledge base root).
         /// </summary>
         [JsonPropertyName("file")]
-        public string? File { get; set; }
+        public string File { get; set; } = string.Empty;
 
         /// <summary>
         /// Document id (e.g. <c>#abc123</c>) usable with the <c>get</c> tool.

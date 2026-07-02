@@ -20,7 +20,7 @@
         /// <summary>
         /// The original documentation file name associated with the knowledge base entry, if available.
         /// </summary>
-        public string? File { get; set; }
+        public string File { get; set; } = string.Empty;
 
         /// <summary>
         /// The relevance score of the knowledge base entry in relation to the search query, if available.

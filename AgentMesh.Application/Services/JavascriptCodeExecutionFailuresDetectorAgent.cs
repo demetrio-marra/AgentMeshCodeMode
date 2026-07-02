@@ -61,7 +61,8 @@ namespace AgentMesh.Application.Services
                 stopwatch.ElapsedMilliseconds, result.TokenCount);
 
             _logger.LogDebug("JavascriptCodeExecutionFailuresDetectorAgent Output: {Output}", System.Text.Json.JsonSerializer.Serialize(result));
-            return result;
+
+            return await Task.FromResult(result);
         }
 
         protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;

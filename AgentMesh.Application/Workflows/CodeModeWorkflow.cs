@@ -310,7 +310,7 @@ namespace AgentMesh.Application.Workflows
                 relatedDocs = relatedDocs.Distinct().ToList();
 
                 // avoid extracting already fetched docs
-                relatedDocs = relatedDocs.Except(fetchedFilesContent.Results.Select(r => r.File)).ToList();
+                relatedDocs = relatedDocs.Except(fetchedFilesContent.Results.Where(r => !string.IsNullOrEmpty(r.File)).Select(r => r.File!)).ToList();
 
                 // fetch again the content of the related docs and add them to the fetchedFilesContent.Results
                 if (relatedDocs.Any())
@@ -599,7 +599,7 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Context Analyzer Agent...");
             var contextAnalyzerInputLogEntries = new Dictionary<string, string>
             {
-                { "ExtranctedItent", state.UserIntent }
+                { "ExtranctedItent", state.UserIntent ?? "(no user intent)" }
             };
             if (state.ExtractedAgentMemories.Any())
             {
@@ -661,9 +661,10 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Technical Analyst Agent...");
+            var enrichedUserRequest = state.EnrichedUserRequest ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Technical Analyst Agent", new Dictionary<string, string>
             {
-                { "EnrichedUserRequest", state.EnrichedUserRequest },
+                { "EnrichedUserRequest", enrichedUserRequest },
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
@@ -671,7 +672,7 @@ namespace AgentMesh.Application.Workflows
 
             var technicalAnalystOutput = await _technicalAnalystAgent.ExecuteAsync(new TechnicalAnalystAgentInput
             {
-                EnrichedUserRequest = state.EnrichedUserRequest,
+                EnrichedUserRequest = enrichedUserRequest,
                 ApiDocumentation = serializedDocumentation
             }, cancellationToken);
             state.ShouldEngageCoder = true;
@@ -689,16 +690,17 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Coder Agent...");
+            var businessRequirements = state.BusinessRequirements ?? "(No business requirements)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Coder Agent", new Dictionary<string, string>
             {
-                { "BusinessRequirements", state.BusinessRequirements! }
+                { "BusinessRequirements", businessRequirements }
             });
 
             var serializedDocumentation = SerializeDocumentationForCoder(state.KnowledgeBaseDocumentsContent);
 
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
             {
-                BusinessRequirements = state.BusinessRequirements!,
+                BusinessRequirements = businessRequirements,
                 ApiDocumentation = serializedDocumentation
             });
             state.GeneratedCode = coderAgentOutput.CodeToRun;
@@ -718,12 +720,12 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Code Static Analyzer Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Code Static Analyzer Agent", new Dictionary<string, string>
             {
-                { "CodeToFix", state.LastCodeWithLineNumbers }
+                { "CodeToFix", state.LastCodeWithLineNumbers ?? "(No code available)" }
             });
 
             var staticAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
             {
-                CodeToFix = state.LastCodeWithLineNumbers
+                CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty
             });
             state.IsCodeValid = !staticAnalyzerOutput.Violations.Any();
             if (!state.IsCodeValid)
@@ -752,13 +754,13 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Code Fixer Agent... Iteration {Iteration}", iteration);
             await _workflowProgressNotifier.NotifyWorkflowStepStart(agentName, new Dictionary<string, string>
             {
-                { "CodeToFix", state.LastCodeWithLineNumbers },
+                { "CodeToFix", state.LastCodeWithLineNumbers ?? "(No code available)" },
                 { "IssuesCount", state.CodeIssues.Count.ToString() }
             });
 
             var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
             {
-                CodeToFix = state.LastCodeWithLineNumbers,
+                CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty,
                 Issues = state.CodeIssues
             });
             state.GeneratedCode = codeFixerOutput.FixedCode;
@@ -784,12 +786,12 @@ namespace AgentMesh.Application.Workflows
                 _logger.LogDebug(logMessage);
                 await _workflowProgressNotifier.NotifyWorkflowStepStart(stepName, new Dictionary<string, string>
                 {
-                    { "Code", state.GeneratedCode }
+                    { "Code", state.GeneratedCode ?? "(No generated code)" }
                 });
 
                 var executionOutput = await _jsSandboxExecutor.ExecuteAsync(new CodeSandboxInput
                 {
-                    Code = state.GeneratedCode
+                    Code = state.GeneratedCode ?? string.Empty
                 });
                 state.SandboxResult = executionOutput.Result;
                 state.SandboxExecutionId = executionOutput.ExecutionId;
@@ -843,14 +845,14 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Code Execution Failures Detector Agent... Iteration {Iteration}", iteration);
             await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Execution Failures Detector Agent (Iteration {iteration})", new Dictionary<string, string>
             {
-                { "CodeWithLineNumbers", state.LastCodeWithLineNumbers },
-                { "ExecutionResult", state.SandboxResult! }
+                { "CodeWithLineNumbers", state.LastCodeWithLineNumbers ?? "(No code available)" },
+                { "ExecutionResult", state.SandboxResult ?? "(No execution result)" }
             });
 
             var detectorOutput = await _codeExecutionFailuresDetectorAgent.ExecuteAsync(new CodeExecutionFailuresDetectorAgentInput
             {
-                CodeWithLineNumbers = state.LastCodeWithLineNumbers,
-                ExecutionResult = state.SandboxResult!
+                CodeWithLineNumbers = state.LastCodeWithLineNumbers ?? string.Empty,
+                ExecutionResult = state.SandboxResult ?? string.Empty
             });
             state.CodeExecutionFailuresDetectorIterationCount++;
             state.AddTokenUsage(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, detectorOutput.TokenCount, detectorOutput.InputTokenCount, detectorOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Execution Failures Detector Agent (Iteration {iteration})");
@@ -870,13 +872,13 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Code Fixer Agent for runtime errors... Iteration {Iteration}", iteration);
             await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", new Dictionary<string, string>
             {
-                { "CodeToFix", state.LastCodeWithLineNumbers },
+                { "CodeToFix", state.LastCodeWithLineNumbers ?? "(No code available)" },
                 { "IssuesCount", "1" }
             });
 
             var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
             {
-                CodeToFix = state.LastCodeWithLineNumbers,
+                CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty,
                 Issues = new[] { analysis }
             });
             state.GeneratedCode = codeFixerOutput.FixedCode;
@@ -893,16 +895,18 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Results Presenter Agent...");
+            var sandboxResult = state.SandboxResult ?? "(No sandbox result)";
+            var enrichedUserRequest = state.EnrichedUserRequest ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
             {
-                { "Data", state.SandboxResult! },
-                { "EnrichedUserRequest", state.EnrichedUserRequest }
+                { "Data", sandboxResult },
+                { "EnrichedUserRequest", enrichedUserRequest }
             });
 
             var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
             {
-                Data = state.SandboxResult!,
-                EnrichedUserRequest = state.EnrichedUserRequest
+                Data = sandboxResult,
+                EnrichedUserRequest = enrichedUserRequest
             });
             state.PresenterOutput = resultsPresenterOutput.Content;
             state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount, stopwatch.Elapsed, "Results Presenter Agent");
@@ -919,9 +923,10 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Business Advisor Agent...");
+            var enrichedUserRequest = state.EnrichedUserRequest ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
             {
-                { "EnrichedUserRequest", state.EnrichedUserRequest },
+                { "EnrichedUserRequest", enrichedUserRequest },
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
@@ -929,14 +934,14 @@ namespace AgentMesh.Application.Workflows
 
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
-                EnrichedUserRequest = state.EnrichedUserRequest,
+                EnrichedUserRequest = enrichedUserRequest,
                 Documentation = serializedDocumentation
             }, cancellationToken);
             state.BusinessAdvisorContent = baOutput.Content;
             state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount, stopwatch.Elapsed, "Business Advisor Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "Content", state.BusinessAdvisorContent },
+                { "Content", state.BusinessAdvisorContent ?? "(No business advisor content)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Advisor Agent", notifyDictionary);
@@ -946,9 +951,10 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Documentation Agent...");
+            var enrichedUserRequest = state.EnrichedUserRequest ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Documentation Agent", new Dictionary<string, string>
             {
-                { "EnrichedUserRequest", state.EnrichedUserRequest },
+                { "EnrichedUserRequest", enrichedUserRequest },
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
@@ -956,14 +962,14 @@ namespace AgentMesh.Application.Workflows
 
             var output = await _documentationAgent.ExecuteAsync(new DocumentationAgentInput
             {
-                EnrichedUserRequest = state.EnrichedUserRequest,
+                EnrichedUserRequest = enrichedUserRequest,
                 Documentation = serializedDocumentation
             }, cancellationToken);
             state.DocumentationContent = output.Content;
             state.AddTokenUsage(DocumentationAgentConfiguration.AgentName, output.TokenCount, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Documentation Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "Content", state.DocumentationContent },
+                { "Content", state.DocumentationContent ?? "(No documentation content)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Documentation Agent", notifyDictionary);
@@ -983,17 +989,18 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Personal Assistant Agent...");
+            var enrichedUserRequest = state.EnrichedUserRequest ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Personal Assistant Agent", new Dictionary<string, string>
             {
                 { "Data", data ?? "(No data)" },
-                { "EnrichedUserRequest", state.EnrichedUserRequest },
+                { "EnrichedUserRequest", enrichedUserRequest },
                 { "LanguageOfTheUser", state.LanguageOfTheUser ?? "(No language specified)" }
             });
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
                 Data = data,
-                EnrichedUserRequest = state.EnrichedUserRequest,
+                EnrichedUserRequest = enrichedUserRequest,
                 LanguageOfTheUser = state.LanguageOfTheUser
             });
             state.FinalAnswer = personalAssistantOutput.Response;
@@ -1010,15 +1017,16 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Relevant Facts Evaluator Agent...");
+            var enrichedUserRequest = state.EnrichedUserRequest ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Relevant Facts Evaluator Agent", new Dictionary<string, string>
             {
-                { "User's request", state.EnrichedUserRequest },
+                { "User's request", enrichedUserRequest },
                 { "AI pipeline answer", state.FinalAnswer ?? string.Empty }
             });
 
             var output = await _relevantFactsEvaluatorAgent.ExecuteAsync(new RelevantFactsEvaluatorAgentInput
             {
-                EnrichedUserRequest = state.EnrichedUserRequest,
+                EnrichedUserRequest = enrichedUserRequest,
                 FinalAnswer = state.FinalAnswer ?? string.Empty
             });
 
@@ -1039,15 +1047,16 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Agent Memory Saver...");
+            var enrichedUserRequest = state.EnrichedUserRequest ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Saver", new Dictionary<string, string>
             {
-                { "User's request", state.EnrichedUserRequest },
+                { "User's request", enrichedUserRequest },
                 { "AI pipeline answer", state.FinalAnswer ?? string.Empty }
             });
 
             await _agentMemorySaver.ExecuteAsync(new AgentMemorySaverInput
             {
-                MessageByUser = state.EnrichedUserRequest,
+                MessageByUser = enrichedUserRequest,
                 ResponseByAssistant = state.FinalAnswer ?? string.Empty
             });
 

@@ -5,7 +5,7 @@ namespace AgentMesh.Models.KnowledgeBaseCacheSave
 {
     public class KnowledgeBaseCacheSaveInput
     {
-        public IEnumerable<KnowledgeBaseCacheableQuery>? KnowledgeBaseCachedQueries { get; set; }
-        public KnowledgeBaseQueryResult? KnowledgeBaseCachedQueryResult { get; set; }
+        public IEnumerable<KnowledgeBaseCacheableQuery> KnowledgeBaseCachedQueries { get; set; } = [];
+        public KnowledgeBaseQueryResult KnowledgeBaseCachedQueryResult { get; set; } = new KnowledgeBaseQueryResult();
     }
 }
