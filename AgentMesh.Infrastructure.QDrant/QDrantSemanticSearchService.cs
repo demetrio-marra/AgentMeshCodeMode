@@ -12,7 +12,7 @@ namespace AgentMesh.Infrastructure.QDrant
         private readonly IEmbeddingService _embeddingService;
         private readonly ILogger<QDrantSemanticSearchService> _logger;
         private readonly int _maxExtractedResults;
-        private readonly string _businessProcessesCollectionName;
+        private readonly string _queriesCacheCollectionName;
 
         public QDrantSemanticSearchService(QDrantSemanticSearchServiceConfiguration configuration,
             IEmbeddingService embeddingService,
@@ -26,7 +26,7 @@ namespace AgentMesh.Infrastructure.QDrant
                port: configuration.Port
            );
             _maxExtractedResults = configuration.MaxResults;
-            _businessProcessesCollectionName = configuration.BusinessProcessesCollectionName;
+            _queriesCacheCollectionName = configuration.QueriesCacheCollectionName;
 
             _ = EnsureAgentRoleIndexAsync();
         }
@@ -35,10 +35,10 @@ namespace AgentMesh.Infrastructure.QDrant
         {
             try
             {
-                _logger.LogInformation("Creating payload index on 'agentRole' field for collection '{CollectionName}'...", _businessProcessesCollectionName);
-                
+                _logger.LogInformation("Creating payload index on 'agentRole' field for collection '{CollectionName}'...", _queriesCacheCollectionName);
+
                 await _qdrantClient.CreatePayloadIndexAsync(
-                    collectionName: _businessProcessesCollectionName,
+                    collectionName: _queriesCacheCollectionName,
                     fieldName: "agentRole",
                     schemaType: PayloadSchemaType.Keyword
                 );
@@ -98,7 +98,7 @@ namespace AgentMesh.Infrastructure.QDrant
             }
 
             var batchSearchResult = await _qdrantClient.SearchBatchAsync(
-                collectionName: _businessProcessesCollectionName,
+                collectionName: _queriesCacheCollectionName,
                 searches: searchPoints,
                 cancellationToken: cancellationToken
             );
