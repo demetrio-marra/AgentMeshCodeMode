@@ -152,7 +152,8 @@ namespace AgentMesh
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens },
                     { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
-                    { SearchQueriesConciliatorAgentConfiguration.AgentName, _llmsConfiguration[_searchQueriesConciliatorConfiguration.LLM].CostPerMillionInputTokens }
+                    { SearchQueriesConciliatorAgentConfiguration.AgentName, _llmsConfiguration[_searchQueriesConciliatorConfiguration.LLM].CostPerMillionInputTokens },
+                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens }
                 };
 
                 var agentOutputCosts = new Dictionary<string, decimal>
@@ -168,7 +169,8 @@ namespace AgentMesh
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
                     { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionOutputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens },
-                    { SearchQueriesConciliatorAgentConfiguration.AgentName, _llmsConfiguration[_searchQueriesConciliatorConfiguration.LLM].CostPerMillionOutputTokens }
+                    { SearchQueriesConciliatorAgentConfiguration.AgentName, _llmsConfiguration[_searchQueriesConciliatorConfiguration.LLM].CostPerMillionOutputTokens },
+                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
                 if (_workflowConfiguration.EnableMemoryService)
@@ -248,7 +250,10 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("Conversation Summarizer", ConversationSummarizerAgent.AgentName, _conversationSummarizerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgent.AgentName, _contextAnalyzerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Documentation", DocumentationAgent.AgentName, _documentationAgentConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Search Queries Conciliator", SearchQueriesConciliatorAgentConfiguration.AgentName, _searchQueriesConciliatorConfiguration);
+            if (_workflowConfiguration.EnableCacheService)
+            {
+                ConsoleHelper.PrintAgentConfiguration("Search Queries Conciliator", SearchQueriesConciliatorAgentConfiguration.AgentName, _searchQueriesConciliatorConfiguration);
+            }
             if (_workflowConfiguration.EnableMemoryService)
             {
                 ConsoleHelper.PrintAgentConfiguration("Relevant Facts Evaluator", RelevantFactsEvaluatorAgentConfiguration.AgentName, _relevantFactsEvaluatorConfiguration);
