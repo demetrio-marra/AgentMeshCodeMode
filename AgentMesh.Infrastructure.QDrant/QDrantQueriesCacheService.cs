@@ -286,8 +286,7 @@ namespace AgentMesh.Infrastructure.QDrant
                 Query = item.FoundQuery,
                 QueryKind = QDrantQueriesCacheItem.AgentMemoryQueryKind,
                 Result = item.Result,
-                LastUpdate = DateTime.UtcNow,
-                Relevance = item.Relevance
+                LastUpdate = DateTime.UtcNow
             };
         }
 
@@ -302,8 +301,7 @@ namespace AgentMesh.Infrastructure.QDrant
                 DocumentTitle = item.DocumentTitle,
                 DocumentSummary = item.DocumentSummary,
                 DocumentFile = item.DocumentFile,
-                LastUpdate = DateTime.UtcNow,
-                Relevance = item.Relevance
+                LastUpdate = DateTime.UtcNow
             };
         }
 

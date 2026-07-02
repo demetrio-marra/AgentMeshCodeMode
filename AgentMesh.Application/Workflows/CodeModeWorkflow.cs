@@ -363,13 +363,14 @@ namespace AgentMesh.Application.Workflows
                             Memory = item.Result,
                             Confidence = item.Relevance
                         })
+                        .Distinct()
                         .ToList();
 
                     var cachedQueries = cachedMemoryItemsList
-                        .Select(item => item.SearchedQuery)
+                        .Select(item => NormalizeCacheLookupValue(item.SearchedQuery))
                         .Where(query => !string.IsNullOrWhiteSpace(query))
                         .ToHashSet(StringComparer.OrdinalIgnoreCase);
-                    state.MissingPastMemories = originalMemoryQueries.Where(q => !cachedQueries.Contains(q));
+                    state.MissingPastMemories = originalMemoryQueries.Where(q => !cachedQueries.Contains(NormalizeCacheLookupValue(q)));
                 }
             }
 
@@ -391,10 +392,6 @@ namespace AgentMesh.Application.Workflows
 
                 if (cachedKnowledgeBaseItemsList.Any())
                 {
-                    var groupedCachedResults = cachedKnowledgeBaseItemsList
-                        .GroupBy(item => new { item.SearchedQuery, item.SearchedQueryType })
-                        .ToList();
-
                     state.KnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
                     {
                         Results = cachedKnowledgeBaseItemsList
@@ -406,19 +403,17 @@ namespace AgentMesh.Application.Workflows
                                 Summary = item.DocumentSummary,
                                 Relevance = item.Relevance
                             })
+                            .Distinct()
                             .ToList()
                     };
 
-                    var cachedQueryKeys = groupedCachedResults
-                        .Select(g => new { Query = g.Key.SearchedQuery, QueryType = g.Key.SearchedQueryType })
-                        .ToHashSet();
+                    var cachedQueryKeys = cachedKnowledgeBaseItemsList
+                        .Select(item => CreateKnowledgeBaseCacheLookupKey(item.SearchedQuery, item.SearchedQueryType))
+                        .Where(key => !string.IsNullOrWhiteSpace(key))
+                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                     state.MissingKnowledgeBaseSearchEntries = originalKnowledgeBaseQueries
-                        .Where(entry => !cachedQueryKeys.Contains(new
-                        {
-                            Query = entry.Query,
-                            QueryType = ParseKnowledgeBaseSearchType(entry.Type)
-                        }));
+                        .Where(entry => !cachedQueryKeys.Contains(CreateKnowledgeBaseCacheLookupKey(entry.Query, ParseKnowledgeBaseSearchType(entry.Type))));
                 }
             }
 
@@ -1062,6 +1057,12 @@ namespace AgentMesh.Application.Workflows
             KnowledgeBaseQuerySearchType.HypotheticalDocument => HYPOTHETICAL_SEARCH_TYPE,
             _ => throw new ArgumentOutOfRangeException(nameof(searchType), $"Not expected search type value: {searchType}")
         };
+
+        private static string CreateKnowledgeBaseCacheLookupKey(string query, KnowledgeBaseQuerySearchType queryType)
+            => $"{queryType}|{NormalizeCacheLookupValue(query)}";
+
+        private static string NormalizeCacheLookupValue(string? value)
+            => value?.Trim() ?? string.Empty;
 
         private static KnowledgeBaseQuerySearchType ParseKnowledgeBaseSearchType(string searchType) => searchType switch
         {
