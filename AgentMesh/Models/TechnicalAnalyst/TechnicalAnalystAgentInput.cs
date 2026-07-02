@@ -1,6 +1,6 @@
-﻿namespace AgentMesh.Models.BusinessRequirementsCreator
+﻿namespace AgentMesh.Models.TechnicalAnalyst
 {
-    public class BusinessRequirementsCreatorAgentInput
+    public class TechnicalAnalystAgentInput
     {
         public string EnrichedUserRequest { get; set; } = string.Empty;
 

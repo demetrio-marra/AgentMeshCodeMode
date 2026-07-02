@@ -1,9 +1,9 @@
 namespace AgentMesh.Application.Configuration
 {
-    public class BusinessRequirementsCreatorAgentConfiguration
+    public class TechnicalAnalystAgentConfiguration
     {
-        public const string SectionName = "Agents:BusinessRequirementsCreator";
-        public const string AgentName = "BusinessRequirementsCreator";
+        public const string SectionName = "Agents:TechnicalAnalyst";
+        public const string AgentName = "TechnicalAnalyst";
 
         public string LLM { get; set; } = string.Empty;
         public string ModelTemperature { get; set; } = string.Empty;

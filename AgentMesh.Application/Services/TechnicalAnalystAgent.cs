@@ -2,7 +2,7 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Models.BusinessRequirementsCreator;
+using AgentMesh.Models.TechnicalAnalyst;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,21 +11,21 @@ using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class BusinessRequirementsCreatorAgent : AgentBase<BusinessRequirementsCreatorAgent.ParsedResponse>, IBusinessRequirementsCreatorAgent
+    public class TechnicalAnalystAgent : AgentBase<TechnicalAnalystAgent.ParsedResponse>, ITechnicalAnalystAgent
     {
-        private readonly ILogger<BusinessRequirementsCreatorAgent> _logger;
+        private readonly ILogger<TechnicalAnalystAgent> _logger;
 
-        public BusinessRequirementsCreatorAgent(
-            [FromKeyedServices(BusinessRequirementsCreatorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            BusinessRequirementsCreatorAgentConfiguration configuration,
+        public TechnicalAnalystAgent(
+            [FromKeyedServices(TechnicalAnalystAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+            TechnicalAnalystAgentConfiguration configuration,
             Resilience resilience,
-            ILogger<BusinessRequirementsCreatorAgent> logger) : base(logger, BusinessRequirementsCreatorAgentConfiguration.AgentName, openAIClient, resilience)
+            ILogger<TechnicalAnalystAgent> logger) : base(logger, TechnicalAnalystAgentConfiguration.AgentName, openAIClient, resilience)
         {
             _logger = logger;
         }
 
-        public async Task<BusinessRequirementsCreatorAgentOutput> ExecuteAsync(
-            BusinessRequirementsCreatorAgentInput input,
+        public async Task<TechnicalAnalystAgentOutput> ExecuteAsync(
+            TechnicalAnalystAgentInput input,
             CancellationToken cancellationToken = default)
         {
             var inputMessages = new List<AgentMessage>();
@@ -40,7 +40,7 @@ namespace AgentMesh.Application.Services
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            return new BusinessRequirementsCreatorAgentOutput
+            return new TechnicalAnalystAgentOutput
             {
                 BusinessRequirements = result.Result.BusinessRequirements,
                 TokenCount = result.TotalTokenCount,

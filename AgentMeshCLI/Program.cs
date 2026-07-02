@@ -106,28 +106,28 @@ namespace AgentMesh
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<LLMsConfiguration>>().Value);
 
-            // Business Requirements Creator agent config and client
+            // Technical Analyst agent config and client
             services
-                .AddOptions<BusinessRequirementsCreatorAgentConfiguration>()
-                .Bind(configuration.GetSection(BusinessRequirementsCreatorAgentConfiguration.SectionName))
+                .AddOptions<TechnicalAnalystAgentConfiguration>()
+                .Bind(configuration.GetSection(TechnicalAnalystAgentConfiguration.SectionName))
                 .PostConfigure(options =>
                 {
                     options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
                 })
                 .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<BusinessRequirementsCreatorAgentConfiguration>>().Value);
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<TechnicalAnalystAgentConfiguration>>().Value);
 
-            services.AddKeyedSingleton<IOpenAIClient>(BusinessRequirementsCreatorAgentConfiguration.AgentName, (sp, _) =>
+            services.AddKeyedSingleton<IOpenAIClient>(TechnicalAnalystAgentConfiguration.AgentName, (sp, _) =>
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<BusinessRequirementsCreatorAgentConfiguration>();
+                var config = sp.GetRequiredService<TechnicalAnalystAgentConfiguration>();
                 var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
                 var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IBusinessRequirementsCreatorAgent, BusinessRequirementsCreatorAgent>();
+            services.AddSingleton<ITechnicalAnalystAgent, TechnicalAnalystAgent>();
 
             // Business Advisor agent config and client
             services

@@ -1,6 +1,6 @@
-﻿namespace AgentMesh.Models.BusinessRequirementsCreator
+﻿namespace AgentMesh.Models.TechnicalAnalyst
 {
-    public class BusinessRequirementsCreatorAgentOutput : IAgentOutput
+    public class TechnicalAnalystAgentOutput : IAgentOutput
     {
         public string? BusinessRequirements { get; set; }
         public int TokenCount { get; set; }

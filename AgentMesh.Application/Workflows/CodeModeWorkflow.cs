@@ -5,7 +5,7 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models;
 using AgentMesh.Models.BusinessAdvisor;
-using AgentMesh.Models.BusinessRequirementsCreator;
+using AgentMesh.Models.TechnicalAnalyst;
 using AgentMesh.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Models.CodeFixer;
 using AgentMesh.Models.Coder;
@@ -48,7 +48,7 @@ namespace AgentMesh.Application.Workflows
         private readonly ILogger<CodeModeWorkflow> _logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier;
 
-        private readonly IBusinessRequirementsCreatorAgent _businessRequirementsCreatorAgent;
+        private readonly ITechnicalAnalystAgent _technicalAnalystAgent;
         private readonly IBusinessAdvisorAgent _businessAdvisorAgent;
         private readonly IDocumentationAgent _documentationAgent;
         private readonly ICoderAgent _coderAgent;
@@ -73,7 +73,7 @@ namespace AgentMesh.Application.Workflows
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
-            IBusinessRequirementsCreatorAgent businessRequirementsCreatorAgent,
+            ITechnicalAnalystAgent technicalAnalystAgent,
             IBusinessAdvisorAgent businessAdvisorAgent,
             IDocumentationAgent documentationAgent,
             ICoderAgent coderAgent,
@@ -98,7 +98,7 @@ namespace AgentMesh.Application.Workflows
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
-            _businessRequirementsCreatorAgent = businessRequirementsCreatorAgent;
+            _technicalAnalystAgent = technicalAnalystAgent;
             _businessAdvisorAgent = businessAdvisorAgent;
             _documentationAgent = documentationAgent;
             _coderAgent = coderAgent;
@@ -175,7 +175,7 @@ namespace AgentMesh.Application.Workflows
 
             if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
             {
-                await ExecuteBusinessRequirementsCreatorAsync(state);
+                await ExecuteTechnicalAnalystAsync(state);
                 await ExecuteCoderAsync(state);
                 await ExecuteCodeStaticAnalyzerAsync(state);
 
@@ -643,11 +643,11 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", contextAnalyzerOutputLogEntries);
         }
 
-        private async Task ExecuteBusinessRequirementsCreatorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
+        private async Task ExecuteTechnicalAnalystAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
             var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Business Requirements Creator Agent...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Requirements Creator Agent", new Dictionary<string, string>
+            _logger.LogDebug("Engaging Technical Analyst Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Technical Analyst Agent", new Dictionary<string, string>
             {
                 { "EnrichedUserRequest", state.EnrichedUserRequest },
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
@@ -655,20 +655,20 @@ namespace AgentMesh.Application.Workflows
 
             var serializedDocumentation = SerializeDocumentationForBusinessAnalyst(state.KnowledgeBaseDocumentsContent);
 
-            var brcOutput = await _businessRequirementsCreatorAgent.ExecuteAsync(new BusinessRequirementsCreatorAgentInput
+            var technicalAnalystOutput = await _technicalAnalystAgent.ExecuteAsync(new TechnicalAnalystAgentInput
             {
                 EnrichedUserRequest = state.EnrichedUserRequest,
                 ApiDocumentation = serializedDocumentation
             }, cancellationToken);
             state.ShouldEngageCoder = true;
-            state.BusinessRequirements = brcOutput.BusinessRequirements;
-            state.AddTokenUsage(BusinessRequirementsCreatorAgentConfiguration.AgentName, brcOutput.TokenCount, brcOutput.InputTokenCount, brcOutput.OutputTokenCount, stopwatch.Elapsed, "Business Requirements Creator Agent");
+            state.BusinessRequirements = technicalAnalystOutput.BusinessRequirements;
+            state.AddTokenUsage(TechnicalAnalystAgentConfiguration.AgentName, technicalAnalystOutput.TokenCount, technicalAnalystOutput.InputTokenCount, technicalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Technical Analyst Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "BusinessRequirements", brcOutput.BusinessRequirements },
+                { "BusinessRequirements", technicalAnalystOutput.BusinessRequirements },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Requirements Creator Agent", notifyDictionary);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Technical Analyst Agent", notifyDictionary);
         }
 
         private async Task ExecuteCoderAsync(CodeModeWorkflowState state)
@@ -1164,3 +1164,4 @@ namespace AgentMesh.Application.Workflows
         public string GetEgressExecutorName() => PersonalAssistantAgentConfiguration.AgentName;
     }
 }
+
