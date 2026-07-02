@@ -1049,15 +1049,6 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", notifyDictionary);
         }
 
-
-        private static string SearchTypeToString(KnowledgeBaseQuerySearchType searchType) => searchType switch
-        {
-            KnowledgeBaseQuerySearchType.Keyword => KEYWORDS_SEARCH_TYPE,
-            KnowledgeBaseQuerySearchType.Semantic => SEMANTIC_SEARCH_TYPE,
-            KnowledgeBaseQuerySearchType.HypotheticalDocument => HYPOTHETICAL_SEARCH_TYPE,
-            _ => throw new ArgumentOutOfRangeException(nameof(searchType), $"Not expected search type value: {searchType}")
-        };
-
         private static string CreateKnowledgeBaseCacheLookupKey(string query, KnowledgeBaseQuerySearchType queryType)
             => $"{queryType}|{NormalizeCacheLookupValue(query)}";
 
