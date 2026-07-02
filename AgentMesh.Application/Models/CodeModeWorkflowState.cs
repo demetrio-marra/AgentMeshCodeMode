@@ -47,8 +47,8 @@ namespace AgentMesh.Application.Models
         public IEnumerable<AgentMemoryCacheableQuery> AgentMemoryCachedQueries { get; set; } = [];
         public IEnumerable<KnowledgeBaseCacheableQuery> KnowledgeBaseCachedQueries { get; set; } = [];
 
-        public bool AgentMemoryCacheHit { get; set; }
-        public bool KnowledgeBaseCacheHit { get; set; }
+        public IEnumerable<AgentMemoryQueryResultItem> CachedAgentMemoryResults { get; set; } = [];
+        public IEnumerable<KnowledgeBaseQueryResultItem> CachedKnowledgeBaseQueryResults { get; set; } = [];
 
         public void AddTokenUsage(string agentName, int inputTokenCount, int outputTokenCount, TimeSpan? elapsed = null, string? stepName = null)
         {

@@ -125,7 +125,7 @@ namespace AgentMesh.Application.Workflows
 
             if (_workflowConfiguration.EnableMemoryService
                 && state.MissingPastMemories.Any()
-                && !state.AgentMemoryCacheHit)
+                && !state.CachedAgentMemoryResults.Any())
             {
                 await ExecuteAgentMemoryServiceAsync(state);
                 if (_workflowConfiguration.EnableCacheService)
@@ -134,7 +134,7 @@ namespace AgentMesh.Application.Workflows
                 }
             }
             if (state.MissingKnowledgeBaseSearchEntries.Any()
-                && !state.KnowledgeBaseCacheHit)
+                && !state.CachedKnowledgeBaseQueryResults.Any())
             {
                 await ExecuteKnowledgeBaseServiceSearchAsync(state);
                 if (_workflowConfiguration.EnableCacheService)
@@ -485,23 +485,20 @@ namespace AgentMesh.Application.Workflows
 
             var output = await _documentsCacheExecutor.ExecuteAsync(input);
 
-            state.AgentMemoryCacheHit = output.AgentMemoryCachedQueryResult != null;
-            state.KnowledgeBaseCacheHit = output.KnowledgeBaseCachedQueryResult != null;
             if (output.AgentMemoryCachedQueryResult != null)
             {
-                state.ExtractedAgentMemories = [.. output.AgentMemoryCachedQueryResult!.Results
+                state.CachedAgentMemoryResults = [.. output.AgentMemoryCachedQueryResult!.Results
                     .Select(m => new AgentMemoryQueryResultItem
                     {
                         Memory = m.Memory,
                         Confidence = null // Confidence is not provided by the cache, so we set it to null
                     })];
+                state.ExtractedAgentMemories = state.CachedAgentMemoryResults;
             }
 
             if (output.KnowledgeBaseCachedQueryResult != null)
             {
-                state.KnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
-                {
-                    Results = [.. output.KnowledgeBaseCachedQueryResult!.Results
+                state.CachedKnowledgeBaseQueryResults = [.. output.KnowledgeBaseCachedQueryResult!.Results
                     .Select(m => new KnowledgeBaseQueryResultItem
                     {
                         Id = m.Id,
@@ -509,7 +506,10 @@ namespace AgentMesh.Application.Workflows
                         Title = m.Title,
                         Summary = m.Summary,
                         Relevance = null // Relevance is not provided by the cache, so we set it to null
-                    })]
+                    })];
+                state.KnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
+                {
+                    Results = state.CachedKnowledgeBaseQueryResults
                 };
             }
 
@@ -517,8 +517,8 @@ namespace AgentMesh.Application.Workflows
 
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "AgentMemoryCacheHit", state.AgentMemoryCacheHit.ToString() },
-                { "KnowledgeBaseCacheHit", state.KnowledgeBaseCacheHit.ToString() },
+                { "AgentMemoryCacheHit", state.CachedAgentMemoryResults.Any().ToString() },
+                { "KnowledgeBaseCacheHit", state.CachedKnowledgeBaseQueryResults.Any().ToString() },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Documents Cache Service", notifyDictionary);
