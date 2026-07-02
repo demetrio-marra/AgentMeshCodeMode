@@ -1,5 +1,6 @@
 ﻿using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Models.SemanticSearch;
 using Microsoft.Extensions.Logging;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
