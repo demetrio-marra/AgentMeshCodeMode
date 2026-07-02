@@ -10,12 +10,11 @@ using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services
 {
-    public class CoderAgent([FromKeyedServices(CoderAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-                      CoderAgentConfiguration configuration,
+    public partial class CoderAgent([FromKeyedServices(CoderAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
                       Resilience resilience,
                       ILogger<CoderAgent> logger) : AgentBase<string>(logger, CoderAgentConfiguration.AgentName, openAIClient, resilience), ICoderAgent
     {
-        private readonly Regex JavascriptCodeRegex = new(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        private readonly Regex JavascriptCodeRegex = JavascriptCodeRegexCompiled();
 
         private readonly ILogger<CoderAgent> _logger = logger;
 
@@ -49,5 +48,8 @@ namespace AgentMesh.Application.Services
 
             return codeRegexMatch.Groups["code"].Value.Trim();
         }
+
+        [GeneratedRegex(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, "it-IT")]
+        private static partial Regex JavascriptCodeRegexCompiled();
     }
 }

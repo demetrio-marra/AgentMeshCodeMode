@@ -13,7 +13,6 @@ namespace AgentMesh.Application.Services
 {
     public class TechnicalAnalystAgent(
         [FromKeyedServices(TechnicalAnalystAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-        TechnicalAnalystAgentConfiguration configuration,
         Resilience resilience,
         ILogger<TechnicalAnalystAgent> logger) : AgentBase<TechnicalAnalystAgent.ParsedResponse>(logger, TechnicalAnalystAgentConfiguration.AgentName, openAIClient, resilience), ITechnicalAnalystAgent
     {

@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 namespace AgentMesh.Application.Services
 {
     public class ConversationSummarizerAgent([FromKeyedServices(ConversationSummarizerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-                                      ConversationSummarizerAgentConfiguration configuration,
                                       Resilience resilience,
                                       ILogger<ConversationSummarizerAgent> logger) : AgentBase<string>(logger, ConversationSummarizerAgentConfiguration.AgentName, openAIClient, resilience), IConversationSummarizerAgent
     {

@@ -13,7 +13,6 @@ namespace AgentMesh.Application.Services
 {
     public class IntentExtractorAgent(
         [FromKeyedServices(IntentExtractorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-        IntentExtractorAgentConfiguration configuration,
         Resilience resilience,
         ILogger<IntentExtractorAgent> logger) : AgentBase<IntentExtractorAgent.ParsedResponse>(logger, IntentExtractorAgentConfiguration.AgentName, openAIClient, resilience), IIntentExtractorAgent
     {

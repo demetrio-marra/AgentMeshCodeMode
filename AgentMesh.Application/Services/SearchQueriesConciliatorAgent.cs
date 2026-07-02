@@ -14,7 +14,6 @@ namespace AgentMesh.Application.Services
 {
     public class SearchQueriesConciliatorAgent(
         [FromKeyedServices(SearchQueriesConciliatorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-        SearchQueriesConciliatorAgentConfiguration configuration,
         Resilience resilience,
         ILogger<SearchQueriesConciliatorAgent> logger) : AgentBase<SearchQueriesConciliatorAgent.ConciliationResult>(logger, SearchQueriesConciliatorAgentConfiguration.AgentName, openAIClient, resilience), ISearchQueriesConciliatorAgent
     {
