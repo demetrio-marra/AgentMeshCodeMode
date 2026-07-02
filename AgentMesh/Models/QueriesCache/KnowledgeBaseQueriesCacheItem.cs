@@ -2,7 +2,7 @@ using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Models.QueriesCache
 {
-    public class KnowledgeBaseQueriesCacheItemOutput
+    public class KnowledgeBaseQueriesCacheItem
     {
         public string Query { get; set; } = string.Empty;
 

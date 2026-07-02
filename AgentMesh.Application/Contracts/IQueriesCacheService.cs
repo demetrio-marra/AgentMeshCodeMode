@@ -12,25 +12,25 @@ namespace AgentMesh.Application.Contracts
         /// </summary>
         /// <param name="queries">The queries to get cached items for.</param>
         /// <returns>The cached items found for the given queries.</returns>
-        Task<IEnumerable<AgentMemoryQueriesCacheItemOutput>> GetCachedItemsAsync(IEnumerable<AgentMemoryQueriesCacheItemInput> queries);
+        Task<IEnumerable<AgentMemoryQueriesCacheItem>> GetMemoryCachedItemsAsync(IEnumerable<AgentMemoryQueriesCacheItemInput> queries);
 
         /// <summary>
         /// Sets cached agent memory items.
         /// </summary>
         /// <param name="cachedItems">The cached items to store.</param>
-        Task SetCachedItemsAsync(IEnumerable<AgentMemoryQueriesCacheItemOutput> cachedItems);
+        Task SetMemoryCachedItemsAsync(IEnumerable<AgentMemoryQueriesCacheItem> cachedItems);
 
         /// <summary>
         /// Gets cached knowledge base items for the given queries.
         /// </summary>
         /// <param name="queries">The knowledge base queries to get cached items for.</param>
         /// <returns>The cached items found for the given knowledge base queries.</returns>
-        Task<IEnumerable<KnowledgeBaseQueriesCacheItemOutput>> GetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItemInput> queries);
+        Task<IEnumerable<KnowledgeBaseQueriesCacheItem>> GetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItemInput> queries);
 
         /// <summary>
         /// Sets cached knowledge base items.
         /// </summary>
         /// <param name="cachedItems">The cached knowledge base items to store.</param>
-        Task SetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItemOutput> cachedItems);
+        Task SetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItem> cachedItems);
     }
 }
