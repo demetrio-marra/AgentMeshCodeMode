@@ -54,6 +54,15 @@ namespace AgentMesh
             services.AddSingleton<IKnowledgeBaseSearchExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
             services.AddSingleton<IKnowledgeBaseGetDocsExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
 
+            // Semantic Search service configuration
+            var semanticSearchConfig = new QDrantSemanticSearchServiceConfiguration();
+            configuration.GetSection("QDrantSemanticSearchService").Bind(semanticSearchConfig);
+            services.AddSingleton(semanticSearchConfig);
+            services.AddSingleton<ISemanticSearchService, QDrantSemanticSearchService>();
+
+            // Register executors
+            services.AddSingleton<ISemanticSearchExecutor, SemanticSearchExecutor>();
+
             // Agent Memory Service configuration
             var agentMemoryConfig = new AgentMemoryServiceConfiguration();
             configuration.GetSection(AgentMemoryServiceConfiguration.SectionName).Bind(agentMemoryConfig);
