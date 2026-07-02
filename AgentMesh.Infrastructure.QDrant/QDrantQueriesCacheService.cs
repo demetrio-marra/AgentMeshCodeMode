@@ -13,24 +13,27 @@ namespace AgentMesh.Infrastructure.QDrant
 {
     public class QDrantQueriesCacheService : IQueriesCacheService
     {
-        private const uint ScrollPageSize = 256;
-
         private readonly QdrantClient _qdrantClient;
         private readonly ILogger<QDrantQueriesCacheService> _logger;
         private readonly string _queriesCacheCollectionName;
         private readonly float[] _defaultVector;
+        private readonly IEmbeddingService _embeddingService;
+        private int _maxResults;
 
         public QDrantQueriesCacheService(
             QDrantSemanticSearchServiceConfiguration configuration,
+            IEmbeddingService embeddingService,
             ILogger<QDrantQueriesCacheService> logger)
         {
             _logger = logger;
+            _embeddingService = embeddingService;
             _qdrantClient = new QdrantClient(
                 host: configuration.Host,
                 https: configuration.Https,
                 port: configuration.Port);
             _queriesCacheCollectionName = configuration.QueriesCacheCollectionName;
             _defaultVector = new float[configuration.VectorSize];
+            _maxResults = configuration.MaxResults;
 
             _ = EnsureQueryCacheIndexesAsync();
         }
@@ -39,24 +42,28 @@ namespace AgentMesh.Infrastructure.QDrant
         {
             var requestedQueries = queries
                 .Where(q => !string.IsNullOrWhiteSpace(q.Query))
-                .GroupBy(q => MapQueryTypeToKind(q.QueryType))
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(q => q.Query).Distinct(StringComparer.OrdinalIgnoreCase).ToList());
+                .Select(q => (QueryKind: MapQueryTypeToKind(q.QueryType), Query: q.Query, QueryType: q.QueryType))
+                .DistinctBy(q => $"{q.QueryKind}|{q.Query}", StringComparer.OrdinalIgnoreCase)
+                .ToList();
 
             if (requestedQueries.Count == 0)
             {
                 return [];
             }
 
-            var results = new List<QDrantQueriesCacheItem>();
-            foreach (var queryGroup in requestedQueries)
-            {
-                results.AddRange(await ScrollByQueryKindAsync(queryGroup.Key, queryGroup.Value));
-            }
+            var results = await SearchByQueryKindsAsync(requestedQueries.Select(q => (q.QueryKind, q.Query)).ToList());
+            var resultsByKind = results
+                .GroupBy(r => r.QueryKind, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.DistinctBy(CreateStablePointId).ToList(),
+                    StringComparer.OrdinalIgnoreCase);
 
-            return results
-                .Select(MapToKnowledgeBaseCacheItem)
+            return requestedQueries
+                .SelectMany(request =>
+                    resultsByKind.TryGetValue(request.QueryKind, out var matchingResults)
+                        ? matchingResults.Select(result => MapToKnowledgeBaseCacheItem(result, request.Query, request.QueryType))
+                        : Enumerable.Empty<KnowledgeBaseQueriesCacheItem>())
                 .ToList();
         }
 
@@ -73,17 +80,24 @@ namespace AgentMesh.Infrastructure.QDrant
                 return [];
             }
 
-            var results = await ScrollByQueryKindAsync(QDrantQueriesCacheItem.AgentMemoryQueryKind, requestedQueries);
+            var queryRequests = requestedQueries
+                .Select(q => (QueryKind: QDrantQueriesCacheItem.AgentMemoryQueryKind, Query: q))
+                .ToList();
 
-            return results
-                .Select(MapToAgentMemoryCacheItem)
+            var results = await SearchByQueryKindsAsync(queryRequests);
+            var distinctResults = results
+                .DistinctBy(CreateStablePointId)
+                .ToList();
+
+            return requestedQueries
+                .SelectMany(requestedQuery => distinctResults.Select(result => MapToAgentMemoryCacheItem(result, requestedQuery)))
                 .ToList();
         }
 
         public async Task SetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItem> cachedItems)
         {
             var entities = cachedItems
-                .Where(item => !string.IsNullOrWhiteSpace(item.Query))
+                .Where(item => !string.IsNullOrWhiteSpace(item.FoundQuery))
                 .Select(MapFromKnowledgeBaseCacheItem)
                 .ToList();
 
@@ -93,7 +107,7 @@ namespace AgentMesh.Infrastructure.QDrant
         public async Task SetMemoryCachedItemsAsync(IEnumerable<AgentMemoryQueriesCacheItem> cachedItems)
         {
             var entities = cachedItems
-                .Where(item => !string.IsNullOrWhiteSpace(item.Query))
+                .Where(item => !string.IsNullOrWhiteSpace(item.FoundQuery))
                 .Select(MapFromAgentMemoryCacheItem)
                 .ToList();
 
@@ -125,46 +139,69 @@ namespace AgentMesh.Infrastructure.QDrant
             }
         }
 
-        private async Task<IReadOnlyCollection<QDrantQueriesCacheItem>> ScrollByQueryKindAsync(string queryKind, IReadOnlyCollection<string> queries)
+        private async Task<IReadOnlyCollection<QDrantQueriesCacheItem>> SearchByQueryKindAsync(string queryKind, IReadOnlyCollection<string> queries)
         {
             if (queries.Count == 0)
             {
                 return [];
             }
 
-            var filter = new Filter();
-            filter.Must.Add(CreateKeywordCondition("queryKind", queryKind));
+            var queryRequests = queries
+                .Where(q => !string.IsNullOrWhiteSpace(q))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(q => (QueryKind: queryKind, Query: q))
+                .ToList();
 
-            foreach (var query in queries)
-            {
-                filter.Should.Add(CreateKeywordCondition("query", query));
-            }
-
-            return await ScrollAllAsync(filter);
+            return await SearchByQueryKindsAsync(queryRequests);
         }
 
-        private async Task<IReadOnlyCollection<QDrantQueriesCacheItem>> ScrollAllAsync(Filter filter)
+        private async Task<IReadOnlyCollection<QDrantQueriesCacheItem>> SearchByQueryKindsAsync(IReadOnlyCollection<(string QueryKind, string Query)> queryRequests)
         {
-            var results = new List<QDrantQueriesCacheItem>();
-            PointId? offset = null;
-
-            do
+            if (queryRequests.Count == 0)
             {
-                var scrollResult = await _qdrantClient.ScrollAsync(
-                    _queriesCacheCollectionName,
-                    filter,
-                    ScrollPageSize,
-                    offset,
-                    true,
-                    false);
-
-                var points = scrollResult.Result;
-                results.AddRange(points.Select(MapFromRetrievedPoint));
-                offset = scrollResult.NextPageOffset;
+                return [];
             }
-            while (offset != null);
 
-            return results;
+            var normalizedRequests = queryRequests
+                .Where(q => !string.IsNullOrWhiteSpace(q.Query) && !string.IsNullOrWhiteSpace(q.QueryKind))
+                .DistinctBy(q => $"{q.QueryKind}|{q.Query}", StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (normalizedRequests.Count == 0)
+            {
+                return [];
+            }
+
+            var embeddings = (await _embeddingService.GetEmbeddingAsync(normalizedRequests.Select(q => q.Query))).ToList();
+            var searches = new List<SearchPoints>(normalizedRequests.Count);
+
+            for (var i = 0; i < normalizedRequests.Count; i++)
+            {
+                var request = normalizedRequests[i];
+
+                var filter = new Filter();
+                filter.Must.Add(CreateKeywordCondition("queryKind", request.QueryKind));
+
+                var search = new SearchPoints
+                {
+                    WithPayload = true,
+                    WithVectors = false,
+                    Limit = (ulong)_maxResults,
+                    Filter = filter
+                };
+
+                search.Vector.AddRange(embeddings[i]);
+                searches.Add(search);
+            }
+
+            var batchSearchResult = await _qdrantClient.SearchBatchAsync(
+                collectionName: _queriesCacheCollectionName,
+                searches: searches);
+
+            return batchSearchResult
+                .SelectMany(batch => batch.Result)
+                .Select(MapFromScoredPoint)
+                .ToList();
         }
 
         private async Task UpsertAsync(IReadOnlyCollection<QDrantQueriesCacheItem> entities)
@@ -174,20 +211,29 @@ namespace AgentMesh.Infrastructure.QDrant
                 return;
             }
 
-            var points = entities
+            var distinctEntities = entities
                 .DistinctBy(CreateStablePointId)
-                .Select(CreatePoint)
                 .ToList();
+
+            var queries = distinctEntities.Select(e => e.Query).ToList();
+            var embeddings = (await _embeddingService.GetEmbeddingAsync(queries)).ToList();
+
+            var points = new List<PointStruct>(distinctEntities.Count);
+            for (var i = 0; i < distinctEntities.Count; i++)
+            {
+                var vector = i < embeddings.Count ? embeddings[i] : _defaultVector;
+                points.Add(CreatePoint(distinctEntities[i], vector));
+            }
 
             await _qdrantClient.UpsertAsync(_queriesCacheCollectionName, points);
         }
 
-        private PointStruct CreatePoint(QDrantQueriesCacheItem entity)
+        private PointStruct CreatePoint(QDrantQueriesCacheItem entity, float[] vector)
         {
             var point = new PointStruct
             {
                 Id = CreateStablePointId(entity),
-                Vectors = _defaultVector
+                Vectors = vector
             };
 
             point.Payload.Add("queryKind", entity.QueryKind);
@@ -226,10 +272,11 @@ namespace AgentMesh.Infrastructure.QDrant
         {
             return new QDrantQueriesCacheItem
             {
-                Query = item.Query,
+                Query = item.FoundQuery,
                 QueryKind = QDrantQueriesCacheItem.AgentMemoryQueryKind,
                 Result = item.Result,
-                LastUpdate = DateTime.UtcNow
+                LastUpdate = DateTime.UtcNow,
+                Relevance = item.Relevance
             };
         }
 
@@ -237,40 +284,49 @@ namespace AgentMesh.Infrastructure.QDrant
         {
             return new QDrantQueriesCacheItem
             {
-                Query = item.Query,
-                QueryKind = MapQueryTypeToKind(item.QueryType),
-                QueryType = item.QueryType,
+                Query = item.FoundQuery,
+                QueryKind = MapQueryTypeToKind(item.FoundQueryType),
+                QueryType = item.FoundQueryType,
                 DocumentId = item.DocumentId,
                 DocumentTitle = item.DocumentTitle,
                 DocumentSummary = item.DocumentSummary,
                 DocumentFile = item.DocumentFile,
-                LastUpdate = DateTime.UtcNow
+                LastUpdate = DateTime.UtcNow,
+                Relevance = item.Relevance
             };
         }
 
-        private static AgentMemoryQueriesCacheItem MapToAgentMemoryCacheItem(QDrantQueriesCacheItem item)
+        private static AgentMemoryQueriesCacheItem MapToAgentMemoryCacheItem(QDrantQueriesCacheItem item, string searchedQuery)
         {
             return new AgentMemoryQueriesCacheItem
             {
-                Query = item.Query,
-                Result = item.Result
+                FoundQuery = item.Query,
+                SearchedQuery = searchedQuery,
+                Result = item.Result,
+                Relevance = item.Relevance
             };
         }
 
-        private static KnowledgeBaseQueriesCacheItem MapToKnowledgeBaseCacheItem(QDrantQueriesCacheItem item)
+        private static KnowledgeBaseQueriesCacheItem MapToKnowledgeBaseCacheItem(
+            QDrantQueriesCacheItem item,
+            string searchedQuery,
+            KnowledgeBaseQuerySearchType searchedQueryType)
         {
             return new KnowledgeBaseQueriesCacheItem
             {
-                Query = item.Query,
-                QueryType = item.QueryType ?? MapKindToQueryType(item.QueryKind),
+                FoundQuery = item.Query,
+                FoundQueryType = item.QueryType ?? MapKindToQueryType(item.QueryKind),
+                SearchedQuery = searchedQuery,
+                SearchedQueryType = searchedQueryType,
                 DocumentId = item.DocumentId,
                 DocumentTitle = item.DocumentTitle,
                 DocumentSummary = item.DocumentSummary,
-                DocumentFile = item.DocumentFile
+                DocumentFile = item.DocumentFile,
+                Relevance = item.Relevance
             };
         }
 
-        private static QDrantQueriesCacheItem MapFromRetrievedPoint(RetrievedPoint point)
+        private static QDrantQueriesCacheItem MapFromScoredPoint(ScoredPoint point)
         {
             return new QDrantQueriesCacheItem
             {
@@ -282,7 +338,8 @@ namespace AgentMesh.Infrastructure.QDrant
                 DocumentTitle = GetStringPayloadValue(point.Payload, "documentTitle"),
                 DocumentSummary = GetNullableStringPayloadValue(point.Payload, "documentSummary"),
                 DocumentFile = GetStringPayloadValue(point.Payload, "documentFile"),
-                LastUpdate = GetDateTimePayloadValue(point.Payload, "lastUpdate")
+                LastUpdate = GetDateTimePayloadValue(point.Payload, "lastUpdate"),
+                Relevance = point.Score
             };
         }
 

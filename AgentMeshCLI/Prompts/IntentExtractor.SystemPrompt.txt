@@ -38,7 +38,6 @@ An array of 4–6 typed sub-query objects. Each object has exactly two fields:
 Type semantics:
 - "vec"  – a natural language question or statement for semantic/embedding search
 - "lex"  – BM25 keyword query; use quoted phrases, domain terms, identifiers; NO full sentences
-- "hyde" – a short paragraph written AS IF it were a passage from the ideal answer document
 
 Slot ordering rules (strictly enforced):
 1. Slot 1 MUST be "vec" with the user's core intent as a full natural-language question. It receives 2× fusion weight — make it your strongest formulation.

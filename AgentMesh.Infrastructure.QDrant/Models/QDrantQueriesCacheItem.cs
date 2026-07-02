@@ -18,5 +18,6 @@ namespace AgentMesh.Infrastructure.QDrant.Models
         public string? DocumentSummary { get; set; }
         public string DocumentFile { get; set; } = string.Empty;
         public DateTime LastUpdate { get; set; } = DateTime.UtcNow;
+        public double Relevance { get; set; }
     }
 }

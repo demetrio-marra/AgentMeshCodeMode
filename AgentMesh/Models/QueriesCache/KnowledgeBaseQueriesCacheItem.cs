@@ -4,9 +4,13 @@ namespace AgentMesh.Models.QueriesCache
 {
     public class KnowledgeBaseQueriesCacheItem
     {
-        public string Query { get; set; } = string.Empty;
+        public string FoundQuery { get; set; } = string.Empty;
 
-        public KnowledgeBaseQuerySearchType QueryType { get; set; }
+        public KnowledgeBaseQuerySearchType FoundQueryType { get; set; }
+
+        public string SearchedQuery { get; set; } = string.Empty;
+
+        public KnowledgeBaseQuerySearchType SearchedQueryType { get; set; }
 
         /// <summary>
         /// The unique identifier of the knowledge base entry.
@@ -27,5 +31,7 @@ namespace AgentMesh.Models.QueriesCache
         /// The original documentation file name associated with the knowledge base entry, if available.
         /// </summary>
         public string DocumentFile { get; set; } = string.Empty;
+
+        public double Relevance { get; set; }
     }
 }
