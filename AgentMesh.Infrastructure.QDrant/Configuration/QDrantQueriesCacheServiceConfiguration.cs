@@ -1,6 +1,6 @@
 namespace AgentMesh.Infrastructure.QDrant
 {
-    public class QDrantSemanticSearchServiceConfiguration
+    public class QDrantQueriesCacheServiceConfiguration
     {
         public string Host { get; set; } = string.Empty;
         public int Port { get; set; }

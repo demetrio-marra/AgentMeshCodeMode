@@ -1,6 +1,5 @@
 ﻿using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
-using AgentMesh.Models.DocumentsCache;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
 using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
@@ -18,9 +17,7 @@ namespace AgentMesh.Application.Models
         public string EnrichedUserRequest { get; set; } = string.Empty;
         public UserIntentCategoryValues UserIntentCategoryValue { get; set; }
         public string? BusinessRequirements { get; set; }
-        public IEnumerable<string> MentionedApis { get; set; } = [];
         public bool ShouldEngageCoder { get; set; }
-        public string? OutputForUserFromBusinessAnalyst { get; set; }
         public string? BusinessAdvisorContent { get; set; }
         public string? DocumentationContent { get; set; }
         public string? GeneratedCode { get; set; }
@@ -44,11 +41,6 @@ namespace AgentMesh.Application.Models
 
         public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseDocumentsContent { get; set; } = [];
 
-        public IEnumerable<AgentMemoryCacheableQuery> AgentMemoryCachedQueries { get; set; } = [];
-        public IEnumerable<KnowledgeBaseCacheableQuery> KnowledgeBaseCachedQueries { get; set; } = [];
-
-        public IEnumerable<AgentMemoryQueryResultItem> CachedAgentMemoryResults { get; set; } = [];
-        public IEnumerable<KnowledgeBaseQueryResultItem> CachedKnowledgeBaseQueryResults { get; set; } = [];
 
         public void AddTokenUsage(string agentName, int inputTokenCount, int outputTokenCount, TimeSpan? elapsed = null, string? stepName = null)
         {

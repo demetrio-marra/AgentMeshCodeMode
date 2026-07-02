@@ -6,7 +6,6 @@ using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.Mem0.Configuration;
 using AgentMesh.Infrastructure.Mem0.Services;
 using AgentMesh.Infrastructure.QDrant;
-using AgentMesh.Infrastructure.QDrant.Configuration;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.QMD;
@@ -61,15 +60,11 @@ namespace AgentMesh
             services.AddSingleton<IKnowledgeBaseSearchExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
             services.AddSingleton<IKnowledgeBaseGetDocsExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
 
-            // Semantic Search service configuration
-            var semanticSearchConfig = new QDrantSemanticSearchServiceConfiguration();
-            configuration.GetSection("QDrantSemanticSearchService").Bind(semanticSearchConfig);
-            services.AddSingleton(semanticSearchConfig);
-            services.AddSingleton<ISemanticSearchService, QDrantSemanticSearchService>();
+            // Queries cache service configuration
+            var queriesCacheServiceConfig = new QDrantQueriesCacheServiceConfiguration();
+            configuration.GetSection("QDrantQueriesCacheService").Bind(queriesCacheServiceConfig);
+            services.AddSingleton(queriesCacheServiceConfig);
             services.AddSingleton<IQueriesCacheService, QDrantQueriesCacheService>();
-
-            // Register executors
-            services.AddSingleton<ISemanticSearchExecutor, SemanticSearchExecutor>();
 
             // Agent Memory Service configuration
             var agentMemoryConfig = new AgentMemoryServiceConfiguration();
@@ -81,16 +76,6 @@ namespace AgentMesh
             services.AddSingleton<AgentMemoryExecutor>();
             services.AddSingleton<IAgentMemoryRetriever>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
             services.AddSingleton<IAgentMemorySaver>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
-
-            // Documents Cache Service and Executor
-            var documentsCacheConfig = new DocumentsCacheServiceConfiguration();
-            configuration.GetSection(DocumentsCacheServiceConfiguration.SectionName).Bind(documentsCacheConfig);
-            services.AddSingleton(documentsCacheConfig);
-            services.AddSingleton<IDocumentsCacheService, DummyDocumentsCacheService>();
-            services.AddSingleton<IDocumentsCacheExecutor, DocumentsCacheExecutor>();
-            services.AddSingleton<IGetAllCachedSearchesExecutor, GetAllCachedSearchesExecutor>();
-            services.AddSingleton<IAgentMemoryCacheSaveExecutor, AgentMemoryCacheSaveExecutor>();
-            services.AddSingleton<IKnowledgeBaseCacheSaveExecutor, KnowledgeBaseCacheSaveExecutor>();
 
             // QMD MCP server proxy configuration and HTTP client
             var qmdHttpProxyConfig = new QMDHttpProxyConfiguration();
@@ -424,29 +409,6 @@ namespace AgentMesh
             });
 
             services.AddSingleton<IConversationSummarizerAgent, ConversationSummarizerAgent>();
-
-            // SearchQueriesConciliator agent config and client
-            services
-                .AddOptions<SearchQueriesConciliatorAgentConfiguration>()
-                .Bind(configuration.GetSection(SearchQueriesConciliatorAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<SearchQueriesConciliatorAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(SearchQueriesConciliatorAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<SearchQueriesConciliatorAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-            services.AddSingleton<ISearchQueriesConciliatorAgent, SearchQueriesConciliatorAgent>();
 
             // CodeModeWorkflow configuration
             services

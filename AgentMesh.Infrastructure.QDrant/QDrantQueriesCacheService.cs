@@ -21,7 +21,7 @@ namespace AgentMesh.Infrastructure.QDrant
         private int _maxResults;
 
         public QDrantQueriesCacheService(
-            QDrantSemanticSearchServiceConfiguration configuration,
+            QDrantQueriesCacheServiceConfiguration configuration,
             IEmbeddingService embeddingService,
             ILogger<QDrantQueriesCacheService> logger)
         {

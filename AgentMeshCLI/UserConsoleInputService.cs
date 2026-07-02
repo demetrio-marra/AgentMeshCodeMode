@@ -23,7 +23,6 @@ namespace AgentMesh
         LLMsConfiguration llmsConfiguration,
         ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration,
         ContextAnalyzerAgentConfiguration contextAnalyzerConfiguration,
-        SearchQueriesConciliatorAgentConfiguration searchQueriesConciliatorConfiguration,
         SESJSSandboxConfiguration sESJSSandboxConfiguration,
         UserConfiguration userConfiguration,
         DocumentationAgentConfiguration documentationAgentConfiguration,
@@ -45,7 +44,6 @@ namespace AgentMesh
         private readonly LLMsConfiguration _llmsConfiguration = llmsConfiguration;
         private readonly ConversationSummarizerAgentConfiguration _conversationSummarizerConfiguration = conversationSummarizerConfiguration;
         private readonly ContextAnalyzerAgentConfiguration _contextAnalyzerConfiguration = contextAnalyzerConfiguration;
-        private readonly SearchQueriesConciliatorAgentConfiguration _searchQueriesConciliatorConfiguration = searchQueriesConciliatorConfiguration;
         private readonly SESJSSandboxConfiguration _sesJsSandboxConfiguration = sESJSSandboxConfiguration;
         private readonly UserConfiguration _userConfiguration = userConfiguration;
         private readonly DocumentationAgentConfiguration _documentationAgentConfiguration = documentationAgentConfiguration;
@@ -130,7 +128,6 @@ namespace AgentMesh
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens },
                     { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
-                    { SearchQueriesConciliatorAgentConfiguration.AgentName, _llmsConfiguration[_searchQueriesConciliatorConfiguration.LLM].CostPerMillionInputTokens },
                     { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens },
                     { "Embedding Service", _embeddingServiceConfiguration.CostPerMillionTokens }
                 };
@@ -148,7 +145,6 @@ namespace AgentMesh
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
                     { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionOutputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens },
-                    { SearchQueriesConciliatorAgentConfiguration.AgentName, _llmsConfiguration[_searchQueriesConciliatorConfiguration.LLM].CostPerMillionOutputTokens },
                     { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
@@ -230,10 +226,7 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("Conversation Summarizer", ConversationSummarizerAgent.AgentName, _conversationSummarizerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgent.AgentName, _contextAnalyzerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Documentation", DocumentationAgent.AgentName, _documentationAgentConfiguration);
-            if (_workflowConfiguration.EnableCacheService)
-            {
-                ConsoleHelper.PrintAgentConfiguration("Search Queries Conciliator", SearchQueriesConciliatorAgentConfiguration.AgentName, _searchQueriesConciliatorConfiguration);
-            }
+         
             if (_workflowConfiguration.EnableMemoryService)
             {
                 ConsoleHelper.PrintAgentConfiguration("Relevant Facts Evaluator", RelevantFactsEvaluatorAgentConfiguration.AgentName, _relevantFactsEvaluatorConfiguration);
