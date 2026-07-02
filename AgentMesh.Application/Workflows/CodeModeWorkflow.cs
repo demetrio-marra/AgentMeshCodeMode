@@ -342,6 +342,8 @@ namespace AgentMesh.Application.Workflows
             var originalMemoryQueries = state.MissingPastMemories.ToList();
             var originalKnowledgeBaseQueries = state.MissingKnowledgeBaseSearchEntries.ToList();
 
+            var totalTokensForEmbedding = 0;
+
             if (originalMemoryQueries.Any())
             {
                 var memoryQueries = originalMemoryQueries
@@ -349,6 +351,8 @@ namespace AgentMesh.Application.Workflows
                     .ToList();
 
                 var cachedMemoryResult = await _queriesCacheService.GetMemoryCachedItemsAsync(memoryQueries);
+                totalTokensForEmbedding += cachedMemoryResult.TotalTokens;
+
                 var cachedMemoryItemsList = cachedMemoryResult.Items.ToList();
 
                 if (cachedMemoryItemsList.Any())
@@ -381,6 +385,8 @@ namespace AgentMesh.Application.Workflows
                     .ToList();
 
                 var cachedKnowledgeBaseResult = await _queriesCacheService.GetKnowledgeBaseCachedItemsAsync(knowledgeBaseQueries);
+                totalTokensForEmbedding += cachedKnowledgeBaseResult.TotalTokens;
+
                 var cachedKnowledgeBaseItemsList = cachedKnowledgeBaseResult.Items.ToList();
 
                 if (cachedKnowledgeBaseItemsList.Any())
@@ -416,7 +422,13 @@ namespace AgentMesh.Application.Workflows
                 }
             }
 
-            state.AddStepUsage("Queries Cache Service", stopwatch.Elapsed, false);
+            var tokenUsageInfo = new AgentTokenUsageEntry
+            {
+                AgentName = "Embedding Service",
+                InputTokens = totalTokensForEmbedding,
+                OutputTokens = 0
+            };
+            state.AddStepUsage("Queries Cache Service", stopwatch.Elapsed, true, tokenUsageInfo);
 
             var notifyDictionary = new Dictionary<string, string>
             {
