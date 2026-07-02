@@ -1078,14 +1078,19 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Knowledge Base Cache Save Service...");
+
+            var cacheableKnowledgeBaseEntries = state.MissingKnowledgeBaseSearchEntries
+                .Where(entry => ParseKnowledgeBaseSearchType(entry.Type) != KnowledgeBaseQuerySearchType.Keyword)
+                .ToList();
+
             await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Cache Save Service", new Dictionary<string, string>
             {
-                { "Queries", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")) }
+                { "Queries", string.Join("\n", cacheableKnowledgeBaseEntries.Select(m => $"- {m}")) }
             });
 
             var input = new KnowledgeBaseCacheSaveInput
             {
-                KnowledgeBaseCachedQueries = [.. state.MissingKnowledgeBaseSearchEntries.Select(p => new KnowledgeBaseCacheableQuery
+                KnowledgeBaseCachedQueries = [.. cacheableKnowledgeBaseEntries.Select(p => new KnowledgeBaseCacheableQuery
                 {
                     Query = p.Query,
                     SearchType = ParseKnowledgeBaseSearchType(p.Type)
