@@ -129,8 +129,9 @@ namespace AgentMesh.Application.Workflows
                 {
                     await CompleteWorkflowAsync(state, state.SandboxResult);
                 }
-                else if (state.CodeExecutionResultType == SandboxResultType.ApplicationError ||
-                         state.CodeExecutionResultType == SandboxResultType.SyntaxError)
+                else if (_workflowConfiguration.EnableCodeCorrection &&
+                    (state.CodeExecutionResultType == SandboxResultType.ApplicationError ||
+                         state.CodeExecutionResultType == SandboxResultType.SyntaxError))
                 {
                     for (int i = 0; i < 2 && state.CodeExecutionFailuresDetectorIterationCount < 2; i++)
                     {
