@@ -9,8 +9,8 @@ namespace AgentMesh.Infrastructure.DocumentsCache
 {
     public class DummyDocumentsCacheService : IDocumentsCacheService
     {
-        private readonly Dictionary<AgentMemoryCacheableQuery, CacheEntry<CacheableAgentMemoryQueryResultItem>> _agentMemoryCache = new();
-        private readonly Dictionary<KnowledgeBaseCacheableQuery, CacheEntry<CacheableKnowledgeBaseQueryResultItem>> _knowledgeBaseCache = new();
+        private readonly Dictionary<AgentMemoryCacheableQuery, CacheEntry<CacheableAgentMemoryQueryResultItem>> _agentMemoryCache = [];
+        private readonly Dictionary<KnowledgeBaseCacheableQuery, CacheEntry<CacheableKnowledgeBaseQueryResultItem>> _knowledgeBaseCache = [];
         private readonly TimeSpan? _cacheExpiration;
 
         public DummyDocumentsCacheService(DocumentsCacheServiceConfiguration configuration)
@@ -85,7 +85,7 @@ namespace AgentMesh.Infrastructure.DocumentsCache
                     }
                     else
                     {
-                        _agentMemoryCache[query] = new CacheEntry<CacheableAgentMemoryQueryResultItem>(newItems.ToHashSet(), GetExpirationTime());
+                        _agentMemoryCache[query] = new CacheEntry<CacheableAgentMemoryQueryResultItem>([.. newItems], GetExpirationTime());
                     }
                 }
             }
@@ -111,7 +111,7 @@ namespace AgentMesh.Infrastructure.DocumentsCache
                     }
                     else
                     {
-                        _knowledgeBaseCache[query] = new CacheEntry<CacheableKnowledgeBaseQueryResultItem>(newItems.ToHashSet(), GetExpirationTime());
+                        _knowledgeBaseCache[query] = new CacheEntry<CacheableKnowledgeBaseQueryResultItem>([.. newItems], GetExpirationTime());
                     }
                 }
             }

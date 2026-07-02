@@ -13,9 +13,9 @@ namespace AgentMesh.Application.Models
         public CodeModeWorkflowState(string userQuestion, IEnumerable<ContextMessage> contextMessages)
         {
             OriginalUserRequest = userQuestion;
-            TokenUsageEntries = new List<WorkflowStepUsageEntry>();
-            CodeIssues = new List<string>();
-            InitialContextMessages = contextMessages.ToList();
+            TokenUsageEntries = [];
+            CodeIssues = [];
+            InitialContextMessages = [.. contextMessages];
         }
 
         public string OriginalUserRequest { get; }
@@ -26,7 +26,7 @@ namespace AgentMesh.Application.Models
         public string EnrichedUserRequest { get; set; } = string.Empty;
         public UserIntentCategoryValues UserIntentCategoryValue { get; set; }
         public string? BusinessRequirements { get; set; }
-        public IEnumerable<string> MentionedApis { get; set; } = Enumerable.Empty<string>();
+        public IEnumerable<string> MentionedApis { get; set; } = [];
         public bool ShouldEngageCoder { get; set; }
         public string? OutputForUserFromBusinessAnalyst { get; set; }
         public string? BusinessAdvisorContent { get; set; }
@@ -44,9 +44,9 @@ namespace AgentMesh.Application.Models
         public string? FinalAnswer { get; set; }
 
         public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; }
-        public IEnumerable<AgentMemoryQueryResultItem> ExtractedAgentMemories { get; set; } = Enumerable.Empty<AgentMemoryQueryResultItem>();
+        public IEnumerable<AgentMemoryQueryResultItem> ExtractedAgentMemories { get; set; } = [];
         public IEnumerable<string> RelevantKnowledgeBaseFileNames { get; set; } = [];
-        public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = Enumerable.Empty<ContextMessage>();
+        public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [];
 
         public KnowledgeBaseQueryResult KnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 

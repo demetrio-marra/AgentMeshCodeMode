@@ -2,7 +2,7 @@
 
 namespace AgentMesh.Services
 {
-    public interface IKnowledgeBaseGetDocsExecutor: IExecutor<KnowledgeBaseGetDocsInput, KnowledgeBaseGetDocsOutput>
+    public interface IKnowledgeBaseGetDocsExecutor : IExecutor<KnowledgeBaseGetDocsInput, KnowledgeBaseGetDocsOutput>
     {
     }
 }

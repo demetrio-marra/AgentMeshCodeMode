@@ -11,7 +11,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch.DTOs.Query
         /// Typed sub-queries to execute (lex/vec/hyde). First gets 2× weight. Required, 1–10 items.
         /// </summary>
         [JsonPropertyName("searches")]
-        public List<QuerySubQuery> Searches { get; set; } = new();
+        public List<QuerySubQuery> Searches { get; set; } = [];
 
         /// <summary>
         /// Max results (server default: 10).

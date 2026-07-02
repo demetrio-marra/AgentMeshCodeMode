@@ -3,7 +3,7 @@
     public class CodeSmellDetectorOutput
     {
         public bool Valid { get; set; }
-        public string[] Feedbacks { get; set; } = Array.Empty<string>();
+        public string[] Feedbacks { get; set; } = [];
 
         public override string ToString()
         {

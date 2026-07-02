@@ -41,11 +41,11 @@ namespace AgentMesh.Infrastructure.AgentMemory.Services
         {
             var request = new MemoryCreateRequest
             {
-                Messages = new List<Message>
-                {
+                Messages =
+                [
                     new Message { Role = "user", Content = userMessage },
                     new Message { Role = "assistant", Content = agentResponse }
-                },
+                ],
                 UserId = userId
             };
 
@@ -89,7 +89,7 @@ namespace AgentMesh.Infrastructure.AgentMemory.Services
 
             if (searchResponse?.Results == null)
             {
-                return Enumerable.Empty<AgentMemoryQueryResultItem>();
+                return [];
             }
 
             return searchResponse.Results.Select(r => new AgentMemoryQueryResultItem

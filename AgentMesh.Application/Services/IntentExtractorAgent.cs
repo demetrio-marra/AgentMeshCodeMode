@@ -54,7 +54,8 @@ namespace AgentMesh.Application.Services
             return ret;
         }
 
-        protected override ParsedResponse ParseStructuredResponse(string rawResponseText) {
+        protected override ParsedResponse ParseStructuredResponse(string rawResponseText)
+        {
             try
             {
                 var responseDTO = JsonSerializer.Deserialize<ParsedResponse>(rawResponseText);
@@ -86,10 +87,10 @@ namespace AgentMesh.Application.Services
             public string UserIntent { get; set; } = string.Empty;
 
             [JsonPropertyName("missingPastMemories")]
-            public IEnumerable<string> MissingPastMemories { get; set; } = Enumerable.Empty<string>();
+            public IEnumerable<string> MissingPastMemories { get; set; } = [];
 
             [JsonPropertyName("missingKnowledgeBaseSearchEntries")]
-            public IEnumerable<IntentExtractorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = Enumerable.Empty<IntentExtractorKnowledgeBase>();
+            public IEnumerable<IntentExtractorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
 
             [JsonPropertyName("languageOfTheUser")]
             public string? LanguageOfTheUser { get; set; }

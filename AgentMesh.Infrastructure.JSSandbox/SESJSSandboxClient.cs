@@ -23,8 +23,8 @@ namespace AgentMesh.Infrastructure.JSSandbox
 
         public async Task<CodeSandboxOutput> RunCode(string agentId, string code)
         {
-            var request = new CodeExecutionRequestDTO 
-            { 
+            var request = new CodeExecutionRequestDTO
+            {
                 CodeToRun = code,
                 UserAgentId = agentId
             };

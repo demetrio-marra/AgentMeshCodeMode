@@ -23,7 +23,7 @@ namespace AgentMesh.Application.Services
             }
 
             var results = await _knowledgeBaseService.GetKnowledgeBaseEntriesContentAsync(input.FilePaths, cancellationToken);
-            return new KnowledgeBaseGetDocsOutput { Results = results.Select(r => new KnowledgeBaseGetDocsOutputItem { File = r.File, Content = r.Content }).ToList() };
+            return new KnowledgeBaseGetDocsOutput { Results = [.. results.Select(r => new KnowledgeBaseGetDocsOutputItem { File = r.File, Content = r.Content })] };
         }
 
 
@@ -38,14 +38,14 @@ namespace AgentMesh.Application.Services
 
             return new KnowledgeBaseQueryResult
             {
-                Results = result.Results.Select(r => new KnowledgeBaseQueryResultItem
+                Results = [.. result.Results.Select(r => new KnowledgeBaseQueryResultItem
                 {
                     File = r.File,
                     Id = r.Id,
                     Relevance = r.Relevance,
                     Summary = r.Summary,
                     Title = r.Title
-                }).ToList()
+                })]
             };
         }
     }

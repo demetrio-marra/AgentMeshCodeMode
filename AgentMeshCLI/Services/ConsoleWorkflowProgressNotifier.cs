@@ -25,7 +25,7 @@ namespace AgentMesh.Services
             {
                 var lines = output.Value.Split('\n');
                 var paramPadding = output.Key.Length + 2;
-                
+
                 if (lines.Length == 1)
                 {
                     ConsoleHelper.WriteLineWithColor($"{output.Key}: {lines[0]}", ConsoleColor.White);
@@ -50,7 +50,7 @@ namespace AgentMesh.Services
             {
                 var lines = input.Value.Split('\n');
                 var paramPadding = input.Key.Length + 2;
-                
+
                 if (lines.Length == 1)
                 {
                     ConsoleHelper.WriteLineWithColor($"{input.Key}: {lines[0]}", ConsoleColor.White);

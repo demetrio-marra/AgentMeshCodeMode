@@ -33,7 +33,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
             var ret = await _httpProxy.MultiGetAsync(query, cancellationToken);
 
-            return ret.Files.Where(f => f != null).Select(kv => new KnowledgeBaseDocumentContent { File = kv.Uri, Content = kv.Text ?? string.Empty }).ToList();
+            return [.. ret.Files.Where(f => f != null).Select(kv => new KnowledgeBaseDocumentContent { File = kv.Uri, Content = kv.Text ?? string.Empty })];
         }
 
 
@@ -52,32 +52,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         {
             var query = new DTOs.Query.QueryToolRequest
             {
-                 Searches = searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = KEYWORDS_SEARCH_TYPE, Query = term }).ToList(),
-                 Collections = collections?.ToList(),
-                 Rerank = rerank
-            };
-
-            var ret = await _httpProxy.QueryAsync(query, cancellationToken);
-
-            return new KnowledgeBaseQueryResult
-            {
-                Results = ret.Results.Select(r => new KnowledgeBaseQueryResultItem
-                {
-                    Id = r.DocId!,
-                    Title = r.Title!,
-                    Summary = r.Snippet,
-                    File = r.File,
-                    Relevance = r.Score
-                }).ToList()
-            };
-        }
-
-
-        public async Task<KnowledgeBaseQueryResult> SemanticSearchAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = true, CancellationToken cancellationToken = default)
-        {
-            var query = new DTOs.Query.QueryToolRequest
-            {
-                Searches = searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = SEMANTIC_SEARCH_TYPE, Query = term }).ToList(),
+                Searches = [.. searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = KEYWORDS_SEARCH_TYPE, Query = term })],
                 Collections = collections?.ToList(),
                 Rerank = rerank
             };
@@ -86,14 +61,39 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
             return new KnowledgeBaseQueryResult
             {
-                Results = ret.Results.Select(r => new KnowledgeBaseQueryResultItem
+                Results = [.. ret.Results.Select(r => new KnowledgeBaseQueryResultItem
                 {
                     Id = r.DocId!,
                     Title = r.Title!,
                     Summary = r.Snippet,
                     File = r.File,
                     Relevance = r.Score
-                }).ToList()
+                })]
+            };
+        }
+
+
+        public async Task<KnowledgeBaseQueryResult> SemanticSearchAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = true, CancellationToken cancellationToken = default)
+        {
+            var query = new DTOs.Query.QueryToolRequest
+            {
+                Searches = [.. searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = SEMANTIC_SEARCH_TYPE, Query = term })],
+                Collections = collections?.ToList(),
+                Rerank = rerank
+            };
+
+            var ret = await _httpProxy.QueryAsync(query, cancellationToken);
+
+            return new KnowledgeBaseQueryResult
+            {
+                Results = [.. ret.Results.Select(r => new KnowledgeBaseQueryResultItem
+                {
+                    Id = r.DocId!,
+                    Title = r.Title!,
+                    Summary = r.Snippet,
+                    File = r.File,
+                    Relevance = r.Score
+                })]
             };
         }
 
@@ -102,12 +102,12 @@ namespace AgentMesh.Infrastructure.SemanticSearch
         {
             var dbQuery = new DTOs.Query.QueryToolRequest
             {
-                Searches = query.Queries.Select(q => new DTOs.Query.QuerySubQuery
+                Searches = [.. query.Queries.Select(q => new DTOs.Query.QuerySubQuery
                 {
                     Type = q.SearchType == KnowledgeBaseQuerySearchType.Keyword ? KEYWORDS_SEARCH_TYPE : q.SearchType == KnowledgeBaseQuerySearchType.Semantic ? SEMANTIC_SEARCH_TYPE : HYPOTHETICAL_SEARCH_TYPE,
                     Query = q.Query
-                }).ToList(),
-                Collections = query.Collections.ToList(),
+                })],
+                Collections = [.. query.Collections],
                 Rerank = true,
                 Intent = query.UserIntent
             };
@@ -116,14 +116,14 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
             return new KnowledgeBaseQueryResult
             {
-                Results = ret.Results.Select(r => new KnowledgeBaseQueryResultItem
+                Results = [.. ret.Results.Select(r => new KnowledgeBaseQueryResultItem
                 {
                     Id = r.DocId!,
                     Title = r.Title!,
                     Summary = r.Snippet,
                     File = r.File,
                     Relevance = r.Score
-                }).ToList()
+                })]
             };
         }
 

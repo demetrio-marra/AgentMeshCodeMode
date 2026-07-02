@@ -85,17 +85,17 @@ namespace AgentMesh.Application.Services
 
         public class ConciliationResult
         {
-            public IEnumerable<KnowledgeBaseSearchQuery> ConciliatedKnowledgeBaseSearchQueries { get; set; } = Enumerable.Empty<KnowledgeBaseSearchQuery>();
-            public IEnumerable<MemorySearchQuery> ConciliatedMemorySearchQueries { get; set; } = Enumerable.Empty<MemorySearchQuery>();
+            public IEnumerable<KnowledgeBaseSearchQuery> ConciliatedKnowledgeBaseSearchQueries { get; set; } = [];
+            public IEnumerable<MemorySearchQuery> ConciliatedMemorySearchQueries { get; set; } = [];
         }
 
         public class ParsedResponse
         {
             [JsonPropertyName("conciliatedKnowledgeBaseSearchQueries")]
-            public IEnumerable<KnowledgeBaseSearchQuery> ConciliatedKnowledgeBaseSearchQueries { get; set; } = Enumerable.Empty<KnowledgeBaseSearchQuery>();
+            public IEnumerable<KnowledgeBaseSearchQuery> ConciliatedKnowledgeBaseSearchQueries { get; set; } = [];
 
             [JsonPropertyName("conciliatedMemorySearchQueries")]
-            public IEnumerable<MemorySearchQuery> ConciliatedMemorySearchQueries { get; set; } = Enumerable.Empty<MemorySearchQuery>();
+            public IEnumerable<MemorySearchQuery> ConciliatedMemorySearchQueries { get; set; } = [];
         }
     }
 }

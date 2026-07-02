@@ -15,8 +15,8 @@ namespace AgentMesh.Application
             _configuration = configuration;
         }
 
-        public Task<T> AgentRunWithRetryAsync<T>(Func<Task<T>> action, 
-            string agentName, 
+        public Task<T> AgentRunWithRetryAsync<T>(Func<Task<T>> action,
+            string agentName,
             ILogger? logger = null,
             int? retryCount = null)
         {

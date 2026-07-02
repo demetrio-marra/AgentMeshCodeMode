@@ -101,7 +101,7 @@ namespace AgentMesh
 
                 var questionDateTime = DateTime.UtcNow;
                 var currentConversation = conversationContext.Conversation.ToList();
-                var result = await _workflow.ExecuteAsync(question!, conversationContext.Conversation.ToList());
+                var result = await _workflow.ExecuteAsync(question!, [.. conversationContext.Conversation]);
 
                 var inputMessageTokens = result.UsageStatistics
                     .Where(e => e.IsAgentic && e.TokensUsage?.AgentName == _workflow.GetIngressExecutorName())
@@ -187,7 +187,8 @@ namespace AgentMesh
 
                     ConsoleHelper.WriteLineWithColor($"Conversation tokens exceeded configured threshold ({_conversationSummarizerConfiguration.SummaryTokenThreshold}). Summarizing conversation...", ConsoleColor.White);
 
-                    var summarizerInput = new ConversationSummarizerAgentInput {
+                    var summarizerInput = new ConversationSummarizerAgentInput
+                    {
                         Conversation = conversationContext.Conversation,
                         CountOfMessagesToKeep = _conversationSummarizerConfiguration.NumMessageToPreseve,
                         SummaryLanguage = _conversationSummarizerConfiguration.SummarizeLanguage
@@ -227,7 +228,7 @@ namespace AgentMesh
                             OutputTokens = summarizationResult.OutputTokenCount
                         }
                     };
-                    
+
                     result.UsageStatistics.Add(summarizationTokenUsageEntry);
                 }
 

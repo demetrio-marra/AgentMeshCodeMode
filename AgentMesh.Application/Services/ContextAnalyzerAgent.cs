@@ -67,11 +67,11 @@ namespace AgentMesh.Application.Services
                 {
                     CondensedUserIntent = responseDTO.CondensedUserIntent,
                     UserIntentCategory = ParseUserIntentCategory(responseDTO.UserIntentCategory),
-                    FilteredKnowledgeBaseDocuments = responseDTO.FilteredKnowledgeBaseDocuments.Select(u => new FilteredKnowledgeBaseItem
+                    FilteredKnowledgeBaseDocuments = [.. responseDTO.FilteredKnowledgeBaseDocuments.Select(u => new FilteredKnowledgeBaseItem
                     {
                         Title = u.Title,
                         DocumentId = u.DocumentId
-                    }).ToList()
+                    })]
                 };
             }
             catch (JsonException ex)
@@ -99,7 +99,7 @@ namespace AgentMesh.Application.Services
             public string UserIntentCategory { get; set; } = string.Empty;
 
             [JsonPropertyName("filteredKnowledgeBaseDocuments")]
-            public List<FilteredKnowledgeBaseDTOItem> FilteredKnowledgeBaseDocuments { get; set; } = new List<FilteredKnowledgeBaseDTOItem>();
+            public List<FilteredKnowledgeBaseDTOItem> FilteredKnowledgeBaseDocuments { get; set; } = [];
         }
 
         private class FilteredKnowledgeBaseDTOItem

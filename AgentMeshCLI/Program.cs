@@ -454,7 +454,7 @@ namespace AgentMesh
 
             // Build service provider
             var serviceProvider = services.BuildServiceProvider();
-           
+
             // Create and run the service
             var userConsoleInputService = serviceProvider.GetRequiredService<UserConsoleInputService>();
             await userConsoleInputService.Run();

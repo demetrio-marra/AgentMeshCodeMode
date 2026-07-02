@@ -114,7 +114,7 @@ namespace AgentMesh.Helpers
                     outputCostStr = outputCost.ToString("F6").PadLeft(17);
                     totalAgentCostStr = totalAgentCost.ToString("F6").PadLeft(14);
                 }
-                    
+
                 var rowName = entry.StepName.Length > 36 ? entry.StepName[..36] : entry.StepName;
                 var agentNamePadded = rowName.PadRight(36);
                 var elapsedPadded = ToHumanReadableDuration(entry.Elapsed).PadLeft(9);

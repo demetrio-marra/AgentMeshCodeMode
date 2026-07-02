@@ -361,7 +361,8 @@ namespace AgentMesh.Infrastructure.SemanticSearch
                         {
                             return fromContent;
                         }
-                    } catch (Exception ex)
+                    }
+                    catch (Exception ex)
                     {
                         throw new Exception($"MCP tool '{toolName}' returned content that could not be deserialized into the expected response type. Content: {parsedContent}", ex);
                     }
@@ -410,8 +411,8 @@ namespace AgentMesh.Infrastructure.SemanticSearch
             {
                 if (item.Type == "resource")
                 {
-                    if (item.Extensions != null 
-                        && item.Extensions.ContainsKey("resource") 
+                    if (item.Extensions != null
+                        && item.Extensions.ContainsKey("resource")
                         && item.Extensions["resource"].ValueKind == JsonValueKind.Object)
                     {
                         var resource = item.Extensions["resource"];

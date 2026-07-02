@@ -20,7 +20,7 @@ namespace AgentMesh.Application
                 sb.AppendLine(message.Text);
                 sb.AppendLine(MESSAGES_SEPARATOR);
             }
-            
+
             var section = WrapSection("conversation history", sb.ToString().TrimEnd());
             return section;
         }

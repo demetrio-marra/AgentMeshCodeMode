@@ -14,7 +14,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch.DTOs.Query
         /// Matching documents ordered by relevance.
         /// </summary>
         [JsonPropertyName("results")]
-        public List<QueryToolResultItem> Results { get; set; } = new();
+        public List<QueryToolResultItem> Results { get; set; } = [];
 
         [JsonExtensionData]
         public Dictionary<string, JsonElement>? Extensions { get; set; }

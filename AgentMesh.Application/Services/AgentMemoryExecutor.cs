@@ -52,11 +52,11 @@ namespace AgentMesh.Application.Services
 
             var output = new AgentMemoryRetrieverOutput
             {
-                Items = ret.Select(r => new AgentMemoryQueryResultItem
+                Items = [.. ret.Select(r => new AgentMemoryQueryResultItem
                 {
                     Confidence = r.Confidence,
                     Memory = r.Memory,
-                }).ToList()
+                })]
             };
 
             _logger.LogDebug("AgentMemoryRetriever - ExecuteAsync completed in {ElapsedMilliseconds}ms.", stopwatch.ElapsedMilliseconds);

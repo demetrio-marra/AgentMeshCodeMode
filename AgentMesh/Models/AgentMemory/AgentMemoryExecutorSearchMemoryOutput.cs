@@ -8,6 +8,6 @@
         /// <summary>
         /// The list of memory items that match the search query, each containing the content of the memory and an associated confidence score indicating the reliability or relevance of the information stored in that memory item.
         /// </summary>
-        public IEnumerable<AgentMemoryQueryResultItem> Items { get; set; } = Enumerable.Empty<AgentMemoryQueryResultItem>();
+        public IEnumerable<AgentMemoryQueryResultItem> Items { get; set; } = [];
     }
 }

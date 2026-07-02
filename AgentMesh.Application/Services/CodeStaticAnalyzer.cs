@@ -110,7 +110,7 @@ namespace AgentMesh.Application.Services
         private JsonDocument ParseJsonResponse(string responseText)
         {
             var trimmedResponse = responseText.Trim();
-            
+
             if (trimmedResponse.StartsWith("```json"))
             {
                 var startIndex = trimmedResponse.IndexOf('\n') + 1;

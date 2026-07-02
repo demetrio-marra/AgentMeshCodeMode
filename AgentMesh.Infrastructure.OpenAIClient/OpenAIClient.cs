@@ -81,7 +81,7 @@ namespace AgentMesh.Infrastructure.OpenAIClient
             var chatCompletionOptions = new ChatCompletionOptions
             {
                 Temperature = _temperature,
-               // ToolChoice = ChatToolChoice.CreateNoneChoice(),
+                // ToolChoice = ChatToolChoice.CreateNoneChoice(),
                 ResponseFormat = ChatResponseFormat.CreateTextFormat(),
             };
 

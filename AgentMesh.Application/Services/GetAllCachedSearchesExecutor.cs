@@ -16,7 +16,7 @@ namespace AgentMesh.Application.Services
         public async Task<GetAllCachedSearchesExecutorOutput> ExecuteAsync(GetAllCachedSearchesExecutorInput input, CancellationToken cancellationToken = default)
         {
             var (agentMemoryQueries, knowledgeBaseQueries) = await _documentsCacheService.GetAllCachedSearchesAsync();
-            
+
             return new GetAllCachedSearchesExecutorOutput
             {
                 AgentMemoryCachedQueries = agentMemoryQueries,

@@ -6,7 +6,7 @@ namespace AgentMesh.Infrastructure.DocumentsCache.Models
     {
         public CacheableKnowledgeBaseQueryResultItem()
         {
-            
+
         }
 
         public CacheableKnowledgeBaseQueryResultItem(KnowledgeBaseQueryResultItem item)

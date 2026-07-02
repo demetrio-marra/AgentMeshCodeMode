@@ -17,14 +17,14 @@ namespace AgentMesh.Application.Services
         public CodeSmellDetector(ILogger<CodeSmellDetector> logger)
         {
             _logger = logger;
-            _validationRules = new List<ValidationRule>
-            {
+            _validationRules =
+            [
                 new ValidationRule
                 {
                     Pattern = ResultIssueCodeRegex,
-                    ErrorMessage = "the 'result' identifier must be dereferenced only once. Not: 'result.result'"      
+                    ErrorMessage = "the 'result' identifier must be dereferenced only once. Not: 'result.result'"
                 }
-            };
+            ];
         }
 
 
@@ -46,7 +46,7 @@ namespace AgentMesh.Application.Services
             var output = new CodeSmellDetectorOutput
             {
                 Valid = feedbacks.Count == 0,
-                Feedbacks = feedbacks.ToArray()
+                Feedbacks = [.. feedbacks]
             };
             return await Task.FromResult(output);
         }
