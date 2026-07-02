@@ -15,7 +15,7 @@ namespace AgentMesh.Application.Services
         Resilience resilience,
         ILogger<CodeFixerAgent> logger) : AgentBase<string>(logger, CodeFixerAgentConfiguration.AgentName, openAIClient, resilience), ICodeFixerAgent
     {
-        private readonly Regex JavascriptCodeRegex = new Regex(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        private readonly Regex JavascriptCodeRegex = new(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
         private readonly ILogger<CodeFixerAgent> _logger = logger;
 
@@ -23,13 +23,11 @@ namespace AgentMesh.Application.Services
         {
             var inputMessages = new List<AgentMessage>
             {
-                new AgentMessage
-                {
+                new() {
                     Role = AgentMessageRole.System,
                     Content = "The following issues were detected in the code:\n- " + string.Join("\n- ", input.Issues)
                 },
-                new AgentMessage
-                {
+                new() {
                     Role = AgentMessageRole.User,
                     Content = "Fix the following code:\n\n" + input.CodeToFix
                 }

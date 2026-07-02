@@ -22,7 +22,7 @@ namespace AgentMesh.Application.Services
         {
             var inputMessages = new List<AgentMessage>
             {
-                new AgentMessage { Role = AgentMessageRole.User, Content = $"User request:\n{input.EnrichedUserRequest}\n\nAssistant answer:\n{input.FinalAnswer}" }
+                new() { Role = AgentMessageRole.User, Content = $"User request:\n{input.EnrichedUserRequest}\n\nAssistant answer:\n{input.FinalAnswer}" }
             };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);

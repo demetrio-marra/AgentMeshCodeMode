@@ -14,7 +14,7 @@
             {
                 fillerChar = '0';
             }
-            var codeLines = sourceCode.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var codeLines = sourceCode.Split(["\r\n", "\r", "\n"], StringSplitOptions.None);
             var maxLineNumberWidth = codeLines.Length.ToString().Length;
             var sb = new System.Text.StringBuilder();
             for (int i = 0; i < codeLines.Length; i++)

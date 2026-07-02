@@ -43,11 +43,7 @@ namespace AgentMesh.Infrastructure.JSSandbox
 
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<CodeSandboxExecutionDTO>();
-
-            if (result is null)
-                throw new InvalidOperationException("Received null response from sandbox service.");
-
+            var result = await response.Content.ReadFromJsonAsync<CodeSandboxExecutionDTO>() ?? throw new InvalidOperationException("Received null response from sandbox service.");
             if (result.IsError)
                 throw new InvalidOperationException($"Sandbox execution error: {result.ExecutionResult}");
 

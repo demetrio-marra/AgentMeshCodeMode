@@ -28,8 +28,8 @@ namespace AgentMesh.Application.Services
 
             var inputMessages = new List<AgentMessage>
             {
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.User, Content = userMessage },
+                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
+                new() { Role = AgentMessageRole.User, Content = userMessage },
             };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);

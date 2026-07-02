@@ -23,7 +23,7 @@ namespace AgentMesh
 {
     internal class Program
     {
-        static async Task Main(string[] args) // Add async keyword
+        static async Task Main()
         {
             // Build configuration
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")

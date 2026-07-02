@@ -6,9 +6,9 @@ using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services
 {
-    public class CodeSmellDetector : ICodeSmellDetector, IExecutor<CodeSmellDetectorInput, CodeSmellDetectorOutput>
+    public partial class CodeSmellDetector : ICodeSmellDetector, IExecutor<CodeSmellDetectorInput, CodeSmellDetectorOutput>
     {
-        private readonly Regex ResultIssueCodeRegex = new Regex(@"(\?)?\.result(\?)?\.result", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        private readonly Regex ResultIssueCodeRegex = MyRegex();
 
         private readonly ILogger<CodeSmellDetector> _logger;
         private readonly IEnumerable<ValidationRule> _validationRules;
@@ -63,5 +63,8 @@ namespace AgentMesh.Application.Services
             public Regex Pattern { get; set; } = null!;
             public string ErrorMessage { get; set; } = string.Empty;
         }
+
+        [GeneratedRegex(@"(\?)?\.result(\?)?\.result", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, "it-IT")]
+        private static partial Regex MyRegex();
     }
 }

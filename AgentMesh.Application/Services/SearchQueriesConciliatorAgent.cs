@@ -31,8 +31,8 @@ namespace AgentMesh.Application.Services
 
             var inputMessages = new List<AgentMessage>
             {
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.User, Content = $"Extracted knowledge base search queries:\n{extractedKbQueries}\n\nCached knowledge base search queries:\n{cachedKbQueries}\n\nExtracted memory search queries:\n{extractedMemoryQueries}\n\nCached memory search queries:\n{cachedMemoryQueries}" }
+                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
+                new() { Role = AgentMessageRole.User, Content = $"Extracted knowledge base search queries:\n{extractedKbQueries}\n\nCached knowledge base search queries:\n{cachedKbQueries}\n\nExtracted memory search queries:\n{extractedMemoryQueries}\n\nCached memory search queries:\n{cachedMemoryQueries}" }
             };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);

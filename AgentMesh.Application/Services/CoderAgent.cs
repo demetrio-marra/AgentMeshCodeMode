@@ -15,7 +15,7 @@ namespace AgentMesh.Application.Services
                       Resilience resilience,
                       ILogger<CoderAgent> logger) : AgentBase<string>(logger, CoderAgentConfiguration.AgentName, openAIClient, resilience), ICoderAgent
     {
-        private readonly Regex JavascriptCodeRegex = new Regex(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
+        private readonly Regex JavascriptCodeRegex = new(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
         private readonly ILogger<CoderAgent> _logger = logger;
 
@@ -23,9 +23,9 @@ namespace AgentMesh.Application.Services
         {
             var inputMessages = new List<AgentMessage>
             {
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.System, Content = "API Reference:\n" + input.ApiDocumentation },
-                new AgentMessage { Role = AgentMessageRole.User, Content = input.BusinessRequirements }
+                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
+                new() { Role = AgentMessageRole.System, Content = "API Reference:\n" + input.ApiDocumentation },
+                new() { Role = AgentMessageRole.User, Content = input.BusinessRequirements }
             };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);

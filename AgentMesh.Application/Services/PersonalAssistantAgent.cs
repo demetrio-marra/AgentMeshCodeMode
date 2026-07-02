@@ -19,10 +19,10 @@ namespace AgentMesh.Application.Services
         {
             var inputMessages = new List<AgentMessage>
             {
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Respond in {input.LanguageOfTheUser}." },
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Respond about this data:\n" + input.Data },
-                new AgentMessage { Role = AgentMessageRole.User, Content = input.EnrichedUserRequest }
+                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
+                new() { Role = AgentMessageRole.System, Content = $"Respond in {input.LanguageOfTheUser}." },
+                new() { Role = AgentMessageRole.System, Content = $"Respond about this data:\n" + input.Data },
+                new() { Role = AgentMessageRole.User, Content = input.EnrichedUserRequest }
             };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);

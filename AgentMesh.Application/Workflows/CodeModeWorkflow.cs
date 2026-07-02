@@ -34,7 +34,7 @@ using System.Data;
 
 namespace AgentMesh.Application.Workflows
 {
-    public class CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
+    public partial class CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
         IWorkflowProgressNotifier workflowProgressNotifier,
         ITechnicalAnalystAgent technicalAnalystAgent,
         IBusinessAdvisorAgent businessAdvisorAgent,
@@ -161,13 +161,13 @@ namespace AgentMesh.Application.Workflows
                 await ExecuteCoderAsync(state);
                 await ExecuteCodeStaticAnalyzerAsync(state);
 
-                for (int i = 0; i < 2 && !state.IsCodeValid && state.CodeIssues.Any(); i++)
+                for (int i = 0; i < 2 && !state.IsCodeValid && state.CodeIssues.Count != 0; i++)
                 {
                     await ExecuteCodeFixerAsync(state, i + 1, false);
                     await ExecuteCodeStaticAnalyzerAsync(state);
                 }
 
-                bool sandBoxError = await ExecuteJSSandboxAsync(state, false);
+                await ExecuteJSSandboxAsync(state, false);
 
                 if (state.CodeExecutionResultType == SandboxResultType.CallError)
                 {
@@ -187,19 +187,19 @@ namespace AgentMesh.Application.Workflows
 
                         await ExecuteCodeFixerForRuntimeErrorsAsync(state, analysis, i + 1);
 
-                        sandBoxError = await ExecuteJSSandboxAsync(state, true);
+                        var sandBoxError = await ExecuteJSSandboxAsync(state, true);
                         if (sandBoxError)
                         {
                             break;
                         }
                     }
 
-                    await ExecuteResultsPresenterAsync(state, sandBoxError);
+                    await ExecuteResultsPresenterAsync(state);
                     await CompleteWorkflowAsync(state, state.PresenterOutput);
                 }
                 else
                 {
-                    await ExecuteResultsPresenterAsync(state, sandBoxError);
+                    await ExecuteResultsPresenterAsync(state);
                     await CompleteWorkflowAsync(state, state.PresenterOutput);
                 }
                 goto WorkflowEnd;
@@ -266,7 +266,7 @@ namespace AgentMesh.Application.Workflows
                 foreach (var mainDoc in fetchedFilesContent.Results)
                 {
                     // find words within double square brackets [[...]] in the mainDoc.Content using regex
-                    var matches = System.Text.RegularExpressions.Regex.Matches(mainDoc.Content, @"\[\[(.*?)\]\]");
+                    var matches = MyRegex().Matches(mainDoc.Content);
                     foreach (System.Text.RegularExpressions.Match match in matches)
                     {
                         var relatedDocName = match.Groups[1].Value;
@@ -284,7 +284,7 @@ namespace AgentMesh.Application.Workflows
                 relatedDocs = [.. relatedDocs.Except(fetchedFilesContent.Results.Where(r => !string.IsNullOrEmpty(r.File)).Select(r => r.File!))];
 
                 // fetch again the content of the related docs and add them to the fetchedFilesContent.Results
-                if (relatedDocs.Any())
+                if (relatedDocs.Count != 0)
                 {
                     var relatedDocsContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
                     {
@@ -334,7 +334,7 @@ namespace AgentMesh.Application.Workflows
             state.MissingKnowledgeBaseSearchEntries = intentExtractorOutput.MissingKnowledgeBaseSearchEntries;
             state.LanguageOfTheUser = intentExtractorOutput.LanguageOfTheUser;
 
-            state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.TokenCount, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount, stopwatch.Elapsed, "Intent Extractor Agent");
+            state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount, stopwatch.Elapsed, "Intent Extractor Agent");
 
             var notifyDictionary = new Dictionary<string, string>
             {
@@ -421,7 +421,7 @@ namespace AgentMesh.Application.Workflows
             // Update state with conciliated memory search queries (extract just the query strings)
             state.MissingPastMemories = conciliatorOutput.ConciliatedMemorySearchQueries.Select(m => m.Query);
 
-            state.AddTokenUsage(SearchQueriesConciliatorAgentConfiguration.AgentName, conciliatorOutput.TokenCount, conciliatorOutput.InputTokenCount, conciliatorOutput.OutputTokenCount, stopwatch.Elapsed, "Search Queries Conciliator Agent");
+            state.AddTokenUsage(SearchQueriesConciliatorAgentConfiguration.AgentName, conciliatorOutput.InputTokenCount, conciliatorOutput.OutputTokenCount, stopwatch.Elapsed, "Search Queries Conciliator Agent");
 
             var notifyDictionary = new Dictionary<string, string>
             {
@@ -534,9 +534,9 @@ namespace AgentMesh.Application.Workflows
                 { "MissingKnowledgeBaseEntries", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")) }
             });
 
-            KnowledgeBaseQueryInput queryInput = new KnowledgeBaseQueryInput
+            KnowledgeBaseQueryInput queryInput = new()
             {
-                Collections = new[] { DOCUMENTATION_COLLECTION_NAME },
+                Collections = [DOCUMENTATION_COLLECTION_NAME],
                 UserIntent = state.UserIntent,
                 Queries = [.. state.MissingKnowledgeBaseSearchEntries.Select(entry => new KnowledgeBaseQueryInputItem
                 {
@@ -610,7 +610,7 @@ namespace AgentMesh.Application.Workflows
 
                 state.RelevantKnowledgeBaseFileNames = filteredFileNames;
             }
-            state.AddTokenUsage(ContextAnalyzerAgentConfiguration.AgentName, contextAnalyzerOutput.TokenCount, contextAnalyzerOutput.InputTokenCount, contextAnalyzerOutput.OutputTokenCount, stopwatch.Elapsed, "Context Analyzer Agent");
+            state.AddTokenUsage(ContextAnalyzerAgentConfiguration.AgentName, contextAnalyzerOutput.InputTokenCount, contextAnalyzerOutput.OutputTokenCount, stopwatch.Elapsed, "Context Analyzer Agent");
 
             var contextAnalyzerOutputLogEntries = new Dictionary<string, string>
             {
@@ -647,7 +647,7 @@ namespace AgentMesh.Application.Workflows
             }, cancellationToken);
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = technicalAnalystOutput.BusinessRequirements;
-            state.AddTokenUsage(TechnicalAnalystAgentConfiguration.AgentName, technicalAnalystOutput.TokenCount, technicalAnalystOutput.InputTokenCount, technicalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Technical Analyst Agent");
+            state.AddTokenUsage(TechnicalAnalystAgentConfiguration.AgentName, technicalAnalystOutput.InputTokenCount, technicalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Technical Analyst Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "BusinessRequirements", technicalAnalystOutput.BusinessRequirements },
@@ -674,7 +674,7 @@ namespace AgentMesh.Application.Workflows
                 ApiDocumentation = serializedDocumentation
             });
             state.GeneratedCode = coderAgentOutput.CodeToRun;
-            state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.TokenCount, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount, stopwatch.Elapsed, "Coder Agent");
+            state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount, stopwatch.Elapsed, "Coder Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "CodeToRun", state.GeneratedCode },
@@ -706,7 +706,7 @@ namespace AgentMesh.Application.Workflows
             {
                 state.CodeIssues.Clear();
             }
-            state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, staticAnalyzerOutput.TokenCount, staticAnalyzerOutput.InputTokenCount, staticAnalyzerOutput.OutputTokenCount, stopwatch.Elapsed, "Code Static Analyzer Agent");
+            state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, staticAnalyzerOutput.InputTokenCount, staticAnalyzerOutput.OutputTokenCount, stopwatch.Elapsed, "Code Static Analyzer Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "IsCodeValid", state.IsCodeValid.ToString() },
@@ -735,7 +735,7 @@ namespace AgentMesh.Application.Workflows
             });
             state.GeneratedCode = codeFixerOutput.FixedCode;
             state.CodeFixerIterationCount++;
-            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, agentName);
+            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, agentName);
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "FixedCode", state.GeneratedCode },
@@ -748,12 +748,12 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             var stepName = isReexecution ? "JS Sandbox Executor (Re-execution)" : "JS Sandbox Executor";
-            var logMessage = isReexecution ? "Re-executing JS Sandbox Executor after runtime fix..." : "Engaging JS Sandbox Executor...";
+            var iterationMessage = isReexecution ? "again after code revision" : "";
 
             bool sandBoxError = false;
             try
             {
-                _logger.LogDebug(logMessage);
+                _logger.LogDebug("Running JS Sandbox Executor {IterationMessage}", iterationMessage);
                 await _workflowProgressNotifier.NotifyWorkflowStepStart(stepName, new Dictionary<string, string>
                 {
                     { "Code", state.GeneratedCode ?? "(No generated code)" }
@@ -825,7 +825,7 @@ namespace AgentMesh.Application.Workflows
                 ExecutionResult = state.SandboxResult ?? string.Empty
             });
             state.CodeExecutionFailuresDetectorIterationCount++;
-            state.AddTokenUsage(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, detectorOutput.TokenCount, detectorOutput.InputTokenCount, detectorOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Execution Failures Detector Agent (Iteration {iteration})");
+            state.AddTokenUsage(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, detectorOutput.InputTokenCount, detectorOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Execution Failures Detector Agent (Iteration {iteration})");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "Analysis", detectorOutput.Analysis },
@@ -849,10 +849,10 @@ namespace AgentMesh.Application.Workflows
             var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
             {
                 CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty,
-                Issues = new[] { analysis }
+                Issues = [analysis]
             });
             state.GeneratedCode = codeFixerOutput.FixedCode;
-            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.TokenCount, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Fixer Agent for Runtime Errors (Iteration {iteration})");
+            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Fixer Agent for Runtime Errors (Iteration {iteration})");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "FixedCode", state.GeneratedCode },
@@ -861,7 +861,7 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", notifyDictionary);
         }
 
-        private async Task ExecuteResultsPresenterAsync(CodeModeWorkflowState state, bool sandBoxError)
+        private async Task ExecuteResultsPresenterAsync(CodeModeWorkflowState state)
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Results Presenter Agent...");
@@ -879,7 +879,7 @@ namespace AgentMesh.Application.Workflows
                 EnrichedUserRequest = enrichedUserRequest
             });
             state.PresenterOutput = resultsPresenterOutput.Content;
-            state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.TokenCount, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount, stopwatch.Elapsed, "Results Presenter Agent");
+            state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount, stopwatch.Elapsed, "Results Presenter Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "Content", state.PresenterOutput },
@@ -908,7 +908,7 @@ namespace AgentMesh.Application.Workflows
                 Documentation = serializedDocumentation
             }, cancellationToken);
             state.BusinessAdvisorContent = baOutput.Content;
-            state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.TokenCount, baOutput.InputTokenCount, baOutput.OutputTokenCount, stopwatch.Elapsed, "Business Advisor Agent");
+            state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.InputTokenCount, baOutput.OutputTokenCount, stopwatch.Elapsed, "Business Advisor Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "Content", state.BusinessAdvisorContent ?? "(No business advisor content)" },
@@ -936,7 +936,7 @@ namespace AgentMesh.Application.Workflows
                 Documentation = serializedDocumentation
             }, cancellationToken);
             state.DocumentationContent = output.Content;
-            state.AddTokenUsage(DocumentationAgentConfiguration.AgentName, output.TokenCount, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Documentation Agent");
+            state.AddTokenUsage(DocumentationAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Documentation Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "Content", state.DocumentationContent ?? "(No documentation content)" },
@@ -974,7 +974,7 @@ namespace AgentMesh.Application.Workflows
                 LanguageOfTheUser = state.LanguageOfTheUser
             });
             state.FinalAnswer = personalAssistantOutput.Response;
-            state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.TokenCount, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount, stopwatch.Elapsed, "Personal Assistant Agent");
+            state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount, stopwatch.Elapsed, "Personal Assistant Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "Response", state.FinalAnswer },
@@ -1000,7 +1000,7 @@ namespace AgentMesh.Application.Workflows
                 FinalAnswer = state.FinalAnswer ?? string.Empty
             });
 
-            state.AddTokenUsage(RelevantFactsEvaluatorAgentConfiguration.AgentName, output.TokenCount, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Relevant Facts Evaluator Agent");
+            state.AddTokenUsage(RelevantFactsEvaluatorAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Relevant Facts Evaluator Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "IsWorthSaving", output.IsWorthSaving.ToString() },
@@ -1157,6 +1157,9 @@ namespace AgentMesh.Application.Workflows
         public string GetIngressExecutorName() => IntentExtractorAgentConfiguration.AgentName;
 
         public string GetEgressExecutorName() => PersonalAssistantAgentConfiguration.AgentName;
+
+        [System.Text.RegularExpressions.GeneratedRegex(@"\[\[(.*?)\]\]")]
+        private static partial System.Text.RegularExpressions.Regex MyRegex();
     }
 }
 

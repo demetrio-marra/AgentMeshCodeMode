@@ -25,8 +25,8 @@ namespace AgentMesh.Application.Services
         {
             var inputMessages = new List<AgentMessage>
             {
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(input) }
+                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
+                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(input) }
             };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
@@ -47,13 +47,7 @@ namespace AgentMesh.Application.Services
         {
             try
             {
-                var responseDTO = JsonSerializer.Deserialize<ContextAnalyzerAgentOutputDTO>(rawResponseText);
-
-                if (responseDTO == null)
-                {
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
-                }
-
+                var responseDTO = JsonSerializer.Deserialize<ContextAnalyzerAgentOutputDTO>(rawResponseText) ?? throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 if (string.IsNullOrWhiteSpace(responseDTO.CondensedUserIntent))
                 {
                     throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty condensed user intent.");

@@ -33,11 +33,7 @@ namespace AgentMesh.Infrastructure.SemanticSearch
 
         public async Task<string> GetKnowledgeBaseEntryContentAsync(string id, CancellationToken cancellationToken = default)
         {
-            var ret = await _httpProxy.GetAsync(new DTOs.Get.GetToolRequest { File = id }, cancellationToken);
-            if (ret == null)
-            {
-                throw new Exception($"Failed to retrieve content for knowledge base entry with ID: {id}");
-            }
+            var ret = await _httpProxy.GetAsync(new DTOs.Get.GetToolRequest { File = id }, cancellationToken) ?? throw new Exception($"Failed to retrieve content for knowledge base entry with ID: {id}");
             return ret.Text;
         }
 

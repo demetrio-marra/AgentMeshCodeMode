@@ -50,7 +50,7 @@ namespace AgentMesh.Application.Models
         public bool AgentMemoryCacheHit { get; set; }
         public bool KnowledgeBaseCacheHit { get; set; }
 
-        public void AddTokenUsage(string agentName, int tokenCount, int inputTokenCount, int outputTokenCount, TimeSpan? elapsed = null, string? stepName = null)
+        public void AddTokenUsage(string agentName, int inputTokenCount, int outputTokenCount, TimeSpan? elapsed = null, string? stepName = null)
         {
             TokenUsageEntries.Add(new WorkflowStepUsageEntry
             {

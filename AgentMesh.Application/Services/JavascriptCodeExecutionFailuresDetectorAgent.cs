@@ -8,16 +8,14 @@ using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services
 {
-    public class JavascriptCodeExecutionFailuresDetectorAgent(
+    public partial class JavascriptCodeExecutionFailuresDetectorAgent(
         [FromKeyedServices(CodeExecutionFailuresDetectorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
         ILogger<JavascriptCodeExecutionFailuresDetectorAgent> logger) : AgentBase<string>(logger, CodeExecutionFailuresDetectorAgentConfiguration.AgentName, openAIClient, resilience), ICodeExecutionFailuresDetectorAgent
     {
         public const string NO_ERROR = "NO_ERROR";
 
-        private static readonly Regex StackTraceRegex = new Regex(
-            @"(?i)stacktrace.*?(?:\r?\n\s*at\s+.+)+",
-            RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase);
+        private static readonly Regex StackTraceRegex = StackTraceRegex2();
 
         private readonly ILogger<JavascriptCodeExecutionFailuresDetectorAgent> _logger = logger;
 
@@ -61,5 +59,9 @@ namespace AgentMesh.Application.Services
         }
 
         protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
+
+
+        [GeneratedRegex(@"(?i)stacktrace.*?(?:\r?\n\s*at\s+.+)+", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, "it-IT")]
+        private static partial Regex StackTraceRegex2();
     }
 }

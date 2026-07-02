@@ -33,9 +33,9 @@ namespace AgentMesh.Application.Services
 
             var inputMessages = new List<AgentMessage>
             {
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new AgentMessage { Role = AgentMessageRole.System, Content = $"Summarize in {input.SummaryLanguage} language" },
-                new AgentMessage { Role = AgentMessageRole.User, Content = serializedConversation }
+                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
+                new() { Role = AgentMessageRole.System, Content = $"Summarize in {input.SummaryLanguage} language" },
+                new() { Role = AgentMessageRole.User, Content = serializedConversation }
             };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
