@@ -27,19 +27,14 @@ namespace AgentMesh.Application.Services
 
             var stopwatch = Stopwatch.StartNew();
 
-            var ret = await _jsSandbox.RunCode(_userConfiguration.AgentId, input.Code);
+            var executionResult = await _jsSandbox.RunCode(_userConfiguration.AgentId, input.Code);
 
             stopwatch.Stop();
 
-            var output = new CodeSandboxOutput
-            {
-                Result = ret
-            };
-
             _logger.LogDebug("JSSandboxExecutor completed in {ElapsedMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
-            _logger.LogDebug("JSSandboxExecutor Output: {Output}", System.Text.Json.JsonSerializer.Serialize(output));
+            _logger.LogDebug("JSSandboxExecutor Output: {Output}", System.Text.Json.JsonSerializer.Serialize(executionResult));
 
-            return output;
+            return executionResult;
         }
     }
 }

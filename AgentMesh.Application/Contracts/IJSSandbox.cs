@@ -1,7 +1,9 @@
-﻿namespace AgentMesh.Application.Contracts
+﻿using AgentMesh.Models.CodeSandbox;
+
+namespace AgentMesh.Application.Contracts
 {
     public interface IJSSandbox
     {
-        Task<string> RunCode(string agentId, string code);
+        Task<CodeSandboxOutput> RunCode(string agentId, string code);
     }
 }

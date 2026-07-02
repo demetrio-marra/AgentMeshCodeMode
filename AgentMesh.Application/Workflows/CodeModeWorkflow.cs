@@ -792,9 +792,11 @@ namespace AgentMesh.Application.Workflows
                     Code = state.GeneratedCode
                 });
                 state.SandboxResult = executionOutput.Result;
+                state.SandboxExecutionId = executionOutput.ExecutionId;
                 state.CodeExecutionResultType = SandboxResultType.Success;
                 var notifyDictionary = new Dictionary<string, string>
                 {
+                    { "ExecutionId", state.SandboxExecutionId },
                     { "Result", state.SandboxResult },
                     { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
                 };

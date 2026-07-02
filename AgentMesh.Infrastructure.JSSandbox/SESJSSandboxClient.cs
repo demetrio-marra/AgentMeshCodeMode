@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using AgentMesh.Infrastructure.JSSandbox.Models;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Models.CodeSandbox;
 
 namespace AgentMesh.Infrastructure.JSSandbox
 {
@@ -20,7 +21,7 @@ namespace AgentMesh.Infrastructure.JSSandbox
             };
         }
 
-        public async Task<string> RunCode(string agentId, string code)
+        public async Task<CodeSandboxOutput> RunCode(string agentId, string code)
         {
             var request = new CodeExecutionRequestDTO 
             { 
@@ -34,7 +35,7 @@ namespace AgentMesh.Infrastructure.JSSandbox
             if (response.StatusCode == HttpStatusCode.BadRequest)
             {
                 var errorResponse = await response.Content.ReadFromJsonAsync<SandboxErrorResponseDTO>();
-                
+
                 throw new CodeSandboxCallException(
                     errorResponse?.ErrorType ?? "Unknown",
                     errorResponse?.Error ?? "An unknown error occurred.");
@@ -50,7 +51,11 @@ namespace AgentMesh.Infrastructure.JSSandbox
             if (result.IsError)
                 throw new InvalidOperationException($"Sandbox execution error: {result.ExecutionResult}");
 
-            return result.ExecutionResult;
+            return new CodeSandboxOutput
+            {
+                ExecutionId = result.Id,
+                Result = result.ExecutionResult
+            };
         }
     }
 }
