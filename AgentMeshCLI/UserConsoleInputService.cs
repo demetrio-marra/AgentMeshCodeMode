@@ -52,6 +52,8 @@ namespace AgentMesh
 
         public async Task Run()
         {
+            Console.WriteLine("Welcome to AgentMesh! This is a console application that allows you to interact with the AgentMesh system.\n");
+
             PrintConfigurations();
 
             var conversationContext = new ConversationContext();
