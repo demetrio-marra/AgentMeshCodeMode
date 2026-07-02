@@ -1,5 +1,5 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Helpers;
@@ -29,6 +29,8 @@ namespace AgentMesh
         private readonly UserConfiguration _userConfiguration;
         private readonly DocumentationAgentConfiguration _documentationAgentConfiguration;
         private readonly IConversationSummarizerAgent _conversationSummarizerAgent;
+        private readonly CodeModeWorkflowConfiguration _workflowConfiguration;
+        private readonly RelevantFactsEvaluatorAgentConfiguration _relevantFactsEvaluatorConfiguration;
 
         public UserConsoleInputService(
             IWorkflow workflow,
@@ -48,7 +50,9 @@ namespace AgentMesh
             SESJSSandboxConfiguration sESJSSandboxConfiguration,
             UserConfiguration userConfiguration,
             DocumentationAgentConfiguration documentationAgentConfiguration,
-            IConversationSummarizerAgent conversationSummarizerAgent)
+            IConversationSummarizerAgent conversationSummarizerAgent,
+            CodeModeWorkflowConfiguration workflowConfiguration,
+            RelevantFactsEvaluatorAgentConfiguration relevantFactsEvaluatorConfiguration)
         {
             _workflow = workflow;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -68,6 +72,8 @@ namespace AgentMesh
             _userConfiguration = userConfiguration;
             _documentationAgentConfiguration = documentationAgentConfiguration;
             _conversationSummarizerAgent = conversationSummarizerAgent;
+            _workflowConfiguration = workflowConfiguration;
+            _relevantFactsEvaluatorConfiguration = relevantFactsEvaluatorConfiguration;
         }
 
         public async Task Run()
@@ -165,6 +171,12 @@ namespace AgentMesh
                     { SearchQueriesConciliatorAgentConfiguration.AgentName, _llmsConfiguration[_searchQueriesConciliatorConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
+                if (_workflowConfiguration.EnableMemoryService)
+                {
+                    agentInputCosts[RelevantFactsEvaluatorAgentConfiguration.AgentName] = _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens;
+                    agentOutputCosts[RelevantFactsEvaluatorAgentConfiguration.AgentName] = _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens;
+                }
+
                 ConsoleHelper.WriteLineWithColor($"\n\nConversation status: Count of messages {conversationContext.Conversation.Count()}. Count of tokens: {conversationContext.TokensCount}\n", ConsoleColor.Gray);
 
                 if (conversationContext.TokensCount >= _conversationSummarizerConfiguration.SummaryTokenThreshold)
@@ -237,6 +249,10 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgent.AgentName, _contextAnalyzerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Documentation", DocumentationAgent.AgentName, _documentationAgentConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Search Queries Conciliator", SearchQueriesConciliatorAgentConfiguration.AgentName, _searchQueriesConciliatorConfiguration);
+            if (_workflowConfiguration.EnableMemoryService)
+            {
+                ConsoleHelper.PrintAgentConfiguration("Relevant Facts Evaluator", RelevantFactsEvaluatorAgentConfiguration.AgentName, _relevantFactsEvaluatorConfiguration);
+            }
             Console.WriteLine();
         }
     }

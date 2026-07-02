@@ -431,6 +431,13 @@ namespace AgentMesh
 
             services.AddSingleton<ISearchQueriesConciliatorAgent, SearchQueriesConciliatorAgent>();
 
+            // CodeModeWorkflow configuration
+            services
+                .AddOptions<CodeModeWorkflowConfiguration>()
+                .Bind(configuration.GetSection(CodeModeWorkflowConfiguration.SectionName))
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<CodeModeWorkflowConfiguration>>().Value);
+
             services.AddSingleton<IJSSandboxExecutor, JSSandboxExecutor>();
             services.AddSingleton<IJSSandbox, SESJSSandboxClient>();
 

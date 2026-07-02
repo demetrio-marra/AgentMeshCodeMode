@@ -70,6 +70,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IAgentMemoryCacheSaveExecutor _agentMemoryCacheSaveExecutor;
         private readonly IKnowledgeBaseCacheSaveExecutor _knowledgeBaseCacheSaveExecutor;
         private readonly ISearchQueriesConciliatorAgent _searchQueriesConciliatorAgent;
+        private readonly CodeModeWorkflowConfiguration _workflowConfiguration;
 
         public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
             IWorkflowProgressNotifier workflowProgressNotifier,
@@ -94,7 +95,8 @@ namespace AgentMesh.Application.Workflows
             IGetAllCachedSearchesExecutor getAllCachedSearchesExecutor,
             IAgentMemoryCacheSaveExecutor agentMemoryCacheSaveExecutor,
             IKnowledgeBaseCacheSaveExecutor knowledgeBaseCacheSaveExecutor,
-            ISearchQueriesConciliatorAgent searchQueriesConciliatorAgent) 
+            ISearchQueriesConciliatorAgent searchQueriesConciliatorAgent,
+            CodeModeWorkflowConfiguration workflowConfiguration)
         {
             _logger = logger;
             _workflowProgressNotifier = workflowProgressNotifier;
@@ -120,6 +122,7 @@ namespace AgentMesh.Application.Workflows
             _agentMemoryCacheSaveExecutor = agentMemoryCacheSaveExecutor;
             _knowledgeBaseCacheSaveExecutor = knowledgeBaseCacheSaveExecutor;
             _searchQueriesConciliatorAgent = searchQueriesConciliatorAgent;
+            _workflowConfiguration = workflowConfiguration;
         }
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
@@ -130,8 +133,9 @@ namespace AgentMesh.Application.Workflows
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
 
-            if (state.MissingPastMemories.Any() 
-                || state.MissingKnowledgeBaseSearchEntries.Any())
+            if (_workflowConfiguration.EnableCacheService
+                && (state.MissingPastMemories.Any()
+                    || state.MissingKnowledgeBaseSearchEntries.Any()))
             {
                 await ExecuteGetAllCachedSearchesAsync(state);
 
@@ -141,24 +145,31 @@ namespace AgentMesh.Application.Workflows
                 }
             }
 
-            if (state.MissingPastMemories.Any()
-                || state.MissingKnowledgeBaseSearchEntries.Any())
+            if (_workflowConfiguration.EnableCacheService
+                && (state.MissingPastMemories.Any()
+                    || state.MissingKnowledgeBaseSearchEntries.Any()))
             {
-                // call the cache to fill the state
                 await ExecuteDocumentsCacheAsync(state);
             }
 
-            if (state.MissingPastMemories.Any()
+            if (_workflowConfiguration.EnableMemoryService
+                && state.MissingPastMemories.Any()
                 && !state.AgentMemoryCacheHit)
             {
                 await ExecuteAgentMemoryServiceAsync(state);
-                await ExecuteAgentMemoryCacheSaveAsync(state);
+                if (_workflowConfiguration.EnableCacheService)
+                {
+                    await ExecuteAgentMemoryCacheSaveAsync(state);
+                }
             }
             if (state.MissingKnowledgeBaseSearchEntries.Any()
                 && !state.KnowledgeBaseCacheHit)
             {
                 await ExecuteKnowledgeBaseServiceSearchAsync(state);
-                await ExecuteKnowledgeBaseCacheSaveAsync(state);
+                if (_workflowConfiguration.EnableCacheService)
+                {
+                    await ExecuteKnowledgeBaseCacheSaveAsync(state);
+                }
             }
 
             await ExecuteContextAnalyzerAsync(state);
@@ -244,10 +255,13 @@ namespace AgentMesh.Application.Workflows
 
         WorkflowEnd:
 
-            var isWorthSaving = await ExecuteRelevantFactsEvaluatorAsync(state);
-            if (isWorthSaving)
+            if (_workflowConfiguration.EnableMemoryService)
             {
-                await ExecuteAgentMemorySaverAsync(state);
+                var isWorthSaving = await ExecuteRelevantFactsEvaluatorAsync(state);
+                if (isWorthSaving)
+                {
+                    await ExecuteAgentMemorySaverAsync(state);
+                }
             }
 
             await _workflowProgressNotifier.NotifyWorkflowEnd();
