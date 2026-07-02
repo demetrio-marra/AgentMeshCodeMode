@@ -348,8 +348,8 @@ namespace AgentMesh.Application.Workflows
                     .Select(query => new AgentMemoryQueriesCacheItemInput { Query = query })
                     .ToList();
 
-                var cachedMemoryItems = await _queriesCacheService.GetMemoryCachedItemsAsync(memoryQueries);
-                var cachedMemoryItemsList = cachedMemoryItems.ToList();
+                var cachedMemoryResult = await _queriesCacheService.GetMemoryCachedItemsAsync(memoryQueries);
+                var cachedMemoryItemsList = cachedMemoryResult.Items.ToList();
 
                 if (cachedMemoryItemsList.Any())
                 {
@@ -380,8 +380,8 @@ namespace AgentMesh.Application.Workflows
                     })
                     .ToList();
 
-                var cachedKnowledgeBaseItems = await _queriesCacheService.GetKnowledgeBaseCachedItemsAsync(knowledgeBaseQueries);
-                var cachedKnowledgeBaseItemsList = cachedKnowledgeBaseItems.ToList();
+                var cachedKnowledgeBaseResult = await _queriesCacheService.GetKnowledgeBaseCachedItemsAsync(knowledgeBaseQueries);
+                var cachedKnowledgeBaseItemsList = cachedKnowledgeBaseResult.Items.ToList();
 
                 if (cachedKnowledgeBaseItemsList.Any())
                 {

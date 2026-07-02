@@ -11,8 +11,8 @@ namespace AgentMesh.Application.Contracts
         /// Gets cached agent memory items for the given queries.
         /// </summary>
         /// <param name="queries">The queries to get cached items for.</param>
-        /// <returns>The cached items found for the given queries.</returns>
-        Task<IEnumerable<AgentMemoryQueriesCacheItem>> GetMemoryCachedItemsAsync(IEnumerable<AgentMemoryQueriesCacheItemInput> queries);
+        /// <returns>The cached items found for the given queries, including token usage information from the embedding service.</returns>
+        Task<AgentMemoryQueriesCacheResult> GetMemoryCachedItemsAsync(IEnumerable<AgentMemoryQueriesCacheItemInput> queries);
 
         /// <summary>
         /// Sets cached agent memory items.
@@ -24,8 +24,8 @@ namespace AgentMesh.Application.Contracts
         /// Gets cached knowledge base items for the given queries.
         /// </summary>
         /// <param name="queries">The knowledge base queries to get cached items for.</param>
-        /// <returns>The cached items found for the given knowledge base queries.</returns>
-        Task<IEnumerable<KnowledgeBaseQueriesCacheItem>> GetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItemInput> queries);
+        /// <returns>The cached items found for the given knowledge base queries, including token usage information from the embedding service.</returns>
+        Task<KnowledgeBaseQueriesCacheResult> GetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItemInput> queries);
 
         /// <summary>
         /// Sets cached knowledge base items.

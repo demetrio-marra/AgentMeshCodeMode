@@ -1,5 +1,6 @@
 ﻿using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Models.Embedding;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 
@@ -19,7 +20,7 @@ namespace AgentMesh.Application.Services
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_configuration.ApiKey}");
         }
 
-        public async Task<float[]> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default)
+        public async Task<EmbeddingResult> GetEmbeddingAsync(string input, CancellationToken cancellationToken = default)
         {
             var payload = new EmbeddingPayload
             {
@@ -35,13 +36,21 @@ namespace AgentMesh.Application.Services
             if (data?.Data.Length == 0
                 || data?.Data[0].Embedding.Length == 0)
             {
-                return Array.Empty<float>();
+                return new EmbeddingResult
+                {
+                    Embedding = Array.Empty<float>(),
+                    TotalTokens = data?.Usage?.TotalTokens ?? 0
+                };
             }
 
-            return data!.Data[0].Embedding;
+            return new EmbeddingResult
+            {
+                Embedding = data!.Data[0].Embedding,
+                TotalTokens = data.Usage?.TotalTokens ?? 0
+            };
         }
 
-        public async Task<IEnumerable<float[]>> GetEmbeddingAsync(IEnumerable<string> inputs, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<EmbeddingResult>> GetEmbeddingAsync(IEnumerable<string> inputs, CancellationToken cancellationToken = default)
         {
             var payload = new EmbeddingsPayload
             {
@@ -54,7 +63,11 @@ namespace AgentMesh.Application.Services
 
             var data = await response.Content.ReadFromJsonAsync<EmbeddingApiResponse>(cancellationToken: cancellationToken);
 
-            var ret = data.Data.Select(d => d.Embedding).AsEnumerable();
+            var ret = data!.Data.Select(d => new EmbeddingResult
+            {
+                Embedding = d.Embedding,
+                TotalTokens = data.Usage?.TotalTokens ?? 0
+            }).AsEnumerable();
             return ret;
         }
 
@@ -74,12 +87,30 @@ namespace AgentMesh.Application.Services
         {
             [JsonPropertyName("data")]
             public EmbeddingData[] Data { get; set; } = Array.Empty<EmbeddingData>();
+
+            [JsonPropertyName("usage")]
+            public UsageData? Usage { get; set; }
         }
 
         private class EmbeddingData
         {
             [JsonPropertyName("embedding")]
             public float[] Embedding { get; set; } = Array.Empty<float>();
+        }
+
+        private class UsageData
+        {
+            [JsonPropertyName("prompt_tokens")]
+            public int PromptTokens { get; set; }
+
+            [JsonPropertyName("total_tokens")]
+            public int TotalTokens { get; set; }
+
+            [JsonPropertyName("completion_tokens")]
+            public int CompletionTokens { get; set; }
+
+            [JsonPropertyName("prompt_tokens_details")]
+            public object? PromptTokensDetails { get; set; }
         }
     }
 }

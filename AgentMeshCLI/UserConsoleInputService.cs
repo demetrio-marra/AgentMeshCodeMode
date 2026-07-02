@@ -29,7 +29,8 @@ namespace AgentMesh
         DocumentationAgentConfiguration documentationAgentConfiguration,
         IConversationSummarizerAgent conversationSummarizerAgent,
         CodeModeWorkflowConfiguration workflowConfiguration,
-        RelevantFactsEvaluatorAgentConfiguration relevantFactsEvaluatorConfiguration)
+        RelevantFactsEvaluatorAgentConfiguration relevantFactsEvaluatorConfiguration,
+        EmbeddingServiceConfiguration embeddingServiceConfiguration)
     {
         private readonly IWorkflow _workflow = workflow;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
@@ -51,6 +52,7 @@ namespace AgentMesh
         private readonly IConversationSummarizerAgent _conversationSummarizerAgent = conversationSummarizerAgent;
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
         private readonly RelevantFactsEvaluatorAgentConfiguration _relevantFactsEvaluatorConfiguration = relevantFactsEvaluatorConfiguration;
+        private readonly EmbeddingServiceConfiguration _embeddingServiceConfiguration = embeddingServiceConfiguration;
 
         public async Task Run()
         {
@@ -129,7 +131,8 @@ namespace AgentMesh
                     { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { SearchQueriesConciliatorAgentConfiguration.AgentName, _llmsConfiguration[_searchQueriesConciliatorConfiguration.LLM].CostPerMillionInputTokens },
-                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens }
+                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens },
+                    { "Embedding Service", _embeddingServiceConfiguration.CostPerMillionTokens }
                 };
 
                 var agentOutputCosts = new Dictionary<string, decimal>

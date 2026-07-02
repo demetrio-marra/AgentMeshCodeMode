@@ -38,7 +38,7 @@ namespace AgentMesh.Infrastructure.QDrant
             _ = EnsureQueryCacheIndexesAsync();
         }
 
-        public async Task<IEnumerable<KnowledgeBaseQueriesCacheItem>> GetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItemInput> queries)
+        public async Task<KnowledgeBaseQueriesCacheResult> GetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItemInput> queries)
         {
             var requestedQueries = queries
                 .Where(q => !string.IsNullOrWhiteSpace(q.Query))
@@ -48,10 +48,10 @@ namespace AgentMesh.Infrastructure.QDrant
 
             if (requestedQueries.Count == 0)
             {
-                return [];
+                return new KnowledgeBaseQueriesCacheResult { Items = [] };
             }
 
-            var results = await SearchByQueryKindsAsync(requestedQueries.Select(q => (q.QueryKind, q.Query)).ToList());
+            var (results, totalTokens) = await SearchByQueryKindsAsync(requestedQueries.Select(q => (q.QueryKind, q.Query)).ToList());
             var resultsByKind = results
                 .GroupBy(r => r.QueryKind, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(
@@ -59,15 +59,21 @@ namespace AgentMesh.Infrastructure.QDrant
                     g => g.DistinctBy(CreateStablePointId).ToList(),
                     StringComparer.OrdinalIgnoreCase);
 
-            return requestedQueries
+            var items = requestedQueries
                 .SelectMany(request =>
                     resultsByKind.TryGetValue(request.QueryKind, out var matchingResults)
                         ? matchingResults.Select(result => MapToKnowledgeBaseCacheItem(result, request.Query, request.QueryType))
                         : Enumerable.Empty<KnowledgeBaseQueriesCacheItem>())
                 .ToList();
+
+            return new KnowledgeBaseQueriesCacheResult
+            {
+                TotalTokens = totalTokens,
+                Items = items
+            };
         }
 
-        public async Task<IEnumerable<AgentMemoryQueriesCacheItem>> GetMemoryCachedItemsAsync(IEnumerable<AgentMemoryQueriesCacheItemInput> queries)
+        public async Task<AgentMemoryQueriesCacheResult> GetMemoryCachedItemsAsync(IEnumerable<AgentMemoryQueriesCacheItemInput> queries)
         {
             var requestedQueries = queries
                 .Where(q => !string.IsNullOrWhiteSpace(q.Query))
@@ -77,21 +83,27 @@ namespace AgentMesh.Infrastructure.QDrant
 
             if (requestedQueries.Count == 0)
             {
-                return [];
+                return new AgentMemoryQueriesCacheResult { Items = [] };
             }
 
             var queryRequests = requestedQueries
                 .Select(q => (QueryKind: QDrantQueriesCacheItem.AgentMemoryQueryKind, Query: q))
                 .ToList();
 
-            var results = await SearchByQueryKindsAsync(queryRequests);
+            var (results, totalTokens) = await SearchByQueryKindsAsync(queryRequests);
             var distinctResults = results
                 .DistinctBy(CreateStablePointId)
                 .ToList();
 
-            return requestedQueries
+            var items = requestedQueries
                 .SelectMany(requestedQuery => distinctResults.Select(result => MapToAgentMemoryCacheItem(result, requestedQuery)))
                 .ToList();
+
+            return new AgentMemoryQueriesCacheResult
+            {
+                TotalTokens = totalTokens,
+                Items = items
+            };
         }
 
         public async Task SetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItem> cachedItems)
@@ -139,11 +151,11 @@ namespace AgentMesh.Infrastructure.QDrant
             }
         }
 
-        private async Task<IReadOnlyCollection<QDrantQueriesCacheItem>> SearchByQueryKindAsync(string queryKind, IReadOnlyCollection<string> queries)
+        private async Task<(IReadOnlyCollection<QDrantQueriesCacheItem> Results, int TotalTokens)> SearchByQueryKindAsync(string queryKind, IReadOnlyCollection<string> queries)
         {
             if (queries.Count == 0)
             {
-                return [];
+                return ([], 0);
             }
 
             var queryRequests = queries
@@ -155,11 +167,11 @@ namespace AgentMesh.Infrastructure.QDrant
             return await SearchByQueryKindsAsync(queryRequests);
         }
 
-        private async Task<IReadOnlyCollection<QDrantQueriesCacheItem>> SearchByQueryKindsAsync(IReadOnlyCollection<(string QueryKind, string Query)> queryRequests)
+        private async Task<(IReadOnlyCollection<QDrantQueriesCacheItem> Results, int TotalTokens)> SearchByQueryKindsAsync(IReadOnlyCollection<(string QueryKind, string Query)> queryRequests)
         {
             if (queryRequests.Count == 0)
             {
-                return [];
+                return ([], 0);
             }
 
             var normalizedRequests = queryRequests
@@ -169,10 +181,11 @@ namespace AgentMesh.Infrastructure.QDrant
 
             if (normalizedRequests.Count == 0)
             {
-                return [];
+                return ([], 0);
             }
 
             var embeddings = (await _embeddingService.GetEmbeddingAsync(normalizedRequests.Select(q => q.Query))).ToList();
+            var totalTokens = embeddings.FirstOrDefault()?.TotalTokens ?? 0;
             var searches = new List<SearchPoints>(normalizedRequests.Count);
 
             for (var i = 0; i < normalizedRequests.Count; i++)
@@ -190,7 +203,7 @@ namespace AgentMesh.Infrastructure.QDrant
                     Filter = filter
                 };
 
-                search.Vector.AddRange(embeddings[i]);
+                search.Vector.AddRange(embeddings[i].Embedding);
                 searches.Add(search);
             }
 
@@ -198,10 +211,12 @@ namespace AgentMesh.Infrastructure.QDrant
                 collectionName: _queriesCacheCollectionName,
                 searches: searches);
 
-            return batchSearchResult
+            var results = batchSearchResult
                 .SelectMany(batch => batch.Result)
                 .Select(MapFromScoredPoint)
                 .ToList();
+
+            return (results, totalTokens);
         }
 
         private async Task UpsertAsync(IReadOnlyCollection<QDrantQueriesCacheItem> entities)
@@ -221,7 +236,7 @@ namespace AgentMesh.Infrastructure.QDrant
             var points = new List<PointStruct>(distinctEntities.Count);
             for (var i = 0; i < distinctEntities.Count; i++)
             {
-                var vector = i < embeddings.Count ? embeddings[i] : _defaultVector;
+                var vector = i < embeddings.Count ? embeddings[i].Embedding : _defaultVector;
                 points.Add(CreatePoint(distinctEntities[i], vector));
             }
 
