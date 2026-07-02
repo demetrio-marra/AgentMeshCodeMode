@@ -106,24 +106,34 @@ namespace AgentMesh.Infrastructure.QDrant
             };
         }
 
-        public async Task SetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItem> cachedItems)
+        public async Task<QueryCacheUpdateResult> SetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItem> cachedItems)
         {
             var entities = cachedItems
                 .Where(item => !string.IsNullOrWhiteSpace(item.FoundQuery))
                 .Select(MapFromKnowledgeBaseCacheItem)
                 .ToList();
 
-            await UpsertAsync(entities);
+            var totalTokens = await UpsertAsync(entities);
+
+            return new QueryCacheUpdateResult
+            {
+                TotalTokens = totalTokens
+            };
         }
 
-        public async Task SetMemoryCachedItemsAsync(IEnumerable<AgentMemoryQueriesCacheItem> cachedItems)
+        public async Task<QueryCacheUpdateResult> SetMemoryCachedItemsAsync(IEnumerable<AgentMemoryQueriesCacheItem> cachedItems)
         {
             var entities = cachedItems
                 .Where(item => !string.IsNullOrWhiteSpace(item.FoundQuery))
                 .Select(MapFromAgentMemoryCacheItem)
                 .ToList();
 
-            await UpsertAsync(entities);
+            var totalTokens = await UpsertAsync(entities);
+
+            return new QueryCacheUpdateResult
+            {
+                TotalTokens = totalTokens
+            };
         }
 
         private async Task EnsureQueryCacheIndexesAsync()
@@ -219,11 +229,11 @@ namespace AgentMesh.Infrastructure.QDrant
             return (results, totalTokens);
         }
 
-        private async Task UpsertAsync(IReadOnlyCollection<QDrantQueriesCacheItem> entities)
+        private async Task<int> UpsertAsync(IReadOnlyCollection<QDrantQueriesCacheItem> entities)
         {
             if (entities.Count == 0)
             {
-                return;
+                return 0;
             }
 
             var distinctEntities = entities
@@ -241,6 +251,8 @@ namespace AgentMesh.Infrastructure.QDrant
             }
 
             await _qdrantClient.UpsertAsync(_queriesCacheCollectionName, points);
+
+            return embeddings.Sum(e => e.TotalTokens);
         }
 
         private PointStruct CreatePoint(QDrantQueriesCacheItem entity, float[] vector)

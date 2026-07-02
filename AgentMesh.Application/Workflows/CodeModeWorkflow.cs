@@ -470,10 +470,20 @@ namespace AgentMesh.Application.Workflows
                     })
                     .ToList();
 
-                await _queriesCacheService.SetMemoryCachedItemsAsync(cacheItems);
+                var cacheUpdateResult = await _queriesCacheService.SetMemoryCachedItemsAsync(cacheItems);
+                
+                var tokenUsageInfo = new AgentTokenUsageEntry
+                {
+                    AgentName = "Query Cache Updater Service (Memory)",
+                    InputTokens = cacheUpdateResult.TotalTokens,
+                    OutputTokens = 0
+                };
+                state.AddStepUsage("Agent Memory Service", stopwatch.Elapsed, true, tokenUsageInfo);
             }
-
-            state.AddStepUsage("Agent Memory Service", stopwatch.Elapsed, false);
+            else
+            {
+                state.AddStepUsage("Agent Memory Service", stopwatch.Elapsed, false);
+            }
 
             var notifyDictionary = new Dictionary<string, string>
             {
@@ -539,11 +549,25 @@ namespace AgentMesh.Application.Workflows
                         }
                     }
 
-                    await _queriesCacheService.SetKnowledgeBaseCachedItemsAsync(cacheItems);
+                    var cacheUpdateResult = await _queriesCacheService.SetKnowledgeBaseCachedItemsAsync(cacheItems);
+                    
+                    var tokenUsageInfo = new AgentTokenUsageEntry
+                    {
+                        AgentName = "Query Cache Updater Service (Knowledge)",
+                        InputTokens = cacheUpdateResult.TotalTokens,
+                        OutputTokens = 0
+                    };
+                    state.AddStepUsage("KB Search Service", stopwatch.Elapsed, true, tokenUsageInfo);
+                }
+                else
+                {
+                    state.AddStepUsage("KB Search Service", stopwatch.Elapsed, false);
                 }
             }
-
-            state.AddStepUsage("KB Search Service", stopwatch.Elapsed, false);
+            else
+            {
+                state.AddStepUsage("KB Search Service", stopwatch.Elapsed, false);
+            }
 
             var notifyDictionary = new Dictionary<string, string>
             {

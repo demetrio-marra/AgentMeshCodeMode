@@ -93,7 +93,7 @@ namespace AgentMesh.Infrastructure.QDrant
             var li = 0;
             foreach (var emb in embeddings)
             {
-                searchPoints[li].Vector.AddRange(emb);
+                searchPoints[li].Vector.AddRange(emb.Embedding);
                 li++;
             }
 
