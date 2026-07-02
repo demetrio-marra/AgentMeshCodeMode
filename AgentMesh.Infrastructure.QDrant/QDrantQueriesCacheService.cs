@@ -161,22 +161,6 @@ namespace AgentMesh.Infrastructure.QDrant
             }
         }
 
-        private async Task<(IReadOnlyCollection<QDrantQueriesCacheItem> Results, int TotalTokens)> SearchByQueryKindAsync(string queryKind, IReadOnlyCollection<string> queries)
-        {
-            if (queries.Count == 0)
-            {
-                return ([], 0);
-            }
-
-            var queryRequests = queries
-                .Where(q => !string.IsNullOrWhiteSpace(q))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Select(q => (QueryKind: queryKind, Query: q))
-                .ToList();
-
-            return await SearchByQueryKindsAsync(queryRequests);
-        }
-
         private async Task<(IReadOnlyCollection<QDrantQueriesCacheItem> Results, int TotalTokens)> SearchByQueryKindsAsync(IReadOnlyCollection<(string QueryKind, string Query)> queryRequests)
         {
             if (queryRequests.Count == 0)
