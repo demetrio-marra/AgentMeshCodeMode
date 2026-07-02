@@ -10,19 +10,14 @@ using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services
 {
-    public class CodeFixerAgent : AgentBase<string>, ICodeFixerAgent
+    public class CodeFixerAgent(
+        [FromKeyedServices(CodeFixerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        Resilience resilience,
+        ILogger<CodeFixerAgent> logger) : AgentBase<string>(logger, CodeFixerAgentConfiguration.AgentName, openAIClient, resilience), ICodeFixerAgent
     {
         private readonly Regex JavascriptCodeRegex = new Regex(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
-        private readonly ILogger<CodeFixerAgent> _logger;
-
-        public CodeFixerAgent(
-            [FromKeyedServices(CodeFixerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            Resilience resilience,
-            ILogger<CodeFixerAgent> logger) : base(logger, CodeFixerAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<CodeFixerAgent> _logger = logger;
 
         public async Task<CodeFixerAgentOutput> ExecuteAsync(CodeFixerAgentInput input, CancellationToken cancellationToken = default)
         {

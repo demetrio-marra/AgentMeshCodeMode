@@ -6,19 +6,11 @@ using System.Diagnostics;
 
 namespace AgentMesh.Application.Services
 {
-    public class JSSandboxExecutor : IJSSandboxExecutor
+    public class JSSandboxExecutor(IJSSandbox jSSandbox, UserConfiguration userConfiguration, ILogger<JSSandboxExecutor> logger) : IJSSandboxExecutor
     {
-        private readonly IJSSandbox _jsSandbox;
-        private readonly UserConfiguration _userConfiguration;
-        private readonly ILogger<JSSandboxExecutor> _logger;
-
-        public JSSandboxExecutor(IJSSandbox jSSandbox, UserConfiguration userConfiguration, ILogger<JSSandboxExecutor> logger)
-        {
-            _jsSandbox = jSSandbox;
-            _userConfiguration = userConfiguration;
-            _logger = logger;
-        }
-
+        private readonly IJSSandbox _jsSandbox = jSSandbox;
+        private readonly UserConfiguration _userConfiguration = userConfiguration;
+        private readonly ILogger<JSSandboxExecutor> _logger = logger;
 
         public async Task<CodeSandboxOutput> ExecuteAsync(CodeSandboxInput input, CancellationToken cancellationToken = default)
         {

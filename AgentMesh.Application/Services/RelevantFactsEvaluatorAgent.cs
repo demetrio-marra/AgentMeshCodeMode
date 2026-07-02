@@ -9,17 +9,12 @@ using Microsoft.Extensions.Logging;
 
 namespace AgentMesh.Application.Services
 {
-    public class RelevantFactsEvaluatorAgent : AgentBase<bool>, IRelevantFactsEvaluatorAgent
+    public class RelevantFactsEvaluatorAgent(
+        [FromKeyedServices(RelevantFactsEvaluatorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        Resilience resilience,
+        ILogger<RelevantFactsEvaluatorAgent> logger) : AgentBase<bool>(logger, RelevantFactsEvaluatorAgentConfiguration.AgentName, openAIClient, resilience), IRelevantFactsEvaluatorAgent
     {
-        private readonly ILogger<RelevantFactsEvaluatorAgent> _logger;
-
-        public RelevantFactsEvaluatorAgent(
-            [FromKeyedServices(RelevantFactsEvaluatorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            Resilience resilience,
-            ILogger<RelevantFactsEvaluatorAgent> logger) : base(logger, RelevantFactsEvaluatorAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<RelevantFactsEvaluatorAgent> _logger = logger;
 
         public async Task<RelevantFactsEvaluatorAgentOutput> ExecuteAsync(
             RelevantFactsEvaluatorAgentInput input,

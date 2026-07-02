@@ -6,19 +6,14 @@ using Microsoft.Extensions.Logging;
 
 namespace AgentMesh.Application.Services
 {
-    public class ConversationSummarizerAgent : AgentBase<string>, IConversationSummarizerAgent
+    public class ConversationSummarizerAgent([FromKeyedServices(ConversationSummarizerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+                                      ConversationSummarizerAgentConfiguration configuration,
+                                      Resilience resilience,
+                                      ILogger<ConversationSummarizerAgent> logger) : AgentBase<string>(logger, ConversationSummarizerAgentConfiguration.AgentName, openAIClient, resilience), IConversationSummarizerAgent
     {
         public const string SectionName = ConversationSummarizerAgentConfiguration.SectionName;
         public const string AgentName = ConversationSummarizerAgentConfiguration.AgentName;
-        private readonly ILogger<ConversationSummarizerAgent> _logger;
-
-        public ConversationSummarizerAgent([FromKeyedServices(ConversationSummarizerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-                                          ConversationSummarizerAgentConfiguration configuration,
-                                          Resilience resilience,
-                                          ILogger<ConversationSummarizerAgent> logger) : base(logger, ConversationSummarizerAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<ConversationSummarizerAgent> _logger = logger;
 
         public async Task<ConversationSummarizerAgentOutput> ExecuteAsync(ConversationSummarizerAgentInput input, CancellationToken cancellationToken = default)
         {

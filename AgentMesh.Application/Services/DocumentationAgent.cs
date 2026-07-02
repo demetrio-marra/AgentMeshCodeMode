@@ -8,19 +8,14 @@ using Microsoft.Extensions.Logging;
 
 namespace AgentMesh.Application.Services
 {
-    public class DocumentationAgent : AgentBase<string>, IDocumentationAgent
+    public class DocumentationAgent(
+        [FromKeyedServices(DocumentationAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        DocumentationAgentConfiguration configuration,
+        Resilience resilience,
+        ILogger<DocumentationAgent> logger) : AgentBase<string>(logger, DocumentationAgentConfiguration.AgentName, openAIClient, resilience), IDocumentationAgent
     {
-        private readonly ILogger<DocumentationAgent> _logger;
+        private readonly ILogger<DocumentationAgent> _logger = logger;
         public const string AgentName = "Documentation Agent";
-
-        public DocumentationAgent(
-            [FromKeyedServices(DocumentationAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            DocumentationAgentConfiguration configuration,
-            Resilience resilience,
-            ILogger<DocumentationAgent> logger) : base(logger, DocumentationAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-            _logger = logger;
-        }
 
         public async Task<DocumentationAgentOutput> ExecuteAsync(
             DocumentationAgentInput input,

@@ -1,13 +1,7 @@
 ﻿namespace AgentMesh.Application.Exceptions
 {
-    public class CodeSandboxCallException : Exception
+    public class CodeSandboxCallException(string errorType, string error) : Exception(error)
     {
-        public string ErrorType { get; } = string.Empty;
-
-        public CodeSandboxCallException(string errorType, string error)
-            : base(error)
-        {
-            ErrorType = errorType;
-        }
+        public string ErrorType { get; } = errorType;
     }
 }

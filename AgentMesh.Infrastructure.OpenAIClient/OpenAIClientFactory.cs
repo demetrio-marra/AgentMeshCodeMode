@@ -5,14 +5,9 @@ using Microsoft.Extensions.Options;
 
 namespace AgentMesh.Infrastructure.OpenAIClient
 {
-    public class OpenAIClientFactory : IOpenAIClientFactory
+    public class OpenAIClientFactory(OpenAIClientFactoryConfiguration configuration) : IOpenAIClientFactory
     {
-        private readonly OpenAIClientFactoryConfiguration _configuration;
-
-        public OpenAIClientFactory(OpenAIClientFactoryConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
+        private readonly OpenAIClientFactoryConfiguration _configuration = configuration;
 
         public IOpenAIClient CreateOpenAIClient(string model, string provider, string temperature, string systemPrompt)
         {

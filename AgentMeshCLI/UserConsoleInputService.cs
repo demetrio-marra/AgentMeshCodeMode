@@ -9,72 +9,48 @@ using AgentMesh.Models.Workflows;
 
 namespace AgentMesh
 {
-    internal class UserConsoleInputService
+    internal class UserConsoleInputService(
+        IWorkflow workflow,
+        IWorkflowProgressNotifier workflowProgressNotifier,
+        TechnicalAnalystAgentConfiguration technicalAnalystConfiguration,
+        BusinessAdvisorAgentConfiguration businessAdvisorConfiguration,
+        CoderAgentConfiguration coderConfiguration,
+        CodeStaticAnalyzerConfiguration codeStaticAnalyzerConfiguration,
+        CodeFixerAgentConfiguration codeFixerConfiguration,
+        ResultsPresenterAgentConfiguration resultsPresenterConfiguration,
+        IntentExtractorAgentConfiguration intentExtractorConfiguration,
+        PersonalAssistantAgentConfiguration personalAssistantConfiguration,
+        LLMsConfiguration llmsConfiguration,
+        ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration,
+        ContextAnalyzerAgentConfiguration contextAnalyzerConfiguration,
+        SearchQueriesConciliatorAgentConfiguration searchQueriesConciliatorConfiguration,
+        SESJSSandboxConfiguration sESJSSandboxConfiguration,
+        UserConfiguration userConfiguration,
+        DocumentationAgentConfiguration documentationAgentConfiguration,
+        IConversationSummarizerAgent conversationSummarizerAgent,
+        CodeModeWorkflowConfiguration workflowConfiguration,
+        RelevantFactsEvaluatorAgentConfiguration relevantFactsEvaluatorConfiguration)
     {
-        private readonly IWorkflow _workflow;
-        private readonly IWorkflowProgressNotifier _workflowProgressNotifier;
-        private readonly TechnicalAnalystAgentConfiguration _technicalAnalystConfiguration;
-        private readonly BusinessAdvisorAgentConfiguration _businessAdvisorConfiguration;
-        private readonly CoderAgentConfiguration _coderConfiguration;
-        private readonly CodeStaticAnalyzerConfiguration _codeStaticAnalyzerConfiguration;
-        private readonly CodeFixerAgentConfiguration _codeFixerConfiguration;
-        private readonly ResultsPresenterAgentConfiguration _resultsPresenterConfiguration;
-        private readonly IntentExtractorAgentConfiguration _intentExtractorConfiguration;
-        private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration;
-        private readonly LLMsConfiguration _llmsConfiguration;
-        private readonly ConversationSummarizerAgentConfiguration _conversationSummarizerConfiguration;
-        private readonly ContextAnalyzerAgentConfiguration _contextAnalyzerConfiguration;
-        private readonly SearchQueriesConciliatorAgentConfiguration _searchQueriesConciliatorConfiguration;
-        private readonly SESJSSandboxConfiguration _sesJsSandboxConfiguration;
-        private readonly UserConfiguration _userConfiguration;
-        private readonly DocumentationAgentConfiguration _documentationAgentConfiguration;
-        private readonly IConversationSummarizerAgent _conversationSummarizerAgent;
-        private readonly CodeModeWorkflowConfiguration _workflowConfiguration;
-        private readonly RelevantFactsEvaluatorAgentConfiguration _relevantFactsEvaluatorConfiguration;
-
-        public UserConsoleInputService(
-            IWorkflow workflow,
-            IWorkflowProgressNotifier workflowProgressNotifier,
-            TechnicalAnalystAgentConfiguration technicalAnalystConfiguration,
-            BusinessAdvisorAgentConfiguration businessAdvisorConfiguration,
-            CoderAgentConfiguration coderConfiguration,
-            CodeStaticAnalyzerConfiguration codeStaticAnalyzerConfiguration,
-            CodeFixerAgentConfiguration codeFixerConfiguration,
-            ResultsPresenterAgentConfiguration resultsPresenterConfiguration,
-            IntentExtractorAgentConfiguration intentExtractorConfiguration,
-            PersonalAssistantAgentConfiguration personalAssistantConfiguration,
-            LLMsConfiguration llmsConfiguration,
-            ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration,
-            ContextAnalyzerAgentConfiguration contextAnalyzerConfiguration,
-            SearchQueriesConciliatorAgentConfiguration searchQueriesConciliatorConfiguration,
-            SESJSSandboxConfiguration sESJSSandboxConfiguration,
-            UserConfiguration userConfiguration,
-            DocumentationAgentConfiguration documentationAgentConfiguration,
-            IConversationSummarizerAgent conversationSummarizerAgent,
-            CodeModeWorkflowConfiguration workflowConfiguration,
-            RelevantFactsEvaluatorAgentConfiguration relevantFactsEvaluatorConfiguration)
-        {
-            _workflow = workflow;
-            _workflowProgressNotifier = workflowProgressNotifier;
-            _technicalAnalystConfiguration = technicalAnalystConfiguration;
-            _businessAdvisorConfiguration = businessAdvisorConfiguration;
-            _coderConfiguration = coderConfiguration;
-            _codeStaticAnalyzerConfiguration = codeStaticAnalyzerConfiguration;
-            _codeFixerConfiguration = codeFixerConfiguration;
-            _resultsPresenterConfiguration = resultsPresenterConfiguration;
-            _intentExtractorConfiguration = intentExtractorConfiguration;
-            _personalAssistantConfiguration = personalAssistantConfiguration;
-            _llmsConfiguration = llmsConfiguration;
-            _conversationSummarizerConfiguration = conversationSummarizerConfiguration;
-            _contextAnalyzerConfiguration = contextAnalyzerConfiguration;
-            _searchQueriesConciliatorConfiguration = searchQueriesConciliatorConfiguration;
-            _sesJsSandboxConfiguration = sESJSSandboxConfiguration;
-            _userConfiguration = userConfiguration;
-            _documentationAgentConfiguration = documentationAgentConfiguration;
-            _conversationSummarizerAgent = conversationSummarizerAgent;
-            _workflowConfiguration = workflowConfiguration;
-            _relevantFactsEvaluatorConfiguration = relevantFactsEvaluatorConfiguration;
-        }
+        private readonly IWorkflow _workflow = workflow;
+        private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
+        private readonly TechnicalAnalystAgentConfiguration _technicalAnalystConfiguration = technicalAnalystConfiguration;
+        private readonly BusinessAdvisorAgentConfiguration _businessAdvisorConfiguration = businessAdvisorConfiguration;
+        private readonly CoderAgentConfiguration _coderConfiguration = coderConfiguration;
+        private readonly CodeStaticAnalyzerConfiguration _codeStaticAnalyzerConfiguration = codeStaticAnalyzerConfiguration;
+        private readonly CodeFixerAgentConfiguration _codeFixerConfiguration = codeFixerConfiguration;
+        private readonly ResultsPresenterAgentConfiguration _resultsPresenterConfiguration = resultsPresenterConfiguration;
+        private readonly IntentExtractorAgentConfiguration _intentExtractorConfiguration = intentExtractorConfiguration;
+        private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration = personalAssistantConfiguration;
+        private readonly LLMsConfiguration _llmsConfiguration = llmsConfiguration;
+        private readonly ConversationSummarizerAgentConfiguration _conversationSummarizerConfiguration = conversationSummarizerConfiguration;
+        private readonly ContextAnalyzerAgentConfiguration _contextAnalyzerConfiguration = contextAnalyzerConfiguration;
+        private readonly SearchQueriesConciliatorAgentConfiguration _searchQueriesConciliatorConfiguration = searchQueriesConciliatorConfiguration;
+        private readonly SESJSSandboxConfiguration _sesJsSandboxConfiguration = sESJSSandboxConfiguration;
+        private readonly UserConfiguration _userConfiguration = userConfiguration;
+        private readonly DocumentationAgentConfiguration _documentationAgentConfiguration = documentationAgentConfiguration;
+        private readonly IConversationSummarizerAgent _conversationSummarizerAgent = conversationSummarizerAgent;
+        private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
+        private readonly RelevantFactsEvaluatorAgentConfiguration _relevantFactsEvaluatorConfiguration = relevantFactsEvaluatorConfiguration;
 
         public async Task Run()
         {

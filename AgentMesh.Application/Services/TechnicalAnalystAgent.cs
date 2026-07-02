@@ -11,18 +11,13 @@ using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class TechnicalAnalystAgent : AgentBase<TechnicalAnalystAgent.ParsedResponse>, ITechnicalAnalystAgent
+    public class TechnicalAnalystAgent(
+        [FromKeyedServices(TechnicalAnalystAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        TechnicalAnalystAgentConfiguration configuration,
+        Resilience resilience,
+        ILogger<TechnicalAnalystAgent> logger) : AgentBase<TechnicalAnalystAgent.ParsedResponse>(logger, TechnicalAnalystAgentConfiguration.AgentName, openAIClient, resilience), ITechnicalAnalystAgent
     {
-        private readonly ILogger<TechnicalAnalystAgent> _logger;
-
-        public TechnicalAnalystAgent(
-            [FromKeyedServices(TechnicalAnalystAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            TechnicalAnalystAgentConfiguration configuration,
-            Resilience resilience,
-            ILogger<TechnicalAnalystAgent> logger) : base(logger, TechnicalAnalystAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<TechnicalAnalystAgent> _logger = logger;
 
         public async Task<TechnicalAnalystAgentOutput> ExecuteAsync(
             TechnicalAnalystAgentInput input,

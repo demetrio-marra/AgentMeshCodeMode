@@ -8,7 +8,10 @@ using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services
 {
-    public class JavascriptCodeExecutionFailuresDetectorAgent : AgentBase<string>, ICodeExecutionFailuresDetectorAgent
+    public class JavascriptCodeExecutionFailuresDetectorAgent(
+        [FromKeyedServices(CodeExecutionFailuresDetectorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        Resilience resilience,
+        ILogger<JavascriptCodeExecutionFailuresDetectorAgent> logger) : AgentBase<string>(logger, CodeExecutionFailuresDetectorAgentConfiguration.AgentName, openAIClient, resilience), ICodeExecutionFailuresDetectorAgent
     {
         public const string NO_ERROR = "NO_ERROR";
 
@@ -16,15 +19,7 @@ namespace AgentMesh.Application.Services
             @"(?i)stacktrace.*?(?:\r?\n\s*at\s+.+)+",
             RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase);
 
-        private readonly ILogger<JavascriptCodeExecutionFailuresDetectorAgent> _logger;
-
-        public JavascriptCodeExecutionFailuresDetectorAgent(
-            [FromKeyedServices(CodeExecutionFailuresDetectorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            Resilience resilience,
-            ILogger<JavascriptCodeExecutionFailuresDetectorAgent> logger) : base(logger, CodeExecutionFailuresDetectorAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<JavascriptCodeExecutionFailuresDetectorAgent> _logger = logger;
 
         public async Task<CodeExecutionFailuresDetectorAgentOutput> ExecuteAsync(CodeExecutionFailuresDetectorAgentInput input, CancellationToken cancellationToken = default)
         {

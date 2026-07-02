@@ -34,7 +34,31 @@ using System.Data;
 
 namespace AgentMesh.Application.Workflows
 {
-    public class CodeModeWorkflow : IWorkflow
+    public class CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
+        IWorkflowProgressNotifier workflowProgressNotifier,
+        ITechnicalAnalystAgent technicalAnalystAgent,
+        IBusinessAdvisorAgent businessAdvisorAgent,
+        IDocumentationAgent documentationAgent,
+        ICoderAgent coderAgent,
+        ICodeStaticAnalyzerAgent codeStaticAnalyzer,
+        ICodeFixerAgent codeFixerAgent,
+        ICodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent,
+        IResultsPresenterAgent resultsPresenterAgent,
+        IJSSandboxExecutor jsSandboxExecutor,
+        IIntentExtractorAgent intentExtractorAgent,
+        IPersonalAssistantAgent personalAssistantAgent,
+        IContextAnalyzerAgent contextAnalyzerAgent,
+        IAgentMemoryRetriever agentMemoryRetriever,
+        IAgentMemorySaver agentMemorySaver,
+        IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
+        IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor,
+        IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
+        IDocumentsCacheExecutor documentsCacheExecutor,
+        IGetAllCachedSearchesExecutor getAllCachedSearchesExecutor,
+        IAgentMemoryCacheSaveExecutor agentMemoryCacheSaveExecutor,
+        IKnowledgeBaseCacheSaveExecutor knowledgeBaseCacheSaveExecutor,
+        ISearchQueriesConciliatorAgent searchQueriesConciliatorAgent,
+        CodeModeWorkflowConfiguration workflowConfiguration) : IWorkflow
     {
         private const string DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE = "Documentation";
         private const string DOCUMENTATION_FOR_DEVELOPER_SECTIONTITLE = "Technical reference";
@@ -45,85 +69,32 @@ namespace AgentMesh.Application.Workflows
         private const string SEMANTIC_SEARCH_TYPE = "vec";
         private const string HYPOTHETICAL_SEARCH_TYPE = "hyde";
 
-        private readonly ILogger<CodeModeWorkflow> _logger;
-        private readonly IWorkflowProgressNotifier _workflowProgressNotifier;
+        private readonly ILogger<CodeModeWorkflow> _logger = logger;
+        private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
 
-        private readonly ITechnicalAnalystAgent _technicalAnalystAgent;
-        private readonly IBusinessAdvisorAgent _businessAdvisorAgent;
-        private readonly IDocumentationAgent _documentationAgent;
-        private readonly ICoderAgent _coderAgent;
-        private readonly ICodeStaticAnalyzerAgent _codeStaticAnalyzer;
-        private readonly ICodeFixerAgent _codeFixerAgent;
-        private readonly ICodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent;
-        private readonly IResultsPresenterAgent _resultsPresenterAgent;
-        private readonly IJSSandboxExecutor _jsSandboxExecutor;
-        private readonly IIntentExtractorAgent _intentExtractorAgent;
-        private readonly IPersonalAssistantAgent _personalAssistantAgent;
-        private readonly IContextAnalyzerAgent _contextAnalyzerAgent;
-        private readonly IAgentMemoryRetriever _agentMemoryRetriever;
-        private readonly IAgentMemorySaver _agentMemorySaver;
-        private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor;
-        private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor;
-        private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent;
-        private readonly IDocumentsCacheExecutor _documentsCacheExecutor;
-        private readonly IGetAllCachedSearchesExecutor _getAllCachedSearchesExecutor;
-        private readonly IAgentMemoryCacheSaveExecutor _agentMemoryCacheSaveExecutor;
-        private readonly IKnowledgeBaseCacheSaveExecutor _knowledgeBaseCacheSaveExecutor;
-        private readonly ISearchQueriesConciliatorAgent _searchQueriesConciliatorAgent;
-        private readonly CodeModeWorkflowConfiguration _workflowConfiguration;
-
-        public CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
-            IWorkflowProgressNotifier workflowProgressNotifier,
-            ITechnicalAnalystAgent technicalAnalystAgent,
-            IBusinessAdvisorAgent businessAdvisorAgent,
-            IDocumentationAgent documentationAgent,
-            ICoderAgent coderAgent,
-            ICodeStaticAnalyzerAgent codeStaticAnalyzer,
-            ICodeFixerAgent codeFixerAgent,
-            ICodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent,
-            IResultsPresenterAgent resultsPresenterAgent,
-            IJSSandboxExecutor jsSandboxExecutor,
-            IIntentExtractorAgent intentExtractorAgent,
-            IPersonalAssistantAgent personalAssistantAgent,
-            IContextAnalyzerAgent contextAnalyzerAgent,
-            IAgentMemoryRetriever agentMemoryRetriever,
-            IAgentMemorySaver agentMemorySaver,
-            IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
-            IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor,
-            IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
-            IDocumentsCacheExecutor documentsCacheExecutor,
-            IGetAllCachedSearchesExecutor getAllCachedSearchesExecutor,
-            IAgentMemoryCacheSaveExecutor agentMemoryCacheSaveExecutor,
-            IKnowledgeBaseCacheSaveExecutor knowledgeBaseCacheSaveExecutor,
-            ISearchQueriesConciliatorAgent searchQueriesConciliatorAgent,
-            CodeModeWorkflowConfiguration workflowConfiguration)
-        {
-            _logger = logger;
-            _workflowProgressNotifier = workflowProgressNotifier;
-            _technicalAnalystAgent = technicalAnalystAgent;
-            _businessAdvisorAgent = businessAdvisorAgent;
-            _documentationAgent = documentationAgent;
-            _coderAgent = coderAgent;
-            _codeStaticAnalyzer = codeStaticAnalyzer;
-            _codeFixerAgent = codeFixerAgent;
-            _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
-            _resultsPresenterAgent = resultsPresenterAgent;
-            _jsSandboxExecutor = jsSandboxExecutor;
-            _intentExtractorAgent = intentExtractorAgent;
-            _personalAssistantAgent = personalAssistantAgent;
-            _contextAnalyzerAgent = contextAnalyzerAgent;
-            _agentMemoryRetriever = agentMemoryRetriever;
-            _agentMemorySaver = agentMemorySaver;
-            _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
-            _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
-            _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
-            _documentsCacheExecutor = documentsCacheExecutor;
-            _getAllCachedSearchesExecutor = getAllCachedSearchesExecutor;
-            _agentMemoryCacheSaveExecutor = agentMemoryCacheSaveExecutor;
-            _knowledgeBaseCacheSaveExecutor = knowledgeBaseCacheSaveExecutor;
-            _searchQueriesConciliatorAgent = searchQueriesConciliatorAgent;
-            _workflowConfiguration = workflowConfiguration;
-        }
+        private readonly ITechnicalAnalystAgent _technicalAnalystAgent = technicalAnalystAgent;
+        private readonly IBusinessAdvisorAgent _businessAdvisorAgent = businessAdvisorAgent;
+        private readonly IDocumentationAgent _documentationAgent = documentationAgent;
+        private readonly ICoderAgent _coderAgent = coderAgent;
+        private readonly ICodeStaticAnalyzerAgent _codeStaticAnalyzer = codeStaticAnalyzer;
+        private readonly ICodeFixerAgent _codeFixerAgent = codeFixerAgent;
+        private readonly ICodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
+        private readonly IResultsPresenterAgent _resultsPresenterAgent = resultsPresenterAgent;
+        private readonly IJSSandboxExecutor _jsSandboxExecutor = jsSandboxExecutor;
+        private readonly IIntentExtractorAgent _intentExtractorAgent = intentExtractorAgent;
+        private readonly IPersonalAssistantAgent _personalAssistantAgent = personalAssistantAgent;
+        private readonly IContextAnalyzerAgent _contextAnalyzerAgent = contextAnalyzerAgent;
+        private readonly IAgentMemoryRetriever _agentMemoryRetriever = agentMemoryRetriever;
+        private readonly IAgentMemorySaver _agentMemorySaver = agentMemorySaver;
+        private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
+        private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
+        private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
+        private readonly IDocumentsCacheExecutor _documentsCacheExecutor = documentsCacheExecutor;
+        private readonly IGetAllCachedSearchesExecutor _getAllCachedSearchesExecutor = getAllCachedSearchesExecutor;
+        private readonly IAgentMemoryCacheSaveExecutor _agentMemoryCacheSaveExecutor = agentMemoryCacheSaveExecutor;
+        private readonly IKnowledgeBaseCacheSaveExecutor _knowledgeBaseCacheSaveExecutor = knowledgeBaseCacheSaveExecutor;
+        private readonly ISearchQueriesConciliatorAgent _searchQueriesConciliatorAgent = searchQueriesConciliatorAgent;
+        private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
         {

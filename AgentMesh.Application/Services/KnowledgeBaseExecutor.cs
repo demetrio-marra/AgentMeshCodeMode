@@ -4,16 +4,9 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services
 {
-    public class KnowledgeBaseExecutor : IKnowledgeBaseSearchExecutor, IKnowledgeBaseGetDocsExecutor
+    public class KnowledgeBaseExecutor(IKnowledgeBaseService knowledgeBaseService) : IKnowledgeBaseSearchExecutor, IKnowledgeBaseGetDocsExecutor
     {
-        private readonly IKnowledgeBaseService _knowledgeBaseService;
-
-
-        public KnowledgeBaseExecutor(IKnowledgeBaseService knowledgeBaseService)
-        {
-            _knowledgeBaseService = knowledgeBaseService;
-        }
-
+        private readonly IKnowledgeBaseService _knowledgeBaseService = knowledgeBaseService;
 
         async Task<KnowledgeBaseGetDocsOutput> IExecutor<KnowledgeBaseGetDocsInput, KnowledgeBaseGetDocsOutput>.ExecuteAsync(KnowledgeBaseGetDocsInput input, CancellationToken cancellationToken)
         {

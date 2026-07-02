@@ -8,18 +8,13 @@ using Microsoft.Extensions.Logging;
 
 namespace AgentMesh.Application.Services
 {
-    public class BusinessAdvisorAgent : AgentBase<string>, IBusinessAdvisorAgent
+    public class BusinessAdvisorAgent(
+        [FromKeyedServices(BusinessAdvisorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        BusinessAdvisorAgentConfiguration configuration,
+        Resilience resilience,
+        ILogger<BusinessAdvisorAgent> logger) : AgentBase<string>(logger, BusinessAdvisorAgentConfiguration.AgentName, openAIClient, resilience), IBusinessAdvisorAgent
     {
-        private readonly ILogger<BusinessAdvisorAgent> _logger;
-
-        public BusinessAdvisorAgent(
-            [FromKeyedServices(BusinessAdvisorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            BusinessAdvisorAgentConfiguration configuration,
-            Resilience resilience,
-            ILogger<BusinessAdvisorAgent> logger) : base(logger, BusinessAdvisorAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<BusinessAdvisorAgent> _logger = logger;
 
         public async Task<BusinessAdvisorAgentOutput> ExecuteAsync(
             BusinessAdvisorAgentInput input,

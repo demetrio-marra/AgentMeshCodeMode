@@ -12,18 +12,13 @@ using static AgentMesh.Models.SearchQueriesConciliator.SearchQueriesConciliatorA
 
 namespace AgentMesh.Application.Services
 {
-    public class SearchQueriesConciliatorAgent : AgentBase<SearchQueriesConciliatorAgent.ConciliationResult>, ISearchQueriesConciliatorAgent
+    public class SearchQueriesConciliatorAgent(
+        [FromKeyedServices(SearchQueriesConciliatorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        SearchQueriesConciliatorAgentConfiguration configuration,
+        Resilience resilience,
+        ILogger<SearchQueriesConciliatorAgent> logger) : AgentBase<SearchQueriesConciliatorAgent.ConciliationResult>(logger, SearchQueriesConciliatorAgentConfiguration.AgentName, openAIClient, resilience), ISearchQueriesConciliatorAgent
     {
-        private readonly ILogger<SearchQueriesConciliatorAgent> _logger;
-
-        public SearchQueriesConciliatorAgent(
-            [FromKeyedServices(SearchQueriesConciliatorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            SearchQueriesConciliatorAgentConfiguration configuration,
-            Resilience resilience,
-            ILogger<SearchQueriesConciliatorAgent> logger) : base(logger, SearchQueriesConciliatorAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<SearchQueriesConciliatorAgent> _logger = logger;
 
         public async Task<SearchQueriesConciliatorAgentOutput> ExecuteAsync(
             SearchQueriesConciliatorAgentInput input,

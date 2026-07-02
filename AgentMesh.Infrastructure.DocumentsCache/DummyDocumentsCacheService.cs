@@ -165,16 +165,10 @@ namespace AgentMesh.Infrastructure.DocumentsCache
             return entry.ExpiresAtUtc.HasValue && entry.ExpiresAtUtc.Value <= now;
         }
 
-        private sealed class CacheEntry<TItem>
+        private sealed class CacheEntry<TItem>(HashSet<TItem> items, DateTime? expiresAtUtc)
         {
-            public CacheEntry(HashSet<TItem> items, DateTime? expiresAtUtc)
-            {
-                Items = items;
-                ExpiresAtUtc = expiresAtUtc;
-            }
-
-            public HashSet<TItem> Items { get; }
-            public DateTime? ExpiresAtUtc { get; set; }
+            public HashSet<TItem> Items { get; } = items;
+            public DateTime? ExpiresAtUtc { get; set; } = expiresAtUtc;
         }
     }
 }

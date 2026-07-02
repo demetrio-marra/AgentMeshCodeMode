@@ -6,23 +6,15 @@ using System.Diagnostics;
 
 namespace AgentMesh.Application.Services
 {
-    public abstract class AgentBase<T>
+    public abstract class AgentBase<T>(ILogger logger,
+        string agentName,
+        IOpenAIClient openAIClient,
+        Resilience resilience)
     {
-        private readonly ILogger _logger;
-        private readonly string _agentName;
-        private readonly IOpenAIClient _openAIClient;
-        private readonly Resilience _resilience;
-
-        protected AgentBase(ILogger logger,
-            string agentName,
-            IOpenAIClient openAIClient,
-            Resilience resilience)
-        {
-            _agentName = agentName;
-            _logger = logger;
-            _openAIClient = openAIClient;
-            _resilience = resilience;
-        }
+        private readonly ILogger _logger = logger;
+        private readonly string _agentName = agentName;
+        private readonly IOpenAIClient _openAIClient = openAIClient;
+        private readonly Resilience _resilience = resilience;
 
         /// <summary>
         /// Executes the agent's main logic with retry mechanism. It sends the input messages to the OpenAI client, checks for empty responses, and parses the response into a structured format of type T. If the response is empty or if parsing fails (throwing a specialized exception), it triggers the retry logic defined in the Resilience class.

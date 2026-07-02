@@ -8,15 +8,11 @@ using Microsoft.Extensions.Logging;
 
 namespace AgentMesh.Application.Services
 {
-    public class PersonalAssistantAgent : AgentBase<string>, IPersonalAssistantAgent
+    public class PersonalAssistantAgent(
+        [FromKeyedServices(PersonalAssistantAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        Resilience resilience,
+        ILogger<PersonalAssistantAgent> logger) : AgentBase<string>(logger, PersonalAssistantAgentConfiguration.AgentName, openAIClient, resilience), IPersonalAssistantAgent
     {
-        public PersonalAssistantAgent(
-            [FromKeyedServices(PersonalAssistantAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            Resilience resilience,
-            ILogger<PersonalAssistantAgent> logger) : base(logger, PersonalAssistantAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-        }
-
         public async Task<PersonalAssistantAgentOutput> ExecuteAsync(
             PersonalAssistantAgentInput input,
             CancellationToken cancellationToken = default)

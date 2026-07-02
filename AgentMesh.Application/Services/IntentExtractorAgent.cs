@@ -11,20 +11,14 @@ using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
 
 namespace AgentMesh.Application.Services
 {
-    public class IntentExtractorAgent : AgentBase<IntentExtractorAgent.ParsedResponse>, IIntentExtractorAgent
+    public class IntentExtractorAgent(
+        [FromKeyedServices(IntentExtractorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        IntentExtractorAgentConfiguration configuration,
+        Resilience resilience,
+        ILogger<IntentExtractorAgent> logger) : AgentBase<IntentExtractorAgent.ParsedResponse>(logger, IntentExtractorAgentConfiguration.AgentName, openAIClient, resilience), IIntentExtractorAgent
     {
-        private readonly IOpenAIClient _openAIClient;
-        private readonly ILogger<IntentExtractorAgent> _logger;
-
-        public IntentExtractorAgent(
-            [FromKeyedServices(IntentExtractorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            IntentExtractorAgentConfiguration configuration,
-            Resilience resilience,
-            ILogger<IntentExtractorAgent> logger) : base(logger, IntentExtractorAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-            _openAIClient = openAIClient;
-            _logger = logger;
-        }
+        private readonly IOpenAIClient _openAIClient = openAIClient;
+        private readonly ILogger<IntentExtractorAgent> _logger = logger;
 
         public async Task<IntentExtractorAgentOutput> ExecuteAsync(
             IntentExtractorAgentInput input,

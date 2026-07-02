@@ -11,17 +11,13 @@ using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
 
 namespace AgentMesh.Application.Services
 {
-    public class ContextAnalyzerAgent : AgentBase<ContextAnalyzerAgentOutput>, IContextAnalyzerAgent
+    public class ContextAnalyzerAgent(
+        [FromKeyedServices(ContextAnalyzerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        ContextAnalyzerAgentConfiguration configuration,
+        Resilience resilience,
+        ILogger<ContextAnalyzerAgent> logger) : AgentBase<ContextAnalyzerAgentOutput>(logger, ContextAnalyzerAgentConfiguration.AgentName, openAIClient, resilience), IContextAnalyzerAgent
     {
         public const string AgentName = "Context Analyzer";
-
-        public ContextAnalyzerAgent(
-            [FromKeyedServices(ContextAnalyzerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            ContextAnalyzerAgentConfiguration configuration,
-            Resilience resilience,
-            ILogger<ContextAnalyzerAgent> logger) : base(logger, ContextAnalyzerAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-        }
 
         public async Task<ContextAnalyzerAgentOutput> ExecuteAsync(
             ContextAnalyzerAgentInput input,

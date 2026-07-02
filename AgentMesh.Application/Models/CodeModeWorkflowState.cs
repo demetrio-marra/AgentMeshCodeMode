@@ -8,17 +8,9 @@ using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
 
 namespace AgentMesh.Application.Models
 {
-    public class CodeModeWorkflowState
+    public class CodeModeWorkflowState(string userQuestion, IEnumerable<ContextMessage> contextMessages)
     {
-        public CodeModeWorkflowState(string userQuestion, IEnumerable<ContextMessage> contextMessages)
-        {
-            OriginalUserRequest = userQuestion;
-            TokenUsageEntries = [];
-            CodeIssues = [];
-            InitialContextMessages = [.. contextMessages];
-        }
-
-        public string OriginalUserRequest { get; }
+        public string OriginalUserRequest { get; } = userQuestion;
         public string? LanguageOfTheUser { get; set; }
         public string? UserIntent { get; set; }
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
@@ -33,7 +25,7 @@ namespace AgentMesh.Application.Models
         public string? DocumentationContent { get; set; }
         public string? GeneratedCode { get; set; }
         public string? LastCodeWithLineNumbers { get => SourceCodeUtils.GetSourceCodeWithLineNumbers(GeneratedCode); }
-        public List<string> CodeIssues { get; set; }
+        public List<string> CodeIssues { get; set; } = [];
         public bool IsCodeValid { get; set; }
         public int CodeFixerIterationCount { get; set; }
         public int CodeExecutionFailuresDetectorIterationCount { get; set; }
@@ -43,10 +35,10 @@ namespace AgentMesh.Application.Models
         public string? PresenterOutput { get; set; }
         public string? FinalAnswer { get; set; }
 
-        public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; }
+        public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; } = [];
         public IEnumerable<AgentMemoryQueryResultItem> ExtractedAgentMemories { get; set; } = [];
         public IEnumerable<string> RelevantKnowledgeBaseFileNames { get; set; } = [];
-        public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [];
+        public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [.. contextMessages];
 
         public KnowledgeBaseQueryResult KnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 

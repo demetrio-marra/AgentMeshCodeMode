@@ -6,14 +6,9 @@ using System.Net;
 
 namespace AgentMesh.Application
 {
-    public class Resilience
+    public class Resilience(ResilienceConfiguration configuration)
     {
-        private readonly ResilienceConfiguration _configuration;
-
-        public Resilience(ResilienceConfiguration configuration)
-        {
-            _configuration = configuration;
-        }
+        private readonly ResilienceConfiguration _configuration = configuration;
 
         public Task<T> AgentRunWithRetryAsync<T>(Func<Task<T>> action,
             string agentName,

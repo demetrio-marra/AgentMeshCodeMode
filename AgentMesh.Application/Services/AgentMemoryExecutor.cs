@@ -6,21 +6,13 @@ using System.Diagnostics;
 
 namespace AgentMesh.Application.Services
 {
-    public class AgentMemoryExecutor : IAgentMemoryRetriever, IAgentMemorySaver
+    public class AgentMemoryExecutor(IAgentMemoryService agentMemoryService,
+        ILogger<AgentMemoryExecutor> logger,
+        UserConfiguration userConfiguration) : IAgentMemoryRetriever, IAgentMemorySaver
     {
-        private readonly ILogger<AgentMemoryExecutor> _logger;
-        private readonly IAgentMemoryService _agentMemoryService;
-        private readonly UserConfiguration _userConfiguration;
-
-        public AgentMemoryExecutor(IAgentMemoryService agentMemoryService,
-            ILogger<AgentMemoryExecutor> logger,
-            UserConfiguration userConfiguration)
-        {
-            _agentMemoryService = agentMemoryService;
-            _logger = logger;
-            _userConfiguration = userConfiguration;
-        }
-
+        private readonly ILogger<AgentMemoryExecutor> _logger = logger;
+        private readonly IAgentMemoryService _agentMemoryService = agentMemoryService;
+        private readonly UserConfiguration _userConfiguration = userConfiguration;
 
         async Task IAgentMemorySaver.ExecuteAsync(AgentMemorySaverInput input)
         {

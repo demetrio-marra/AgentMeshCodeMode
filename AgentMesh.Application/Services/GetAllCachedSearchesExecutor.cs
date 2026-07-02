@@ -4,14 +4,9 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services
 {
-    public class GetAllCachedSearchesExecutor : IGetAllCachedSearchesExecutor
+    public class GetAllCachedSearchesExecutor(IDocumentsCacheService documentsCacheService) : IGetAllCachedSearchesExecutor
     {
-        private readonly IDocumentsCacheService _documentsCacheService;
-
-        public GetAllCachedSearchesExecutor(IDocumentsCacheService documentsCacheService)
-        {
-            _documentsCacheService = documentsCacheService;
-        }
+        private readonly IDocumentsCacheService _documentsCacheService = documentsCacheService;
 
         public async Task<GetAllCachedSearchesExecutorOutput> ExecuteAsync(GetAllCachedSearchesExecutorInput input, CancellationToken cancellationToken = default)
         {

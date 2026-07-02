@@ -8,15 +8,11 @@ using Microsoft.Extensions.Logging;
 
 namespace AgentMesh.Application.Services
 {
-    public class ResultsPresenterAgent : AgentBase<string>, IResultsPresenterAgent
+    public class ResultsPresenterAgent(
+        [FromKeyedServices(ResultsPresenterAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        Resilience resilience,
+        ILogger<ResultsPresenterAgent> logger) : AgentBase<string>(logger, ResultsPresenterAgentConfiguration.AgentName, openAIClient, resilience), IResultsPresenterAgent
     {
-        public ResultsPresenterAgent(
-            [FromKeyedServices(ResultsPresenterAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
-            Resilience resilience,
-            ILogger<ResultsPresenterAgent> logger) : base(logger, ResultsPresenterAgentConfiguration.AgentName, openAIClient, resilience)
-        {
-        }
-
         public async Task<ResultsPresenterAgentOutput> ExecuteAsync(
             ResultsPresenterAgentInput input,
             CancellationToken cancellationToken = default)

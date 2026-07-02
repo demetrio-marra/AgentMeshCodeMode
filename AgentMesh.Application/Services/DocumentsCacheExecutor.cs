@@ -4,14 +4,9 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services
 {
-    public class DocumentsCacheExecutor : IDocumentsCacheExecutor
+    public class DocumentsCacheExecutor(IDocumentsCacheService documentsCacheService) : IDocumentsCacheExecutor
     {
-        private readonly IDocumentsCacheService _documentsCacheService;
-
-        public DocumentsCacheExecutor(IDocumentsCacheService documentsCacheService)
-        {
-            _documentsCacheService = documentsCacheService;
-        }
+        private readonly IDocumentsCacheService _documentsCacheService = documentsCacheService;
 
         public async Task<DocumentsCacheExecutorOutput> ExecuteAsync(DocumentsCacheExecutorInput input, CancellationToken cancellationToken = default)
         {

@@ -4,19 +4,13 @@ using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Infrastructure.SemanticSearch
 {
-    public class QMDKnowledgeBaseService : IKnowledgeBaseService
+    public class QMDKnowledgeBaseService(QMDHttpProxy httpProxy) : IKnowledgeBaseService
     {
         private const string KEYWORDS_SEARCH_TYPE = "lex";
         private const string SEMANTIC_SEARCH_TYPE = "vec";
         private const string HYPOTHETICAL_SEARCH_TYPE = "hyde";
 
-        private readonly QMDHttpProxy _httpProxy;
-
-        public QMDKnowledgeBaseService(QMDHttpProxy httpProxy)
-        {
-            _httpProxy = httpProxy;
-        }
-
+        private readonly QMDHttpProxy _httpProxy = httpProxy;
 
         async Task<KnowledgeBaseDocumentContent> IKnowledgeBaseService.GetKnowledgeBaseEntryContentAsync(string id, CancellationToken cancellationToken)
         {

@@ -9,21 +9,14 @@ using AgentMesh.Application.Contracts;
 
 namespace AgentMesh.Application.Services
 {
-    public class CodeStaticAnalyzer : ICodeStaticAnalyzerAgent
+    public class CodeStaticAnalyzer(
+        [FromKeyedServices(CodeStaticAnalyzerConfiguration.AgentName)] IOpenAIClient openAIClient,
+        ICodeSmellDetector codeSmellDetector,
+        ILogger<CodeStaticAnalyzer> logger) : ICodeStaticAnalyzerAgent
     {
-        private readonly IOpenAIClient _openAIClient;
-        private readonly ICodeSmellDetector _codeSmellDetector;
-        private readonly ILogger<CodeStaticAnalyzer> _logger;
-
-        public CodeStaticAnalyzer(
-            [FromKeyedServices(CodeStaticAnalyzerConfiguration.AgentName)] IOpenAIClient openAIClient,
-            ICodeSmellDetector codeSmellDetector,
-            ILogger<CodeStaticAnalyzer> logger)
-        {
-            _openAIClient = openAIClient;
-            _codeSmellDetector = codeSmellDetector;
-            _logger = logger;
-        }
+        private readonly IOpenAIClient _openAIClient = openAIClient;
+        private readonly ICodeSmellDetector _codeSmellDetector = codeSmellDetector;
+        private readonly ILogger<CodeStaticAnalyzer> _logger = logger;
 
         public async Task<CodeStaticAnalyzerOutput> ExecuteAsync(CodeStaticAnalyzerInput input, CancellationToken cancellationToken = default)
         {
