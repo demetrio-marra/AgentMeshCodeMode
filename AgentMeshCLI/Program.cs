@@ -66,6 +66,7 @@ namespace AgentMesh
             configuration.GetSection("QDrantSemanticSearchService").Bind(semanticSearchConfig);
             services.AddSingleton(semanticSearchConfig);
             services.AddSingleton<ISemanticSearchService, QDrantSemanticSearchService>();
+            services.AddSingleton<IQueriesCacheService, QDrantQueriesCacheService>();
 
             // Register executors
             services.AddSingleton<ISemanticSearchExecutor, SemanticSearchExecutor>();
