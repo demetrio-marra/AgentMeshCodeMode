@@ -420,7 +420,7 @@ namespace AgentMesh.Application.Workflows
                 ExtractedKnowledgeBaseSearchQueries = extractedKbQueries,
                 CachedKnowledgeBaseSearchQueries = cachedKbQueries,
                 ExtractedMemorySearchQueries = extractedMemoryQueries,
-                CachedMemorySearchQueries = cachedMemoryQueries
+                CachedMemorySearchQueries = cachedMemoryQueries                 
             };
 
             var conciliatorOutput = await _searchQueriesConciliatorAgent.ExecuteAsync(conciliatorInput);
@@ -430,7 +430,7 @@ namespace AgentMesh.Application.Workflows
                 .Select(q => new IntentExtractorKnowledgeBase 
                 { 
                     Type = q.Type, 
-                    Query = q.Query 
+                    Query = q.Query                    
                 }).ToList();
 
             // Update state with conciliated memory search queries (extract just the query strings)
@@ -504,14 +504,28 @@ namespace AgentMesh.Application.Workflows
             state.KnowledgeBaseCacheHit = output.KnowledgeBaseCachedQueryResult != null;
             if (output.AgentMemoryCachedQueryResult != null)
             {
-                state.ExtractedAgentMemories = output.AgentMemoryCachedQueryResult!.Results.ToList();
+                state.ExtractedAgentMemories = output.AgentMemoryCachedQueryResult!.Results
+                    .Select(m => new AgentMemoryQueryResultItem
+                    {
+                        Memory = m.Memory,
+                        Confidence = null // Confidence is not provided by the cache, so we set it to null
+                    }).ToList();
             }   
 
             if (output.KnowledgeBaseCachedQueryResult != null)
             {
                 state.KnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
                 {
-                    Results = output.KnowledgeBaseCachedQueryResult!.Results.ToList()
+                    Results = output.KnowledgeBaseCachedQueryResult!.Results
+                    .Select(m => new KnowledgeBaseQueryResultItem
+                    {
+                        Id = m.Id,
+                        File = m.File,
+                        Title = m.Title,
+                        Summary = m.Summary,
+                        Relevance = null // Relevance is not provided by the cache, so we set it to null
+                    })
+                    .ToList()
                 };
             }
 
@@ -583,15 +597,18 @@ namespace AgentMesh.Application.Workflows
             }
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", contextAnalyzerInputLogEntries);
 
+            var sortedKnowledgeBaseResults = state.KnowledgeBaseQueryResults.Results
+                .OrderByDescending(m => m.Relevance ?? double.MinValue)
+                .ToList();
+
             var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
             {
                 UserIntent = state.UserIntent ?? string.Empty,
-                ExtractedKnowledgeBase = state.KnowledgeBaseQueryResults.Results.Select(m => new ContextAnalyzerAgentInput.ExtractedKnowledgeItem
+                ExtractedKnowledgeBase = sortedKnowledgeBaseResults.Select(m => new ContextAnalyzerAgentInput.ExtractedKnowledgeItem
                 {
                     DocumentId = m.Id,
                     Title = m.Title,
-                    Summary = m.Summary,
-                    Relevance = m.Relevance                     
+                    Summary = m.Summary
                 }).ToList(),
                 ExtractedMemories = state.ExtractedAgentMemories.Select(m => m.Memory).ToList()
             });

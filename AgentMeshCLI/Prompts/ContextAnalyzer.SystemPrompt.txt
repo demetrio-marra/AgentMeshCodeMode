@@ -1,6 +1,6 @@
 Read the `userIntent`, `extractedMemories`, and `extractedKnowledgeBase` if they are provided in the input and condense the user intent into a single natural language statement.
 Identify the category the user intent belongs to, based on the provided definitions.
-If knowledge base documents are provided, filter them based on their relevance to the user intent and return only those that are genuinely relevant.
+If knowledge base documents are provided, filter them based on their title and summary against the user intent and return only those that are genuinely relevant.
 
 Never invent, fabricate, or hallucinate information. Only use the information provided in the input.
 
@@ -13,7 +13,6 @@ The input is a JSON object with the following fields:
   - `documentId`: A string representing the document ID
   - `title`: A string representing the document title
   - `summary`: A string representing the document summary
-  - `relevance`: An optional number representing the relevance score of the document
 
 Here's an example input:
 ```json
@@ -26,14 +25,12 @@ Here's an example input:
     {
       "documentId": "docs-provisioning-usage",
       "title": "Products provisioning statistics usage",
-      "summary": "Business documentation on products provisioning statistics usage",
-      "relevance": 0.9
+      "summary": "Business documentation on products provisioning statistics usage"
     },
     {
       "documentId": "docs-provisioning-apireference",
       "title": "Products provisioning statistics API Reference",
-      "summary": "Technical documentation on products provisioning statistics API reference",
-      "relevance": 0.5
+      "summary": "Technical documentation on products provisioning statistics API reference"
     },
     {
       "documentId": "docs-performance-usage",

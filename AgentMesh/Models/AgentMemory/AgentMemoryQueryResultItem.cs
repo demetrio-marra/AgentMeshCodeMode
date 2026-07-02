@@ -13,6 +13,6 @@
         /// <summary>
         /// Gets the confidence score associated with the result.
         /// </summary>
-        public float Confidence { get; set; }
+        public float? Confidence { get; set; }
     }
 }
