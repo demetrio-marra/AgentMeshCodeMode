@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Infrastructure.SemanticSearch
+﻿namespace AgentMesh.Infrastructure.DocumentsCache
 {
     public class QDrantSemanticSearchServiceConfiguration
     {
