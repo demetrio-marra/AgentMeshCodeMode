@@ -22,9 +22,6 @@ namespace AgentMesh.Application.Models
         public string? DocumentationContent { get; set; }
         public string? GeneratedCode { get; set; }
         public string? LastCodeWithLineNumbers { get => SourceCodeUtils.GetSourceCodeWithLineNumbers(GeneratedCode); }
-        public List<string> CodeIssues { get; set; } = [];
-        public bool IsCodeValid { get; set; }
-        public int CodeFixerIterationCount { get; set; }
         public int CodeExecutionFailuresDetectorIterationCount { get; set; }
         public string? SandboxResult { get; set; }
         public string? SandboxExecutionId { get; set; }

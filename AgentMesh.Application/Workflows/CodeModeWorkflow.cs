@@ -10,7 +10,6 @@ using AgentMesh.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Models.CodeFixer;
 using AgentMesh.Models.Coder;
 using AgentMesh.Models.CodeSandbox;
-using AgentMesh.Models.CodeStaticAnalyzer;
 using AgentMesh.Models.ContextAnalyzer;
 using AgentMesh.Models.Documentation;
 using AgentMesh.Models.IntentExtractor;
@@ -36,7 +35,6 @@ namespace AgentMesh.Application.Workflows
         IBusinessAdvisorAgent businessAdvisorAgent,
         IDocumentationAgent documentationAgent,
         ICoderAgent coderAgent,
-        ICodeStaticAnalyzerAgent codeStaticAnalyzer,
         ICodeFixerAgent codeFixerAgent,
         ICodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent,
         IResultsPresenterAgent resultsPresenterAgent,
@@ -68,7 +66,6 @@ namespace AgentMesh.Application.Workflows
         private readonly IBusinessAdvisorAgent _businessAdvisorAgent = businessAdvisorAgent;
         private readonly IDocumentationAgent _documentationAgent = documentationAgent;
         private readonly ICoderAgent _coderAgent = coderAgent;
-        private readonly ICodeStaticAnalyzerAgent _codeStaticAnalyzer = codeStaticAnalyzer;
         private readonly ICodeFixerAgent _codeFixerAgent = codeFixerAgent;
         private readonly ICodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
         private readonly IResultsPresenterAgent _resultsPresenterAgent = resultsPresenterAgent;
@@ -125,13 +122,6 @@ namespace AgentMesh.Application.Workflows
             {
                 await ExecuteTechnicalAnalystAsync(state);
                 await ExecuteCoderAsync(state);
-                await ExecuteCodeStaticAnalyzerAsync(state);
-
-                for (int i = 0; i < 2 && !state.IsCodeValid && state.CodeIssues.Count != 0; i++)
-                {
-                    await ExecuteCodeFixerAsync(state, i + 1, false);
-                    await ExecuteCodeStaticAnalyzerAsync(state);
-                }
 
                 await ExecuteJSSandboxAsync(state, false);
 
@@ -694,64 +684,29 @@ namespace AgentMesh.Application.Workflows
         }
 
 
-        private async Task ExecuteCodeStaticAnalyzerAsync(CodeModeWorkflowState state)
+        private async Task ExecuteCodeFixerForRuntimeErrorsAsync(CodeModeWorkflowState state, string analysis, int iteration)
         {
             var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Code Static Analyzer Agent...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Code Static Analyzer Agent", new Dictionary<string, string>
-            {
-                { "CodeToFix", state.LastCodeWithLineNumbers ?? "(No code available)" }
-            });
-
-            var staticAnalyzerOutput = await _codeStaticAnalyzer.ExecuteAsync(new CodeStaticAnalyzerInput
-            {
-                CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty
-            });
-            state.IsCodeValid = !staticAnalyzerOutput.Violations.Any();
-            if (!state.IsCodeValid)
-            {
-                state.CodeIssues = [.. staticAnalyzerOutput.Violations];
-            }
-            else
-            {
-                state.CodeIssues.Clear();
-            }
-            state.AddTokenUsage(CodeStaticAnalyzerConfiguration.AgentName, staticAnalyzerOutput.InputTokenCount, staticAnalyzerOutput.OutputTokenCount, stopwatch.Elapsed, "Code Static Analyzer Agent");
-            var notifyDictionary = new Dictionary<string, string>
-            {
-                { "IsCodeValid", state.IsCodeValid.ToString() },
-                { "ViolationsCount", staticAnalyzerOutput.Violations.Count().ToString() },
-                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
-            };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Code Static Analyzer Agent", notifyDictionary);
-        }
-
-        private async Task ExecuteCodeFixerAsync(CodeModeWorkflowState state, int iteration, bool isRuntimeFix)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            var agentName = isRuntimeFix ? $"Code Fixer Agent for Runtime Errors (Iteration {iteration})" : $"Code Fixer Agent (Iteration {iteration})";
-
-            _logger.LogDebug("Engaging Code Fixer Agent... Iteration {Iteration}", iteration);
-            await _workflowProgressNotifier.NotifyWorkflowStepStart(agentName, new Dictionary<string, string>
+            _logger.LogDebug("Engaging Code Fixer Agent for runtime errors... Iteration {Iteration}", iteration);
+            await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", new Dictionary<string, string>
             {
                 { "CodeToFix", state.LastCodeWithLineNumbers ?? "(No code available)" },
-                { "IssuesCount", state.CodeIssues.Count.ToString() }
+                { "IssuesCount", "1" }
             });
 
             var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
             {
                 CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty,
-                Issues = state.CodeIssues
+                Issues = [analysis]
             });
             state.GeneratedCode = codeFixerOutput.FixedCode;
-            state.CodeFixerIterationCount++;
-            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, agentName);
+            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Fixer Agent for Runtime Errors (Iteration {iteration})");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "FixedCode", state.GeneratedCode },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd(agentName, notifyDictionary);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", notifyDictionary);
         }
 
         private async Task<bool> ExecuteJSSandboxAsync(CodeModeWorkflowState state, bool isReexecution)
@@ -844,31 +799,6 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Execution Failures Detector Agent (Iteration {iteration})", notifyDictionary);
 
             return detectorOutput.Analysis;
-        }
-
-        private async Task ExecuteCodeFixerForRuntimeErrorsAsync(CodeModeWorkflowState state, string analysis, int iteration)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Code Fixer Agent for runtime errors... Iteration {Iteration}", iteration);
-            await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", new Dictionary<string, string>
-            {
-                { "CodeToFix", state.LastCodeWithLineNumbers ?? "(No code available)" },
-                { "IssuesCount", "1" }
-            });
-
-            var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
-            {
-                CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty,
-                Issues = [analysis]
-            });
-            state.GeneratedCode = codeFixerOutput.FixedCode;
-            state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Fixer Agent for Runtime Errors (Iteration {iteration})");
-            var notifyDictionary = new Dictionary<string, string>
-            {
-                { "FixedCode", state.GeneratedCode },
-                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
-            };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", notifyDictionary);
         }
 
         private async Task ExecuteResultsPresenterAsync(CodeModeWorkflowState state)

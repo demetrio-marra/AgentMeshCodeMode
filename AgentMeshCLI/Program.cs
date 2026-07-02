@@ -200,9 +200,6 @@ namespace AgentMesh
 
             services.AddSingleton<ICoderAgent, CoderAgent>();
 
-            // Code Smell Checker
-            services.AddSingleton<ICodeSmellDetector, CodeSmellDetector>();
-
             // Results Presenter agent config and client
             services
                 .AddOptions<ResultsPresenterAgentConfiguration>()
@@ -271,29 +268,6 @@ namespace AgentMesh
             });
 
             services.AddSingleton<ICodeExecutionFailuresDetectorAgent, JavascriptCodeExecutionFailuresDetectorAgent>();
-
-            // CodeStaticAnalyzer agent config and client
-            services
-                .AddOptions<CodeStaticAnalyzerConfiguration>()
-                .Bind(configuration.GetSection(CodeStaticAnalyzerConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<CodeStaticAnalyzerConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(CodeStaticAnalyzerConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<CodeStaticAnalyzerConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-            services.AddSingleton<ICodeStaticAnalyzerAgent, CodeStaticAnalyzer>();
 
             // ContextAnalyzer agent config and client
             services
