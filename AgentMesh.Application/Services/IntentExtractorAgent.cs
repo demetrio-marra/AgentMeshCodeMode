@@ -34,9 +34,10 @@ namespace AgentMesh.Application.Services
             var ret = new IntentExtractorAgentOutput
             {
                 UserIntent = result.Result.UserIntent,
-                LanguageOfTheUser = result.Result.LanguageOfTheUser,
+                Entities = result.Result.Entities,
+                Domains = result.Result.Domains,
                 SupportingIntentInformation = result.Result.SupportingIntentInformation,
-                UserRequestDomains = result.Result.UserRequestDomains,
+                LanguageOfTheUser = result.Result.LanguageOfTheUser,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount,
                 TokenCount = result.TotalTokenCount
@@ -63,13 +64,38 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty user intent.");
                 }
 
-                responseDTO.SupportingIntentInformation = responseDTO.SupportingIntentInformation
+                if (string.IsNullOrWhiteSpace(responseDTO.LanguageOfTheUser))
+                {
+                    _logger.LogWarning("The model's response contains empty language of the user. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty language of the user.");
+                }
+
+                responseDTO.Entities = responseDTO.Entities
                     .Where(entry => !string.IsNullOrWhiteSpace(entry))
                     .Select(entry => entry.Trim())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToArray();
 
-                responseDTO.UserRequestDomains = responseDTO.UserRequestDomains
+                responseDTO.Domains = responseDTO.Domains
+                    .Where(entry => !string.IsNullOrWhiteSpace(entry))
+                    .Select(entry => entry.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                responseDTO.LanguageOfTheUser = responseDTO.LanguageOfTheUser.Trim();
+
+                var legacyDomains = responseDTO.LegacyUserRequestDomains
+                    .Where(entry => !string.IsNullOrWhiteSpace(entry))
+                    .Select(entry => entry.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                if (!responseDTO.Domains.Any() && legacyDomains.Any())
+                {
+                    responseDTO.Domains = legacyDomains;
+                }
+
+                responseDTO.SupportingIntentInformation = responseDTO.SupportingIntentInformation
                     .Where(entry => !string.IsNullOrWhiteSpace(entry))
                     .Select(entry => entry.Trim())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -89,14 +115,20 @@ namespace AgentMesh.Application.Services
             [JsonPropertyName("userIntent")]
             public string UserIntent { get; set; } = string.Empty;
 
-            [JsonPropertyName("languageOfTheUser")]
-            public string? LanguageOfTheUser { get; set; }
+            [JsonPropertyName("entities")]
+            public IEnumerable<string> Entities { get; set; } = [];
+
+            [JsonPropertyName("domains")]
+            public IEnumerable<string> Domains { get; set; } = [];
 
             [JsonPropertyName("supportingIntentInformation")]
             public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
 
+            [JsonPropertyName("languageOfTheUser")]
+            public string LanguageOfTheUser { get; set; } = string.Empty;
+
             [JsonPropertyName("userRequestDomains")]
-            public IEnumerable<string> UserRequestDomains { get; set; } = [];
+            public IEnumerable<string> LegacyUserRequestDomains { get; set; } = [];
         }
     }
 }
