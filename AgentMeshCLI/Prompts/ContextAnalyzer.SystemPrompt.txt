@@ -1,4 +1,4 @@
-Read the `userIntent`, `extractedMemories`, and `extractedKnowledgeBase` if they are provided in the input and condense the user intent into a single natural language statement.
+Read the `userIntent`, `supportingIntentInformation`, `userRequestDomains`, `extractedMemories`, and `extractedKnowledgeBase` if they are provided in the input and condense the user intent into a single natural language statement.
 Identify the category the user intent belongs to, based on the provided definitions.
 If knowledge base documents are provided, filter them based on their title and summary against the user intent and return only those that are genuinely relevant.
 
@@ -8,6 +8,8 @@ Never invent, fabricate, or hallucinate information. Only use the information pr
 # Input
 The input is a JSON object with the following fields:
 - `userIntent`: A string representing the user's intent
+- `supportingIntentInformation`: An optional array of strings representing additional clarifications about the intent
+- `userRequestDomains`: An optional array of strings representing the request domains
 - `extractedMemories`: An optional array of strings representing relevant memories
 - `extractedKnowledgeBase`: An optional array of objects representing relevant knowledge base documents, each with the following fields:
   - `documentId`: A string representing the document ID
@@ -18,6 +20,13 @@ Here's an example input:
 ```json
 {
   "userIntent": "The user asks to retrieve the provisioning statistics values for product 'MySQL' during year 2025",
+  "supportingIntentInformation": [
+    "The user wants data grouped by month"
+  ],
+  "userRequestDomains": [
+    "analytics",
+    "provisioning"
+  ],
   "extractedMemories": [
     "The user asked to represent similar data extraction tasks using tabular result"
   ],
@@ -93,13 +102,13 @@ If no documents are relevant, return an empty array.
 Output the result as a structured JSON object.
 IMPORTANT: Do not wrap the output in backticks or any other formatting. Only output the JSON object.
 You must respond with a valid JSON object with the following fields:
-- `condensedUserIntent`: A single natural language statement condensing the user intent and relevant memories
+- `condensedUserIntent`: A single natural language statement condensing the user intent, supporting intent information, user request domains, and relevant memories
 - `userIntentCategory`: One of `taskExecution`, `businessAdvisor`, `documentation`, or `other`
 - `filteredKnowledgeBaseDocuments`: Array of objects with `documentId` and `title` for each relevant document
 
 Example output:
 {
-  "condensedUserIntent": "The user asks to retrieve the product provisioning statistics for 'MySQL' during year 2025, presenting results in tabular format.",
+  "condensedUserIntent": "The user asks to retrieve the product provisioning statistics for 'MySQL' during year 2025, grouped by month, in the analytics/provisioning domain, presenting results in tabular format.",
   "userIntentCategory": "taskExecution",
   "filteredKnowledgeBaseDocuments": [
     {

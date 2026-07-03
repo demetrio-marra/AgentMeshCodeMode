@@ -92,9 +92,11 @@ namespace AgentMesh.Application.Workflows
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
 
-            return new WorkflowResult();
 
             await ExecuteSearchQueriesGeneratorAsync(state);
+
+            //return new WorkflowResult();
+
 
             if (_workflowConfiguration.EnableCacheService
                 && (state.MissingPastMemories.Any()
@@ -328,14 +330,15 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Search Queries Generator Agent", new Dictionary<string, string>
             {
                 { "UserIntent", state.UserIntent ?? "(No intent extracted)" },
-                { "UserLastRequest", state.OriginalUserRequest }
+                { "SupportingIntentInformation", state.SupportingIntentInformation.Any() ? string.Join("\n", state.SupportingIntentInformation.Select(info => $"- {info}")) : "(No supporting intent information)" },
+                { "UserRequestDomains", state.UserRequestDomains.Any() ? string.Join("\n", state.UserRequestDomains.Select(domain => $"- {domain}")) : "(No user request domains)" }
             });
 
             var output = await _searchQueriesGeneratorAgent.ExecuteAsync(new SearchQueriesGeneratorAgentInput
             {
-                ContextMessages = [.. state.InitialContextMessages],
-                UserLastRequest = state.OriginalUserRequest,
-                UserIntent = state.UserIntent ?? string.Empty
+                UserIntent = state.UserIntent ?? string.Empty,
+                SupportingIntentInformation = state.SupportingIntentInformation,
+                UserRequestDomains = state.UserRequestDomains
             });
 
             state.MissingPastMemories = output.MissingPastMemories;
@@ -614,6 +617,14 @@ namespace AgentMesh.Application.Workflows
             {
                 { "ExtranctedItent", state.UserIntent ?? "(no user intent)" }
             };
+            if (state.SupportingIntentInformation.Any())
+            {
+                contextAnalyzerInputLogEntries.Add("SupportingIntentInformation", string.Join("\n", state.SupportingIntentInformation.Select(info => $"- {info}")));
+            }
+            if (state.UserRequestDomains.Any())
+            {
+                contextAnalyzerInputLogEntries.Add("UserRequestDomains", string.Join("\n", state.UserRequestDomains.Select(domain => $"- {domain}")));
+            }
             if (state.ExtractedAgentMemories.Any())
             {
                 contextAnalyzerInputLogEntries.Add("ExtractedAgentMemories", string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")));
@@ -631,6 +642,8 @@ namespace AgentMesh.Application.Workflows
             var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
             {
                 UserIntent = state.UserIntent ?? string.Empty,
+                SupportingIntentInformation = state.SupportingIntentInformation,
+                UserRequestDomains = state.UserRequestDomains,
                 ExtractedKnowledgeBase = [.. sortedKnowledgeBaseResults.Select(m => new ContextAnalyzerAgentInput.ExtractedKnowledgeItem
                 {
                     DocumentId = m.Id,

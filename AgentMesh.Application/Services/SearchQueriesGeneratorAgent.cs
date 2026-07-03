@@ -21,8 +21,16 @@ namespace AgentMesh.Application.Services
             SearchQueriesGeneratorAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            var conversationHistory = MessageSerializationUtils.SerializeConversationHistory(input.ContextMessages, input.UserLastRequest);
-            var userMessage = $"Captured user intent:\n{input.UserIntent}\n\n{conversationHistory}";
+            var userMessage = $"""
+Captured user intent:
+{input.UserIntent}
+
+Supporting intent information:
+{string.Join("\n", input.SupportingIntentInformation.Select(info => $"- {info}"))}
+
+User request domains:
+{string.Join("\n", input.UserRequestDomains.Select(domain => $"- {domain}"))}
+""";
 
             var inputMessages = new List<AgentMessage>
             {
