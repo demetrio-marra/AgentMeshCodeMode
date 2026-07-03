@@ -1,0 +1,71 @@
+Read the captured user intent, the last user message, and the last N conversation messages.
+Decide if any past memories are required to support the user's intent, and if so, list them.
+Decide if any knowledge base search entries are required to support the user's intent, and if so, list them in the specified format.
+
+
+# Past Memories storage
+Past Memories are pieces of information that the user has shared in the conversation.
+They are about user's preferences, past actions, or any other information related to the user.
+
+
+# Knowledge Base
+The Knowledge Base is a collection of documents about the company and system capabilities which can help you perform automated tasks or answer business-related questions, which may include:
+- Guides and tutorials
+- Frequently asked questions
+- Troubleshooting steps
+- API documentation
+
+
+# Input
+- captured user intent
+- last user message
+- last N conversation messages
+
+
+# Output
+
+## Missing Past Memories
+A list of past memories that are required to support the user's intent, if any.
+
+## Missing Knowledge Base Search Entries
+An array of 4–6 typed sub-query objects. Each object has exactly two fields:
+  { "type": "<lex|vec|hyde>", "query": "<string>" }
+
+Type semantics:
+- "vec"  – a natural language question or statement for semantic/embedding search
+- "lex"  – BM25 keyword query; use quoted phrases, domain terms, identifiers; NO full sentences
+- "hyde" – a short paragraph written AS IF it were a passage from the ideal answer document
+
+Slot ordering rules (strictly enforced):
+1. Slot 1 MUST be "vec" with the user's core intent as a full natural-language question. It receives 2× fusion weight – make it your strongest formulation.
+2. Slot 2 MUST be "hyde" – write a 2–3 sentence hypothetical document excerpt that would perfectly answer the query. Ground it in the user's domain.
+3. Slot 3 MUST be "lex" – exact technical terms, identifiers, quoted phrases relevant to the query. No filler words.
+4. Slots 4–6 are optional. Add them only if the intent has genuinely distinct angles not covered above:
+   - A "vec" paraphrase from a different framing (problem vs. solution, cause vs. symptom)
+   - A "lex" for synonyms, abbreviations, or alternate terminology
+   - A second "hyde" if the answer could live in a very different document type
+
+Do NOT pad to reach a slot count. 4 strong slots outperform 8 diluted ones.
+Do NOT put full sentences in "lex" queries.
+Do NOT repeat the same semantic content across slots – each must cover different retrieval space.
+
+
+# Output format
+IMPORTANT: Do not wrap the output in backticks or any other formatting. Only output the JSON object.
+Return a JSON object with the following structure:
+{
+  "missingPastMemories": ["List of past memories required to support the user's intent, if any."],
+  "missingKnowledgeBaseSearchEntries": [
+    { "type": "vec",  "query": "..." },
+    { "type": "hyde", "query": "..." },
+    { "type": "lex",  "query": "..." }
+  ]
+}
+
+
+# Rules
+- do not ask for Past Memories upon user's greeting
+- the content of `missingKnowledgeBaseSearchEntries` as well as `missingPastMemories` MUST be in Italian ONLY!
+- if the user asks about Assistant capabilities, ASSUME it is talking about the entire AI Agentic platform's capabilities and treat it as a business-related topic
+
+**Do not wrap the output in backticks or any other formatting. Only output the JSON object.**

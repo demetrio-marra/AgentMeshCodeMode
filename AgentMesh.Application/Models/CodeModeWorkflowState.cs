@@ -3,7 +3,7 @@ using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
 using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
-using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
+using static AgentMesh.Models.SearchQueriesGenerator.SearchQueriesGeneratorAgentOutput;
 
 namespace AgentMesh.Application.Models
 {
@@ -13,7 +13,7 @@ namespace AgentMesh.Application.Models
         public string? LanguageOfTheUser { get; set; }
         public string? UserIntent { get; set; }
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
-        public IEnumerable<IntentExtractorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
+        public IEnumerable<SearchQueriesGeneratorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
         public string EnrichedUserRequest { get; set; } = string.Empty;
         public UserIntentCategoryValues UserIntentCategoryValue { get; set; }
         public string? BusinessRequirements { get; set; }

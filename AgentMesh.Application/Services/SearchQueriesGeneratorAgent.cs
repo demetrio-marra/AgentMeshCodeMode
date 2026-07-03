@@ -1,7 +1,7 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Models.IntentExtractor;
+using AgentMesh.Models.SearchQueriesGenerator;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -10,18 +10,19 @@ using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class IntentExtractorAgent(
-        [FromKeyedServices(IntentExtractorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+    public class SearchQueriesGeneratorAgent(
+        [FromKeyedServices(SearchQueriesGeneratorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<IntentExtractorAgent> logger) : AgentBase<IntentExtractorAgent.ParsedResponse>(logger, IntentExtractorAgentConfiguration.AgentName, openAIClient, resilience), IIntentExtractorAgent
+        ILogger<SearchQueriesGeneratorAgent> logger) : AgentBase<SearchQueriesGeneratorAgent.ParsedResponse>(logger, SearchQueriesGeneratorAgentConfiguration.AgentName, openAIClient, resilience), ISearchQueriesGeneratorAgent
     {
-        private readonly ILogger<IntentExtractorAgent> _logger = logger;
+        private readonly ILogger<SearchQueriesGeneratorAgent> _logger = logger;
 
-        public async Task<IntentExtractorAgentOutput> ExecuteAsync(
-            IntentExtractorAgentInput input,
+        public async Task<SearchQueriesGeneratorAgentOutput> ExecuteAsync(
+            SearchQueriesGeneratorAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            var userMessage = MessageSerializationUtils.SerializeConversationHistory(input.ContextMessages, input.UserLastRequest);
+            var conversationHistory = MessageSerializationUtils.SerializeConversationHistory(input.ContextMessages, input.UserLastRequest);
+            var userMessage = $"Captured user intent:\n{input.UserIntent}\n\n{conversationHistory}";
 
             var inputMessages = new List<AgentMessage>
             {
@@ -31,16 +32,14 @@ namespace AgentMesh.Application.Services
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            var ret = new IntentExtractorAgentOutput
+            return new SearchQueriesGeneratorAgentOutput
             {
-                UserIntent = result.Result.UserIntent,
-                LanguageOfTheUser = result.Result.LanguageOfTheUser,
+                MissingKnowledgeBaseSearchEntries = result.Result.MissingKnowledgeBaseSearchEntries,
+                MissingPastMemories = result.Result.MissingPastMemories,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount,
                 TokenCount = result.TotalTokenCount
             };
-
-            return ret;
         }
 
         protected override ParsedResponse ParseStructuredResponse(string rawResponseText)
@@ -55,11 +54,8 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                if (string.IsNullOrWhiteSpace(responseDTO.UserIntent))
-                {
-                    _logger.LogWarning("The model's response contains empty user intent. Response text: {ResponseText}", rawResponseText);
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty user intent.");
-                }
+                responseDTO.MissingPastMemories ??= [];
+                responseDTO.MissingKnowledgeBaseSearchEntries ??= [];
 
                 return responseDTO;
             }
@@ -72,11 +68,11 @@ namespace AgentMesh.Application.Services
 
         public class ParsedResponse
         {
-            [JsonPropertyName("userIntent")]
-            public string UserIntent { get; set; } = string.Empty;
+            [JsonPropertyName("missingPastMemories")]
+            public IEnumerable<string> MissingPastMemories { get; set; } = [];
 
-            [JsonPropertyName("languageOfTheUser")]
-            public string? LanguageOfTheUser { get; set; }
+            [JsonPropertyName("missingKnowledgeBaseSearchEntries")]
+            public IEnumerable<SearchQueriesGeneratorAgentOutput.SearchQueriesGeneratorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
         }
     }
 }

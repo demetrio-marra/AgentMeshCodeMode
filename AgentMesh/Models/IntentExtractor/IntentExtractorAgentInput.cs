@@ -1,5 +1,3 @@
-using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
-
 namespace AgentMesh.Models.IntentExtractor
 {
     public class IntentExtractorAgentInput

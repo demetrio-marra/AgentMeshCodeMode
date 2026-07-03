@@ -315,6 +315,29 @@ namespace AgentMesh
 
             services.AddSingleton<IIntentExtractorAgent, IntentExtractorAgent>();
 
+            // SearchQueriesGenerator agent config and client
+            services
+                .AddOptions<SearchQueriesGeneratorAgentConfiguration>()
+                .Bind(configuration.GetSection(SearchQueriesGeneratorAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<SearchQueriesGeneratorAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(SearchQueriesGeneratorAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<SearchQueriesGeneratorAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<ISearchQueriesGeneratorAgent, SearchQueriesGeneratorAgent>();
+
             // PersonalAssistant agent config and client
             services
                 .AddOptions<PersonalAssistantAgentConfiguration>()

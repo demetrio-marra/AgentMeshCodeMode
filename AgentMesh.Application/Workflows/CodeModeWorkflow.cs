@@ -15,6 +15,7 @@ using AgentMesh.Models.Documentation;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.PersonalAssistant;
 using AgentMesh.Models.ResultsPresenter;
+using AgentMesh.Models.SearchQueriesGenerator;
 using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
@@ -40,6 +41,7 @@ namespace AgentMesh.Application.Workflows
         IResultsPresenterAgent resultsPresenterAgent,
         IJSSandboxExecutor jsSandboxExecutor,
         IIntentExtractorAgent intentExtractorAgent,
+        ISearchQueriesGeneratorAgent searchQueriesGeneratorAgent,
         IPersonalAssistantAgent personalAssistantAgent,
         IContextAnalyzerAgent contextAnalyzerAgent,
         IAgentMemoryRetriever agentMemoryRetriever,
@@ -71,6 +73,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IResultsPresenterAgent _resultsPresenterAgent = resultsPresenterAgent;
         private readonly IJSSandboxExecutor _jsSandboxExecutor = jsSandboxExecutor;
         private readonly IIntentExtractorAgent _intentExtractorAgent = intentExtractorAgent;
+        private readonly ISearchQueriesGeneratorAgent _searchQueriesGeneratorAgent = searchQueriesGeneratorAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent = personalAssistantAgent;
         private readonly IContextAnalyzerAgent _contextAnalyzerAgent = contextAnalyzerAgent;
         private readonly IAgentMemoryRetriever _agentMemoryRetriever = agentMemoryRetriever;
@@ -88,6 +91,7 @@ namespace AgentMesh.Application.Workflows
             var state = new CodeModeWorkflowState(userInput, chatHistory);
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
+            await ExecuteSearchQueriesGeneratorAsync(state);
 
             if (_workflowConfiguration.EnableCacheService
                 && (state.MissingPastMemories.Any()
@@ -287,8 +291,6 @@ namespace AgentMesh.Application.Workflows
             });
 
             state.UserIntent = intentExtractorOutput.UserIntent;
-            state.MissingPastMemories = intentExtractorOutput.MissingPastMemories;
-            state.MissingKnowledgeBaseSearchEntries = intentExtractorOutput.MissingKnowledgeBaseSearchEntries;
             state.LanguageOfTheUser = intentExtractorOutput.LanguageOfTheUser;
 
             state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount, stopwatch.Elapsed, "Intent Extractor Agent");
@@ -301,18 +303,45 @@ namespace AgentMesh.Application.Workflows
             {
                 notifyDictionary.Add("LanguageOfTheUser", state.LanguageOfTheUser);
             }
-            if (state.MissingPastMemories != null && state.MissingPastMemories.Any())
-            {
-                notifyDictionary.Add("MissingPastMemoriesDetails", string.Join("\n", state.MissingPastMemories.Select(m => $"- {m}")));
-            }
-            if (state.MissingKnowledgeBaseSearchEntries != null && state.MissingKnowledgeBaseSearchEntries.Any())
-            {
-                notifyDictionary.Add("MissingKnowledgeBaseEntriesDetails", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")));
-            }
             notifyDictionary.Add("ELAPSED_TIME", GetElapsedTime(stopwatch));
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", notifyDictionary);
         }
 
+        private async Task ExecuteSearchQueriesGeneratorAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Search Queries Generator Agent...");
+
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Search Queries Generator Agent", new Dictionary<string, string>
+            {
+                { "UserIntent", state.UserIntent ?? "(No intent extracted)" },
+                { "UserLastRequest", state.OriginalUserRequest }
+            });
+
+            var output = await _searchQueriesGeneratorAgent.ExecuteAsync(new SearchQueriesGeneratorAgentInput
+            {
+                ContextMessages = [.. state.InitialContextMessages],
+                UserLastRequest = state.OriginalUserRequest,
+                UserIntent = state.UserIntent ?? string.Empty
+            });
+
+            state.MissingPastMemories = output.MissingPastMemories;
+            state.MissingKnowledgeBaseSearchEntries = output.MissingKnowledgeBaseSearchEntries;
+
+            state.AddTokenUsage(SearchQueriesGeneratorAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Search Queries Generator Agent");
+
+            var notifyDictionary = new Dictionary<string, string>();
+            if (state.MissingPastMemories.Any())
+            {
+                notifyDictionary.Add("MissingPastMemoriesDetails", string.Join("\n", state.MissingPastMemories.Select(m => $"- {m}")));
+            }
+            if (state.MissingKnowledgeBaseSearchEntries.Any())
+            {
+                notifyDictionary.Add("MissingKnowledgeBaseEntriesDetails", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")));
+            }
+            notifyDictionary.Add("ELAPSED_TIME", GetElapsedTime(stopwatch));
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Search Queries Generator Agent", notifyDictionary);
+        }
 
         private async Task ExecuteQueryCacheServiceAsync(CodeModeWorkflowState state)
         {
