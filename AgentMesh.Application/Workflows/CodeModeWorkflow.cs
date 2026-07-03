@@ -91,6 +91,9 @@ namespace AgentMesh.Application.Workflows
             var state = new CodeModeWorkflowState(userInput, chatHistory);
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
+
+            return new WorkflowResult();
+
             await ExecuteSearchQueriesGeneratorAsync(state);
 
             if (_workflowConfiguration.EnableCacheService
@@ -292,6 +295,8 @@ namespace AgentMesh.Application.Workflows
 
             state.UserIntent = intentExtractorOutput.UserIntent;
             state.LanguageOfTheUser = intentExtractorOutput.LanguageOfTheUser;
+            state.SupportingIntentInformation = intentExtractorOutput.SupportingIntentInformation;
+            state.UserRequestDomains = intentExtractorOutput.UserRequestDomains;
 
             state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount, stopwatch.Elapsed, "Intent Extractor Agent");
 
@@ -302,6 +307,14 @@ namespace AgentMesh.Application.Workflows
             if (state.LanguageOfTheUser != null)
             {
                 notifyDictionary.Add("LanguageOfTheUser", state.LanguageOfTheUser);
+            }
+            if (state.SupportingIntentInformation.Any())
+            {
+                notifyDictionary.Add("SupportingIntentInformation", string.Join("\n", state.SupportingIntentInformation.Select(info => $"- {info}")));
+            }
+            if (state.UserRequestDomains.Any())
+            {
+                notifyDictionary.Add("UserRequestDomains", string.Join("\n", state.UserRequestDomains.Select(domain => $"- {domain}")));
             }
             notifyDictionary.Add("ELAPSED_TIME", GetElapsedTime(stopwatch));
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", notifyDictionary);

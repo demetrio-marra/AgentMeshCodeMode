@@ -35,6 +35,8 @@ namespace AgentMesh.Application.Services
             {
                 UserIntent = result.Result.UserIntent,
                 LanguageOfTheUser = result.Result.LanguageOfTheUser,
+                SupportingIntentInformation = result.Result.SupportingIntentInformation,
+                UserRequestDomains = result.Result.UserRequestDomains,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount,
                 TokenCount = result.TotalTokenCount
@@ -61,6 +63,18 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty user intent.");
                 }
 
+                responseDTO.SupportingIntentInformation = responseDTO.SupportingIntentInformation
+                    .Where(entry => !string.IsNullOrWhiteSpace(entry))
+                    .Select(entry => entry.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                responseDTO.UserRequestDomains = responseDTO.UserRequestDomains
+                    .Where(entry => !string.IsNullOrWhiteSpace(entry))
+                    .Select(entry => entry.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
                 return responseDTO;
             }
             catch (JsonException ex)
@@ -77,6 +91,12 @@ namespace AgentMesh.Application.Services
 
             [JsonPropertyName("languageOfTheUser")]
             public string? LanguageOfTheUser { get; set; }
+
+            [JsonPropertyName("supportingIntentInformation")]
+            public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
+
+            [JsonPropertyName("userRequestDomains")]
+            public IEnumerable<string> UserRequestDomains { get; set; } = [];
         }
     }
 }

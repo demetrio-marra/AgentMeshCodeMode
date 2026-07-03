@@ -12,6 +12,8 @@ namespace AgentMesh.Application.Models
         public string OriginalUserRequest { get; } = userQuestion;
         public string? LanguageOfTheUser { get; set; }
         public string? UserIntent { get; set; }
+        public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
+        public IEnumerable<string> UserRequestDomains { get; set; } = [];
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
         public IEnumerable<SearchQueriesGeneratorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
         public string EnrichedUserRequest { get; set; } = string.Empty;

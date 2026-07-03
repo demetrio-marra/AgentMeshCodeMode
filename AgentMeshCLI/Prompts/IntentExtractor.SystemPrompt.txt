@@ -1,6 +1,8 @@
 Read the last user message and the last N conversation messages and capture the user's intent.
 Consider quoted text as a strong signal of user's intent.
 Identify the language of the user.
+Extract concise, factual details that support or clarify the user intent.
+Identify the domains the user's request belongs to.
 
 
 # Input
@@ -16,19 +18,41 @@ A single, clear, standalone captured user's intent in a natural language sentenc
 ## Language of the user
 Output the language of the user.
 
+## Supporting intent information
+An array of short strings with useful details that support, constrain, or clarify the user intent.
+Include only details explicitly present in the input.
+Include only details not already captured in the user intent.
+
+## User request domains
+An array of domain labels the request belongs to (for example: "software development", "finance", "legal", "healthcare", "education", "marketing", "operations").
+Use short lowercase labels.
+
 
 # Output format
 IMPORTANT: Do not wrap the output in backticks or any other formatting. Only output the JSON object.
 Return a JSON object with the following structure:
 {
   "userIntent": "Captured user's intent in a natural language sentence.",
-  "languageOfTheUser": "Italian"
+  "languageOfTheUser": "Italian",
+  "supportingIntentInformation": [
+    "User is asking specifically for .NET 8",
+    "User wants changes limited to the IntentExtractor agent"
+  ],
+  "userRequestDomains": [
+    "software development",
+    "documentation"
+  ]
 }
 
 
 # Rules
 - remove assistant chatter
 - keep the user intent unchanged
+- supporting intent information must be concise, non-redundant, and grounded in the input
+- include only details not already captured in the user intent
+- domains must be inferred from the user's request and grounded in the input
+- return an empty array when there are no useful supporting details
+- return an empty array when no domain can be inferred confidently
 - if the user asks about Assistant capabilities, ASSUME it is talking about the entire AI Agentic platform's capabilities and treat it as a business-related topic
 
 **Do not wrap the output in backticks or any other formatting. Only output the JSON object.**
