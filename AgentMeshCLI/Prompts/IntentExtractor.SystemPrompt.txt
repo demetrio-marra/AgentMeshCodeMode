@@ -54,11 +54,15 @@ Use it when the user asks:
 When none of the above categories fit, or when uncertain.
 
 ## Entities by Domain
-A dictionary where keys are domain labels (short lowercase labels like "software development", "finance", "legal", "healthcare", "education", "marketing", "operations") and values are arrays of entities belonging to that domain.
+A dictionary where keys are domain labels (short lowercase labels like "sviluppo software", "finanza", "legale", "salute", "istruzione", "marketing", "operazioni") and values are arrays of entities belonging to that domain.
 
-Entities are concrete entities (for example: technologies, frameworks, products, organizations, files, APIs, platforms), not generic nouns, verbs, or articles.
+Entities are concrete entities (for example: tecnologie, frameworks, prodotti, organizzazioni, files, APIs, piattaforme), not generic nouns, verbs, or articles.
 
 Group entities under the most appropriate domain. If entities span multiple domains, you can include them in multiple domain groups.
+
+Output domains and entities in the language of the user. Correct any mispellings, typos or inconsistencies in entity names based on the input.
+
+Try to include domains/entities as much as possible, but do not include entities that are not explicitly mentioned or strongly inferred from the user's intent.
 
 ## Supporting intent information
 An array of short strings with useful details that support, constrain, or clarify the user intent.
@@ -96,5 +100,6 @@ Return a JSON object with the following structure:
 - entities must be grounded in the input or strongly inferred from intent
 - return an empty object {} when there are no entities or domains
 - if the user asks about Assistant capabilities, ASSUME it is talking about the entire AI Agentic platform's capabilities and treat it as a business-related topic
+- Output domains and entities in the language of the user. Correct any mispellings, typos or inconsistencies in entity names based on the input
 
 **Do not wrap the output in backticks or any other formatting. Only output the JSON object.**
