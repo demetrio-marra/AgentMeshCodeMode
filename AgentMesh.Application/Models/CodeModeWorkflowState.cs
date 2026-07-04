@@ -37,6 +37,8 @@ namespace AgentMesh.Application.Models
         public IEnumerable<string> RelevantKnowledgeBaseFileNames { get; set; } = [];
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [.. contextMessages];
 
+        public KnowledgeBaseQueryResult FastKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
+
         public KnowledgeBaseQueryResult KnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 
         public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseDocumentsContent { get; set; } = [];

@@ -48,6 +48,7 @@ namespace AgentMesh.Application.Workflows
         IAgentMemorySaver agentMemorySaver,
         IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
         IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor,
+        IKnowledgeBaseSearchFastExecutor knowledgeBaseSearchFastExecutor,
         IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
         CodeModeWorkflowConfiguration workflowConfiguration,
         IQueriesCacheService queriesCacheService) : IWorkflow
@@ -80,6 +81,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IAgentMemorySaver _agentMemorySaver = agentMemorySaver;
         private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
         private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
+        private readonly IKnowledgeBaseSearchFastExecutor _knowledgeBaseSearchFastExecutor = knowledgeBaseSearchFastExecutor;
         private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
         private readonly IQueriesCacheService _queriesCacheService = queriesCacheService;
@@ -91,6 +93,14 @@ namespace AgentMesh.Application.Workflows
             var state = new CodeModeWorkflowState(userInput, chatHistory);
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
+
+            if (state.EntitiesByDomain.Any())
+            {
+                await ExecuteKnowledgeBaseServiceFastSearchAsync(state);
+            }
+
+            //return new WorkflowResult();
+
             await ExecuteSearchQueriesGeneratorAsync(state);
 
           
@@ -608,6 +618,78 @@ namespace AgentMesh.Application.Workflows
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Search Service", notifyDictionary);
+        }
+
+        private async Task ExecuteKnowledgeBaseServiceFastSearchAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Knowledge Base Fast Service...");
+            
+            var domainsDisplay = string.Join("\n", state.EntitiesByDomain.Select(kvp => 
+                $"- {kvp.Key}: {string.Join(", ", kvp.Value)}"));
+            
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Fast Search Service", new Dictionary<string, string>
+            {
+                { "Domains", domainsDisplay }
+            });
+
+            var queries = new List<KnowledgeBaseQueryInputItem>();
+            
+            foreach (var domainEntry in state.EntitiesByDomain)
+            {
+                var domain = domainEntry.Key;
+                var entities = domainEntry.Value;
+                // Add a keyword search for the domain
+                queries.Add(new KnowledgeBaseQueryInputItem
+                {
+                    Query = domain,
+                    SearchType = KnowledgeBaseQuerySearchType.Keyword
+                });
+                // Add a keyword search for each entity in the domain
+                foreach (var entity in entities)
+                {
+                    queries.Add(new KnowledgeBaseQueryInputItem
+                    {
+                        Query = entity,
+                        SearchType = KnowledgeBaseQuerySearchType.Keyword
+                    });
+                }
+            }
+
+            if (!queries.Any())
+            {
+                _logger.LogDebug("No domains or entities to search for in knowledge base");
+                state.AddStepUsage("KB Fast Search Service", stopwatch.Elapsed, false);
+                await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Fast Search Service", new Dictionary<string, string>
+                {
+                    { "ExtractedKnowledgeBaseEntries", "(No queries generated)" },
+                    { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+                });
+                return;
+            }
+
+            KnowledgeBaseQueryInput queryInput = new()
+            {
+                UserIntent = state.UserIntent,
+                Queries = queries
+            };
+
+            var brcOutput = await _knowledgeBaseSearchFastExecutor.ExecuteAsync(queryInput, CancellationToken.None);
+
+            var existingResults = state.KnowledgeBaseQueryResults.Results.ToList();
+            state.KnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
+            {
+                Results = existingResults.Concat(brcOutput.Results).ToList()
+            };
+
+            state.AddStepUsage("KB Fast Search Service", stopwatch.Elapsed, false);
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "ExtractedKnowledgeBaseEntries", string.Join("\n", brcOutput.Results.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Fast Search Service", notifyDictionary);
         }
 
 
