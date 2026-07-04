@@ -1,8 +1,9 @@
 using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
+using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
-using static AgentMesh.Models.ContextAnalyzer.ContextAnalyzerAgentOutput;
+using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
 using static AgentMesh.Models.SearchQueriesGenerator.SearchQueriesGeneratorAgentOutput;
 
 namespace AgentMesh.Application.Models
@@ -12,8 +13,7 @@ namespace AgentMesh.Application.Models
         public string OriginalUserRequest { get; } = userQuestion;
         public string? LanguageOfTheUser { get; set; }
         public string? UserIntent { get; set; }
-        public IEnumerable<string> Entities { get; set; } = [];
-        public IEnumerable<string> Domains { get; set; } = [];
+        public Dictionary<string, IEnumerable<string>> EntitiesByDomain { get; set; } = new();
         public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
         public IEnumerable<SearchQueriesGeneratorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
@@ -40,7 +40,6 @@ namespace AgentMesh.Application.Models
         public KnowledgeBaseQueryResult KnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 
         public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseDocumentsContent { get; set; } = [];
-
 
         public void AddTokenUsage(string agentName, int inputTokenCount, int outputTokenCount, TimeSpan? elapsed = null, string? stepName = null)
         {

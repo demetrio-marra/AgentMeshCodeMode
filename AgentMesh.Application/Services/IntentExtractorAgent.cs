@@ -34,8 +34,8 @@ namespace AgentMesh.Application.Services
             var ret = new IntentExtractorAgentOutput
             {
                 UserIntent = result.Result.UserIntent,
-                Entities = result.Result.Entities,
-                Domains = result.Result.Domains,
+                UserIntentCategory = result.Result.UserIntentCategory,
+                EntitiesByDomain = result.Result.EntitiesByDomain,
                 SupportingIntentInformation = result.Result.SupportingIntentInformation,
                 LanguageOfTheUser = result.Result.LanguageOfTheUser,
                 InputTokenCount = result.InputTokenCount,
@@ -70,36 +70,17 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty language of the user.");
                 }
 
-                responseDTO.Entities = responseDTO.Entities
-                    .Where(entry => !string.IsNullOrWhiteSpace(entry))
-                    .Select(entry => entry.Trim())
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
-
-                responseDTO.Domains = responseDTO.Domains
-                    .Where(entry => !string.IsNullOrWhiteSpace(entry))
-                    .Select(entry => entry.Trim())
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
-
                 responseDTO.LanguageOfTheUser = responseDTO.LanguageOfTheUser.Trim();
 
-                var legacyDomains = responseDTO.LegacyUserRequestDomains
-                    .Where(entry => !string.IsNullOrWhiteSpace(entry))
-                    .Select(entry => entry.Trim())
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
-
-                if (!responseDTO.Domains.Any() && legacyDomains.Any())
-                {
-                    responseDTO.Domains = legacyDomains;
-                }
+                responseDTO.EntitiesByDomain = ParseEntitiesByDomain(responseDTO.EntitiesByDomainRaw);
 
                 responseDTO.SupportingIntentInformation = responseDTO.SupportingIntentInformation
                     .Where(entry => !string.IsNullOrWhiteSpace(entry))
                     .Select(entry => entry.Trim())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToArray();
+
+                responseDTO.UserIntentCategory = ParseUserIntentCategory(responseDTO.UserIntentCategoryRaw);
 
                 return responseDTO;
             }
@@ -110,16 +91,61 @@ namespace AgentMesh.Application.Services
             }
         }
 
+        private static Dictionary<string, IEnumerable<string>> ParseEntitiesByDomain(
+            Dictionary<string, IEnumerable<string>>? entitiesByDomain)
+        {
+            var result = new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase);
+
+            if (entitiesByDomain != null && entitiesByDomain.Any())
+            {
+                foreach (var kvp in entitiesByDomain)
+                {
+                    var domain = kvp.Key?.Trim();
+                    if (string.IsNullOrWhiteSpace(domain))
+                        continue;
+
+                    var entities = kvp.Value
+                        .Where(e => !string.IsNullOrWhiteSpace(e))
+                        .Select(e => e.Trim())
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToArray();
+
+                    if (entities.Any())
+                    {
+                        result[domain] = entities;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private static IntentExtractorAgentOutput.UserIntentCategoryValues ParseUserIntentCategory(string userIntentCategory)
+        {
+            if (Enum.TryParse<IntentExtractorAgentOutput.UserIntentCategoryValues>(userIntentCategory, true, out var parsedCategory))
+            {
+                return parsedCategory;
+            }
+
+            throw new BadStructuredResponseException(userIntentCategory, $"Unknown user intent category: {userIntentCategory}");
+        }
+
         public class ParsedResponse
         {
             [JsonPropertyName("userIntent")]
             public string UserIntent { get; set; } = string.Empty;
 
-            [JsonPropertyName("entities")]
-            public IEnumerable<string> Entities { get; set; } = [];
+            [JsonPropertyName("userIntentCategory")]
+            public string UserIntentCategoryRaw { get; set; } = string.Empty;
 
-            [JsonPropertyName("domains")]
-            public IEnumerable<string> Domains { get; set; } = [];
+            [JsonIgnore]
+            public IntentExtractorAgentOutput.UserIntentCategoryValues UserIntentCategory { get; set; }
+
+            [JsonPropertyName("entitiesByDomain")]
+            public Dictionary<string, IEnumerable<string>>? EntitiesByDomainRaw { get; set; }
+
+            [JsonIgnore]
+            public Dictionary<string, IEnumerable<string>> EntitiesByDomain { get; set; } = new();
 
             [JsonPropertyName("supportingIntentInformation")]
             public IEnumerable<string> SupportingIntentInformation { get; set; } = [];

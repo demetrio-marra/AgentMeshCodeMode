@@ -33,7 +33,6 @@ namespace AgentMesh.Application.Services
             return new ContextAnalyzerAgentOutput
             {
                 CondensedUserIntent = result.Result.CondensedUserIntent,
-                UserIntentCategory = result.Result.UserIntentCategory,
                 FilteredKnowledgeBaseDocuments = result.Result.FilteredKnowledgeBaseDocuments,
 
                 TokenCount = result.TotalTokenCount,
@@ -55,7 +54,6 @@ namespace AgentMesh.Application.Services
                 return new ContextAnalyzerAgentOutput
                 {
                     CondensedUserIntent = responseDTO.CondensedUserIntent,
-                    UserIntentCategory = ParseUserIntentCategory(responseDTO.UserIntentCategory),
                     FilteredKnowledgeBaseDocuments = [.. responseDTO.FilteredKnowledgeBaseDocuments.Select(u => new FilteredKnowledgeBaseItem
                     {
                         Title = u.Title,
@@ -69,23 +67,10 @@ namespace AgentMesh.Application.Services
             }
         }
 
-        private static UserIntentCategoryValues ParseUserIntentCategory(string userIntentCategory)
-        {
-            if (Enum.TryParse<UserIntentCategoryValues>(userIntentCategory, true, out var parsedCategory))
-            {
-                return parsedCategory;
-            }
-
-            throw new BadStructuredResponseException(userIntentCategory, $"Unknown user intent category: {userIntentCategory}");
-        }
-
         private class ContextAnalyzerAgentOutputDTO
         {
             [JsonPropertyName("condensedUserIntent")]
             public string CondensedUserIntent { get; set; } = string.Empty;
-
-            [JsonPropertyName("userIntentCategory")]
-            public string UserIntentCategory { get; set; } = string.Empty;
 
             [JsonPropertyName("filteredKnowledgeBaseDocuments")]
             public List<FilteredKnowledgeBaseDTOItem> FilteredKnowledgeBaseDocuments { get; set; } = [];

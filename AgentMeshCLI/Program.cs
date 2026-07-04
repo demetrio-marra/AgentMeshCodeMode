@@ -57,7 +57,9 @@ namespace AgentMesh
 
             services.AddSingleton<IKnowledgeBaseService, QMDKnowledgeBaseService>();
             services.AddSingleton<KnowledgeBaseExecutor>();
+            services.AddSingleton<KnowledgeBaseSearchFastExecutor>();
             services.AddSingleton<IKnowledgeBaseSearchExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
+            services.AddSingleton<IKnowledgeBaseSearchFastExecutor>(sp => sp.GetRequiredService<KnowledgeBaseSearchFastExecutor>());
             services.AddSingleton<IKnowledgeBaseGetDocsExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
 
             // Queries cache service configuration

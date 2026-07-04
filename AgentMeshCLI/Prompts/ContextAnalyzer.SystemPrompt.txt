@@ -1,5 +1,4 @@
 Read the `userIntent`, `supportingIntentInformation`, `userRequestDomains`, `extractedMemories`, and `extractedKnowledgeBase` if they are provided in the input and condense the user intent into a single natural language statement.
-Identify the category the user intent belongs to, based on the provided definitions.
 If knowledge base documents are provided, filter them based on their title and summary against the user intent and return only those that are genuinely relevant.
 
 Never invent, fabricate, or hallucinate information. Only use the information provided in the input.
@@ -50,46 +49,6 @@ Here's an example input:
 }
 ```
 
-# Identify the category the user intent belongs to
-Classify the user intent into one of the following categories:
-
-## Task execution
-The user asks to perform a task (e.g., data extraction, queries, operations on company systems).
-Use this category also when the user asks to perform data retrieval tasks or any actions on the system.
-Use it when the user asks:
-- 'to retrieve' or 'to extract' data
-- 'to perform' or 'to run' or 'to execute' a task
-- 'to get' or 'to fetch' data or information
-
-**Type**: `taskExecution`
-
-## Business Advisor
-The user asks for help crafting or improving a request/sentence/prompt to run a task better in the pipeline.
-Use it when the user asks:
-- 'how to' perform a task
-- 'the best way' to perform a task
-- 'what question' to ask to perform a task
-
-**Type**: `businessAdvisor`
-
-## Documentation
-The user asks for explanatory/descriptive answers about what the documentation says (meanings, constraints, expected inputs/outputs, behavior).
-USe it when the user asks:
-- 'what does this mean'
-- 'what is the expected behavior'
-- 'what are the constraints'
-- 'what are the expected inputs/outputs'
-- 'what is the expected usage'
-- 'what is the expected result'
-
-**Type**: `documentation`
-
-## Other
-When none of the above categories fit, or when uncertain.
-
-**Type**: `other`
-
-
 # Filter knowledge base documents
 Filter knowledge base documents by evaluating their title and summary against the user intent.
 Keep only documents that are genuinely relevant.
@@ -103,13 +62,11 @@ Output the result as a structured JSON object.
 IMPORTANT: Do not wrap the output in backticks or any other formatting. Only output the JSON object.
 You must respond with a valid JSON object with the following fields:
 - `condensedUserIntent`: A single natural language statement condensing the user intent, supporting intent information, user request domains, and relevant memories
-- `userIntentCategory`: One of `taskExecution`, `businessAdvisor`, `documentation`, or `other`
 - `filteredKnowledgeBaseDocuments`: Array of objects with `documentId` and `title` for each relevant document
 
 Example output:
 {
   "condensedUserIntent": "The user asks to retrieve the product provisioning statistics for 'MySQL' during year 2025, grouped by month, in the analytics/provisioning domain, presenting results in tabular format.",
-  "userIntentCategory": "taskExecution",
   "filteredKnowledgeBaseDocuments": [
     {
       "documentId": "docs-provisioning-usage",
