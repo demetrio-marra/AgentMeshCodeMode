@@ -78,6 +78,7 @@ namespace AgentMesh.Application.Services
 
             return new DomainExpertAgentOutput
             {
+                BusinessRequirements = result.Result.BusinessRequirements,
                 KnowledgeBaseAPIQueries = result.Result.KnowledgeBaseAPIQueries,
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
@@ -95,6 +96,12 @@ namespace AgentMesh.Application.Services
                 {
                     _logger.LogWarning("The model's response could not be deserialized into the expected format. Response text: {ResponseText}", rawResponseText);
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
+                }
+
+                if (string.IsNullOrWhiteSpace(responseDTO.BusinessRequirements))
+                {
+                    _logger.LogWarning("The model's response contains empty business requirements. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty business requirements.");
                 }
 
                 responseDTO.KnowledgeBaseAPIQueries ??= [];
@@ -122,6 +129,9 @@ namespace AgentMesh.Application.Services
 
         public class ParsedResponse
         {
+            [JsonPropertyName("businessRequirements")]
+            public string BusinessRequirements { get; set; } = string.Empty;
+
             [JsonPropertyName("knowledgeBaseAPIQueries")]
             public IEnumerable<DomainExpertAgentOutput.KnowledgeBaseAPIQuery> KnowledgeBaseAPIQueries { get; set; } = [];
         }

@@ -4,6 +4,7 @@ namespace AgentMesh.Models.DomainExpert
 {
     public class DomainExpertAgentOutput : IAgentOutput
     {
+        public string BusinessRequirements { get; set; } = string.Empty;
         public IEnumerable<KnowledgeBaseAPIQuery> KnowledgeBaseAPIQueries { get; set; } = [];
         public int TokenCount { get; set; }
         public int InputTokenCount { get; set; }
