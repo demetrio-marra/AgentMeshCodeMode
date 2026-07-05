@@ -2,7 +2,7 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Models.TechnicalAnalyst;
+using AgentMesh.Models.DomainExpert;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,15 +11,15 @@ using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class TechnicalAnalystAgent(
-        [FromKeyedServices(TechnicalAnalystAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+    public class DomainExpertAgent(
+        [FromKeyedServices(DomainExpertAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<TechnicalAnalystAgent> logger) : AgentBase<TechnicalAnalystAgent.ParsedResponse>(logger, TechnicalAnalystAgentConfiguration.AgentName, openAIClient, resilience), ITechnicalAnalystAgent
+        ILogger<DomainExpertAgent> logger) : AgentBase<DomainExpertAgent.ParsedResponse>(logger, DomainExpertAgentConfiguration.AgentName, openAIClient, resilience), IDomainExpertAgent
     {
-        private readonly ILogger<TechnicalAnalystAgent> _logger = logger;
+        private readonly ILogger<DomainExpertAgent> _logger = logger;
 
-        public async Task<TechnicalAnalystAgentOutput> ExecuteAsync(
-            TechnicalAnalystAgentInput input,
+        public async Task<DomainExpertAgentOutput> ExecuteAsync(
+            DomainExpertAgentInput input,
             CancellationToken cancellationToken = default)
         {
             var inputMessages = new List<AgentMessage>();
@@ -34,7 +34,7 @@ namespace AgentMesh.Application.Services
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            return new TechnicalAnalystAgentOutput
+            return new DomainExpertAgentOutput
             {
                 BusinessRequirements = result.Result.BusinessRequirements,
                 TokenCount = result.TotalTokenCount,

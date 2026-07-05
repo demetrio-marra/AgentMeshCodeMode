@@ -110,28 +110,28 @@ namespace AgentMesh
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<LLMsConfiguration>>().Value);
 
-            // Technical Analyst agent config and client
+            // Domain Expert agent config and client
             services
-                .AddOptions<TechnicalAnalystAgentConfiguration>()
-                .Bind(configuration.GetSection(TechnicalAnalystAgentConfiguration.SectionName))
+                .AddOptions<DomainExpertAgentConfiguration>()
+                .Bind(configuration.GetSection(DomainExpertAgentConfiguration.SectionName))
                 .PostConfigure(options =>
                 {
                     options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
                 })
                 .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<TechnicalAnalystAgentConfiguration>>().Value);
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<DomainExpertAgentConfiguration>>().Value);
 
-            services.AddKeyedSingleton<IOpenAIClient>(TechnicalAnalystAgentConfiguration.AgentName, (sp, _) =>
+            services.AddKeyedSingleton<IOpenAIClient>(DomainExpertAgentConfiguration.AgentName, (sp, _) =>
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<TechnicalAnalystAgentConfiguration>();
+                var config = sp.GetRequiredService<DomainExpertAgentConfiguration>();
                 var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
                 var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<ITechnicalAnalystAgent, TechnicalAnalystAgent>();
+            services.AddSingleton<IDomainExpertAgent, DomainExpertAgent>();
 
             // Business Advisor agent config and client
             services

@@ -5,7 +5,6 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models;
 using AgentMesh.Models.BusinessAdvisor;
-using AgentMesh.Models.TechnicalAnalyst;
 using AgentMesh.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Models.CodeFixer;
 using AgentMesh.Models.Coder;
@@ -27,12 +26,13 @@ using System.Diagnostics;
 using AgentMesh.Models.AgentMemory;
 using System.Data;
 using AgentMesh.Models.QueriesCache;
+using AgentMesh.Models.DomainExpert;
 
 namespace AgentMesh.Application.Workflows
 {
     public partial class CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
         IWorkflowProgressNotifier workflowProgressNotifier,
-        ITechnicalAnalystAgent technicalAnalystAgent,
+        IDomainExpertAgent domainExpertAgent,
         IBusinessAdvisorAgent businessAdvisorAgent,
         IDocumentationAgent documentationAgent,
         ICoderAgent coderAgent,
@@ -65,7 +65,7 @@ namespace AgentMesh.Application.Workflows
         private readonly ILogger<CodeModeWorkflow> _logger = logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
 
-        private readonly ITechnicalAnalystAgent _technicalAnalystAgent = technicalAnalystAgent;
+        private readonly IDomainExpertAgent _domainExpertAgent = domainExpertAgent;
         private readonly IBusinessAdvisorAgent _businessAdvisorAgent = businessAdvisorAgent;
         private readonly IDocumentationAgent _documentationAgent = documentationAgent;
         private readonly ICoderAgent _coderAgent = coderAgent;
@@ -146,7 +146,7 @@ namespace AgentMesh.Application.Workflows
             }
             else if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
             {
-                await ExecuteTechnicalAnalystAsync(state);
+                await ExecuteDomainExpertAsync(state);
                 await ExecuteCoderAsync(state);
 
                 await ExecuteJSSandboxAsync(state, false);
@@ -242,40 +242,40 @@ namespace AgentMesh.Application.Workflows
                 FilePaths = state.RelevantKnowledgeBaseFileNames
             });
 
-            // additional feature
-            if (AUTOMATICALLY_FETCH_RELATED_DOCUMENTATION)
-            {
-                var relatedDocs = new List<string>();
-                foreach (var mainDoc in fetchedFilesContent.Results)
-                {
-                    // find words within double square brackets [[...]] in the mainDoc.Content using regex
-                    var matches = MyRegex().Matches(mainDoc.Content);
-                    foreach (System.Text.RegularExpressions.Match match in matches)
-                    {
-                        var relatedDocName = match.Groups[1].Value;
-                        if (!relatedDocs.Contains(relatedDocName))
-                        {
-                            relatedDocs.Add(relatedDocName);
-                        }
-                    }
-                }
+            //// additional feature
+            //if (AUTOMATICALLY_FETCH_RELATED_DOCUMENTATION)
+            //{
+            //    var relatedDocs = new List<string>();
+            //    foreach (var mainDoc in fetchedFilesContent.Results)
+            //    {
+            //        // find words within double square brackets [[...]] in the mainDoc.Content using regex
+            //        var matches = MyRegex().Matches(mainDoc.Content);
+            //        foreach (System.Text.RegularExpressions.Match match in matches)
+            //        {
+            //            var relatedDocName = match.Groups[1].Value;
+            //            if (!relatedDocs.Contains(relatedDocName))
+            //            {
+            //                relatedDocs.Add(relatedDocName);
+            //            }
+            //        }
+            //    }
 
-                // distinct on relatedDocs
-                relatedDocs = [.. relatedDocs.Distinct()];
+            //    // distinct on relatedDocs
+            //    relatedDocs = [.. relatedDocs.Distinct()];
 
-                // avoid extracting already fetched docs
-                relatedDocs = [.. relatedDocs.Except(fetchedFilesContent.Results.Where(r => !string.IsNullOrEmpty(r.File)).Select(r => r.File!))];
+            //    // avoid extracting already fetched docs
+            //    relatedDocs = [.. relatedDocs.Except(fetchedFilesContent.Results.Where(r => !string.IsNullOrEmpty(r.File)).Select(r => r.File!))];
 
-                // fetch again the content of the related docs and add them to the fetchedFilesContent.Results
-                if (relatedDocs.Count != 0)
-                {
-                    var relatedDocsContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
-                    {
-                        FilePaths = relatedDocs
-                    });
-                    fetchedFilesContent.Results = fetchedFilesContent.Results.Concat(relatedDocsContent.Results);
-                }
-            }
+            //    // fetch again the content of the related docs and add them to the fetchedFilesContent.Results
+            //    if (relatedDocs.Count != 0)
+            //    {
+            //        var relatedDocsContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
+            //        {
+            //            FilePaths = relatedDocs
+            //        });
+            //        fetchedFilesContent.Results = fetchedFilesContent.Results.Concat(relatedDocsContent.Results);
+            //    }
+            //}
 
             state.KnowledgeBaseDocumentsContent = [.. state.KnowledgeBaseQueryResults.Results
                 .Join(fetchedFilesContent.Results, kb => kb.File, fc => fc.File, (kb, fc) => new { kb, fc })
@@ -796,12 +796,12 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", contextAnalyzerOutputLogEntries);
         }
 
-        private async Task ExecuteTechnicalAnalystAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
+        private async Task ExecuteDomainExpertAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
             var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Technical Analyst Agent...");
+            _logger.LogDebug("Engaging Domain Expert Agent...");
             var enrichedUserRequest = state.EnrichedUserRequest ?? "(No enriched user request)";
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Technical Analyst Agent", new Dictionary<string, string>
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Domain Expert Agent", new Dictionary<string, string>
             {
                 { "EnrichedUserRequest", enrichedUserRequest },
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
@@ -809,20 +809,20 @@ namespace AgentMesh.Application.Workflows
 
             var serializedDocumentation = SerializeDocumentationForBusinessAnalyst(state.KnowledgeBaseDocumentsContent);
 
-            var technicalAnalystOutput = await _technicalAnalystAgent.ExecuteAsync(new TechnicalAnalystAgentInput
+            var domainExpertOutput = await _domainExpertAgent.ExecuteAsync(new DomainExpertAgentInput
             {
                 EnrichedUserRequest = enrichedUserRequest,
                 ApiDocumentation = serializedDocumentation
             }, cancellationToken);
             state.ShouldEngageCoder = true;
-            state.BusinessRequirements = technicalAnalystOutput.BusinessRequirements;
-            state.AddTokenUsage(TechnicalAnalystAgentConfiguration.AgentName, technicalAnalystOutput.InputTokenCount, technicalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Technical Analyst Agent");
+            state.BusinessRequirements = domainExpertOutput.BusinessRequirements;
+            state.AddTokenUsage(DomainExpertAgentConfiguration.AgentName, domainExpertOutput.InputTokenCount, domainExpertOutput.OutputTokenCount, stopwatch.Elapsed, "Domain Expert Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "BusinessRequirements", technicalAnalystOutput.BusinessRequirements },
+                { "BusinessRequirements", domainExpertOutput.BusinessRequirements },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Technical Analyst Agent", notifyDictionary);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Domain Expert Agent", notifyDictionary);
         }
 
         private async Task ExecuteCoderAsync(CodeModeWorkflowState state)

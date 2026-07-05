@@ -12,7 +12,7 @@ namespace AgentMesh
     internal class UserConsoleInputService(
         IWorkflow workflow,
         IWorkflowProgressNotifier workflowProgressNotifier,
-        TechnicalAnalystAgentConfiguration technicalAnalystConfiguration,
+        DomainExpertAgentConfiguration domainExpertConfiguration,
         BusinessAdvisorAgentConfiguration businessAdvisorConfiguration,
         CoderAgentConfiguration coderConfiguration,
         CodeFixerAgentConfiguration codeFixerConfiguration,
@@ -32,7 +32,7 @@ namespace AgentMesh
     {
         private readonly IWorkflow _workflow = workflow;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-        private readonly TechnicalAnalystAgentConfiguration _technicalAnalystConfiguration = technicalAnalystConfiguration;
+        private readonly DomainExpertAgentConfiguration _domainExpertConfiguration = domainExpertConfiguration;
         private readonly BusinessAdvisorAgentConfiguration _businessAdvisorConfiguration = businessAdvisorConfiguration;
         private readonly CoderAgentConfiguration _coderConfiguration = coderConfiguration;
         private readonly CodeFixerAgentConfiguration _codeFixerConfiguration = codeFixerConfiguration;
@@ -118,7 +118,7 @@ namespace AgentMesh
                 var agentInputCosts = new Dictionary<string, decimal>
                 {
                     { IntentExtractorAgentConfiguration.AgentName, _llmsConfiguration[_intentExtractorConfiguration.LLM].CostPerMillionInputTokens },
-                    { TechnicalAnalystAgentConfiguration.AgentName, _llmsConfiguration[_technicalAnalystConfiguration.LLM].CostPerMillionInputTokens },
+                    { DomainExpertAgentConfiguration.AgentName, _llmsConfiguration[_domainExpertConfiguration.LLM].CostPerMillionInputTokens },
                     { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionInputTokens },
                     { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionInputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionInputTokens },
@@ -134,7 +134,7 @@ namespace AgentMesh
                 var agentOutputCosts = new Dictionary<string, decimal>
                 {
                     { IntentExtractorAgentConfiguration.AgentName, _llmsConfiguration[_intentExtractorConfiguration.LLM].CostPerMillionOutputTokens },
-                    { TechnicalAnalystAgentConfiguration.AgentName, _llmsConfiguration[_technicalAnalystConfiguration.LLM].CostPerMillionOutputTokens },
+                    { DomainExpertAgentConfiguration.AgentName, _llmsConfiguration[_domainExpertConfiguration.LLM].CostPerMillionOutputTokens },
                     { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionOutputTokens },
                     { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionOutputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionOutputTokens },
@@ -214,7 +214,7 @@ namespace AgentMesh
             Console.WriteLine("Sandbox Url: " + _sesJsSandboxConfiguration.SandboxServiceURL + ", SandboxName: " + _sesJsSandboxConfiguration.SandboxName + ", AgentId: " + _userConfiguration.AgentId);
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Intent Extractor", IntentExtractorAgentConfiguration.AgentName, _intentExtractorConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Technical Analyst", TechnicalAnalystAgentConfiguration.AgentName, _technicalAnalystConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Domain Expert", DomainExpertAgentConfiguration.AgentName, _domainExpertConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Business Advisor", BusinessAdvisorAgentConfiguration.AgentName, _businessAdvisorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, _coderConfiguration);
 

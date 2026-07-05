@@ -1,6 +1,6 @@
-﻿namespace AgentMesh.Models.TechnicalAnalyst
+﻿namespace AgentMesh.Models.DomainExpert
 {
-    public class TechnicalAnalystAgentOutput : IAgentOutput
+    public class DomainExpertAgentOutput : IAgentOutput
     {
         public string BusinessRequirements { get; set; } = string.Empty;
         public int TokenCount { get; set; }

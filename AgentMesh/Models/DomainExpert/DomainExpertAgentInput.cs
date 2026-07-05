@@ -1,6 +1,6 @@
-﻿namespace AgentMesh.Models.TechnicalAnalyst
+﻿namespace AgentMesh.Models.DomainExpert
 {
-    public class TechnicalAnalystAgentInput
+    public class DomainExpertAgentInput
     {
         public string EnrichedUserRequest { get; set; } = string.Empty;
 
