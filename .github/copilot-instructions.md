@@ -7,6 +7,7 @@ This file provides guidance for GitHub Copilot when working in this repository. 
 ## Table of Contents
 
 1. [Creating New Agents](#1-creating-new-agents)
+2. [Updating existing Agents](#2-updating-existing-agents)
 
 ---
 
@@ -246,3 +247,26 @@ services.AddSingleton<I<AgentName>Agent, <AgentName>Agent>();
 - **`SystemPromptFile` vs `SystemPrompt`** — Prefer `SystemPromptFile` in `appsettings.json` to keep prompts in dedicated `.txt` files. The `ResolveConfigText` helper in `Program.cs` resolves the file path at startup and populates `SystemPrompt` automatically.
 - **Project placement** — Contracts and models belong in `AgentMesh`; all application logic and configuration belong in `AgentMesh.Application`. Do not add implementation details to the `AgentMesh` contracts project.
 - **Workflow wiring** — Adding a new agent to an existing or new `IWorkflow` implementation is a separate concern. Inject the agent's interface via the workflow constructor and call `ExecuteAsync` as needed within the workflow logic.
+
+
+## 1. Updating existing Agents
+This section details the workflows on updating existing agents capabilities
+
+### Adding/Removing or Changing an agent's feature
+When the user asks for changes agent features, usually it means to update its input/output along the system prompt. Follow the script below.
+- Update the system prompt to instruct the model to consider new properties/reconsider existing ones
+- Change the DTOs to reflect new properties
+- Update the Agent's class file, how input is sent and how response is parsed
+- Update the Agent's executor in the `CodeModeWorkflow.cs` file to trace properties in `notifyDictionary`
+- Update the `CodeModeWorkflowState.cs` properties involved in the change.
+
+### Changes of name only
+When the user asks to refactor the name of the agent keeping features unchanged, it is just a refactor/rephrase work. Do as follows:
+- Rename any file/folder/class/enum and any kind of c# entity related.
+- Update all references with the new names
+- Update the system prompt to reflect the new name
+- Update any text within  `CodeModeWorkflow.cs` and also trace properties in `notifyDictionary`
+- Update the agent's configuration printed at program startup
+
+
+
