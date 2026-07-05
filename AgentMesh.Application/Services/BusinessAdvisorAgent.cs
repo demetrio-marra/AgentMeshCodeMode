@@ -21,9 +21,50 @@ namespace AgentMesh.Application.Services
         {
             var inputMessages = new List<AgentMessage>();
 
-            if (!string.IsNullOrWhiteSpace(input.Documentation))
+            if (!string.IsNullOrWhiteSpace(input.Intent))
             {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Available Documentation: {input.Documentation}" });
+                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Intent: {input.Intent}" });
+            }
+
+            if (input.SupportingIntentInformation.Any())
+            {
+                inputMessages.Add(new AgentMessage
+                {
+                    Role = AgentMessageRole.System,
+                    Content = $"Supporting Intent Information:\n{string.Join("\n", input.SupportingIntentInformation.Select(i => $"- {i}"))}"
+                });
+            }
+
+            if (input.Entities.Any())
+            {
+                inputMessages.Add(new AgentMessage
+                {
+                    Role = AgentMessageRole.System,
+                    Content = $"Entities:\n{string.Join("\n", input.Entities.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}")))}"
+                });
+            }
+
+            if (input.UserPreferences.Any())
+            {
+                inputMessages.Add(new AgentMessage
+                {
+                    Role = AgentMessageRole.System,
+                    Content = $"User Preferences:\n{string.Join("\n", input.UserPreferences.Select(p => $"- {p}"))}"
+                });
+            }
+
+            if (input.AgentMemories.Any())
+            {
+                inputMessages.Add(new AgentMessage
+                {
+                    Role = AgentMessageRole.System,
+                    Content = $"Memories from AgentMemoryService:\n{string.Join("\n", input.AgentMemories.Select(m => $"- {m}"))}"
+                });
+            }
+
+            if (!string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
+            {
+                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"KnowledgeBaseDocumentsContent: {input.KnowledgeBaseDocumentsContent}" });
             }
             else
             {

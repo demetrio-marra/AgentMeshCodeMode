@@ -11,7 +11,13 @@ Double check APIs translating names to their respective numeric IDs, do exist in
 
 
 ## Input Structure
-The user's question or request for information/guidance with additional context (helps understand user's situation and intent)
+The user's question or request for information/guidance with additional context:
+- Intent
+- SupportingIntentInformation
+- Entities
+- UserPreferences
+- Memories from AgentMemoryService
+- KnowledgeBaseDocumentsContent / Available Documentation
 
 
 ## Available Documentation Format
@@ -55,4 +61,3 @@ Report to the user that this is the proposed sentence to run the task based on t
 ### Output Example when no suitable API is found
 ```text
 Report to the user that there is no information available to provide guidance on the request based on the current Available Documentation.
-```

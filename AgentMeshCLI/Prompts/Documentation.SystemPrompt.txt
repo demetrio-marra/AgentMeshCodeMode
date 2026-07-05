@@ -8,7 +8,13 @@ Double check APIs translating names to their respective numeric IDs, do exist in
 
 
 ## Input Structure
-The user's question or request for clarification about documentation content, with additional context if available.
+The user's question or request for clarification about documentation content, with additional context:
+- Intent
+- SupportingIntentInformation
+- Entities
+- UserPreferences
+- Memories from AgentMemoryService
+- KnowledgeBaseDocumentsContent / Available Documentation
 
 
 ## Available Documentation Format
@@ -49,4 +55,3 @@ Report to the user the answer based on the analysis of the Available Documentati
 ### Output Example when no relevant information is found
 ```text
 Report to the user that there is no information available in the current documentation for the request.
-```
