@@ -21,15 +21,48 @@ namespace AgentMesh.Application.Services
             RequirementsCollectorAgentInput input,
             CancellationToken cancellationToken = default)
         {
+            var entitiesByDomainText = input.EntitiesByDomain.Any()
+                ? string.Join("\n", input.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(entity => $"- [{kvp.Key}] {entity}")))
+                : "(No entities)";
+
+            var supportingIntentInformationText = input.SupportingIntentInformation.Any()
+                ? string.Join("\n", input.SupportingIntentInformation.Select(info => $"- {info}"))
+                : "(No supporting intent information)";
+
+            var userPreferencesText = input.UserPreferences.Any()
+                ? string.Join("\n", input.UserPreferences.Select(preference => $"- {preference}"))
+                : "(No user preferences)";
+
+            var missingMemoriesText = input.MissingMemories.Any()
+                ? string.Join("\n", input.MissingMemories.Select(memory => $"- {memory}"))
+                : "(No missing memories extracted)";
+
+            var fastKnowledgeBaseEntriesText = input.FastKnowledgeBaseQueryResults.Any()
+                ? string.Join("\n", input.FastKnowledgeBaseQueryResults.Select(entry =>
+                    $"- Id: {entry.Id}; Title: {entry.Title}; File: {entry.File}; Relevance: {(entry.Relevance.HasValue ? entry.Relevance.Value.ToString("0.####") : "n/a")}; Summary: {entry.Summary ?? "n/a"}"))
+                : "(No fast knowledge base entries)";
+
             var userMessage = $"""
 Captured user intent:
 {input.UserIntent}
 
-Supporting intent information:
-{string.Join("\n", input.SupportingIntentInformation.Select(info => $"- {info}"))}
+Captured user intent category:
+{input.UserIntentCategory}
 
-User request domains:
-{string.Join("\n", input.UserRequestDomains.Select(domain => $"- {domain}"))}
+Captured entities by domain:
+{entitiesByDomainText}
+
+Supporting intent information:
+{supportingIntentInformationText}
+
+User preferences:
+{userPreferencesText}
+
+Missing memories:
+{missingMemoriesText}
+
+Fast Knowledge Base results:
+{fastKnowledgeBaseEntriesText}
 """;
 
             var inputMessages = new List<AgentMessage>
@@ -40,10 +73,12 @@ User request domains:
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
+            var shouldCreateMem0Queries = !input.UserPreferences.Any() || input.MissingMemories.Any();
+
             return new RequirementsCollectorAgentOutput
             {
                 MissingKnowledgeBaseSearchEntries = result.Result.MissingKnowledgeBaseSearchEntries,
-                MissingPastMemories = result.Result.MissingPastMemories,
+                MissingPastMemories = shouldCreateMem0Queries ? result.Result.MissingPastMemories : [],
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount,
                 TokenCount = result.TotalTokenCount

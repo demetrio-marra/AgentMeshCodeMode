@@ -352,15 +352,23 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Requirements Collector Agent", new Dictionary<string, string>
             {
                 { "UserIntent", state.UserIntent ?? "(No intent extracted)" },
+                { "UserIntentCategory", state.UserIntentCategoryValue.ToString() },
                 { "EntitiesByDomain", state.EntitiesByDomain.Any() ? string.Join("\n", state.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(e => $"- [{kvp.Key}] {e}"))) : "(No entities)" },
-                { "SupportingIntentInformation", state.SupportingIntentInformation.Any() ? string.Join("\n", state.SupportingIntentInformation.Select(info => $"- {info}")) : "(No supporting intent information)" }
+                { "SupportingIntentInformation", state.SupportingIntentInformation.Any() ? string.Join("\n", state.SupportingIntentInformation.Select(info => $"- {info}")) : "(No supporting intent information)" },
+                { "UserPreferences", state.UserPreferences.Any() ? string.Join("\n", state.UserPreferences.Select(pref => $"- {pref}")) : "(No user preferences)" },
+                { "MissingMemories", state.MissingMemories.Any() ? string.Join("\n", state.MissingMemories.Select(mem => $"- {mem}")) : "(No missing memories)" },
+                { "FastKnowledgeBaseResults", state.FastKnowledgeBaseQueryResults.Results.Any() ? string.Join("\n", state.FastKnowledgeBaseQueryResults.Results.Select(r => $"- [{r.File}] {r.Title}")) : "(No fast knowledge base results)" }
             });
 
             var output = await _requirementsCollectorAgent.ExecuteAsync(new RequirementsCollectorAgentInput
             {
                 UserIntent = state.UserIntent ?? string.Empty,
+                UserIntentCategory = state.UserIntentCategoryValue,
+                EntitiesByDomain = state.EntitiesByDomain,
                 SupportingIntentInformation = state.SupportingIntentInformation,
-                UserRequestDomains = state.EntitiesByDomain.Keys
+                UserPreferences = state.UserPreferences,
+                MissingMemories = state.MissingMemories,
+                FastKnowledgeBaseQueryResults = state.FastKnowledgeBaseQueryResults.Results
             });
 
             state.MissingPastMemories = output.MissingPastMemories;
