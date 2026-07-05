@@ -7,9 +7,11 @@ Group entities by the domain of human knowledge they belong to.
 Extract concise, factual details that support or clarify the user intent.
 Extract user preferences about intent's fulfilling from the previous messages list.
 Extract facts the user mentions that are missing from the previous messages list.
+An application domain list is available in the input as system information and can be used as guidance for domain grouping.
 
 
 # Input
+- application domain list (provided as a system message, may be empty)
 - last user message
 - last N conversation messages
 
@@ -120,6 +122,7 @@ Return a JSON object with the following structure:
 - userPreferences should capture explicit preferences from conversation history (e.g., format, constraints, requirements)
 - missingMemories should identify contextual facts mentioned in the current request but absent from prior messages
 - entities must be grounded in the input or strongly inferred from intent
+- use the application domain list as contextual guidance when choosing domain labels, when relevant
 - return an empty array [] for userPreferences and missingMemories when nothing is found
 - return an empty object {} when there are no entities or domains
 - if the user asks about Assistant capabilities, ASSUME it is talking about the entire AI Agentic platform's capabilities and treat it as a business-related topic

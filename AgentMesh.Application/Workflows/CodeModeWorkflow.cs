@@ -94,16 +94,17 @@ namespace AgentMesh.Application.Workflows
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
 
+            if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
+            {
+                goto CompleteWorkflow;
+            }
+
             if (state.EntitiesByDomain.Any())
             {
                 await ExecuteKnowledgeBaseServiceFastSearchAsync(state);
             }
 
-            //return new WorkflowResult();
-
             await ExecuteRequirementsCollectorAsync(state);
-
-          
 
 
             if (_workflowConfiguration.EnableCacheService
@@ -300,7 +301,8 @@ namespace AgentMesh.Application.Workflows
             var intentExtractorOutput = await _intentExtractorAgent.ExecuteAsync(new IntentExtractorAgentInput
             {
                 ContextMessages = [.. state.InitialContextMessages],
-                UserLastRequest = state.OriginalUserRequest
+                UserLastRequest = state.OriginalUserRequest,
+                ApplicationDomainList = _workflowConfiguration.ApplicationDomainList
             });
 
             state.UserIntent = intentExtractorOutput.UserIntent;
@@ -661,7 +663,7 @@ namespace AgentMesh.Application.Workflows
                 queries.Add(new KnowledgeBaseQueryInputItem
                 {
                     Query = domain,
-                    SearchType = KnowledgeBaseQuerySearchType.Keyword
+                    SearchType = KnowledgeBaseQuerySearchType.Keyword,
                 });
                 // Add a keyword search for each entity in the domain
                 foreach (var entity in entities)
@@ -689,22 +691,22 @@ namespace AgentMesh.Application.Workflows
             KnowledgeBaseQueryInput queryInput = new()
             {
                 UserIntent = state.UserIntent,
-                Queries = queries
+                Queries = queries,
+                Collections = ["domains"]
             };
 
             var brcOutput = await _knowledgeBaseSearchFastExecutor.ExecuteAsync(queryInput, CancellationToken.None);
 
-            var existingResults = state.KnowledgeBaseQueryResults.Results.ToList();
-            state.KnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
+            state.FastKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
             {
-                Results = existingResults.Concat(brcOutput.Results).ToList()
+                Results = brcOutput.Results.ToList()
             };
 
             state.AddStepUsage("KB Fast Search Service", stopwatch.Elapsed, false);
 
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "ExtractedKnowledgeBaseEntries", string.Join("\n", brcOutput.Results.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
+                { "FastKnowledgeBaseQueryResults", string.Join("\n", state.FastKnowledgeBaseQueryResults.Results.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Fast Search Service", notifyDictionary);

@@ -26,6 +26,7 @@ namespace AgentMesh.Application.Services
             var inputMessages = new List<AgentMessage>
             {
                 new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
+                new() { Role = AgentMessageRole.System, Content = BuildApplicationDomainSystemMessage(input.ApplicationDomainList) },
                 new() { Role = AgentMessageRole.User, Content = userMessage },
             };
 
@@ -46,6 +47,19 @@ namespace AgentMesh.Application.Services
             };
 
             return ret;
+        }
+
+        private static string BuildApplicationDomainSystemMessage(IEnumerable<string> applicationDomainList)
+        {
+            var domains = applicationDomainList
+                .Where(domain => !string.IsNullOrWhiteSpace(domain))
+                .Select(domain => domain.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            return domains.Length == 0
+                ? "Application domain list available for this request: none."
+                : $"Application domain list available for this request: {string.Join(", ", domains)}.";
         }
 
         protected override ParsedResponse ParseStructuredResponse(string rawResponseText)
