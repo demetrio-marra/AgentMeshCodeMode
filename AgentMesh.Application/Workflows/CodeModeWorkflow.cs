@@ -822,8 +822,7 @@ namespace AgentMesh.Application.Workflows
                 Entities = state.EntitiesByDomain,
                 UserPreferences = state.UserPreferences,
                 AgentMemories = state.ExtractedAgentMemories.Select(m => m.Memory),
-                KnowledgeBaseDocumentsContent = serializedDocumentation,
-                ApiDocumentation = serializedDocumentation
+                KnowledgeBaseDocumentsContent = serializedDocumentation
             }, cancellationToken);
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = domainExpertOutput.BusinessRequirements;

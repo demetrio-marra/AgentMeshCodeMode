@@ -70,11 +70,6 @@ namespace AgentMesh.Application.Services
                 inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"KnowledgeBaseDocumentsContent: {input.KnowledgeBaseDocumentsContent}" });
             }
 
-            if (!string.IsNullOrWhiteSpace(input.ApiDocumentation))
-            {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"API Documentation: {input.ApiDocumentation}" });
-            }
-
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.EnrichedUserRequest });
 
