@@ -124,19 +124,27 @@ namespace AgentMesh.Application.Workflows
 
             await Task.WhenAll(memoryTask, knowledgeBaseTask);
 
-            await ExecuteContextAnalyzerAsync(state);
-
-            if (state.UserIntentCategoryValue == UserIntentCategoryValues.Other)
+            if (state.UserIntentCategoryValue == UserIntentCategoryValues.Documentation)
             {
-                goto CompleteWorkflow;
+                if (state.RelevantKnowledgeBaseFileNames.Any())
+                {
+                    await ExecuteKnowledgeBaseDocumentsExtractorAsync(state);
+                }
+
+                await ExecuteDocumentationAsync(state);
             }
 
-            if (state.RelevantKnowledgeBaseFileNames.Any())
-            {
-                await ExecuteKnowledgeBaseDocumentsExtractorAsync(state);
-            }
 
-            if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
+            if (state.UserIntentCategoryValue == UserIntentCategoryValues.BusinessAdvisor)
+            {
+                if (state.RelevantKnowledgeBaseFileNames.Any())
+                {
+                    await ExecuteKnowledgeBaseDocumentsExtractorAsync(state);
+                }
+
+                await ExecuteBusinessAdvisorAsync(state);
+            }
+            else if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
             {
                 await ExecuteTechnicalAnalystAsync(state);
                 await ExecuteCoderAsync(state);
@@ -194,7 +202,7 @@ namespace AgentMesh.Application.Workflows
             else
             {
                 throw new Exception($"Unknown user intent category: {state.UserIntentCategoryValue}");
-            }
+            } // end of if task execution
 
         CompleteWorkflow:
             await CompleteWorkflowAsync(state);
