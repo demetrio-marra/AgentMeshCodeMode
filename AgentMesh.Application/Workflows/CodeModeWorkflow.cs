@@ -9,7 +9,6 @@ using AgentMesh.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Models.CodeFixer;
 using AgentMesh.Models.Coder;
 using AgentMesh.Models.CodeSandbox;
-using AgentMesh.Models.ContextAnalyzer;
 using AgentMesh.Models.Documentation;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.PersonalAssistant;
@@ -43,7 +42,6 @@ namespace AgentMesh.Application.Workflows
         IIntentExtractorAgent intentExtractorAgent,
         IRequirementsCollectorAgent requirementsCollectorAgent,
         IPersonalAssistantAgent personalAssistantAgent,
-        IContextAnalyzerAgent contextAnalyzerAgent,
         IAgentMemoryRetriever agentMemoryRetriever,
         IAgentMemorySaver agentMemorySaver,
         IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
@@ -76,7 +74,6 @@ namespace AgentMesh.Application.Workflows
         private readonly IIntentExtractorAgent _intentExtractorAgent = intentExtractorAgent;
         private readonly IRequirementsCollectorAgent _requirementsCollectorAgent = requirementsCollectorAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent = personalAssistantAgent;
-        private readonly IContextAnalyzerAgent _contextAnalyzerAgent = contextAnalyzerAgent;
         private readonly IAgentMemoryRetriever _agentMemoryRetriever = agentMemoryRetriever;
         private readonly IAgentMemorySaver _agentMemorySaver = agentMemorySaver;
         private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
@@ -775,81 +772,6 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Fast Search Service", notifyDictionary);
         }
 
-
-        private async Task ExecuteContextAnalyzerAsync(CodeModeWorkflowState state)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Context Analyzer Agent...");
-            var contextAnalyzerInputLogEntries = new Dictionary<string, string>
-            {
-                { "ExtranctedItent", state.UserIntent ?? "(no user intent)" }
-            };
-            if (state.SupportingIntentInformation.Any())
-            {
-                contextAnalyzerInputLogEntries.Add("SupportingIntentInformation", string.Join("\n", state.SupportingIntentInformation.Select(info => $"- {info}")));
-            }
-            if (state.EntitiesByDomain.Any())
-            {
-                var entitiesDisplay = string.Join("\n", state.EntitiesByDomain.SelectMany(kvp => 
-                    kvp.Value.Select(entity => $"- [{kvp.Key}] {entity}")));
-                contextAnalyzerInputLogEntries.Add("EntitiesByDomain", entitiesDisplay);
-            }
-            if (state.ExtractedAgentMemories.Any())
-            {
-                contextAnalyzerInputLogEntries.Add("ExtractedAgentMemories", string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")));
-            }
-            if (state.KnowledgeBaseQueryResults.Results.Any())
-            {
-                contextAnalyzerInputLogEntries.Add("ExtractedKnowledgeBaseDocuments", string.Join("\n", state.KnowledgeBaseQueryResults.Results.Select(m => $"- File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")));
-            }
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Context Analyzer Agent", contextAnalyzerInputLogEntries);
-
-            var sortedKnowledgeBaseResults = state.KnowledgeBaseQueryResults.Results
-                .OrderByDescending(m => m.Relevance ?? double.MinValue)
-                .ToList();
-
-            var contextAnalyzerOutput = await _contextAnalyzerAgent.ExecuteAsync(new ContextAnalyzerAgentInput
-            {
-                UserIntent = state.UserIntent ?? string.Empty,
-                SupportingIntentInformation = state.SupportingIntentInformation,
-                UserRequestDomains = state.EntitiesByDomain.Keys,
-                ExtractedKnowledgeBase = [.. sortedKnowledgeBaseResults.Select(m => new ContextAnalyzerAgentInput.ExtractedKnowledgeItem
-                {
-                    DocumentId = m.Id,
-                    Title = m.Title,
-                    Summary = m.Summary
-                })],
-                ExtractedMemories = [.. state.ExtractedAgentMemories.Select(m => m.Memory)]
-            });
-
-            state.EnrichedUserRequest = contextAnalyzerOutput.CondensedUserIntent;
-
-            if (contextAnalyzerOutput.FilteredKnowledgeBaseDocuments != null
-                && contextAnalyzerOutput.FilteredKnowledgeBaseDocuments.Any())
-            {
-                var filteredFileNames = state.KnowledgeBaseQueryResults.Results.Where(kb => contextAnalyzerOutput.FilteredKnowledgeBaseDocuments.Select(f => f.DocumentId).Contains(kb.Id))
-                    .Select(kb => kb.File)
-                    .Distinct()
-                    .ToList();
-
-                state.RelevantKnowledgeBaseFileNames = filteredFileNames;
-            }
-            state.AddTokenUsage(ContextAnalyzerAgentConfiguration.AgentName, contextAnalyzerOutput.InputTokenCount, contextAnalyzerOutput.OutputTokenCount, stopwatch.Elapsed, "Context Analyzer Agent");
-
-            var contextAnalyzerOutputLogEntries = new Dictionary<string, string>
-            {
-                { "EnrichedUserRequest", state.EnrichedUserRequest },
-                { "UserIntentCategory", state.UserIntentCategoryValue.ToString() }
-            };
-
-            if (state.RelevantKnowledgeBaseFileNames != null && state.RelevantKnowledgeBaseFileNames.Any())
-            {
-                contextAnalyzerOutputLogEntries.Add("KnowledgeBaseDocumentFilteredFiles", string.Join("\n", state.RelevantKnowledgeBaseFileNames.Select(m => $"- {m}")));
-            }
-            contextAnalyzerOutputLogEntries.Add("ELAPSED_TIME", GetElapsedTime(stopwatch));
-
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Context Analyzer Agent", contextAnalyzerOutputLogEntries);
-        }
 
         private async Task ExecuteDomainExpertAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {

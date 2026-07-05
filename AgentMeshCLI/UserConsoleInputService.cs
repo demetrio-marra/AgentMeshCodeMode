@@ -21,7 +21,6 @@ namespace AgentMesh
         PersonalAssistantAgentConfiguration personalAssistantConfiguration,
         LLMsConfiguration llmsConfiguration,
         ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration,
-        ContextAnalyzerAgentConfiguration contextAnalyzerConfiguration,
         SESJSSandboxConfiguration sESJSSandboxConfiguration,
         UserConfiguration userConfiguration,
         DocumentationAgentConfiguration documentationAgentConfiguration,
@@ -41,7 +40,6 @@ namespace AgentMesh
         private readonly PersonalAssistantAgentConfiguration _personalAssistantConfiguration = personalAssistantConfiguration;
         private readonly LLMsConfiguration _llmsConfiguration = llmsConfiguration;
         private readonly ConversationSummarizerAgentConfiguration _conversationSummarizerConfiguration = conversationSummarizerConfiguration;
-        private readonly ContextAnalyzerAgentConfiguration _contextAnalyzerConfiguration = contextAnalyzerConfiguration;
         private readonly SESJSSandboxConfiguration _sesJsSandboxConfiguration = sESJSSandboxConfiguration;
         private readonly UserConfiguration _userConfiguration = userConfiguration;
         private readonly DocumentationAgentConfiguration _documentationAgentConfiguration = documentationAgentConfiguration;
@@ -102,7 +100,7 @@ namespace AgentMesh
                     Text = result.Response,
                 });
 
-                // Passiamo l'intera conversazione al context analyzer agent.
+                // Passiamo l'intera conversazione al workflow.
                 // Quindi i token totali, non devono essere sommati ogni volta,
                 // ma semplicemente aggiornati con i token dell'ultima interazione,
                 // ai quali aggiungeremo quello di output dell'ultima risposta.
@@ -125,7 +123,6 @@ namespace AgentMesh
                     { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionInputTokens },
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionInputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens },
-                    { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionInputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens },
                     { "Embedding Service", _embeddingServiceConfiguration.CostPerMillionTokens }
@@ -141,7 +138,6 @@ namespace AgentMesh
                     { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionOutputTokens },
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionOutputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
-                    { ContextAnalyzerAgent.AgentName, _llmsConfiguration[_contextAnalyzerConfiguration.LLM].CostPerMillionOutputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens },
                     { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens }
                 };
@@ -226,7 +222,6 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("Results Presenter", ResultsPresenterAgentConfiguration.AgentName, _resultsPresenterConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Conversation Summarizer", ConversationSummarizerAgent.AgentName, _conversationSummarizerConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Context Analyzer", ContextAnalyzerAgent.AgentName, _contextAnalyzerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Documentation", DocumentationAgent.AgentName, _documentationAgentConfiguration);
          
             if (_workflowConfiguration.EnableMemoryService)
