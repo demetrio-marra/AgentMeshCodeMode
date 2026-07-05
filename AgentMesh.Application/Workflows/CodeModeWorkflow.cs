@@ -804,6 +804,11 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Domain Expert Agent", new Dictionary<string, string>
             {
                 { "EnrichedUserRequest", enrichedUserRequest },
+                { "Intent", state.UserIntent ?? "(No intent)" },
+                { "SupportingIntentInformation", state.SupportingIntentInformation.Any() ? string.Join("\n", state.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
+                { "Entities", state.EntitiesByDomain.Any() ? string.Join("\n", state.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
+                { "UserPreferences", state.UserPreferences.Any() ? string.Join("\n", state.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
+                { "MemoriesFromAgentMemoryService", state.ExtractedAgentMemories.Any() ? string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")) : "(No memories)" },
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
@@ -812,6 +817,12 @@ namespace AgentMesh.Application.Workflows
             var domainExpertOutput = await _domainExpertAgent.ExecuteAsync(new DomainExpertAgentInput
             {
                 EnrichedUserRequest = enrichedUserRequest,
+                Intent = state.UserIntent ?? string.Empty,
+                SupportingIntentInformation = state.SupportingIntentInformation,
+                Entities = state.EntitiesByDomain,
+                UserPreferences = state.UserPreferences,
+                AgentMemories = state.ExtractedAgentMemories.Select(m => m.Memory),
+                KnowledgeBaseDocumentsContent = serializedDocumentation,
                 ApiDocumentation = serializedDocumentation
             }, cancellationToken);
             state.ShouldEngageCoder = true;

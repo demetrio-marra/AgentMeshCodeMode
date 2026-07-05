@@ -8,6 +8,12 @@ IMPORTANT ROLE AND OUTPUT CONSTRAINTS (MUST FOLLOW):
 
 Input Structure:
 - "enrichedUserRequest": The user's request for data extraction or operations with additional context (helps understand user's situation, intent, and any implicit requirements)
+- "intent": User's inferred intent
+- "supportingIntentInformation": Additional extracted details that support the intent
+- "entities": Domain entities extracted from the request/context
+- "userPreferences": User preferences relevant to request execution
+- "agentMemories": Memories retrieved from AgentMemoryService
+- "knowledgeBaseDocumentsContent" / "API Documentation": Relevant documentation excerpts
 
 Workflow (This Agent MUST follow all steps in this order):
 
