@@ -114,15 +114,15 @@ namespace AgentMesh.Application.Workflows
                 await ExecuteQueryCacheServiceAsync(state);
             }
 
-            if (_workflowConfiguration.EnableMemoryService && state.MissingPastMemories.Any())
-            {
-                await ExecuteAgentMemoryServiceAsync(state);
-            }
+            var memoryTask = (_workflowConfiguration.EnableMemoryService && state.MissingPastMemories.Any())
+                ? ExecuteAgentMemoryServiceAsync(state)
+                : Task.CompletedTask;
 
-            if (state.MissingKnowledgeBaseSearchEntries.Any())
-            {
-                await ExecuteKnowledgeBaseServiceSearchAsync(state);
-            }
+            var knowledgeBaseTask = state.MissingKnowledgeBaseSearchEntries.Any()
+                ? ExecuteKnowledgeBaseServiceSearchAsync(state)
+                : Task.CompletedTask;
+
+            await Task.WhenAll(memoryTask, knowledgeBaseTask);
 
             await ExecuteContextAnalyzerAsync(state);
 
