@@ -37,6 +37,8 @@ namespace AgentMesh.Application.Services
                 UserIntentCategory = result.Result.UserIntentCategory,
                 EntitiesByDomain = result.Result.EntitiesByDomain,
                 SupportingIntentInformation = result.Result.SupportingIntentInformation,
+                UserPreferences = result.Result.UserPreferences,
+                MissingMemories = result.Result.MissingMemories,
                 LanguageOfTheUser = result.Result.LanguageOfTheUser,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount,
@@ -75,6 +77,18 @@ namespace AgentMesh.Application.Services
                 responseDTO.EntitiesByDomain = ParseEntitiesByDomain(responseDTO.EntitiesByDomainRaw);
 
                 responseDTO.SupportingIntentInformation = responseDTO.SupportingIntentInformation
+                    .Where(entry => !string.IsNullOrWhiteSpace(entry))
+                    .Select(entry => entry.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                responseDTO.UserPreferences = responseDTO.UserPreferences
+                    .Where(entry => !string.IsNullOrWhiteSpace(entry))
+                    .Select(entry => entry.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                responseDTO.MissingMemories = responseDTO.MissingMemories
                     .Where(entry => !string.IsNullOrWhiteSpace(entry))
                     .Select(entry => entry.Trim())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -149,6 +163,12 @@ namespace AgentMesh.Application.Services
 
             [JsonPropertyName("supportingIntentInformation")]
             public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
+
+            [JsonPropertyName("userPreferences")]
+            public IEnumerable<string> UserPreferences { get; set; } = [];
+
+            [JsonPropertyName("missingMemories")]
+            public IEnumerable<string> MissingMemories { get; set; } = [];
 
             [JsonPropertyName("languageOfTheUser")]
             public string LanguageOfTheUser { get; set; } = string.Empty;

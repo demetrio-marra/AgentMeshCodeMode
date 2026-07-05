@@ -5,6 +5,8 @@ Classify the user intent into one of: taskExecution, businessAdvisor, documentat
 Extract the entities mentioned by the user or strongly inferred from the user's intent.
 Group entities by the domain of human knowledge they belong to.
 Extract concise, factual details that support or clarify the user intent.
+Extract user preferences about intent's fulfilling from the previous messages list.
+Extract facts the user mentions that are missing from the previous messages list.
 
 
 # Input
@@ -69,6 +71,16 @@ An array of short strings with useful details that support, constrain, or clarif
 Include only details explicitly present in the input.
 Include only details not already captured in the user intent, userIntentCategory, or entitiesByDomain.
 
+## User Preferences
+An array of short strings describing user preferences about how the intent should be fulfilled, based on the previous messages list.
+Include only preferences explicitly mentioned in the conversation history (e.g., preferred output format, constraints, specific requirements).
+Return an empty array [] if no preferences are found.
+
+## Missing Memories
+An array of short strings listing facts or information the user mentions in the current request that are missing from the previous messages list.
+These are contextual facts the user assumes but hasn't mentioned before in the conversation (e.g., project names, file paths, specific configurations, domain knowledge).
+Return an empty array [] if no missing facts are detected.
+
 ## Language of the user
 Output the language of the user.
 
@@ -88,6 +100,14 @@ Return a JSON object with the following structure:
   "supportingIntentInformation": [
     "User wants changes limited to the intent extractor output"
   ],
+  "userPreferences": [
+    "Return results in JSON format",
+    "Include detailed explanations"
+  ],
+  "missingMemories": [
+    "Project uses AgentMesh framework",
+    "Working on feature/pipeline-accuracy-improvement branch"
+  ],
   "languageOfTheUser": "Italian"
 }
 
@@ -97,7 +117,10 @@ Return a JSON object with the following structure:
 - keep the user intent unchanged
 - supporting intent information must be concise, non-redundant, and grounded in the input
 - include only details not already captured in the user intent, userIntentCategory, or entitiesByDomain
+- userPreferences should capture explicit preferences from conversation history (e.g., format, constraints, requirements)
+- missingMemories should identify contextual facts mentioned in the current request but absent from prior messages
 - entities must be grounded in the input or strongly inferred from intent
+- return an empty array [] for userPreferences and missingMemories when nothing is found
 - return an empty object {} when there are no entities or domains
 - if the user asks about Assistant capabilities, ASSUME it is talking about the entire AI Agentic platform's capabilities and treat it as a business-related topic
 - Output domains and entities in the language of the user. Correct any mispellings, typos or inconsistencies in entity names based on the input

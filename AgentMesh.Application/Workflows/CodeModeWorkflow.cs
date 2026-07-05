@@ -308,6 +308,8 @@ namespace AgentMesh.Application.Workflows
             state.LanguageOfTheUser = intentExtractorOutput.LanguageOfTheUser;
             state.EntitiesByDomain = intentExtractorOutput.EntitiesByDomain;
             state.SupportingIntentInformation = intentExtractorOutput.SupportingIntentInformation;
+            state.UserPreferences = intentExtractorOutput.UserPreferences;
+            state.MissingMemories = intentExtractorOutput.MissingMemories;
 
             state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount, stopwatch.Elapsed, "Intent Extractor Agent");
 
@@ -329,6 +331,14 @@ namespace AgentMesh.Application.Workflows
                 var entitiesDisplay = string.Join("\n", state.EntitiesByDomain.SelectMany(kvp => 
                     kvp.Value.Select(entity => $"- [{kvp.Key}] {entity}")));
                 notifyDictionary.Add("EntitiesByDomain", entitiesDisplay);
+            }
+            if (state.UserPreferences.Any())
+            {
+                notifyDictionary.Add("UserPreferences", string.Join("\n", state.UserPreferences.Select(pref => $"- {pref}")));
+            }
+            if (state.MissingMemories.Any())
+            {
+                notifyDictionary.Add("MissingMemories", string.Join("\n", state.MissingMemories.Select(mem => $"- {mem}")));
             }
             notifyDictionary.Add("ELAPSED_TIME", GetElapsedTime(stopwatch));
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", notifyDictionary);
