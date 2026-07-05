@@ -147,6 +147,12 @@ namespace AgentMesh.Application.Workflows
             else if (state.UserIntentCategoryValue == UserIntentCategoryValues.TaskExecution)
             {
                 await ExecuteDomainExpertAsync(state);
+
+                if (state.KnowledgeBaseAPIQueries.Any())
+                {
+                    await ExecuteKnowledgeBaseApiDocumentsExtractorAsync(state);
+                }
+
                 await ExecuteCoderAsync(state);
 
                 await ExecuteJSSandboxAsync(state, false);
@@ -232,7 +238,7 @@ namespace AgentMesh.Application.Workflows
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Knowledge Base Documents Extractor Service...");
 
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Documents Extractor Service", new Dictionary<string, string>
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Documents Extractor Service (Domain)", new Dictionary<string, string>
             {
                 { "Documents", string.Join("\n", state.RelevantKnowledgeBaseFileNames.Select(s => $"- {s}")) }
             });
@@ -285,14 +291,63 @@ namespace AgentMesh.Application.Workflows
                     Content = kb.fc.Content
                 })];
 
-            state.AddStepUsage("KB Documents Extractor Service", stopwatch.Elapsed, false);
+            state.AddStepUsage("KB Documents Extractor Service (Domain)", stopwatch.Elapsed, false);
 
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "Total files extracted", state.KnowledgeBaseDocumentsContent.Count().ToString() },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Documents Extractor Service", notifyDictionary);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Documents Extractor Service (Domain)", notifyDictionary);
+        }
+
+        private async Task ExecuteKnowledgeBaseApiDocumentsExtractorAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Knowledge Base API Documents Extractor Service...");
+
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Documents Extractor Service (APIs)", new Dictionary<string, string>
+            {
+                { "Queries", string.Join("\n", state.KnowledgeBaseAPIQueries.Select(q => $"- [{q.Type}] {q.Query}")) }
+            });
+
+            var apiKnowledgeBaseQueryResults = await _knowledgeBaseSearchExecutor.ExecuteAsync(new KnowledgeBaseQueryInput
+            {
+                UserIntent = state.UserIntent,
+                Queries = [.. state.KnowledgeBaseAPIQueries.Select(entry => new KnowledgeBaseQueryInputItem
+                {
+                    Query = entry.Query,
+                    SearchType = ParseKnowledgeBaseSearchType(entry.Type)
+                })]
+            }, CancellationToken.None);
+
+            var apiFilePaths = apiKnowledgeBaseQueryResults.Results
+                .Select(result => result.File)
+                .Where(file => !string.IsNullOrWhiteSpace(file))
+                .Distinct()
+                .ToList();
+
+            var fetchedFilesContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
+            {
+                FilePaths = apiFilePaths
+            });
+
+            state.KnowledgeBaseAPIDocumentsContent = [.. apiKnowledgeBaseQueryResults.Results
+                .Join(fetchedFilesContent.Results, kb => kb.File, fc => fc.File, (kb, fc) => new { kb, fc })
+                .Select(kb => new KnowledgeBaseDocumentContent
+                {
+                    File = kb.kb.File,
+                    Content = kb.fc.Content
+                })];
+
+            state.AddStepUsage("KB Documents Extractor Service (APIs)", stopwatch.Elapsed, false);
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "Total files extracted", state.KnowledgeBaseAPIDocumentsContent.Count().ToString() },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Documents Extractor Service (APIs)", notifyDictionary);
         }
 
         private async Task ExecuteIntentExtractorAsync(CodeModeWorkflowState state, IEnumerable<ContextMessage> chatHistory)
@@ -847,7 +902,7 @@ namespace AgentMesh.Application.Workflows
                 { "BusinessRequirements", businessRequirements }
             });
 
-            var serializedDocumentation = SerializeDocumentationForCoder(state.KnowledgeBaseDocumentsContent);
+            var serializedDocumentation = SerializeDocumentationForCoder(state.KnowledgeBaseAPIDocumentsContent);
 
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
             {
