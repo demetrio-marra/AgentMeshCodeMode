@@ -1,6 +1,6 @@
-namespace AgentMesh.Models.SearchQueriesGenerator
+namespace AgentMesh.Models.RequirementsCollector
 {
-    public class SearchQueriesGeneratorAgentInput
+    public class RequirementsCollectorAgentInput
     {
         public string UserIntent { get; set; } = string.Empty;
         public IEnumerable<string> SupportingIntentInformation { get; set; } = [];

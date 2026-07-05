@@ -317,28 +317,28 @@ namespace AgentMesh
 
             services.AddSingleton<IIntentExtractorAgent, IntentExtractorAgent>();
 
-            // SearchQueriesGenerator agent config and client
+            // RequirementsCollector agent config and client
             services
-                .AddOptions<SearchQueriesGeneratorAgentConfiguration>()
-                .Bind(configuration.GetSection(SearchQueriesGeneratorAgentConfiguration.SectionName))
+                .AddOptions<RequirementsCollectorAgentConfiguration>()
+                .Bind(configuration.GetSection(RequirementsCollectorAgentConfiguration.SectionName))
                 .PostConfigure(options =>
                 {
                     options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
                 })
                 .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<SearchQueriesGeneratorAgentConfiguration>>().Value);
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<RequirementsCollectorAgentConfiguration>>().Value);
 
-            services.AddKeyedSingleton<IOpenAIClient>(SearchQueriesGeneratorAgentConfiguration.AgentName, (sp, _) =>
+            services.AddKeyedSingleton<IOpenAIClient>(RequirementsCollectorAgentConfiguration.AgentName, (sp, _) =>
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<SearchQueriesGeneratorAgentConfiguration>();
+                var config = sp.GetRequiredService<RequirementsCollectorAgentConfiguration>();
                 var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
                 var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<ISearchQueriesGeneratorAgent, SearchQueriesGeneratorAgent>();
+            services.AddSingleton<IRequirementsCollectorAgent, RequirementsCollectorAgent>();
 
             // PersonalAssistant agent config and client
             services

@@ -1,9 +1,9 @@
 namespace AgentMesh.Application.Services
 {
-    public class SearchQueriesGeneratorAgentConfiguration
+    public class RequirementsCollectorAgentConfiguration
     {
-        public const string SectionName = "Agents:SearchQueriesGenerator";
-        public const string AgentName = "SearchQueriesGenerator";
+        public const string SectionName = "Agents:RequirementsCollector";
+        public const string AgentName = "RequirementsCollector";
 
         public string LLM { get; set; } = string.Empty;
         public string ModelTemperature { get; set; } = string.Empty;

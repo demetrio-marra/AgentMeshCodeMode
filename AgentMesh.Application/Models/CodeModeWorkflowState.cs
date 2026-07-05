@@ -4,7 +4,7 @@ using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
 using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
-using static AgentMesh.Models.SearchQueriesGenerator.SearchQueriesGeneratorAgentOutput;
+using static AgentMesh.Models.RequirementsCollector.RequirementsCollectorAgentOutput;
 
 namespace AgentMesh.Application.Models
 {
@@ -18,7 +18,7 @@ namespace AgentMesh.Application.Models
         public IEnumerable<string> UserPreferences { get; set; } = [];
         public IEnumerable<string> MissingMemories { get; set; } = [];
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
-        public IEnumerable<SearchQueriesGeneratorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
+        public IEnumerable<RequirementsCollectorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
         public string EnrichedUserRequest { get; set; } = string.Empty;
         public UserIntentCategoryValues UserIntentCategoryValue { get; set; }
         public string? BusinessRequirements { get; set; }

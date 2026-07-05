@@ -1,7 +1,7 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Models.SearchQueriesGenerator;
+using AgentMesh.Models.RequirementsCollector;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -10,15 +10,15 @@ using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class SearchQueriesGeneratorAgent(
-        [FromKeyedServices(SearchQueriesGeneratorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+    public class RequirementsCollectorAgent(
+        [FromKeyedServices(RequirementsCollectorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<SearchQueriesGeneratorAgent> logger) : AgentBase<SearchQueriesGeneratorAgent.ParsedResponse>(logger, SearchQueriesGeneratorAgentConfiguration.AgentName, openAIClient, resilience), ISearchQueriesGeneratorAgent
+        ILogger<RequirementsCollectorAgent> logger) : AgentBase<RequirementsCollectorAgent.ParsedResponse>(logger, RequirementsCollectorAgentConfiguration.AgentName, openAIClient, resilience), IRequirementsCollectorAgent
     {
-        private readonly ILogger<SearchQueriesGeneratorAgent> _logger = logger;
+        private readonly ILogger<RequirementsCollectorAgent> _logger = logger;
 
-        public async Task<SearchQueriesGeneratorAgentOutput> ExecuteAsync(
-            SearchQueriesGeneratorAgentInput input,
+        public async Task<RequirementsCollectorAgentOutput> ExecuteAsync(
+            RequirementsCollectorAgentInput input,
             CancellationToken cancellationToken = default)
         {
             var userMessage = $"""
@@ -40,7 +40,7 @@ User request domains:
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            return new SearchQueriesGeneratorAgentOutput
+            return new RequirementsCollectorAgentOutput
             {
                 MissingKnowledgeBaseSearchEntries = result.Result.MissingKnowledgeBaseSearchEntries,
                 MissingPastMemories = result.Result.MissingPastMemories,
@@ -80,7 +80,7 @@ User request domains:
             public IEnumerable<string> MissingPastMemories { get; set; } = [];
 
             [JsonPropertyName("missingKnowledgeBaseSearchEntries")]
-            public IEnumerable<SearchQueriesGeneratorAgentOutput.SearchQueriesGeneratorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
+            public IEnumerable<RequirementsCollectorAgentOutput.RequirementsCollectorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
         }
     }
 }

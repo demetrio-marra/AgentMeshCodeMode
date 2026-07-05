@@ -15,7 +15,7 @@ using AgentMesh.Models.Documentation;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.PersonalAssistant;
 using AgentMesh.Models.ResultsPresenter;
-using AgentMesh.Models.SearchQueriesGenerator;
+using AgentMesh.Models.RequirementsCollector;
 using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
@@ -41,7 +41,7 @@ namespace AgentMesh.Application.Workflows
         IResultsPresenterAgent resultsPresenterAgent,
         IJSSandboxExecutor jsSandboxExecutor,
         IIntentExtractorAgent intentExtractorAgent,
-        ISearchQueriesGeneratorAgent searchQueriesGeneratorAgent,
+        IRequirementsCollectorAgent requirementsCollectorAgent,
         IPersonalAssistantAgent personalAssistantAgent,
         IContextAnalyzerAgent contextAnalyzerAgent,
         IAgentMemoryRetriever agentMemoryRetriever,
@@ -74,7 +74,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IResultsPresenterAgent _resultsPresenterAgent = resultsPresenterAgent;
         private readonly IJSSandboxExecutor _jsSandboxExecutor = jsSandboxExecutor;
         private readonly IIntentExtractorAgent _intentExtractorAgent = intentExtractorAgent;
-        private readonly ISearchQueriesGeneratorAgent _searchQueriesGeneratorAgent = searchQueriesGeneratorAgent;
+        private readonly IRequirementsCollectorAgent _requirementsCollectorAgent = requirementsCollectorAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent = personalAssistantAgent;
         private readonly IContextAnalyzerAgent _contextAnalyzerAgent = contextAnalyzerAgent;
         private readonly IAgentMemoryRetriever _agentMemoryRetriever = agentMemoryRetriever;
@@ -101,7 +101,7 @@ namespace AgentMesh.Application.Workflows
 
             //return new WorkflowResult();
 
-            await ExecuteSearchQueriesGeneratorAsync(state);
+            await ExecuteRequirementsCollectorAsync(state);
 
           
 
@@ -344,19 +344,19 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", notifyDictionary);
         }
 
-        private async Task ExecuteSearchQueriesGeneratorAsync(CodeModeWorkflowState state)
+        private async Task ExecuteRequirementsCollectorAsync(CodeModeWorkflowState state)
         {
             var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Search Queries Generator Agent...");
+            _logger.LogDebug("Engaging Requirements Collector Agent...");
 
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Search Queries Generator Agent", new Dictionary<string, string>
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Requirements Collector Agent", new Dictionary<string, string>
             {
                 { "UserIntent", state.UserIntent ?? "(No intent extracted)" },
                 { "EntitiesByDomain", state.EntitiesByDomain.Any() ? string.Join("\n", state.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(e => $"- [{kvp.Key}] {e}"))) : "(No entities)" },
                 { "SupportingIntentInformation", state.SupportingIntentInformation.Any() ? string.Join("\n", state.SupportingIntentInformation.Select(info => $"- {info}")) : "(No supporting intent information)" }
             });
 
-            var output = await _searchQueriesGeneratorAgent.ExecuteAsync(new SearchQueriesGeneratorAgentInput
+            var output = await _requirementsCollectorAgent.ExecuteAsync(new RequirementsCollectorAgentInput
             {
                 UserIntent = state.UserIntent ?? string.Empty,
                 SupportingIntentInformation = state.SupportingIntentInformation,
@@ -366,7 +366,7 @@ namespace AgentMesh.Application.Workflows
             state.MissingPastMemories = output.MissingPastMemories;
             state.MissingKnowledgeBaseSearchEntries = output.MissingKnowledgeBaseSearchEntries;
 
-            state.AddTokenUsage(SearchQueriesGeneratorAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Search Queries Generator Agent");
+            state.AddTokenUsage(RequirementsCollectorAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Requirements Collector Agent");
 
             var notifyDictionary = new Dictionary<string, string>();
             if (state.MissingPastMemories.Any())
@@ -378,7 +378,7 @@ namespace AgentMesh.Application.Workflows
                 notifyDictionary.Add("MissingKnowledgeBaseEntriesDetails", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")));
             }
             notifyDictionary.Add("ELAPSED_TIME", GetElapsedTime(stopwatch));
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Search Queries Generator Agent", notifyDictionary);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Requirements Collector Agent", notifyDictionary);
         }
 
         private async Task ExecuteQueryCacheServiceAsync(CodeModeWorkflowState state)
