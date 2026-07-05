@@ -17,6 +17,7 @@ namespace AgentMesh.Application.Services
         ILogger<DomainExpertAgent> logger) : AgentBase<DomainExpertAgent.ParsedResponse>(logger, DomainExpertAgentConfiguration.AgentName, openAIClient, resilience), IDomainExpertAgent
     {
         private readonly ILogger<DomainExpertAgent> _logger = logger;
+        private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];
 
         public async Task<DomainExpertAgentOutput> ExecuteAsync(
             DomainExpertAgentInput input,
@@ -77,7 +78,7 @@ namespace AgentMesh.Application.Services
 
             return new DomainExpertAgentOutput
             {
-                BusinessRequirements = result.Result.BusinessRequirements,
+                KnowledgeBaseAPIQueries = result.Result.KnowledgeBaseAPIQueries,
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount
@@ -96,10 +97,18 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                if (string.IsNullOrWhiteSpace(responseDTO.BusinessRequirements))
+                responseDTO.KnowledgeBaseAPIQueries ??= [];
+
+                if (!responseDTO.KnowledgeBaseAPIQueries.Any())
                 {
-                    _logger.LogWarning("The model's response contains empty business requirements. Response text: {ResponseText}", rawResponseText);
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty business requirements.");
+                    _logger.LogWarning("The model's response contains empty knowledge base API queries. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty knowledge base API queries.");
+                }
+
+                if (responseDTO.KnowledgeBaseAPIQueries.Any(q => string.IsNullOrWhiteSpace(q.Query) || !AllowedQueryTypes.Contains(q.Type, StringComparer.OrdinalIgnoreCase)))
+                {
+                    _logger.LogWarning("The model's response contains invalid query entries. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains invalid query entries. Allowed types: lex, vec, hyde; query must be non-empty.");
                 }
 
                 return responseDTO;
@@ -113,8 +122,8 @@ namespace AgentMesh.Application.Services
 
         public class ParsedResponse
         {
-            [JsonPropertyName("businessRequirements")]
-            public string BusinessRequirements { get; set; } = string.Empty;
+            [JsonPropertyName("knowledgeBaseAPIQueries")]
+            public IEnumerable<DomainExpertAgentOutput.KnowledgeBaseAPIQuery> KnowledgeBaseAPIQueries { get; set; } = [];
         }
     }
 }

@@ -1,5 +1,6 @@
 using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
+using AgentMesh.Models.DomainExpert;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
@@ -37,6 +38,7 @@ namespace AgentMesh.Application.Models
         public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; } = [];
         public IEnumerable<AgentMemoryQueryResultItem> ExtractedAgentMemories { get; set; } = [];
         public IEnumerable<string> RelevantKnowledgeBaseFileNames { get; set; } = [];
+        public IEnumerable<DomainExpertAgentOutput.KnowledgeBaseAPIQuery> KnowledgeBaseAPIQueries { get; set; } = [];
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [.. contextMessages];
 
         public KnowledgeBaseQueryResult FastKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();

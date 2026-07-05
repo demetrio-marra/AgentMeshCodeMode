@@ -825,11 +825,11 @@ namespace AgentMesh.Application.Workflows
                 KnowledgeBaseDocumentsContent = serializedDocumentation
             }, cancellationToken);
             state.ShouldEngageCoder = true;
-            state.BusinessRequirements = domainExpertOutput.BusinessRequirements;
+            state.KnowledgeBaseAPIQueries = domainExpertOutput.KnowledgeBaseAPIQueries;
             state.AddTokenUsage(DomainExpertAgentConfiguration.AgentName, domainExpertOutput.InputTokenCount, domainExpertOutput.OutputTokenCount, stopwatch.Elapsed, "Domain Expert Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "BusinessRequirements", domainExpertOutput.BusinessRequirements },
+                { "KnowledgeBaseAPIQueries", state.KnowledgeBaseAPIQueries.Any() ? string.Join("\n", state.KnowledgeBaseAPIQueries.Select(q => $"- [{q.Type}] {q.Query}")) : "(No queries)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Domain Expert Agent", notifyDictionary);
