@@ -3,6 +3,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.Coder;
+using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -23,9 +24,18 @@ namespace AgentMesh.Application.Services
             var inputMessages = new List<AgentMessage>
             {
                 new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new() { Role = AgentMessageRole.System, Content = "API Reference:\n" + input.ApiDocumentation },
-                new() { Role = AgentMessageRole.User, Content = input.BusinessRequirements }
+                new() { Role = AgentMessageRole.System, Content = $"Business Requirements:\n{input.BusinessRequirements}" }
             };
+
+            var knowledgeBaseDocumentsContent = FormatKnowledgeBaseDocumentsContent(input.KnowledgeBaseAPIDocumentsContent);
+            if (!string.IsNullOrWhiteSpace(knowledgeBaseDocumentsContent))
+            {
+                inputMessages.Add(new AgentMessage
+                {
+                    Role = AgentMessageRole.System,
+                    Content = $"Knowledge Base API Documents:\n{knowledgeBaseDocumentsContent}"
+                });
+            }
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
@@ -47,6 +57,11 @@ namespace AgentMesh.Application.Services
             }
 
             return codeRegexMatch.Groups["code"].Value.Trim();
+        }
+
+        private static string FormatKnowledgeBaseDocumentsContent(IEnumerable<KnowledgeBaseGetDocsOutputItem> documents)
+        {
+            return string.Join("\n\n", documents.Select(d => $"- File: {d.File ?? "(No file)"}\n  Content: {d.Content}"));
         }
 
         [GeneratedRegex(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, "it-IT")]

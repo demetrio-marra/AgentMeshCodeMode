@@ -867,8 +867,6 @@ namespace AgentMesh.Application.Workflows
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
-            var serializedDocumentation = SerializeDocumentationForBusinessAnalyst(state.KnowledgeBaseDocumentsContent);
-
             var domainExpertOutput = await _domainExpertAgent.ExecuteAsync(new DomainExpertAgentInput
             {
                 EnrichedUserRequest = enrichedUserRequest,
@@ -877,7 +875,7 @@ namespace AgentMesh.Application.Workflows
                 Entities = state.EntitiesByDomain,
                 UserPreferences = state.UserPreferences,
                 AgentMemories = state.ExtractedAgentMemories.Select(m => m.Memory),
-                KnowledgeBaseDocumentsContent = serializedDocumentation
+                KnowledgeBaseDocumentsContent = null // Do not send to coder agent
             }, cancellationToken);
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = domainExpertOutput.BusinessRequirements;
@@ -902,12 +900,14 @@ namespace AgentMesh.Application.Workflows
                 { "BusinessRequirements", businessRequirements }
             });
 
-            var serializedDocumentation = SerializeDocumentationForCoder(state.KnowledgeBaseAPIDocumentsContent);
-
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
             {
                 BusinessRequirements = businessRequirements,
-                ApiDocumentation = serializedDocumentation
+                KnowledgeBaseAPIDocumentsContent = state.KnowledgeBaseAPIDocumentsContent.Select(doc => new KnowledgeBaseGetDocsOutputItem
+                {
+                    File = doc.File,
+                    Content = doc.Content
+                })
             });
             state.GeneratedCode = coderAgentOutput.CodeToRun;
             state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount, stopwatch.Elapsed, "Coder Agent");
