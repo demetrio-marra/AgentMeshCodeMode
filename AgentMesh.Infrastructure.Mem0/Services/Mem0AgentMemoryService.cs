@@ -4,6 +4,7 @@ using AgentMesh.Application;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Infrastructure.Mem0.Configuration;
 using AgentMesh.Infrastructure.Mem0.Models;
+using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
 
 namespace AgentMesh.Infrastructure.Mem0.Services
@@ -33,19 +34,28 @@ namespace AgentMesh.Infrastructure.Mem0.Services
             };
         }
 
-        public async Task AddChatInteraction(
+        public async Task AddConversationHistory(
             string userId,
-            string userMessage,
-            string agentResponse,
+            IEnumerable<ContextMessage> conversationHistory,
             CancellationToken cancellationToken = default)
         {
+            var messages = conversationHistory
+                .Where(m => !string.IsNullOrWhiteSpace(m.Text))
+                .Select(m => new Message
+                {
+                    Role = m.Role == ContextMessageRole.User ? "user" : "assistant",
+                    Content = m.Text.Trim()
+                })
+                .ToList();
+
+            if (messages.Count == 0)
+            {
+                return;
+            }
+
             var request = new MemoryCreateRequest
             {
-                Messages =
-                [
-                    new Message { Role = "user", Content = userMessage },
-                    new Message { Role = "assistant", Content = agentResponse }
-                ],
+                Messages = messages,
                 UserId = userId
             };
 
@@ -55,7 +65,7 @@ namespace AgentMesh.Infrastructure.Mem0.Services
                     request,
                     _jsonOptions,
                     cancellationToken),
-                "AddChatInteraction",
+                "AddConversationHistory",
                 null);
 
             response.EnsureSuccessStatusCode();

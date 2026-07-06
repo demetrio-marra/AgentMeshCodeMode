@@ -1,6 +1,6 @@
 ﻿using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Models;
 using AgentMesh.Models.AgentMemory;
+using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -8,29 +8,27 @@ namespace AgentMesh.Application.Services
 {
     public class AgentMemoryExecutor(IAgentMemoryService agentMemoryService,
         ILogger<AgentMemoryExecutor> logger,
-        UserConfiguration userConfiguration) : IAgentMemoryRetriever, IAgentMemorySaver
+        UserConfiguration userConfiguration) : IAgentMemoryRetrieverExecutor, IAgentMemorySaverExecutor
     {
         private readonly ILogger<AgentMemoryExecutor> _logger = logger;
         private readonly IAgentMemoryService _agentMemoryService = agentMemoryService;
         private readonly UserConfiguration _userConfiguration = userConfiguration;
 
-        async Task IAgentMemorySaver.ExecuteAsync(AgentMemorySaverInput input)
+        async Task IAgentMemorySaverExecutor.ExecuteAsync(AgentMemorySaverConversationInput input)
         {
-            _logger.LogDebug("Executing AgentMemorySaver - ExecuteAsync.");
-            _logger.LogDebug("AgentMemorySaver - ExecuteAsync Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
+            _logger.LogDebug("Executing AgentMemorySaver - SaveConversationHistoryAsync.");
+            _logger.LogDebug("AgentMemorySaver - SaveConversationHistoryAsync Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
             var stopwatch = Stopwatch.StartNew();
 
-            await _agentMemoryService.AddChatInteraction(_userConfiguration.AgentId,
-                input.MessageByUser,
-                input.ResponseByAssistant);
+            await _agentMemoryService.AddConversationHistory(_userConfiguration.AgentId, input.ConversationHistory);
 
             stopwatch.Stop();
 
-            _logger.LogDebug("AgentMemorySaver - ExecuteAsync completed in {ElapsedMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
+            _logger.LogDebug("AgentMemorySaver - SaveConversationHistoryAsync completed in {ElapsedMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
         }
 
-        async Task<AgentMemoryRetrieverOutput> IAgentMemoryRetriever.ExecuteAsync(AgentMemoryRetrieverInput input)
+        async Task<AgentMemoryRetrieverOutput> IAgentMemoryRetrieverExecutor.ExecuteAsync(AgentMemoryRetrieverInput input)
         {
             _logger.LogDebug("Executing AgentMemoryRetriever - ExecuteAsync.");
             _logger.LogDebug("AgentMemoryRetriever - ExecuteAsync Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));

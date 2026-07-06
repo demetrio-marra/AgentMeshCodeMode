@@ -1,12 +1,11 @@
 using AgentMesh.Application.Configuration;
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Models;
-using AgentMesh.Models.RelevantFactsEvaluator;
+using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 
@@ -28,10 +27,8 @@ namespace AgentMesh
         DocumentationAgentConfiguration documentationAgentConfiguration,
         IConversationSummarizerAgent conversationSummarizerAgent,
         CodeModeWorkflowConfiguration workflowConfiguration,
-        RelevantFactsEvaluatorAgentConfiguration relevantFactsEvaluatorConfiguration,
         EmbeddingServiceConfiguration embeddingServiceConfiguration,
-        IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
-        IAgentMemorySaver agentMemorySaver)
+        IAgentMemorySaverExecutor agentMemorySaver)
     {
         private readonly IWorkflow _workflow = workflow;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
@@ -48,10 +45,8 @@ namespace AgentMesh
         private readonly DocumentationAgentConfiguration _documentationAgentConfiguration = documentationAgentConfiguration;
         private readonly IConversationSummarizerAgent _conversationSummarizerAgent = conversationSummarizerAgent;
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
-        private readonly RelevantFactsEvaluatorAgentConfiguration _relevantFactsEvaluatorConfiguration = relevantFactsEvaluatorConfiguration;
         private readonly EmbeddingServiceConfiguration _embeddingServiceConfiguration = embeddingServiceConfiguration;
-        private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
-        private readonly IAgentMemorySaver _agentMemorySaver = agentMemorySaver;
+        private readonly IAgentMemorySaverExecutor _agentMemorySaver = agentMemorySaver;
 
         public async Task Run()
         {
@@ -128,7 +123,6 @@ namespace AgentMesh
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionInputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
-                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens },
                     { "Embedding Service", _embeddingServiceConfiguration.CostPerMillionTokens }
                 };
 
@@ -141,15 +135,8 @@ namespace AgentMesh
                     { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionOutputTokens },
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionOutputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
-                    { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens },
-                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens }
+                    { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens }
                 };
-
-                if (_workflowConfiguration.EnableMemoryService)
-                {
-                    agentInputCosts[RelevantFactsEvaluatorAgentConfiguration.AgentName] = _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens;
-                    agentOutputCosts[RelevantFactsEvaluatorAgentConfiguration.AgentName] = _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens;
-                }
 
                 ConsoleHelper.WriteLineWithColor($"\n\nConversation status: Count of messages {conversationContext.Conversation.Count()}. Count of tokens: {conversationContext.TokensCount}\n", ConsoleColor.Gray);
 
@@ -157,21 +144,21 @@ namespace AgentMesh
                 {
                     ConsoleHelper.WriteLineWithColor($"Conversation tokens exceeded configured threshold ({_conversationSummarizerConfiguration.SummaryTokenThreshold}). Summarizing conversation...", ConsoleColor.White);
 
-                    var relevantFactsConversation = conversationContext.Conversation.ToList();
+                    var memoryConversation = conversationContext.Conversation.ToList();
                     var summarizerConversation = conversationContext.Conversation.ToList();
 
-                    var relevantFactsTask = EvaluateRelevantFactsAndSaveToAgentMemory(relevantFactsConversation);
+                    var memorySaverTask = SaveConversationToAgentMemory(memoryConversation);
                     var summarizerTask = SummarizeChatContextTask(summarizerConversation);
 
-                    await Task.WhenAll(relevantFactsTask, summarizerTask);
+                    await Task.WhenAll(memorySaverTask, summarizerTask);
 
-                    var relevantFactsUsage = await relevantFactsTask;
+                    var memorySaverUsage = await memorySaverTask;
                     var summarizerResult = await summarizerTask;
 
                     conversationContext.Conversation = summarizerResult.NewConversation;
                     conversationContext.TokensCount = 0; // non fa niente se non è preciso, tanto lo ricalcoliamo al prossimo giro
 
-                    result.UsageStatistics.Add(relevantFactsUsage);
+                    result.UsageStatistics.Add(memorySaverUsage);
                     result.UsageStatistics.Add(summarizerResult.Usage);
                 }
 
@@ -179,12 +166,12 @@ namespace AgentMesh
             }
         }
 
-        private async Task<WorkflowStepUsageEntry> EvaluateRelevantFactsAndSaveToAgentMemory(List<ContextMessage> conversation)
+        private async Task<WorkflowStepUsageEntry> SaveConversationToAgentMemory(List<ContextMessage> conversation)
         {
             var usage = new WorkflowStepUsageEntry
             {
-                StepName = "Relevant Facts Evaluator Agent",
-                IsAgentic = true
+                StepName = "Agent Memory Saver",
+                IsAgentic = false
             };
 
             if (!_workflowConfiguration.EnableMemoryService || !conversation.Any())
@@ -192,52 +179,28 @@ namespace AgentMesh
                 return usage;
             }
 
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Relevant Facts Evaluator Agent", new Dictionary<string, string>
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Saver", new Dictionary<string, string>
             {
                 { "Conversation", $"<omitted for brevity>. Total: {conversation.Count}" }
             });
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-            var output = await _relevantFactsEvaluatorAgent.ExecuteAsync(new RelevantFactsEvaluatorAgentInput
+            await _agentMemorySaver.ExecuteAsync(new AgentMemorySaverConversationInput
             {
                 ConversationHistory = conversation
             });
 
-            var relevantFacts = output.RelevantFacts
-                .Where(f => !string.IsNullOrWhiteSpace(f))
-                .Select(f => f.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            foreach (var fact in relevantFacts)
-            {
-                await _agentMemorySaver.ExecuteAsync(new AgentMemorySaverInput
-                {
-                    MessageByUser = fact,
-                    ResponseByAssistant = string.Empty
-                });
-            }
-
             stopwatch.Stop();
 
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Relevant Facts Evaluator Agent", new Dictionary<string, string>
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", new Dictionary<string, string>
             {
-                { "FactsCount", relevantFacts.Count.ToString() },
-                { "RelevantFacts", relevantFacts.Any() ? string.Join("\n", relevantFacts.Select(f => $"- {f}")) : "(No relevant facts found)" }
+                { "SavedMessagesCount", conversation.Count.ToString() }
             });
 
             usage.Elapsed = stopwatch.Elapsed;
-            usage.TokensUsage = new AgentTokenUsageEntry
-            {
-                AgentName = RelevantFactsEvaluatorAgentConfiguration.AgentName,
-                InputTokens = output.InputTokenCount,
-                OutputTokens = output.OutputTokenCount
-            };
-
             return usage;
         }
-
 
         private async Task<(WorkflowStepUsageEntry Usage, IEnumerable<ContextMessage> NewConversation)> SummarizeChatContextTask(List<ContextMessage> conversation)
         {
@@ -304,11 +267,6 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Conversation Summarizer", ConversationSummarizerAgent.AgentName, _conversationSummarizerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Documentation", DocumentationAgent.AgentName, _documentationAgentConfiguration);
-         
-            if (_workflowConfiguration.EnableMemoryService)
-            {
-                ConsoleHelper.PrintAgentConfiguration("Relevant Facts Evaluator", RelevantFactsEvaluatorAgentConfiguration.AgentName, _relevantFactsEvaluatorConfiguration);
-            }
             Console.WriteLine();
         }
     }

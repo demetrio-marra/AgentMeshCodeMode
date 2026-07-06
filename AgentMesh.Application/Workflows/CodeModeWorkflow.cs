@@ -37,7 +37,7 @@ namespace AgentMesh.Application.Workflows
         IIntentExtractorAgent intentExtractorAgent,
         IRequirementsCollectorAgent requirementsCollectorAgent,
         IPersonalAssistantAgent personalAssistantAgent,
-        IAgentMemoryRetriever agentMemoryRetriever,
+        IAgentMemoryRetrieverExecutor agentMemoryRetriever,
         IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
         IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor,
         IKnowledgeBaseSearchFastExecutor knowledgeBaseSearchFastExecutor,
@@ -60,7 +60,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IIntentExtractorAgent _intentExtractorAgent = intentExtractorAgent;
         private readonly IRequirementsCollectorAgent _requirementsCollectorAgent = requirementsCollectorAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent = personalAssistantAgent;
-        private readonly IAgentMemoryRetriever _agentMemoryRetriever = agentMemoryRetriever;
+        private readonly IAgentMemoryRetrieverExecutor _agentMemoryRetriever = agentMemoryRetriever;
         private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
         private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
         private readonly IKnowledgeBaseSearchFastExecutor _knowledgeBaseSearchFastExecutor = knowledgeBaseSearchFastExecutor;

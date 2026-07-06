@@ -76,8 +76,8 @@ namespace AgentMesh
 
             // Register Agent Memory Executor - single implementation for both interfaces
             services.AddSingleton<AgentMemoryExecutor>();
-            services.AddSingleton<IAgentMemoryRetriever>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
-            services.AddSingleton<IAgentMemorySaver>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
+            services.AddSingleton<IAgentMemoryRetrieverExecutor>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
+            services.AddSingleton<IAgentMemorySaverExecutor>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
 
             // QMD MCP server proxy configuration and HTTP client
             var qmdHttpProxyConfig = new QMDHttpProxyConfiguration();

@@ -1,4 +1,4 @@
-namespace AgentMesh.Application.Models
+namespace AgentMesh.Models.AgentMemory
 {
     /// <summary>
     /// Wraps the input parameters required for searching the agent's memory.
