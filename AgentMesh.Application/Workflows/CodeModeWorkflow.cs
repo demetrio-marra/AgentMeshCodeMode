@@ -17,7 +17,6 @@ using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using AgentMesh.Models.KnowledgeBase;
-using AgentMesh.Models.RelevantFactsEvaluator;
 using System.Diagnostics;
 using AgentMesh.Models.AgentMemory;
 using System.Data;
@@ -39,11 +38,9 @@ namespace AgentMesh.Application.Workflows
         IRequirementsCollectorAgent requirementsCollectorAgent,
         IPersonalAssistantAgent personalAssistantAgent,
         IAgentMemoryRetriever agentMemoryRetriever,
-        IAgentMemorySaver agentMemorySaver,
         IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
         IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor,
         IKnowledgeBaseSearchFastExecutor knowledgeBaseSearchFastExecutor,
-        IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
         CodeModeWorkflowConfiguration workflowConfiguration,
         IQueriesCacheService queriesCacheService) : IWorkflow
     {
@@ -68,11 +65,9 @@ namespace AgentMesh.Application.Workflows
         private readonly IRequirementsCollectorAgent _requirementsCollectorAgent = requirementsCollectorAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent = personalAssistantAgent;
         private readonly IAgentMemoryRetriever _agentMemoryRetriever = agentMemoryRetriever;
-        private readonly IAgentMemorySaver _agentMemorySaver = agentMemorySaver;
         private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
         private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
         private readonly IKnowledgeBaseSearchFastExecutor _knowledgeBaseSearchFastExecutor = knowledgeBaseSearchFastExecutor;
-        private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
         private readonly IQueriesCacheService _queriesCacheService = queriesCacheService;
 
@@ -181,15 +176,6 @@ namespace AgentMesh.Application.Workflows
             await CompleteWorkflowAsync(state);
 
         WorkflowEnd:
-
-            if (_workflowConfiguration.EnableMemoryService)
-            {
-                var isWorthSaving = await ExecuteRelevantFactsEvaluatorAsync(state);
-                if (isWorthSaving)
-                {
-                    await ExecuteAgentMemorySaverAsync(state);
-                }
-            }
 
             await _workflowProgressNotifier.NotifyWorkflowEnd();
 
@@ -1011,61 +997,7 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Personal Assistant Agent", notifyDictionary);
         }
 
-        private async Task<bool> ExecuteRelevantFactsEvaluatorAsync(CodeModeWorkflowState state)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Relevant Facts Evaluator Agent...");
-            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Relevant Facts Evaluator Agent", new Dictionary<string, string>
-            {
-                { "User's request", enrichedUserRequest },
-                { "AI pipeline answer", state.FinalAnswer ?? string.Empty }
-            });
-
-            var output = await _relevantFactsEvaluatorAgent.ExecuteAsync(new RelevantFactsEvaluatorAgentInput
-            {
-                EnrichedUserRequest = enrichedUserRequest,
-                FinalAnswer = state.FinalAnswer ?? string.Empty
-            });
-
-            state.AddTokenUsage(RelevantFactsEvaluatorAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Relevant Facts Evaluator Agent");
-            var notifyDictionary = new Dictionary<string, string>
-            {
-                { "IsWorthSaving", output.IsWorthSaving.ToString() },
-                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
-            };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Relevant Facts Evaluator Agent", notifyDictionary);
-
-            return output.IsWorthSaving;
-        }
-
         private static string GetElapsedTime(Stopwatch stopwatch) => $"{stopwatch.ElapsedMilliseconds}ms";
-
-        private async Task ExecuteAgentMemorySaverAsync(CodeModeWorkflowState state)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Agent Memory Saver...");
-            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Saver", new Dictionary<string, string>
-            {
-                { "User's request", enrichedUserRequest },
-                { "AI pipeline answer", state.FinalAnswer ?? string.Empty }
-            });
-
-            await _agentMemorySaver.ExecuteAsync(new AgentMemorySaverInput
-            {
-                MessageByUser = enrichedUserRequest,
-                ResponseByAssistant = state.FinalAnswer ?? string.Empty
-            });
-
-            var notifyDictionary = new Dictionary<string, string>
-            {
-                { "Status", "Memory saved successfully" },
-                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
-            };
-            state.AddStepUsage("Agent Memory Saver", stopwatch.Elapsed, false);
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", notifyDictionary);
-        }
 
         private static string CreateKnowledgeBaseCacheLookupKey(string query, KnowledgeBaseQuerySearchType queryType)
             => $"{queryType}|{NormalizeCacheLookupValue(query)}";

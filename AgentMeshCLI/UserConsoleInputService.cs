@@ -1,11 +1,14 @@
-using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Models;
+using AgentMesh.Models.RelevantFactsEvaluator;
 using AgentMesh.Models.Workflows;
+using AgentMesh.Services;
 
 namespace AgentMesh
 {
@@ -26,7 +29,9 @@ namespace AgentMesh
         IConversationSummarizerAgent conversationSummarizerAgent,
         CodeModeWorkflowConfiguration workflowConfiguration,
         RelevantFactsEvaluatorAgentConfiguration relevantFactsEvaluatorConfiguration,
-        EmbeddingServiceConfiguration embeddingServiceConfiguration)
+        EmbeddingServiceConfiguration embeddingServiceConfiguration,
+        IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
+        IAgentMemorySaver agentMemorySaver)
     {
         private readonly IWorkflow _workflow = workflow;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
@@ -45,6 +50,8 @@ namespace AgentMesh
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
         private readonly RelevantFactsEvaluatorAgentConfiguration _relevantFactsEvaluatorConfiguration = relevantFactsEvaluatorConfiguration;
         private readonly EmbeddingServiceConfiguration _embeddingServiceConfiguration = embeddingServiceConfiguration;
+        private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
+        private readonly IAgentMemorySaver _agentMemorySaver = agentMemorySaver;
 
         public async Task Run()
         {
@@ -148,58 +155,127 @@ namespace AgentMesh
 
                 if (conversationContext.TokensCount >= _conversationSummarizerConfiguration.SummaryTokenThreshold)
                 {
-                    var currentCountOfMessages = conversationContext.Conversation.Count();
-
-                    ConsoleHelper.WriteLineWithColor($"Conversation tokens exceeded configured threshold ({_conversationSummarizerConfiguration.SummaryTokenThreshold}). Summarizing conversation...", ConsoleColor.White);
-
-                    var summarizerInput = new ConversationSummarizerAgentInput
-                    {
-                        Conversation = conversationContext.Conversation,
-                        CountOfMessagesToKeep = _conversationSummarizerConfiguration.NumMessageToPreseve,
-                        SummaryLanguage = _conversationSummarizerConfiguration.SummarizeLanguage
-                    };
-
-                    await _workflowProgressNotifier.NotifyWorkflowStepStart("Conversation Summarizer Agent", new Dictionary<string, string>
-                    {
-                        { "Conversation", $"<omitted for brevity>. Total: {summarizerInput.Conversation.Count()}" },
-                        { "CountOfMessagesToKeep", summarizerInput.CountOfMessagesToKeep.ToString() },
-                        { "SummaryLanguage", summarizerInput.SummaryLanguage ?? string.Empty }
-                    });
-
-                    var summarizationStopwatch = System.Diagnostics.Stopwatch.StartNew();
-                    var summarizationResult = await _conversationSummarizerAgent.ExecuteAsync(summarizerInput);
-                    summarizationStopwatch.Stop();
-
-                    await _workflowProgressNotifier.NotifyWorkflowStepEnd("Conversation Summarizer Agent", new Dictionary<string, string>
-                    {
-                        { "Conversation", $"<omitted for brevity>. Total: {summarizationResult.NewConversation.Count()}" },
-                        { "Summary", summarizationResult.Summary.ToString() }
-                    });
-
-                    conversationContext.Conversation = summarizationResult.NewConversation;
-                    conversationContext.TokensCount = 0; // non fa niente se non è preciso, tanto lo ricalcoliamo al prossimo giro
-
-                    var afterCountOfMessages = conversationContext.Conversation.Count();
-
-                    var summarizationTokenUsageEntry = new WorkflowStepUsageEntry
-                    {
-                        StepName = "Conversation Summarizer Agent",
-                        Elapsed = summarizationStopwatch.Elapsed,
-                        IsAgentic = true,
-                        TokensUsage = new AgentTokenUsageEntry
-                        {
-                            AgentName = ConversationSummarizerAgent.AgentName,
-                            InputTokens = summarizationResult.InputTokenCount,
-                            OutputTokens = summarizationResult.OutputTokenCount
-                        }
-                    };
-
-                    result.UsageStatistics.Add(summarizationTokenUsageEntry);
+                    var relevantFactsUsage = await EvaluateRelevantFactsAndSaveToAgentMemory(conversationContext);
+                    var summarizerUsage = await SummarizeChatContextTask(conversationContext);
+                    result.UsageStatistics.Add(relevantFactsUsage);
+                    result.UsageStatistics.Add(summarizerUsage);
                 }
 
                 ConsoleHelper.PrintTokenUsageSummary(result.UsageStatistics, agentInputCosts, agentOutputCosts);
             }
         }
+
+        private async Task<WorkflowStepUsageEntry> EvaluateRelevantFactsAndSaveToAgentMemory(ConversationContext conversationContext)
+        {
+            var usage = new WorkflowStepUsageEntry
+            {
+                StepName = "Relevant Facts Evaluator Agent",
+                IsAgentic = true
+            };
+
+            if (!_workflowConfiguration.EnableMemoryService || !conversationContext.Conversation.Any())
+            {
+                return usage;
+            }
+
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Relevant Facts Evaluator Agent", new Dictionary<string, string>
+            {
+                { "Conversation", $"<omitted for brevity>. Total: {conversationContext.Conversation.Count()}" }
+            });
+
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            var output = await _relevantFactsEvaluatorAgent.ExecuteAsync(new RelevantFactsEvaluatorAgentInput
+            {
+                ConversationHistory = conversationContext.Conversation
+            });
+
+            var relevantFacts = output.RelevantFacts
+                .Where(f => !string.IsNullOrWhiteSpace(f))
+                .Select(f => f.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var fact in relevantFacts)
+            {
+                await _agentMemorySaver.ExecuteAsync(new AgentMemorySaverInput
+                {
+                    MessageByUser = fact,
+                    ResponseByAssistant = string.Empty
+                });
+            }
+
+            stopwatch.Stop();
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Relevant Facts Evaluator Agent", new Dictionary<string, string>
+            {
+                { "FactsCount", relevantFacts.Count.ToString() },
+                { "RelevantFacts", relevantFacts.Any() ? string.Join("\n", relevantFacts.Select(f => $"- {f}")) : "(No relevant facts found)" }
+            });
+
+            usage.Elapsed = stopwatch.Elapsed;
+            usage.TokensUsage = new AgentTokenUsageEntry
+            {
+                AgentName = RelevantFactsEvaluatorAgentConfiguration.AgentName,
+                InputTokens = output.InputTokenCount,
+                OutputTokens = output.OutputTokenCount
+            };
+
+            return usage;
+        }
+
+
+        private async Task<WorkflowStepUsageEntry> SummarizeChatContextTask(ConversationContext conversationContext)
+        {
+            var currentCountOfMessages = conversationContext.Conversation.Count();
+
+            ConsoleHelper.WriteLineWithColor($"Conversation tokens exceeded configured threshold ({_conversationSummarizerConfiguration.SummaryTokenThreshold}). Summarizing conversation...", ConsoleColor.White);
+
+            var summarizerInput = new ConversationSummarizerAgentInput
+            {
+                Conversation = conversationContext.Conversation,
+                CountOfMessagesToKeep = _conversationSummarizerConfiguration.NumMessageToPreseve,
+                SummaryLanguage = _conversationSummarizerConfiguration.SummarizeLanguage
+            };
+
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Conversation Summarizer Agent", new Dictionary<string, string>
+            {
+                { "Conversation", $"<omitted for brevity>. Total: {summarizerInput.Conversation.Count()}" },
+                { "CountOfMessagesToKeep", summarizerInput.CountOfMessagesToKeep.ToString() },
+                { "SummaryLanguage", summarizerInput.SummaryLanguage ?? string.Empty }
+            });
+
+            var summarizationStopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var summarizationResult = await _conversationSummarizerAgent.ExecuteAsync(summarizerInput);
+            summarizationStopwatch.Stop();
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Conversation Summarizer Agent", new Dictionary<string, string>
+            {
+                { "Conversation", $"<omitted for brevity>. Total: {summarizationResult.NewConversation.Count()}" },
+                { "Summary", summarizationResult.Summary.ToString() }
+            });
+
+            conversationContext.Conversation = summarizationResult.NewConversation;
+            conversationContext.TokensCount = 0; // non fa niente se non è preciso, tanto lo ricalcoliamo al prossimo giro
+
+            var afterCountOfMessages = conversationContext.Conversation.Count();
+
+            var summarizationTokenUsageEntry = new WorkflowStepUsageEntry
+            {
+                StepName = "Conversation Summarizer Agent",
+                Elapsed = summarizationStopwatch.Elapsed,
+                IsAgentic = true,
+                TokensUsage = new AgentTokenUsageEntry
+                {
+                    AgentName = ConversationSummarizerAgent.AgentName,
+                    InputTokens = summarizationResult.InputTokenCount,
+                    OutputTokens = summarizationResult.OutputTokenCount
+                }
+            };
+
+            return summarizationTokenUsageEntry;
+        }
+
 
         private void PrintConfigurations()
         {
@@ -227,3 +303,4 @@ namespace AgentMesh
         }
     }
 }
+
