@@ -1005,14 +1005,6 @@ namespace AgentMesh.Application.Workflows
         private static string NormalizeCacheLookupValue(string? value)
             => value?.Trim() ?? string.Empty;
 
-        private static KnowledgeBaseQuerySearchType ParseKnowledgeBaseSearchType(string searchType) => searchType switch
-        {
-            KEYWORDS_SEARCH_TYPE => KnowledgeBaseQuerySearchType.Keyword,
-            SEMANTIC_SEARCH_TYPE => KnowledgeBaseQuerySearchType.Semantic,
-            HYPOTHETICAL_SEARCH_TYPE => KnowledgeBaseQuerySearchType.HypotheticalDocument,
-            _ => throw new ArgumentOutOfRangeException(nameof(searchType), $"Not expected search type value: {searchType}")
-        };
-
         public string GetIngressExecutorName() => IntentExtractorAgentConfiguration.AgentName;
 
         public string GetEgressExecutorName() => PersonalAssistantAgentConfiguration.AgentName;
