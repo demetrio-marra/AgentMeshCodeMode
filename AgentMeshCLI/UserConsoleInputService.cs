@@ -155,17 +155,31 @@ namespace AgentMesh
 
                 if (conversationContext.TokensCount >= _conversationSummarizerConfiguration.SummaryTokenThreshold)
                 {
-                    var relevantFactsUsage = await EvaluateRelevantFactsAndSaveToAgentMemory(conversationContext);
-                    var summarizerUsage = await SummarizeChatContextTask(conversationContext);
+                    ConsoleHelper.WriteLineWithColor($"Conversation tokens exceeded configured threshold ({_conversationSummarizerConfiguration.SummaryTokenThreshold}). Summarizing conversation...", ConsoleColor.White);
+
+                    var relevantFactsConversation = conversationContext.Conversation.ToList();
+                    var summarizerConversation = conversationContext.Conversation.ToList();
+
+                    var relevantFactsTask = EvaluateRelevantFactsAndSaveToAgentMemory(relevantFactsConversation);
+                    var summarizerTask = SummarizeChatContextTask(summarizerConversation);
+
+                    await Task.WhenAll(relevantFactsTask, summarizerTask);
+
+                    var relevantFactsUsage = await relevantFactsTask;
+                    var summarizerResult = await summarizerTask;
+
+                    conversationContext.Conversation = summarizerResult.NewConversation;
+                    conversationContext.TokensCount = 0; // non fa niente se non è preciso, tanto lo ricalcoliamo al prossimo giro
+
                     result.UsageStatistics.Add(relevantFactsUsage);
-                    result.UsageStatistics.Add(summarizerUsage);
+                    result.UsageStatistics.Add(summarizerResult.Usage);
                 }
 
                 ConsoleHelper.PrintTokenUsageSummary(result.UsageStatistics, agentInputCosts, agentOutputCosts);
             }
         }
 
-        private async Task<WorkflowStepUsageEntry> EvaluateRelevantFactsAndSaveToAgentMemory(ConversationContext conversationContext)
+        private async Task<WorkflowStepUsageEntry> EvaluateRelevantFactsAndSaveToAgentMemory(List<ContextMessage> conversation)
         {
             var usage = new WorkflowStepUsageEntry
             {
@@ -173,21 +187,21 @@ namespace AgentMesh
                 IsAgentic = true
             };
 
-            if (!_workflowConfiguration.EnableMemoryService || !conversationContext.Conversation.Any())
+            if (!_workflowConfiguration.EnableMemoryService || !conversation.Any())
             {
                 return usage;
             }
 
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Relevant Facts Evaluator Agent", new Dictionary<string, string>
             {
-                { "Conversation", $"<omitted for brevity>. Total: {conversationContext.Conversation.Count()}" }
+                { "Conversation", $"<omitted for brevity>. Total: {conversation.Count}" }
             });
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             var output = await _relevantFactsEvaluatorAgent.ExecuteAsync(new RelevantFactsEvaluatorAgentInput
             {
-                ConversationHistory = conversationContext.Conversation
+                ConversationHistory = conversation
             });
 
             var relevantFacts = output.RelevantFacts
@@ -225,15 +239,14 @@ namespace AgentMesh
         }
 
 
-        private async Task<WorkflowStepUsageEntry> SummarizeChatContextTask(ConversationContext conversationContext)
+        private async Task<(WorkflowStepUsageEntry Usage, IEnumerable<ContextMessage> NewConversation)> SummarizeChatContextTask(List<ContextMessage> conversation)
         {
-            var currentCountOfMessages = conversationContext.Conversation.Count();
+            var currentCountOfMessages = conversation.Count;
 
-            ConsoleHelper.WriteLineWithColor($"Conversation tokens exceeded configured threshold ({_conversationSummarizerConfiguration.SummaryTokenThreshold}). Summarizing conversation...", ConsoleColor.White);
 
             var summarizerInput = new ConversationSummarizerAgentInput
             {
-                Conversation = conversationContext.Conversation,
+                Conversation = conversation,
                 CountOfMessagesToKeep = _conversationSummarizerConfiguration.NumMessageToPreseve,
                 SummaryLanguage = _conversationSummarizerConfiguration.SummarizeLanguage
             };
@@ -255,10 +268,7 @@ namespace AgentMesh
                 { "Summary", summarizationResult.Summary.ToString() }
             });
 
-            conversationContext.Conversation = summarizationResult.NewConversation;
-            conversationContext.TokensCount = 0; // non fa niente se non è preciso, tanto lo ricalcoliamo al prossimo giro
-
-            var afterCountOfMessages = conversationContext.Conversation.Count();
+            var afterCountOfMessages = summarizationResult.NewConversation.Count();
 
             var summarizationTokenUsageEntry = new WorkflowStepUsageEntry
             {
@@ -273,7 +283,7 @@ namespace AgentMesh
                 }
             };
 
-            return summarizationTokenUsageEntry;
+            return (summarizationTokenUsageEntry, summarizationResult.NewConversation);
         }
 
 
