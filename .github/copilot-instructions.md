@@ -274,10 +274,11 @@ When the user asks to refactor the name of the agent keeping features unchanged,
 ## 3. Removing legacy Agents
 
 When the user asks to remove a no more useful or superseed agent, follow this workflow:
-1. Remove it from `CodeModeWorkflow.cs` first.
+1. Remove it from `CodeModeWorkflow.cs` first
 2. Remove related-only properties from `CodeModeWorkflowState.cs`
 3. Delete its configuration in `appSettings.json`
-4. Remove configuration binding from `Program.cs` as well as Dependency Injection.
-5. Delete the .cs file,
-6. Delete related DTOs and Executors.
+4. Remove configuration binding from `Program.cs` as well as Dependency Injection
+5. Delete the .cs file
+6. Delete related DTOs and Executors
 7. Ensure all folders belonging to it are deleted across the entire solution
+8. Delete the `<agentName>.SystemPrompt.txt` file 
