@@ -20,7 +20,7 @@ namespace AgentMesh.Application.Models
         public IEnumerable<string> MissingMemories { get; set; } = [];
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
         public IEnumerable<RequirementsCollectorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
-        public string EnrichedUserRequest { get; set; } = string.Empty;
+        public string EnrichedUserRequest { get => UserIntent; }
         public UserIntentCategoryValues UserIntentCategoryValue { get; set; }
         public string? BusinessRequirements { get; set; }
         public bool ShouldEngageCoder { get; set; }
@@ -37,7 +37,6 @@ namespace AgentMesh.Application.Models
 
         public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; } = [];
         public IEnumerable<AgentMemoryQueryResultItem> ExtractedAgentMemories { get; set; } = [];
-        public IEnumerable<string> RelevantKnowledgeBaseFileNames { get; set; } = [];
         public IEnumerable<DomainExpertAgentOutput.KnowledgeBaseAPIQuery> KnowledgeBaseAPIQueries { get; set; } = [];
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [.. contextMessages];
 
@@ -45,7 +44,7 @@ namespace AgentMesh.Application.Models
 
         public KnowledgeBaseQueryResult KnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 
-        public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseDocumentsContent { get; set; } = [];
+        public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseDomainsDocumentsContent { get; set; } = [];
         public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseAPIDocumentsContent { get; set; } = [];
 
         public void AddTokenUsage(string agentName, int inputTokenCount, int outputTokenCount, TimeSpan? elapsed = null, string? stepName = null)
