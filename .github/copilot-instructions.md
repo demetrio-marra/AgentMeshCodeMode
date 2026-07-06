@@ -1,3 +1,4 @@
+
 # GitHub Copilot Instructions for AgentMesh
 
 This file provides guidance for GitHub Copilot when working in this repository. It is organized by topic and should be extended over time as new conventions and patterns are established.
@@ -8,6 +9,7 @@ This file provides guidance for GitHub Copilot when working in this repository. 
 
 1. [Creating New Agents](#1-creating-new-agents)
 2. [Updating existing Agents](#2-updating-existing-agents)
+3. [Removing legacy Agents](#3-deleting-legacy-agents)
 
 ---
 
@@ -249,7 +251,7 @@ services.AddSingleton<I<AgentName>Agent, <AgentName>Agent>();
 - **Workflow wiring** — Adding a new agent to an existing or new `IWorkflow` implementation is a separate concern. Inject the agent's interface via the workflow constructor and call `ExecuteAsync` as needed within the workflow logic.
 
 
-## 1. Updating existing Agents
+## 2. Updating existing Agents
 This section details the workflows on updating existing agents capabilities
 
 ### Adding/Removing or Changing an agent's feature
@@ -269,4 +271,13 @@ When the user asks to refactor the name of the agent keeping features unchanged,
 - Update the agent's configuration printed at program startup
 
 
+## 3. Removing legacy Agents
 
+When the user asks to remove a no more useful or superseed agent, follow this workflow:
+1. Remove it from `CodeModeWorkflow.cs` first.
+2. Remove related-only properties from `CodeModeWorkflowState.cs`
+3. Delete its configuration in `appSettings.json`
+4. Remove configuration binding from `Program.cs` as well as Dependency Injection.
+5. Delete the .cs file,
+6. Delete related DTOs and Executors.
+7. Ensure all folders belonging to it are deleted across the entire solution
