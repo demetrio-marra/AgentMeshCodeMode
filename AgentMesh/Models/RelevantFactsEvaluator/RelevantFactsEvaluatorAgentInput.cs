@@ -1,3 +1,5 @@
+using AgentMesh.Models;
+
 namespace AgentMesh.Models.RelevantFactsEvaluator
 {
     public class RelevantFactsEvaluatorAgentInput
@@ -5,3 +7,4 @@ namespace AgentMesh.Models.RelevantFactsEvaluator
         public IEnumerable<ContextMessage> ConversationHistory { get; set; } = [];
     }
 }
+

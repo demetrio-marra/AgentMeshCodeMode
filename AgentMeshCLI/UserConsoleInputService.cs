@@ -6,6 +6,7 @@ using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
+using AgentMesh.Models.RelevantFactsEvaluator;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 
@@ -25,7 +26,9 @@ namespace AgentMesh
         SESJSSandboxConfiguration sESJSSandboxConfiguration,
         UserConfiguration userConfiguration,
         DocumentationAgentConfiguration documentationAgentConfiguration,
+        RelevantFactsEvaluatorAgentConfiguration relevantFactsEvaluatorConfiguration,
         IConversationSummarizerAgent conversationSummarizerAgent,
+        IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
         CodeModeWorkflowConfiguration workflowConfiguration,
         EmbeddingServiceConfiguration embeddingServiceConfiguration,
         IAgentMemorySaverExecutor agentMemorySaver)
@@ -43,7 +46,9 @@ namespace AgentMesh
         private readonly SESJSSandboxConfiguration _sesJsSandboxConfiguration = sESJSSandboxConfiguration;
         private readonly UserConfiguration _userConfiguration = userConfiguration;
         private readonly DocumentationAgentConfiguration _documentationAgentConfiguration = documentationAgentConfiguration;
+        private readonly RelevantFactsEvaluatorAgentConfiguration _relevantFactsEvaluatorConfiguration = relevantFactsEvaluatorConfiguration;
         private readonly IConversationSummarizerAgent _conversationSummarizerAgent = conversationSummarizerAgent;
+        private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
         private readonly EmbeddingServiceConfiguration _embeddingServiceConfiguration = embeddingServiceConfiguration;
         private readonly IAgentMemorySaverExecutor _agentMemorySaver = agentMemorySaver;
@@ -123,6 +128,7 @@ namespace AgentMesh
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionInputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
+                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens },
                     { "Embedding Service", _embeddingServiceConfiguration.CostPerMillionTokens }
                 };
 
@@ -135,7 +141,8 @@ namespace AgentMesh
                     { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionOutputTokens },
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionOutputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
-                    { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens }
+                    { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens },
+                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
                 ConsoleHelper.WriteLineWithColor($"\n\nConversation status: Count of messages {conversationContext.Conversation.Count()}. Count of tokens: {conversationContext.TokensCount}\n", ConsoleColor.Gray);
@@ -152,13 +159,13 @@ namespace AgentMesh
 
                     await Task.WhenAll(memorySaverTask, summarizerTask);
 
-                    var memorySaverUsage = await memorySaverTask;
+                    var memorySaverUsageEntries = await memorySaverTask;
                     var summarizerResult = await summarizerTask;
 
                     conversationContext.Conversation = summarizerResult.NewConversation;
                     conversationContext.TokensCount = 0; // non fa niente se non è preciso, tanto lo ricalcoliamo al prossimo giro
 
-                    result.UsageStatistics.Add(memorySaverUsage);
+                    result.UsageStatistics.AddRange(memorySaverUsageEntries);
                     result.UsageStatistics.Add(summarizerResult.Usage);
                 }
 
@@ -166,40 +173,94 @@ namespace AgentMesh
             }
         }
 
-        private async Task<WorkflowStepUsageEntry> SaveConversationToAgentMemory(List<ContextMessage> conversation)
+        private async Task<List<WorkflowStepUsageEntry>> SaveConversationToAgentMemory(List<ContextMessage> conversation)
         {
-            var usage = new WorkflowStepUsageEntry
-            {
-                StepName = "Agent Memory Saver",
-                IsAgentic = false
-            };
+            var usageEntries = new List<WorkflowStepUsageEntry>();
 
             if (!_workflowConfiguration.EnableMemoryService || !conversation.Any())
             {
-                return usage;
+                return usageEntries;
+            }
+
+            var userConversation = conversation
+                .Where(message => message.Role == ContextMessageRole.User)
+                .Where(message => !string.IsNullOrWhiteSpace(message.Text))
+                .ToList();
+
+            if (!userConversation.Any())
+            {
+                return usageEntries;
+            }
+
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Relevant Facts Evaluator Agent", new Dictionary<string, string>
+            {
+                { "Conversation", $"<omitted for brevity>. Total user messages: {userConversation.Count}" }
+            });
+
+            var evaluatorStopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var relevantMessagesResult = await _relevantFactsEvaluatorAgent.ExecuteAsync(new RelevantFactsEvaluatorAgentInput
+            {
+                ConversationHistory = userConversation
+            });
+            evaluatorStopwatch.Stop();
+
+            var relevantConversation = BuildRelevantConversationForMemory(conversation, relevantMessagesResult.RelevantUserMessages);
+            var relevantUserMessagesCount = relevantConversation.Count(message =>
+                message.Role == ContextMessageRole.User &&
+                !string.IsNullOrWhiteSpace(message.Text));
+
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Relevant Facts Evaluator Agent", new Dictionary<string, string>
+            {
+                { "RelevantUserMessagesCount", relevantUserMessagesCount.ToString() },
+                { "RelevantUserMessages", relevantUserMessagesCount > 0 ? "<omitted for brevity>" : "(No relevant user messages)" }
+            });
+
+            usageEntries.Add(new WorkflowStepUsageEntry
+            {
+                StepName = "Relevant Facts Evaluator Agent",
+                Elapsed = evaluatorStopwatch.Elapsed,
+                IsAgentic = true,
+                TokensUsage = new AgentTokenUsageEntry
+                {
+                    AgentName = RelevantFactsEvaluatorAgentConfiguration.AgentName,
+                    InputTokens = relevantMessagesResult.InputTokenCount,
+                    OutputTokens = relevantMessagesResult.OutputTokenCount
+                }
+            });
+
+            if (relevantUserMessagesCount == 0)
+            {
+                return usageEntries;
             }
 
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Saver", new Dictionary<string, string>
             {
-                { "Conversation", $"<omitted for brevity>. Total: {conversation.Count}" }
+                { "Conversation", $"<omitted for brevity>. Total messages: {relevantConversation.Count}" },
+                { "RelevantUserMessagesCount", relevantUserMessagesCount.ToString() }
             });
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             await _agentMemorySaver.ExecuteAsync(new AgentMemorySaverConversationInput
             {
-                ConversationHistory = conversation
+                ConversationHistory = relevantConversation
             });
 
             stopwatch.Stop();
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", new Dictionary<string, string>
             {
-                { "SavedMessagesCount", conversation.Count.ToString() }
+                { "SavedMessagesCount", relevantUserMessagesCount.ToString() }
             });
 
-            usage.Elapsed = stopwatch.Elapsed;
-            return usage;
+            usageEntries.Add(new WorkflowStepUsageEntry
+            {
+                StepName = "Agent Memory Saver",
+                Elapsed = stopwatch.Elapsed,
+                IsAgentic = false
+            });
+
+            return usageEntries;
         }
 
         private async Task<(WorkflowStepUsageEntry Usage, IEnumerable<ContextMessage> NewConversation)> SummarizeChatContextTask(List<ContextMessage> conversation)
@@ -249,6 +310,26 @@ namespace AgentMesh
             return (summarizationTokenUsageEntry, summarizationResult.NewConversation);
         }
 
+        private static List<ContextMessage> BuildRelevantConversationForMemory(IEnumerable<ContextMessage> conversation, IEnumerable<string> relevantUserMessages)
+        {
+            var normalizedRelevantMessages = relevantUserMessages
+                .Where(message => !string.IsNullOrWhiteSpace(message))
+                .Select(NormalizeMessageText)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            return [.. conversation.Select(message => new ContextMessage
+            {
+                Role = message.Role,
+                Date = message.Date,
+                Text = message.Role == ContextMessageRole.User && normalizedRelevantMessages.Contains(NormalizeMessageText(message.Text))
+                    ? message.Text
+                    : string.Empty
+            })];
+        }
+
+        private static string NormalizeMessageText(string? value)
+            => string.Join(' ', (value ?? string.Empty)
+                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
         private void PrintConfigurations()
         {
@@ -267,6 +348,7 @@ namespace AgentMesh
             ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Conversation Summarizer", ConversationSummarizerAgent.AgentName, _conversationSummarizerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Documentation", DocumentationAgent.AgentName, _documentationAgentConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Relevant Facts Evaluator", RelevantFactsEvaluatorAgentConfiguration.AgentName, _relevantFactsEvaluatorConfiguration);
             Console.WriteLine();
         }
     }

@@ -2,6 +2,7 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
+using AgentMesh.Models;
 using AgentMesh.Models.RelevantFactsEvaluator;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,20 @@ namespace AgentMesh.Application.Services
             RelevantFactsEvaluatorAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            var serializedConversation = MessageSerializationUtils.SerializeConversationHistory(input.ConversationHistory);
+            var userMessages = input.ConversationHistory
+                .Where(message => message.Role == ContextMessageRole.User)
+                .Where(message => !string.IsNullOrWhiteSpace(message.Text))
+                .ToList();
+
+            if (userMessages.Count == 0)
+            {
+                return new RelevantFactsEvaluatorAgentOutput
+                {
+                    RelevantUserMessages = []
+                };
+            }
+
+            var serializedConversation = MessageSerializationUtils.SerializeConversationHistory(userMessages);
 
             var inputMessages = new List<AgentMessage>
             {
@@ -32,7 +46,7 @@ namespace AgentMesh.Application.Services
 
             return new RelevantFactsEvaluatorAgentOutput
             {
-                RelevantFacts = result.Result,
+                RelevantUserMessages = result.Result,
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount
@@ -46,17 +60,18 @@ namespace AgentMesh.Application.Services
                 var parsed = JsonSerializer.Deserialize<List<string>>(rawResponseText);
                 if (parsed == null)
                 {
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into a list of facts.");
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into a list of user messages.");
                 }
 
                 return [.. parsed
-                    .Where(fact => !string.IsNullOrWhiteSpace(fact))
-                    .Select(fact => fact.Trim())];
+                    .Where(message => !string.IsNullOrWhiteSpace(message))
+                    .Select(message => message.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)];
             }
             catch (JsonException ex)
             {
                 _logger.LogWarning(ex, "Failed to deserialize relevant facts evaluator response. Response text: {ResponseText}", rawResponseText);
-                throw new BadStructuredResponseException(rawResponseText, "Failed to parse the model's response as a JSON array of strings.", ex);
+                throw new BadStructuredResponseException(rawResponseText, "Failed to parse the model's response as a JSON array of user messages.", ex);
             }
         }
     }
