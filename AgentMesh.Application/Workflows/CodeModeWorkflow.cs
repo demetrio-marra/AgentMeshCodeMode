@@ -47,10 +47,6 @@ namespace AgentMesh.Application.Workflows
         private const string DOMAINS_DOCUMENTATION_COLLECTION_NAME = "domains";
         private const string APIS_DOCUMENTATION_COLLECTION_NAME = "apis";
 
-        private const string KEYWORDS_SEARCH_TYPE = "lex";
-        private const string SEMANTIC_SEARCH_TYPE = "vec";
-        private const string HYPOTHETICAL_SEARCH_TYPE = "hyde";
-
         private readonly ILogger<CodeModeWorkflow> _logger = logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
 
