@@ -3,7 +3,6 @@
     public enum UserIntentCategoryValues
     {
         Other,
-        BusinessAdvisor,
         Documentation,
         TaskExecution
     }

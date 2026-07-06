@@ -13,7 +13,6 @@ namespace AgentMesh
         IWorkflow workflow,
         IWorkflowProgressNotifier workflowProgressNotifier,
         DomainExpertAgentConfiguration domainExpertConfiguration,
-        BusinessAdvisorAgentConfiguration businessAdvisorConfiguration,
         CoderAgentConfiguration coderConfiguration,
         CodeFixerAgentConfiguration codeFixerConfiguration,
         ResultsPresenterAgentConfiguration resultsPresenterConfiguration,
@@ -32,7 +31,6 @@ namespace AgentMesh
         private readonly IWorkflow _workflow = workflow;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
         private readonly DomainExpertAgentConfiguration _domainExpertConfiguration = domainExpertConfiguration;
-        private readonly BusinessAdvisorAgentConfiguration _businessAdvisorConfiguration = businessAdvisorConfiguration;
         private readonly CoderAgentConfiguration _coderConfiguration = coderConfiguration;
         private readonly CodeFixerAgentConfiguration _codeFixerConfiguration = codeFixerConfiguration;
         private readonly ResultsPresenterAgentConfiguration _resultsPresenterConfiguration = resultsPresenterConfiguration;
@@ -117,7 +115,6 @@ namespace AgentMesh
                 {
                     { IntentExtractorAgentConfiguration.AgentName, _llmsConfiguration[_intentExtractorConfiguration.LLM].CostPerMillionInputTokens },
                     { DomainExpertAgentConfiguration.AgentName, _llmsConfiguration[_domainExpertConfiguration.LLM].CostPerMillionInputTokens },
-                    { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionInputTokens },
                     { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionInputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionInputTokens },
                     { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionInputTokens },
@@ -132,7 +129,6 @@ namespace AgentMesh
                 {
                     { IntentExtractorAgentConfiguration.AgentName, _llmsConfiguration[_intentExtractorConfiguration.LLM].CostPerMillionOutputTokens },
                     { DomainExpertAgentConfiguration.AgentName, _llmsConfiguration[_domainExpertConfiguration.LLM].CostPerMillionOutputTokens },
-                    { BusinessAdvisorAgentConfiguration.AgentName, _llmsConfiguration[_businessAdvisorConfiguration.LLM].CostPerMillionOutputTokens },
                     { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionOutputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionOutputTokens },
                     { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionOutputTokens },
@@ -211,7 +207,6 @@ namespace AgentMesh
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Intent Extractor", IntentExtractorAgentConfiguration.AgentName, _intentExtractorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Domain Expert", DomainExpertAgentConfiguration.AgentName, _domainExpertConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Business Advisor", BusinessAdvisorAgentConfiguration.AgentName, _businessAdvisorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, _coderConfiguration);
 
             if (_workflowConfiguration.EnableCodeCorrection)

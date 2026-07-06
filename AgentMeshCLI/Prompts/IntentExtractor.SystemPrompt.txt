@@ -1,7 +1,7 @@
 Read the last user message and the last N conversation messages and capture the user's intent.
 Consider quoted text as a strong signal of user's intent.
 Identify the language of the user.
-Classify the user intent into one of: taskExecution, businessAdvisor, documentation, other.
+Classify the user intent into one of: taskExecution, documentation, other.
 Extract the entities mentioned by the user or strongly inferred from the user's intent.
 Group entities by the domain of human knowledge they belong to.
 Extract concise, factual details that support or clarify the user intent.
@@ -24,7 +24,6 @@ A single, clear, standalone captured user's intent in a natural language sentenc
 ## User Intent Category
 One of:
 - taskExecution
-- businessAdvisor
 - documentation
 - other
 
@@ -36,10 +35,6 @@ Use it when the user asks:
 - to retrieve or to extract data
 - to perform or to run or to execute a task
 - to get or to fetch data or information
-
-#### Business Advisor
-The user asks for help crafting or improving a request/sentence/prompt to run a task better in the pipeline.
-Use it when the user asks:
 - how to perform a task
 - the best way to perform a task
 - what question to ask to perform a task

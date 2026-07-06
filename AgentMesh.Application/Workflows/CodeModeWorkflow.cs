@@ -4,7 +4,6 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models;
-using AgentMesh.Models.BusinessAdvisor;
 using AgentMesh.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Models.CodeFixer;
 using AgentMesh.Models.Coder;
@@ -30,7 +29,6 @@ namespace AgentMesh.Application.Workflows
     public partial class CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
         IWorkflowProgressNotifier workflowProgressNotifier,
         IDomainExpertAgent domainExpertAgent,
-        IBusinessAdvisorAgent businessAdvisorAgent,
         IDocumentationAgent documentationAgent,
         ICoderAgent coderAgent,
         ICodeFixerAgent codeFixerAgent,
@@ -60,7 +58,6 @@ namespace AgentMesh.Application.Workflows
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
 
         private readonly IDomainExpertAgent _domainExpertAgent = domainExpertAgent;
-        private readonly IBusinessAdvisorAgent _businessAdvisorAgent = businessAdvisorAgent;
         private readonly IDocumentationAgent _documentationAgent = documentationAgent;
         private readonly ICoderAgent _coderAgent = coderAgent;
         private readonly ICodeFixerAgent _codeFixerAgent = codeFixerAgent;
@@ -125,10 +122,6 @@ namespace AgentMesh.Application.Workflows
             if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
             {
                 await ExecuteDocumentationAgentAsync(state);
-            }
-            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
-            {
-                await ExecuteBusinessAdvisorAsync(state);
             }
             else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.TaskExecution)
             {
@@ -927,44 +920,6 @@ namespace AgentMesh.Application.Workflows
         }
 
 
-        private async Task ExecuteBusinessAdvisorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Business Advisor Agent...");
-            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
-            {
-                { "EnrichedUserRequest", enrichedUserRequest },
-                { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
-                { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.ClassifiedUserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
-                { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
-                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? string.Join("\n", state.ClassifiedUserRequest.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
-                { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? string.Join("\n", state.PastMemoriesQueryResults.Select(m => $"- {m.Memory}")) : "(No memories)" },
-                { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() }
-            });
-
-            var serializedDocumentation = SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent);
-
-            var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
-            {
-                EnrichedUserRequest = enrichedUserRequest,
-                Intent = state.ClassifiedUserRequest.Intent ?? string.Empty,
-                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
-                Entities = state.ClassifiedUserRequest.EntitiesByDomain,
-                UserPreferences = state.ClassifiedUserRequest.UserPreferences,
-                AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
-                KnowledgeBaseDocumentsContent = serializedDocumentation
-            }, cancellationToken);
-            state.BusinessAdvisorResult = baOutput.Content;
-            state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.InputTokenCount, baOutput.OutputTokenCount, stopwatch.Elapsed, "Business Advisor Agent");
-            var notifyDictionary = new Dictionary<string, string>
-            {
-                { "Content", state.BusinessAdvisorResult ?? "(No business advisor content)" },
-                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
-            };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Advisor Agent", notifyDictionary);
-        }
-
         private async Task ExecuteDocumentationAgentAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -1020,10 +975,6 @@ namespace AgentMesh.Application.Workflows
             if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
             {
                 data = state.DocumentationContent;
-            }
-            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
-            {
-                data = state.BusinessAdvisorResult;
             }
             else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.TaskExecution)
             {

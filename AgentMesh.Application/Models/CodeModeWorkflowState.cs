@@ -50,9 +50,6 @@ namespace AgentMesh.Application.Models
         public IEnumerable<KnowledgeBaseDocumentContent> DomainsKnowledgeBaseDocumentsContent { get; set; } = [];
 
 
-        public string? BusinessAdvisorResult { get; set; }
-
-
         public string? BusinessRequirements { get; set; }
         public bool ShouldEngageCoder { get; set; }
         public IEnumerable<KnowledgeBaseQueryInputItem> APISKnowledgeBaseQuery { get; set; } = [];
