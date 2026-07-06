@@ -1,6 +1,6 @@
 using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
 
-namespace AgentMesh.Application.Models
+namespace AgentMesh.Models.IntentExtractor
 {
     /// <summary>
     /// The request from the user, structured and classified into intent, categories, entities, and other relevant information for processing by the system.

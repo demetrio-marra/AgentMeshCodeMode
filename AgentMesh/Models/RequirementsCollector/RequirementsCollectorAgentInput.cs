@@ -1,5 +1,5 @@
+using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
-using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
 
 namespace AgentMesh.Models.RequirementsCollector
 {

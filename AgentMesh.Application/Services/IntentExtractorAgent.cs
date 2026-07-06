@@ -148,9 +148,9 @@ namespace AgentMesh.Application.Services
             return result;
         }
 
-        private static IntentExtractorAgentOutput.UserIntentCategoryValues ParseUserIntentCategory(string userIntentCategory)
+        private static UserIntentCategoryValues ParseUserIntentCategory(string userIntentCategory)
         {
-            if (Enum.TryParse<IntentExtractorAgentOutput.UserIntentCategoryValues>(userIntentCategory, true, out var parsedCategory))
+            if (Enum.TryParse<UserIntentCategoryValues>(userIntentCategory, true, out var parsedCategory))
             {
                 return parsedCategory;
             }
@@ -167,7 +167,7 @@ namespace AgentMesh.Application.Services
             public string UserIntentCategoryRaw { get; set; } = string.Empty;
 
             [JsonIgnore]
-            public IntentExtractorAgentOutput.UserIntentCategoryValues UserIntentCategory { get; set; }
+            public UserIntentCategoryValues UserIntentCategory { get; set; }
 
             [JsonPropertyName("entitiesByDomain")]
             public Dictionary<string, IEnumerable<string>>? EntitiesByDomainRaw { get; set; }

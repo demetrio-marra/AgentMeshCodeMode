@@ -1,9 +1,8 @@
 using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
-using AgentMesh.Models.DomainExpert;
+using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
-using static AgentMesh.Models.RequirementsCollector.RequirementsCollectorAgentOutput;
 
 namespace AgentMesh.Application.Models
 {

@@ -13,13 +13,5 @@ namespace AgentMesh.Models.IntentExtractor
         public int TokenCount { get; set; }
         public int InputTokenCount { get; set; }
         public int OutputTokenCount { get; set; }
-
-        public enum UserIntentCategoryValues
-        {
-            Other,
-            BusinessAdvisor,
-            Documentation,
-            TaskExecution
-        }
     }
 }

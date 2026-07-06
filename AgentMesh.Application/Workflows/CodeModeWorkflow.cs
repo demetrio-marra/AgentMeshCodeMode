@@ -14,11 +14,9 @@ using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.PersonalAssistant;
 using AgentMesh.Models.ResultsPresenter;
 using AgentMesh.Models.RequirementsCollector;
-using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
-using AgentMesh.Application.Helpers;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RelevantFactsEvaluator;
 using System.Diagnostics;
@@ -51,11 +49,8 @@ namespace AgentMesh.Application.Workflows
         CodeModeWorkflowConfiguration workflowConfiguration,
         IQueriesCacheService queriesCacheService) : IWorkflow
     {
-        private const string DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE = "Documentation";
-        private const string DOCUMENTATION_FOR_DEVELOPER_SECTIONTITLE = "Technical reference";
         private const string DOMAINS_DOCUMENTATION_COLLECTION_NAME = "domains";
         private const string APIS_DOCUMENTATION_COLLECTION_NAME = "apis";
-        private const bool AUTOMATICALLY_FETCH_RELATED_DOCUMENTATION = true;
 
         private const string KEYWORDS_SEARCH_TYPE = "lex";
         private const string SEMANTIC_SEARCH_TYPE = "vec";
@@ -122,24 +117,17 @@ namespace AgentMesh.Application.Workflows
 
             await Task.WhenAll(memoryTask, knowledgeBaseTask);
 
-            if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
+            if (state.DomainsKnowledgeBaseQueryResults.Results.Any())
             {
-                if (state.DomainsKnowledgeBaseQuery.Any())
-                {
-                    await ExecuteKnowledgeBaseDocumentsExtractorAsync(state);
-                }
-
-                await ExecuteDocumentationAsync(state);
+                await ExecuteKnowledgeBaseDocumentsExtractorAsync(state);
             }
 
-
-            if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
+            if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
             {
-                if (state.DomainsKnowledgeBaseQueryResults.Results.Any())
-                {
-                    await ExecuteKnowledgeBaseDocumentsExtractorAsync(state);
-                }
-
+                await ExecuteDocumentationAgentAsync(state);
+            }
+            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
+            {
                 await ExecuteBusinessAdvisorAsync(state);
             }
             else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.TaskExecution)
@@ -157,7 +145,7 @@ namespace AgentMesh.Application.Workflows
 
                 if (state.CodeExecutionResultType == SandboxResultType.CallError)
                 {
-                    await CompleteWorkflowAsync(state, state.SandboxResult);
+                    await CompleteWorkflowAsync(state);
                 }
                 else if (_workflowConfiguration.EnableCodeCorrection &&
                     (state.CodeExecutionResultType == SandboxResultType.ApplicationError ||
@@ -182,25 +170,13 @@ namespace AgentMesh.Application.Workflows
                     }
 
                     await ExecuteResultsPresenterAsync(state);
-                    await CompleteWorkflowAsync(state, state.PresenterOutput);
+                    await CompleteWorkflowAsync(state);
                 }
                 else
                 {
                     await ExecuteResultsPresenterAsync(state);
-                    await CompleteWorkflowAsync(state, state.PresenterOutput);
+                    await CompleteWorkflowAsync(state);
                 }
-                goto WorkflowEnd;
-            }
-            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
-            {
-                await ExecuteBusinessAdvisorAsync(state);
-                await CompleteWorkflowAsync(state, state.BusinessAdvisorResult);
-                goto WorkflowEnd;
-            }
-            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
-            {
-                await ExecuteDocumentationAsync(state);
-                await CompleteWorkflowAsync(state, state.DocumentationContent);
                 goto WorkflowEnd;
             }
             else
@@ -251,41 +227,6 @@ namespace AgentMesh.Application.Workflows
             {
                 FilePaths = fileNamesToExtract
             });
-
-            //// additional feature
-            //if (AUTOMATICALLY_FETCH_RELATED_DOCUMENTATION)
-            //{
-            //    var relatedDocs = new List<string>();
-            //    foreach (var mainDoc in fetchedFilesContent.Results)
-            //    {
-            //        // find words within double square brackets [[...]] in the mainDoc.Content using regex
-            //        var matches = MyRegex().Matches(mainDoc.Content);
-            //        foreach (System.Text.RegularExpressions.Match match in matches)
-            //        {
-            //            var relatedDocName = match.Groups[1].Value;
-            //            if (!relatedDocs.Contains(relatedDocName))
-            //            {
-            //                relatedDocs.Add(relatedDocName);
-            //            }
-            //        }
-            //    }
-
-            //    // distinct on relatedDocs
-            //    relatedDocs = [.. relatedDocs.Distinct()];
-
-            //    // avoid extracting already fetched docs
-            //    relatedDocs = [.. relatedDocs.Except(fetchedFilesContent.Results.Where(r => !string.IsNullOrEmpty(r.File)).Select(r => r.File!))];
-
-            //    // fetch again the content of the related docs and add them to the fetchedFilesContent.Results
-            //    if (relatedDocs.Count != 0)
-            //    {
-            //        var relatedDocsContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
-            //        {
-            //            FilePaths = relatedDocs
-            //        });
-            //        fetchedFilesContent.Results = fetchedFilesContent.Results.Concat(relatedDocsContent.Results);
-            //    }
-            //}
 
             state.DomainsKnowledgeBaseDocumentsContent = [.. state.DomainsKnowledgeBaseQueryResults.Results
                 .Join(fetchedFilesContent.Results, kb => kb.File, fc => fc.File, (kb, fc) => new { kb, fc })
@@ -1024,7 +965,7 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Advisor Agent", notifyDictionary);
         }
 
-        private async Task ExecuteDocumentationAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
+        private async Task ExecuteDocumentationAgentAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Documentation Agent...");
@@ -1069,11 +1010,33 @@ namespace AgentMesh.Application.Workflows
             return string.Join(Environment.NewLine + "---" + Environment.NewLine + "---", serializedDocs);
         }
 
-        private async Task CompleteWorkflowAsync(CodeModeWorkflowState state, string? data = null)
+        private async Task CompleteWorkflowAsync(CodeModeWorkflowState state)
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Personal Assistant Agent...");
             var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
+
+            string? data = null;
+            if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
+            {
+                data = state.DocumentationContent;
+            }
+            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
+            {
+                data = state.BusinessAdvisorResult;
+            }
+            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.TaskExecution)
+            {
+                if (state.CodeExecutionResultType == SandboxResultType.CallError)
+                {
+                    data = state.SandboxResult;
+                }
+                else
+                {
+                    data = state.PresenterOutput;
+                }
+            }
+
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Personal Assistant Agent", new Dictionary<string, string>
             {
                 { "Data", data ?? "(No data)" },
