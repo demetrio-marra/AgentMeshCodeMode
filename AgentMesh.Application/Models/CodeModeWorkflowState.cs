@@ -17,11 +17,49 @@ namespace AgentMesh.Application.Models
         /// </summary>
         public StructuredUserRequest ClassifiedUserRequest { get; set; } = new();
 
-        public IEnumerable<string> MissingPastMemories { get; set; } = [];
-        public IEnumerable<RequirementsCollectorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
+        /// <summary>
+        /// First knowledge base call, which is a fast query to retrieve relevant information from the knowledge base to assist in understanding the user's request and providing context for further processing.
+        /// It is based on ClassifiedUserRequest.EntitiesByDomain
+        /// </summary>
+        public KnowledgeBaseQueryResult FastKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
+
+
+        /// <summary>
+        /// Past memories query, which is used to retrieve relevant information from the agent's memory to assist in understanding the user's request and providing context for further processing.
+        /// </summary>
+        public IEnumerable<string> PastMemoriesQuery { get; set; } = [];
+
+        /// <summary>
+        /// Domain knowledge base query, which is used to retrieve relevant information from the domain-specific knowledge base to assist in understanding the user's request and providing context for further processing.
+        /// </summary>
+        public IEnumerable<KnowledgeBaseQueryInputItem> DomainsKnowledgeBaseQuery { get; set; } = [];
+
+
+        /// <summary>
+        /// Results of the extracted agent memories, which are used to retrieve relevant information from the agent's memory to assist in understanding the user's request and providing context for further processing.
+        /// </summary>
+        public IEnumerable<AgentMemoryQueryResultItem> PastMemoriesQueryResults { get; set; } = [];
+
+        /// <summary>
+        /// Results of the domain knowledge base queries, which are used to retrieve relevant information from the domain-specific knowledge base to assist in understanding the user's request and providing context for further processing.
+        /// </summary>
+        public KnowledgeBaseQueryResult DomainsKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
+
+        /// <summary>
+        /// Results of the domain knowledge base documents content, which are used to retrieve relevant information from the domain-specific knowledge base to assist in understanding the user's request and providing context for further processing.
+        /// </summary>
+        public IEnumerable<KnowledgeBaseDocumentContent> DomainsKnowledgeBaseDocumentsContent { get; set; } = [];
+
+
+        public string? BusinessAdvisorResult { get; set; }
+
+
         public string? BusinessRequirements { get; set; }
         public bool ShouldEngageCoder { get; set; }
-        public string? BusinessAdvisorContent { get; set; }
+        public IEnumerable<KnowledgeBaseQueryInputItem> APISKnowledgeBaseQuery { get; set; } = [];
+
+
+
         public string? DocumentationContent { get; set; }
         public string? GeneratedCode { get; set; }
         public string? LastCodeWithLineNumbers { get => SourceCodeUtils.GetSourceCodeWithLineNumbers(GeneratedCode); }
@@ -33,14 +71,9 @@ namespace AgentMesh.Application.Models
         public string? FinalAnswer { get; set; }
 
         public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; } = [];
-        public IEnumerable<AgentMemoryQueryResultItem> ExtractedAgentMemories { get; set; } = [];
-        public IEnumerable<DomainExpertAgentOutput.KnowledgeBaseAPIQuery> KnowledgeBaseAPIQueries { get; set; } = [];
 
-        public KnowledgeBaseQueryResult FastKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 
-        public KnowledgeBaseQueryResult KnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 
-        public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseDomainsDocumentsContent { get; set; } = [];
         public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseAPIDocumentsContent { get; set; } = [];
 
         public void AddTokenUsage(string agentName, int inputTokenCount, int outputTokenCount, TimeSpan? elapsed = null, string? stepName = null)

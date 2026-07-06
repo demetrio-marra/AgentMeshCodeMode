@@ -1,6 +1,7 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
+using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RequirementsCollector;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +17,31 @@ namespace AgentMesh.Application.Services
         ILogger<RequirementsCollectorAgent> logger) : AgentBase<RequirementsCollectorAgent.ParsedResponse>(logger, RequirementsCollectorAgentConfiguration.AgentName, openAIClient, resilience), IRequirementsCollectorAgent
     {
         private readonly ILogger<RequirementsCollectorAgent> _logger = logger;
+        private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];
+
+        private static KnowledgeBaseQueryInputItem TranslateKnowledgeBaseQuery(QueryItem query)
+        {
+            var normalizedType = AllowedQueryTypes.FirstOrDefault(type => type.Equals(query.Type, StringComparison.OrdinalIgnoreCase));
+
+            if (normalizedType == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}");
+            }
+
+            var searchType = normalizedType switch
+            {
+                "lex" => KnowledgeBaseQuerySearchType.Keyword,
+                "vec" => KnowledgeBaseQuerySearchType.Semantic,
+                "hyde" => KnowledgeBaseQuerySearchType.HypotheticalDocument,
+                _ => throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}")
+            };
+
+            return new KnowledgeBaseQueryInputItem
+            {
+                Query = query.Query,
+                SearchType = searchType
+            };
+        }
 
         public async Task<RequirementsCollectorAgentOutput> ExecuteAsync(
             RequirementsCollectorAgentInput input,
@@ -77,7 +103,7 @@ Fast Knowledge Base results:
 
             return new RequirementsCollectorAgentOutput
             {
-                MissingKnowledgeBaseSearchEntries = result.Result.MissingKnowledgeBaseSearchEntries,
+                MissingKnowledgeBaseSearchEntries = result.Result.MissingKnowledgeBaseSearchEntries.Select(TranslateKnowledgeBaseQuery).ToList(),
                 MissingPastMemories = shouldCreateMem0Queries ? result.Result.MissingPastMemories : [],
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount,
@@ -115,7 +141,21 @@ Fast Knowledge Base results:
             public IEnumerable<string> MissingPastMemories { get; set; } = [];
 
             [JsonPropertyName("missingKnowledgeBaseSearchEntries")]
-            public IEnumerable<RequirementsCollectorAgentOutput.RequirementsCollectorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
+            public IEnumerable<QueryItem> MissingKnowledgeBaseSearchEntries { get; set; } = [];
+        }
+
+        public class QueryItem
+        {
+            [JsonPropertyName("type")]
+            public string Type { get; set; } = string.Empty;
+
+            [JsonPropertyName("query")]
+            public string Query { get; set; } = string.Empty;
+
+            public override string ToString()
+            {
+                return $"Type: {Type}, Query: {Query}";
+            }
         }
     }
 }

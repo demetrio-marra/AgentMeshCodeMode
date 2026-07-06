@@ -106,17 +106,17 @@ namespace AgentMesh.Application.Workflows
 
 
             if (_workflowConfiguration.EnableCacheService
-                && (state.MissingPastMemories.Any()
-                    || state.MissingKnowledgeBaseSearchEntries.Any()))
+                && (state.PastMemoriesQuery.Any()
+                    || state.DomainsKnowledgeBaseQuery.Any()))
             {
                 await ExecuteQueryCacheServiceAsync(state);
             }
 
-            var memoryTask = (_workflowConfiguration.EnableMemoryService && state.MissingPastMemories.Any())
+            var memoryTask = (_workflowConfiguration.EnableMemoryService && state.PastMemoriesQuery.Any())
                 ? ExecuteAgentMemoryServiceAsync(state)
                 : Task.CompletedTask;
 
-            var knowledgeBaseTask = state.MissingKnowledgeBaseSearchEntries.Any()
+            var knowledgeBaseTask = state.DomainsKnowledgeBaseQuery.Any()
                 ? ExecuteKnowledgeBaseServiceSearchAsync(state)
                 : Task.CompletedTask;
 
@@ -124,7 +124,7 @@ namespace AgentMesh.Application.Workflows
 
             if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
             {
-                if (state.MissingKnowledgeBaseSearchEntries.Any())
+                if (state.DomainsKnowledgeBaseQuery.Any())
                 {
                     await ExecuteKnowledgeBaseDocumentsExtractorAsync(state);
                 }
@@ -135,7 +135,7 @@ namespace AgentMesh.Application.Workflows
 
             if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
             {
-                if (state.KnowledgeBaseQueryResults.Results.Any())
+                if (state.DomainsKnowledgeBaseQueryResults.Results.Any())
                 {
                     await ExecuteKnowledgeBaseDocumentsExtractorAsync(state);
                 }
@@ -146,7 +146,7 @@ namespace AgentMesh.Application.Workflows
             {
                 await ExecuteDomainExpertAsync(state);
 
-                if (state.KnowledgeBaseAPIQueries.Any())
+                if (state.APISKnowledgeBaseQuery.Any())
                 {
                     await ExecuteKnowledgeBaseApiDocumentsExtractorAsync(state);
                 }
@@ -194,7 +194,7 @@ namespace AgentMesh.Application.Workflows
             else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
             {
                 await ExecuteBusinessAdvisorAsync(state);
-                await CompleteWorkflowAsync(state, state.BusinessAdvisorContent);
+                await CompleteWorkflowAsync(state, state.BusinessAdvisorResult);
                 goto WorkflowEnd;
             }
             else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
@@ -236,14 +236,20 @@ namespace AgentMesh.Application.Workflows
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Knowledge Base Documents Extractor Service...");
 
+            var fileNamesToExtract = state.DomainsKnowledgeBaseQueryResults.Results
+                .Select(r => r.File)
+                .Where(f => !string.IsNullOrWhiteSpace(f))
+                .Distinct()
+                .ToList();
+
             await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Documents Extractor Service (Domain)", new Dictionary<string, string>
             {
-                { "Documents", string.Join("\n", state.KnowledgeBaseQueryResults.Results.Select(s => $"- {s.File}")) }
+                { "Documents", string.Join("\n", fileNamesToExtract.Select(s => $"- {s}")) }
             });
 
             var fetchedFilesContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
             {
-                FilePaths = state.KnowledgeBaseQueryResults.Results.Select(r => r.File).ToList()
+                FilePaths = fileNamesToExtract
             });
 
             //// additional feature
@@ -281,7 +287,7 @@ namespace AgentMesh.Application.Workflows
             //    }
             //}
 
-            state.KnowledgeBaseDomainsDocumentsContent = [.. state.KnowledgeBaseQueryResults.Results
+            state.DomainsKnowledgeBaseDocumentsContent = [.. state.DomainsKnowledgeBaseQueryResults.Results
                 .Join(fetchedFilesContent.Results, kb => kb.File, fc => fc.File, (kb, fc) => new { kb, fc })
                 .Select(kb => new KnowledgeBaseDocumentContent
                 {
@@ -293,7 +299,7 @@ namespace AgentMesh.Application.Workflows
 
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "Total files extracted", state.KnowledgeBaseDomainsDocumentsContent.Count().ToString() },
+                { "Total files extracted", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Documents Extractor Service (Domain)", notifyDictionary);
@@ -306,18 +312,14 @@ namespace AgentMesh.Application.Workflows
 
             await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Documents Extractor Service (APIs)", new Dictionary<string, string>
             {
-                { "Queries", string.Join("\n", state.KnowledgeBaseAPIQueries.Select(q => $"- [{q.Type}] {q.Query}")) }
+                { "Queries", string.Join("\n", state.APISKnowledgeBaseQuery.Select(q => $"- {q}")) }
             });
 
             var apiKnowledgeBaseQueryResults = await _knowledgeBaseSearchExecutor.ExecuteAsync(new KnowledgeBaseQueryInput
             {
                 Collections = [APIS_DOCUMENTATION_COLLECTION_NAME],
                 UserIntent = state.ClassifiedUserRequest.Intent,
-                Queries = [.. state.KnowledgeBaseAPIQueries.Select(entry => new KnowledgeBaseQueryInputItem
-                {
-                    Query = entry.Query,
-                    SearchType = ParseKnowledgeBaseSearchType(entry.Type)
-                })]
+                Queries = state.APISKnowledgeBaseQuery.ToList()
             }, CancellationToken.None);
 
             var apiFilePaths = apiKnowledgeBaseQueryResults.Results
@@ -438,19 +440,19 @@ namespace AgentMesh.Application.Workflows
                 FastKnowledgeBaseQueryResults = state.FastKnowledgeBaseQueryResults.Results
             });
 
-            state.MissingPastMemories = output.MissingPastMemories;
-            state.MissingKnowledgeBaseSearchEntries = output.MissingKnowledgeBaseSearchEntries;
+            state.PastMemoriesQuery = output.MissingPastMemories;
+            state.DomainsKnowledgeBaseQuery = output.MissingKnowledgeBaseSearchEntries;
 
             state.AddTokenUsage(RequirementsCollectorAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Requirements Collector Agent");
 
             var notifyDictionary = new Dictionary<string, string>();
-            if (state.MissingPastMemories.Any())
+            if (state.PastMemoriesQuery.Any())
             {
-                notifyDictionary.Add("MissingPastMemoriesDetails", string.Join("\n", state.MissingPastMemories.Select(m => $"- {m}")));
+                notifyDictionary.Add("MissingPastMemoriesDetails", string.Join("\n", state.PastMemoriesQuery.Select(m => $"- {m}")));
             }
-            if (state.MissingKnowledgeBaseSearchEntries.Any())
+            if (state.DomainsKnowledgeBaseQuery.Any())
             {
-                notifyDictionary.Add("MissingKnowledgeBaseEntriesDetails", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")));
+                notifyDictionary.Add("MissingKnowledgeBaseEntriesDetails", string.Join("\n", state.DomainsKnowledgeBaseQuery.Select(m => $"- {m}")));
             }
             notifyDictionary.Add("ELAPSED_TIME", GetElapsedTime(stopwatch));
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Requirements Collector Agent", notifyDictionary);
@@ -462,18 +464,18 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Queries Cache Service...");
 
             var notifyInputDictionary = new Dictionary<string, string>();
-            if (state.MissingPastMemories.Any())
+            if (state.PastMemoriesQuery.Any())
             {
-                notifyInputDictionary.Add("MissingPastMemories", string.Join("\n", state.MissingPastMemories.Select(m => $"- {m}")));
+                notifyInputDictionary.Add("MissingPastMemories", string.Join("\n", state.PastMemoriesQuery.Select(m => $"- {m}")));
             }
-            if (state.MissingKnowledgeBaseSearchEntries.Any())
+            if (state.DomainsKnowledgeBaseQuery.Any())
             {
-                notifyInputDictionary.Add("MissingKnowledgeBaseEntries", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")));
+                notifyInputDictionary.Add("MissingKnowledgeBaseEntries", string.Join("\n", state.DomainsKnowledgeBaseQuery.Select(m => $"- {m}")));
             }
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Queries Cache Service", notifyInputDictionary);
 
-            var originalMemoryQueries = state.MissingPastMemories.ToList();
-            var originalKnowledgeBaseQueries = state.MissingKnowledgeBaseSearchEntries.ToList();
+            var originalMemoryQueries = state.PastMemoriesQuery.ToList();
+            var originalKnowledgeBaseQueries = state.DomainsKnowledgeBaseQuery.ToList();
 
             var totalTokensForEmbedding = 0;
 
@@ -490,7 +492,7 @@ namespace AgentMesh.Application.Workflows
 
                 if (cachedMemoryItemsList.Any())
                 {
-                    state.ExtractedAgentMemories = cachedMemoryItemsList
+                    state.PastMemoriesQueryResults = cachedMemoryItemsList
                         .Select(item => new AgentMemoryQueryResultItem
                         {
                             Memory = item.Result,
@@ -503,19 +505,14 @@ namespace AgentMesh.Application.Workflows
                         .Select(item => NormalizeCacheLookupValue(item.SearchedQuery))
                         .Where(query => !string.IsNullOrWhiteSpace(query))
                         .ToHashSet(StringComparer.OrdinalIgnoreCase);
-                    state.MissingPastMemories = originalMemoryQueries.Where(q => !cachedQueries.Contains(NormalizeCacheLookupValue(q)));
+                    state.PastMemoriesQuery = originalMemoryQueries.Where(q => !cachedQueries.Contains(NormalizeCacheLookupValue(q)));
                 }
             }
 
             if (originalKnowledgeBaseQueries.Any())
             {
                 var knowledgeBaseQueries = originalKnowledgeBaseQueries
-                    .Where(k => k.Type != KEYWORDS_SEARCH_TYPE) // ALWAYS Exclude keyword search queries from caching
-                    .Select(entry => new KnowledgeBaseQueriesCacheItemInput
-                    {
-                        Query = entry.Query,
-                        QueryType = ParseKnowledgeBaseSearchType(entry.Type)
-                    })
+                    .Where(k => k.SearchType != KnowledgeBaseQuerySearchType.Keyword) // ALWAYS Exclude keyword search queries from caching
                     .ToList();
 
                 var cachedKnowledgeBaseResult = await _queriesCacheService.GetKnowledgeBaseCachedItemsAsync(knowledgeBaseQueries);
@@ -525,7 +522,7 @@ namespace AgentMesh.Application.Workflows
 
                 if (cachedKnowledgeBaseItemsList.Any())
                 {
-                    state.KnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
+                    state.DomainsKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
                     {
                         Results = cachedKnowledgeBaseItemsList
                             .Select(item => new KnowledgeBaseQueryResultItem
@@ -545,8 +542,8 @@ namespace AgentMesh.Application.Workflows
                         .Where(key => !string.IsNullOrWhiteSpace(key))
                         .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-                    state.MissingKnowledgeBaseSearchEntries = originalKnowledgeBaseQueries
-                        .Where(entry => !cachedQueryKeys.Contains(CreateKnowledgeBaseCacheLookupKey(entry.Query, ParseKnowledgeBaseSearchType(entry.Type))));
+                    state.DomainsKnowledgeBaseQuery = originalKnowledgeBaseQueries
+                        .Where(entry => !cachedQueryKeys.Contains(CreateKnowledgeBaseCacheLookupKey(entry.Query, entry.SearchType)));
                 }
             }
 
@@ -560,10 +557,10 @@ namespace AgentMesh.Application.Workflows
 
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "MemoryCacheHitsCount", (originalMemoryQueries.Count - state.MissingPastMemories.Count()).ToString() },
-                { "MemoryRemainingQueriesCount", state.MissingPastMemories.Count().ToString() },
-                { "KnowledgeBaseCacheHitsCount", (originalKnowledgeBaseQueries.Count - state.MissingKnowledgeBaseSearchEntries.Count()).ToString() },
-                { "KnowledgeBaseRemainingQueriesCount", state.MissingKnowledgeBaseSearchEntries.Count().ToString() },
+                { "MemoryCacheHitsCount", (originalMemoryQueries.Count - state.PastMemoriesQuery.Count()).ToString() },
+                { "MemoryRemainingQueriesCount", state.PastMemoriesQuery.Count().ToString() },
+                { "KnowledgeBaseCacheHitsCount", (originalKnowledgeBaseQueries.Count - state.DomainsKnowledgeBaseQuery.Count()).ToString() },
+                { "KnowledgeBaseRemainingQueriesCount", state.DomainsKnowledgeBaseQuery.Count().ToString() },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Queries Cache Service", notifyDictionary);
@@ -575,10 +572,10 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Agent Memory Service...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Service", new Dictionary<string, string>
             {
-                { "MissingPastMemories", string.Join("\n", state.MissingPastMemories.Select(m => $"- {m}")) }
+                { "MissingPastMemories", string.Join("\n", state.PastMemoriesQuery.Select(m => $"- {m}")) }
             });
 
-            var queriesList = state.MissingPastMemories.ToList();
+            var queriesList = state.PastMemoriesQuery.ToList();
 
             var brcOutput = await _agentMemoryRetriever.ExecuteAsync(new AgentMemoryRetrieverInput
             {
@@ -586,7 +583,7 @@ namespace AgentMesh.Application.Workflows
             });
 
             var retrievedMemories = brcOutput.Items.ToList();
-            state.ExtractedAgentMemories = state.ExtractedAgentMemories.Concat(retrievedMemories).ToList();
+            state.PastMemoriesQueryResults = state.PastMemoriesQueryResults.Concat(retrievedMemories).ToList();
 
             if (_workflowConfiguration.EnableCacheService && retrievedMemories.Any())
             {
@@ -628,26 +625,22 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Knowledge Base Service...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Search Service", new Dictionary<string, string>
             {
-                { "MissingKnowledgeBaseEntries", string.Join("\n", state.MissingKnowledgeBaseSearchEntries.Select(m => $"- {m}")) }
+                { "MissingKnowledgeBaseEntries", string.Join("\n", state.DomainsKnowledgeBaseQuery.Select(m => $"- {m}")) }
             });
 
-            var queriesList = state.MissingKnowledgeBaseSearchEntries.ToList();
+            var queriesList = state.DomainsKnowledgeBaseQuery.ToList();
 
             KnowledgeBaseQueryInput queryInput = new()
             {
                 Collections = [DOMAINS_DOCUMENTATION_COLLECTION_NAME],
                 UserIntent = state.ClassifiedUserRequest.Intent,
-                Queries = [.. queriesList.Select(entry => new KnowledgeBaseQueryInputItem
-                {
-                    Query = entry.Query,
-                    SearchType = ParseKnowledgeBaseSearchType(entry.Type)
-                })]
+                Queries = queriesList
             };
 
             var brcOutput = await _knowledgeBaseSearchExecutor.ExecuteAsync(queryInput, CancellationToken.None);
 
-            var existingResults = state.KnowledgeBaseQueryResults.Results.ToList();
-            state.KnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
+            var existingResults = state.DomainsKnowledgeBaseQueryResults.Results.ToList();
+            state.DomainsKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
             {
                 Results = existingResults.Concat(brcOutput.Results).ToList()
             };
@@ -655,7 +648,7 @@ namespace AgentMesh.Application.Workflows
             if (_workflowConfiguration.EnableCacheService && brcOutput.Results.Any())
             {
                 var cacheableQueries = queriesList
-                    .Where(entry => ParseKnowledgeBaseSearchType(entry.Type) != KnowledgeBaseQuerySearchType.Keyword)
+                    .Where(entry => entry.SearchType != KnowledgeBaseQuerySearchType.Keyword)
                     .ToList();
 
                 if (cacheableQueries.Any())
@@ -668,7 +661,7 @@ namespace AgentMesh.Application.Workflows
                             cacheItems.Add(new KnowledgeBaseQueriesCacheItem
                             {
                                 FoundQuery = query.Query,
-                                FoundQueryType = ParseKnowledgeBaseSearchType(query.Type),
+                                FoundQueryType = query.SearchType,
                                 DocumentId = result.Id,
                                 DocumentFile = result.File,
                                 DocumentTitle = result.Title,
@@ -790,8 +783,8 @@ namespace AgentMesh.Application.Workflows
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.ClassifiedUserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? string.Join("\n", state.ClassifiedUserRequest.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
-                { "MemoriesFromAgentMemoryService", state.ExtractedAgentMemories.Any() ? string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")) : "(No memories)" },
-                { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDomainsDocumentsContent.Count().ToString() }
+                { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? string.Join("\n", state.PastMemoriesQueryResults.Select(m => $"- {m.Memory}")) : "(No memories)" },
+                { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
             var domainExpertOutput = await _domainExpertAgent.ExecuteAsync(new DomainExpertAgentInput
@@ -801,17 +794,18 @@ namespace AgentMesh.Application.Workflows
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
-                AgentMemories = state.ExtractedAgentMemories.Select(m => m.Memory),
-                KnowledgeBaseDocumentsContent = null // Do not send to coder agent
+                AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
+                KnowledgeBaseDocumentsContent = string.Join("------" + Environment.NewLine, state.DomainsKnowledgeBaseDocumentsContent.Select(doc => doc.Print()))
             }, cancellationToken);
+
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = domainExpertOutput.BusinessRequirements;
-            state.KnowledgeBaseAPIQueries = domainExpertOutput.KnowledgeBaseAPIQueries;
+            state.APISKnowledgeBaseQuery = domainExpertOutput.APISKnowledgeBaseQuery;
             state.AddTokenUsage(DomainExpertAgentConfiguration.AgentName, domainExpertOutput.InputTokenCount, domainExpertOutput.OutputTokenCount, stopwatch.Elapsed, "Domain Expert Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "BusinessRequirements", state.BusinessRequirements ?? "(No business requirements)" },
-                { "KnowledgeBaseAPIQueries", state.KnowledgeBaseAPIQueries.Any() ? string.Join("\n", state.KnowledgeBaseAPIQueries.Select(q => $"- [{q.Type}] {q.Query}")) : "(No queries)" },
+                { "KnowledgeBaseAPIQueries", state.APISKnowledgeBaseQuery.Any() ? string.Join("\n", state.APISKnowledgeBaseQuery.Select(q => $"- {q}")) : "(No queries)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Domain Expert Agent", notifyDictionary);
@@ -1004,11 +998,11 @@ namespace AgentMesh.Application.Workflows
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.ClassifiedUserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? string.Join("\n", state.ClassifiedUserRequest.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
-                { "MemoriesFromAgentMemoryService", state.ExtractedAgentMemories.Any() ? string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")) : "(No memories)" },
-                { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDomainsDocumentsContent.Count().ToString() }
+                { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? string.Join("\n", state.PastMemoriesQueryResults.Select(m => $"- {m.Memory}")) : "(No memories)" },
+                { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
-            var serializedDocumentation = SerializeDocumentationForBusinessAnalyst(state.KnowledgeBaseDomainsDocumentsContent);
+            var serializedDocumentation = SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent);
 
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
@@ -1017,14 +1011,14 @@ namespace AgentMesh.Application.Workflows
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
-                AgentMemories = state.ExtractedAgentMemories.Select(m => m.Memory),
+                AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
                 KnowledgeBaseDocumentsContent = serializedDocumentation
             }, cancellationToken);
-            state.BusinessAdvisorContent = baOutput.Content;
+            state.BusinessAdvisorResult = baOutput.Content;
             state.AddTokenUsage(BusinessAdvisorAgentConfiguration.AgentName, baOutput.InputTokenCount, baOutput.OutputTokenCount, stopwatch.Elapsed, "Business Advisor Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "Content", state.BusinessAdvisorContent ?? "(No business advisor content)" },
+                { "Content", state.BusinessAdvisorResult ?? "(No business advisor content)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Business Advisor Agent", notifyDictionary);
@@ -1042,11 +1036,11 @@ namespace AgentMesh.Application.Workflows
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.ClassifiedUserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? string.Join("\n", state.ClassifiedUserRequest.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
-                { "MemoriesFromAgentMemoryService", state.ExtractedAgentMemories.Any() ? string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")) : "(No memories)" },
-                { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDomainsDocumentsContent.Count().ToString() }
+                { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? string.Join("\n", state.PastMemoriesQueryResults.Select(m => $"- {m.Memory}")) : "(No memories)" },
+                { "DomainsKnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
-            var serializedDocumentation = SerializeDocumentationForBusinessAnalyst(state.KnowledgeBaseDomainsDocumentsContent);
+            var serializedDocumentation = SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent);
 
             var output = await _documentationAgent.ExecuteAsync(new DocumentationAgentInput
             {
@@ -1055,7 +1049,7 @@ namespace AgentMesh.Application.Workflows
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
-                AgentMemories = state.ExtractedAgentMemories.Select(m => m.Memory),
+                AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
                 KnowledgeBaseDocumentsContent = serializedDocumentation
             }, cancellationToken);
             state.DocumentationContent = output.Content;
@@ -1068,13 +1062,10 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Documentation Agent", notifyDictionary);
         }
 
-        private static string SerializeDocumentationForBusinessAnalyst(IEnumerable<KnowledgeBaseDocumentContent> documents) => SerializeDocumentationFor(documents, DOCUMENTATION_FOR_BUSINESSANALYST_SECTIONTITLE);
 
-        private static string SerializeDocumentationForCoder(IEnumerable<KnowledgeBaseDocumentContent> documents) => SerializeDocumentationFor(documents, DOCUMENTATION_FOR_DEVELOPER_SECTIONTITLE);
-
-        private static string SerializeDocumentationFor(IEnumerable<KnowledgeBaseDocumentContent> documents, string separator)
+        private static string SerializeDocumentation(IEnumerable<KnowledgeBaseDocumentContent> documents)
         {
-            var serializedDocs = documents.Select(kv => $"{MarkdownDocumentationHelper.GetMarkdownSection(kv.Content, separator)}\n\nOriginal file: {kv.File}");
+            var serializedDocs = documents.Select(kv => $"{kv.Content}\n\nOriginal file: {kv.File}");
             return string.Join(Environment.NewLine + "---" + Environment.NewLine + "---", serializedDocs);
         }
 

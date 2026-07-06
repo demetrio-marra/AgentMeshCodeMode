@@ -38,11 +38,11 @@ namespace AgentMesh.Infrastructure.QDrant
             _ = EnsureQueryCacheIndexesAsync();
         }
 
-        public async Task<KnowledgeBaseQueriesCacheResult> GetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueriesCacheItemInput> queries)
+        public async Task<KnowledgeBaseQueriesCacheResult> GetKnowledgeBaseCachedItemsAsync(IEnumerable<KnowledgeBaseQueryInputItem> queries)
         {
             var requestedQueries = queries
                 .Where(q => !string.IsNullOrWhiteSpace(q.Query))
-                .Select(q => (QueryKind: MapQueryTypeToKind(q.QueryType), Query: q.Query, QueryType: q.QueryType))
+                .Select(q => (QueryKind: MapQueryTypeToKind(q.SearchType), q.Query))
                 .DistinctBy(q => $"{q.QueryKind}|{q.Query}", StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
@@ -62,7 +62,7 @@ namespace AgentMesh.Infrastructure.QDrant
             var items = requestedQueries
                 .SelectMany(request =>
                     resultsByKind.TryGetValue(request.QueryKind, out var matchingResults)
-                        ? matchingResults.Select(result => MapToKnowledgeBaseCacheItem(result, request.Query, request.QueryType))
+                        ? matchingResults.Select(result => MapToKnowledgeBaseCacheItem(result, request.Query, MapKindToQueryType(request.QueryKind)))
                         : Enumerable.Empty<KnowledgeBaseQueriesCacheItem>())
                 .ToList();
 

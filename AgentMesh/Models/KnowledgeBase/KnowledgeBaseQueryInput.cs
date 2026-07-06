@@ -11,6 +11,11 @@
     {
         public string Query { get; set; } = string.Empty;
         public KnowledgeBaseQuerySearchType SearchType { get; set; }
+
+        public override string ToString()
+        {
+            return $"Query: {Query}, SearchType: {SearchType}";
+        }
     }
 
     public enum KnowledgeBaseQuerySearchType
@@ -18,5 +23,6 @@
         Keyword,
         Semantic,
         HypotheticalDocument
+
     }
 }

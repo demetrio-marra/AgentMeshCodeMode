@@ -3,6 +3,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.DomainExpert;
+using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,30 @@ namespace AgentMesh.Application.Services
     {
         private readonly ILogger<DomainExpertAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];
+
+        private static KnowledgeBaseQueryInputItem TranslateKnowledgeBaseQuery(APIKnowledgeBaseQuery query)
+        {
+            var normalizedType = AllowedQueryTypes.FirstOrDefault(type => type.Equals(query.Type, StringComparison.OrdinalIgnoreCase));
+
+            if (normalizedType == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}");
+            }
+
+            var searchType = normalizedType switch
+            {
+                "lex" => KnowledgeBaseQuerySearchType.Keyword,
+                "vec" => KnowledgeBaseQuerySearchType.Semantic,
+                "hyde" => KnowledgeBaseQuerySearchType.HypotheticalDocument,
+                _ => throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}")
+            };
+
+            return new KnowledgeBaseQueryInputItem
+            {
+                Query = query.Query,
+                SearchType = searchType
+            };
+        }
 
         public async Task<DomainExpertAgentOutput> ExecuteAsync(
             DomainExpertAgentInput input,
@@ -79,7 +104,7 @@ namespace AgentMesh.Application.Services
             return new DomainExpertAgentOutput
             {
                 BusinessRequirements = result.Result.BusinessRequirements,
-                KnowledgeBaseAPIQueries = result.Result.KnowledgeBaseAPIQueries,
+                APISKnowledgeBaseQuery = result.Result.KnowledgeBaseAPIQueries.Select(TranslateKnowledgeBaseQuery).ToList(),
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount
@@ -133,7 +158,16 @@ namespace AgentMesh.Application.Services
             public string BusinessRequirements { get; set; } = string.Empty;
 
             [JsonPropertyName("knowledgeBaseAPIQueries")]
-            public IEnumerable<DomainExpertAgentOutput.KnowledgeBaseAPIQuery> KnowledgeBaseAPIQueries { get; set; } = [];
+            public IEnumerable<APIKnowledgeBaseQuery> KnowledgeBaseAPIQueries { get; set; } = [];
+        }
+
+        public class APIKnowledgeBaseQuery
+        {
+            [JsonPropertyName("type")]
+            public string Type { get; set; } = string.Empty;
+
+            [JsonPropertyName("query")]
+            public string Query { get; set; } = string.Empty;
         }
     }
 }
