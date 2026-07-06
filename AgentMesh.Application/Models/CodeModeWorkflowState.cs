@@ -1,10 +1,8 @@
 using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.DomainExpert;
-using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
-using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
 using static AgentMesh.Models.RequirementsCollector.RequirementsCollectorAgentOutput;
 
 namespace AgentMesh.Application.Models
@@ -12,16 +10,9 @@ namespace AgentMesh.Application.Models
     public class CodeModeWorkflowState(string userQuestion, IEnumerable<ContextMessage> contextMessages)
     {
         public string OriginalUserRequest { get; } = userQuestion;
-        public string? LanguageOfTheUser { get; set; }
-        public string? UserIntent { get; set; }
-        public Dictionary<string, IEnumerable<string>> EntitiesByDomain { get; set; } = new();
-        public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
-        public IEnumerable<string> UserPreferences { get; set; } = [];
-        public IEnumerable<string> MissingMemories { get; set; } = [];
+        public UserRequest UserRequest { get; set; } = new();
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
         public IEnumerable<RequirementsCollectorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
-        public string EnrichedUserRequest { get => UserIntent; }
-        public UserIntentCategoryValues UserIntentCategoryValue { get; set; }
         public string? BusinessRequirements { get; set; }
         public bool ShouldEngageCoder { get; set; }
         public string? BusinessAdvisorContent { get; set; }
