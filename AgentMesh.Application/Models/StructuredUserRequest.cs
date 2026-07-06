@@ -2,7 +2,10 @@ using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
 
 namespace AgentMesh.Application.Models
 {
-    public class UserRequest
+    /// <summary>
+    /// The request from the user, structured and classified into intent, categories, entities, and other relevant information for processing by the system.
+    /// </summary>
+    public class StructuredUserRequest
     {
         public string Intent { get; set; } = string.Empty;
         public UserIntentCategoryValues IntentCategory { get; set; }

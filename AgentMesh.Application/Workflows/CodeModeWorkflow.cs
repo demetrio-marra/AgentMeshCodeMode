@@ -92,12 +92,12 @@ namespace AgentMesh.Application.Workflows
 
             await ExecuteIntentExtractorAsync(state, chatHistory);
 
-            if (state.UserRequest.IntentCategory == UserIntentCategoryValues.Other)
+            if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Other)
             {
                 goto CompleteWorkflow;
             }
 
-            if (state.UserRequest.EntitiesByDomain.Any())
+            if (state.ClassifiedUserRequest.EntitiesByDomain.Any())
             {
                 await ExecuteKnowledgeBaseServiceFastSearchAsync(state);
             }
@@ -122,7 +122,7 @@ namespace AgentMesh.Application.Workflows
 
             await Task.WhenAll(memoryTask, knowledgeBaseTask);
 
-            if (state.UserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
+            if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
             {
                 if (state.MissingKnowledgeBaseSearchEntries.Any())
                 {
@@ -133,7 +133,7 @@ namespace AgentMesh.Application.Workflows
             }
 
 
-            if (state.UserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
+            if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
             {
                 if (state.KnowledgeBaseQueryResults.Results.Any())
                 {
@@ -142,7 +142,7 @@ namespace AgentMesh.Application.Workflows
 
                 await ExecuteBusinessAdvisorAsync(state);
             }
-            else if (state.UserRequest.IntentCategory == UserIntentCategoryValues.TaskExecution)
+            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.TaskExecution)
             {
                 await ExecuteDomainExpertAsync(state);
 
@@ -191,13 +191,13 @@ namespace AgentMesh.Application.Workflows
                 }
                 goto WorkflowEnd;
             }
-            else if (state.UserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
+            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.BusinessAdvisor)
             {
                 await ExecuteBusinessAdvisorAsync(state);
                 await CompleteWorkflowAsync(state, state.BusinessAdvisorContent);
                 goto WorkflowEnd;
             }
-            else if (state.UserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
+            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
             {
                 await ExecuteDocumentationAsync(state);
                 await CompleteWorkflowAsync(state, state.DocumentationContent);
@@ -205,7 +205,7 @@ namespace AgentMesh.Application.Workflows
             }
             else
             {
-                throw new Exception($"Unknown user intent category: {state.UserRequest.IntentCategory}");
+                throw new Exception($"Unknown user intent category: {state.ClassifiedUserRequest.IntentCategory}");
             } // end of if task execution
 
         CompleteWorkflow:
@@ -312,7 +312,7 @@ namespace AgentMesh.Application.Workflows
             var apiKnowledgeBaseQueryResults = await _knowledgeBaseSearchExecutor.ExecuteAsync(new KnowledgeBaseQueryInput
             {
                 Collections = [APIS_DOCUMENTATION_COLLECTION_NAME],
-                UserIntent = state.UserRequest.Intent,
+                UserIntent = state.ClassifiedUserRequest.Intent,
                 Queries = [.. state.KnowledgeBaseAPIQueries.Select(entry => new KnowledgeBaseQueryInputItem
                 {
                     Query = entry.Query,
@@ -367,7 +367,7 @@ namespace AgentMesh.Application.Workflows
                 ApplicationDomainList = _workflowConfiguration.ApplicationDomainList
             });
 
-            state.UserRequest = new UserRequest
+            state.ClassifiedUserRequest = new StructuredUserRequest
             {
                 Intent = intentExtractorOutput.UserIntent,
                 IntentCategory = intentExtractorOutput.UserIntentCategory,
@@ -382,30 +382,30 @@ namespace AgentMesh.Application.Workflows
 
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "ExtractedIntent", state.UserRequest.Intent ?? "(No intent extracted)" }
+                { "ExtractedIntent", state.ClassifiedUserRequest.Intent ?? "(No intent extracted)" }
             };
-            if (state.UserRequest.LanguageOfTheUser != null)
+            if (state.ClassifiedUserRequest.LanguageOfTheUser != null)
             {
-                notifyDictionary.Add("LanguageOfTheUser", state.UserRequest.LanguageOfTheUser);
+                notifyDictionary.Add("LanguageOfTheUser", state.ClassifiedUserRequest.LanguageOfTheUser);
             }
-            notifyDictionary.Add("UserIntentCategory", state.UserRequest.IntentCategory.ToString());
-            if (state.UserRequest.SupportingIntentInformation.Any())
+            notifyDictionary.Add("UserIntentCategory", state.ClassifiedUserRequest.IntentCategory.ToString());
+            if (state.ClassifiedUserRequest.SupportingIntentInformation.Any())
             {
-                notifyDictionary.Add("SupportingIntentInformation", string.Join("\n", state.UserRequest.SupportingIntentInformation.Select(info => $"- {info}")));
+                notifyDictionary.Add("SupportingIntentInformation", string.Join("\n", state.ClassifiedUserRequest.SupportingIntentInformation.Select(info => $"- {info}")));
             }
-            if (state.UserRequest.EntitiesByDomain.Any())
+            if (state.ClassifiedUserRequest.EntitiesByDomain.Any())
             {
-                var entitiesDisplay = string.Join("\n", state.UserRequest.EntitiesByDomain.SelectMany(kvp => 
+                var entitiesDisplay = string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => 
                     kvp.Value.Select(entity => $"- [{kvp.Key}] {entity}")));
                 notifyDictionary.Add("EntitiesByDomain", entitiesDisplay);
             }
-            if (state.UserRequest.UserPreferences.Any())
+            if (state.ClassifiedUserRequest.UserPreferences.Any())
             {
-                notifyDictionary.Add("UserPreferences", string.Join("\n", state.UserRequest.UserPreferences.Select(pref => $"- {pref}")));
+                notifyDictionary.Add("UserPreferences", string.Join("\n", state.ClassifiedUserRequest.UserPreferences.Select(pref => $"- {pref}")));
             }
-            if (state.UserRequest.MissingMemories.Any())
+            if (state.ClassifiedUserRequest.MissingMemories.Any())
             {
-                notifyDictionary.Add("MissingMemories", string.Join("\n", state.UserRequest.MissingMemories.Select(mem => $"- {mem}")));
+                notifyDictionary.Add("MissingMemories", string.Join("\n", state.ClassifiedUserRequest.MissingMemories.Select(mem => $"- {mem}")));
             }
             notifyDictionary.Add("ELAPSED_TIME", GetElapsedTime(stopwatch));
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", notifyDictionary);
@@ -418,23 +418,23 @@ namespace AgentMesh.Application.Workflows
 
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Requirements Collector Agent", new Dictionary<string, string>
             {
-                { "UserIntent", state.UserRequest.Intent ?? "(No intent extracted)" },
-                { "UserIntentCategory", state.UserRequest.IntentCategory.ToString() },
-                { "EntitiesByDomain", state.UserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.UserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(e => $"- [{kvp.Key}] {e}"))) : "(No entities)" },
-                { "SupportingIntentInformation", state.UserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.UserRequest.SupportingIntentInformation.Select(info => $"- {info}")) : "(No supporting intent information)" },
-                { "UserPreferences", state.UserRequest.UserPreferences.Any() ? string.Join("\n", state.UserRequest.UserPreferences.Select(pref => $"- {pref}")) : "(No user preferences)" },
-                { "MissingMemories", state.UserRequest.MissingMemories.Any() ? string.Join("\n", state.UserRequest.MissingMemories.Select(mem => $"- {mem}")) : "(No missing memories)" },
+                { "UserIntent", state.ClassifiedUserRequest.Intent ?? "(No intent extracted)" },
+                { "UserIntentCategory", state.ClassifiedUserRequest.IntentCategory.ToString() },
+                { "EntitiesByDomain", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(e => $"- [{kvp.Key}] {e}"))) : "(No entities)" },
+                { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.ClassifiedUserRequest.SupportingIntentInformation.Select(info => $"- {info}")) : "(No supporting intent information)" },
+                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? string.Join("\n", state.ClassifiedUserRequest.UserPreferences.Select(pref => $"- {pref}")) : "(No user preferences)" },
+                { "MissingMemories", state.ClassifiedUserRequest.MissingMemories.Any() ? string.Join("\n", state.ClassifiedUserRequest.MissingMemories.Select(mem => $"- {mem}")) : "(No missing memories)" },
                 { "FastKnowledgeBaseResults", state.FastKnowledgeBaseQueryResults.Results.Any() ? string.Join("\n", state.FastKnowledgeBaseQueryResults.Results.Select(r => $"- [{r.File}] {r.Title}")) : "(No fast knowledge base results)" }
             });
 
             var output = await _requirementsCollectorAgent.ExecuteAsync(new RequirementsCollectorAgentInput
             {
-                UserIntent = state.UserRequest.Intent ?? string.Empty,
-                UserIntentCategory = state.UserRequest.IntentCategory,
-                EntitiesByDomain = state.UserRequest.EntitiesByDomain,
-                SupportingIntentInformation = state.UserRequest.SupportingIntentInformation,
-                UserPreferences = state.UserRequest.UserPreferences,
-                MissingMemories = state.UserRequest.MissingMemories,
+                UserIntent = state.ClassifiedUserRequest.Intent ?? string.Empty,
+                UserIntentCategory = state.ClassifiedUserRequest.IntentCategory,
+                EntitiesByDomain = state.ClassifiedUserRequest.EntitiesByDomain,
+                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
+                UserPreferences = state.ClassifiedUserRequest.UserPreferences,
+                MissingMemories = state.ClassifiedUserRequest.MissingMemories,
                 FastKnowledgeBaseQueryResults = state.FastKnowledgeBaseQueryResults.Results
             });
 
@@ -636,7 +636,7 @@ namespace AgentMesh.Application.Workflows
             KnowledgeBaseQueryInput queryInput = new()
             {
                 Collections = [DOMAINS_DOCUMENTATION_COLLECTION_NAME],
-                UserIntent = state.UserRequest.Intent,
+                UserIntent = state.ClassifiedUserRequest.Intent,
                 Queries = [.. queriesList.Select(entry => new KnowledgeBaseQueryInputItem
                 {
                     Query = entry.Query,
@@ -710,7 +710,7 @@ namespace AgentMesh.Application.Workflows
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Knowledge Base Fast Service...");
             
-            var domainsDisplay = string.Join("\n", state.UserRequest.EntitiesByDomain.Select(kvp => 
+            var domainsDisplay = string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.Select(kvp => 
                 $"- {kvp.Key}: {string.Join(", ", kvp.Value)}"));
             
             await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Fast Search Service", new Dictionary<string, string>
@@ -720,7 +720,7 @@ namespace AgentMesh.Application.Workflows
 
             var queries = new List<KnowledgeBaseQueryInputItem>();
             
-            foreach (var domainEntry in state.UserRequest.EntitiesByDomain)
+            foreach (var domainEntry in state.ClassifiedUserRequest.EntitiesByDomain)
             {
                 var domain = domainEntry.Key;
                 var entities = domainEntry.Value;
@@ -755,7 +755,7 @@ namespace AgentMesh.Application.Workflows
 
             KnowledgeBaseQueryInput queryInput = new()
             {
-                UserIntent = state.UserRequest.Intent,
+                UserIntent = state.ClassifiedUserRequest.Intent,
                 Queries = queries,
                 Collections = [DOMAINS_DOCUMENTATION_COLLECTION_NAME]
             };
@@ -782,14 +782,14 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Domain Expert Agent...");
-            var enrichedUserRequest = state.UserRequest.Intent ?? "(No enriched user request)";
+            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Domain Expert Agent", new Dictionary<string, string>
             {
                 { "EnrichedUserRequest", enrichedUserRequest },
-                { "Intent", state.UserRequest.Intent ?? "(No intent)" },
-                { "SupportingIntentInformation", state.UserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.UserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
-                { "Entities", state.UserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.UserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
-                { "UserPreferences", state.UserRequest.UserPreferences.Any() ? string.Join("\n", state.UserRequest.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
+                { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
+                { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.ClassifiedUserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
+                { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
+                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? string.Join("\n", state.ClassifiedUserRequest.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
                 { "MemoriesFromAgentMemoryService", state.ExtractedAgentMemories.Any() ? string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")) : "(No memories)" },
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDomainsDocumentsContent.Count().ToString() }
             });
@@ -797,10 +797,10 @@ namespace AgentMesh.Application.Workflows
             var domainExpertOutput = await _domainExpertAgent.ExecuteAsync(new DomainExpertAgentInput
             {
                 EnrichedUserRequest = enrichedUserRequest,
-                Intent = state.UserRequest.Intent ?? string.Empty,
-                SupportingIntentInformation = state.UserRequest.SupportingIntentInformation,
-                Entities = state.UserRequest.EntitiesByDomain,
-                UserPreferences = state.UserRequest.UserPreferences,
+                Intent = state.ClassifiedUserRequest.Intent ?? string.Empty,
+                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
+                Entities = state.ClassifiedUserRequest.EntitiesByDomain,
+                UserPreferences = state.ClassifiedUserRequest.UserPreferences,
                 AgentMemories = state.ExtractedAgentMemories.Select(m => m.Memory),
                 KnowledgeBaseDocumentsContent = null // Do not send to coder agent
             }, cancellationToken);
@@ -969,7 +969,7 @@ namespace AgentMesh.Application.Workflows
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Results Presenter Agent...");
             var sandboxResult = state.SandboxResult ?? "(No sandbox result)";
-            var enrichedUserRequest = state.UserRequest.Intent ?? "(No enriched user request)";
+            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
             {
                 { "Data", sandboxResult },
@@ -996,14 +996,14 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Business Advisor Agent...");
-            var enrichedUserRequest = state.UserRequest.Intent ?? "(No enriched user request)";
+            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Business Advisor Agent", new Dictionary<string, string>
             {
                 { "EnrichedUserRequest", enrichedUserRequest },
-                { "Intent", state.UserRequest.Intent ?? "(No intent)" },
-                { "SupportingIntentInformation", state.UserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.UserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
-                { "Entities", state.UserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.UserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
-                { "UserPreferences", state.UserRequest.UserPreferences.Any() ? string.Join("\n", state.UserRequest.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
+                { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
+                { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.ClassifiedUserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
+                { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
+                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? string.Join("\n", state.ClassifiedUserRequest.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
                 { "MemoriesFromAgentMemoryService", state.ExtractedAgentMemories.Any() ? string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")) : "(No memories)" },
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDomainsDocumentsContent.Count().ToString() }
             });
@@ -1013,10 +1013,10 @@ namespace AgentMesh.Application.Workflows
             var baOutput = await _businessAdvisorAgent.ExecuteAsync(new BusinessAdvisorAgentInput
             {
                 EnrichedUserRequest = enrichedUserRequest,
-                Intent = state.UserRequest.Intent ?? string.Empty,
-                SupportingIntentInformation = state.UserRequest.SupportingIntentInformation,
-                Entities = state.UserRequest.EntitiesByDomain,
-                UserPreferences = state.UserRequest.UserPreferences,
+                Intent = state.ClassifiedUserRequest.Intent ?? string.Empty,
+                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
+                Entities = state.ClassifiedUserRequest.EntitiesByDomain,
+                UserPreferences = state.ClassifiedUserRequest.UserPreferences,
                 AgentMemories = state.ExtractedAgentMemories.Select(m => m.Memory),
                 KnowledgeBaseDocumentsContent = serializedDocumentation
             }, cancellationToken);
@@ -1034,14 +1034,14 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Documentation Agent...");
-            var enrichedUserRequest = state.UserRequest.Intent ?? "(No enriched user request)";
+            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Documentation Agent", new Dictionary<string, string>
             {
                 { "EnrichedUserRequest", enrichedUserRequest },
-                { "Intent", state.UserRequest.Intent ?? "(No intent)" },
-                { "SupportingIntentInformation", state.UserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.UserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
-                { "Entities", state.UserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.UserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
-                { "UserPreferences", state.UserRequest.UserPreferences.Any() ? string.Join("\n", state.UserRequest.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
+                { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
+                { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.ClassifiedUserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
+                { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
+                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? string.Join("\n", state.ClassifiedUserRequest.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
                 { "MemoriesFromAgentMemoryService", state.ExtractedAgentMemories.Any() ? string.Join("\n", state.ExtractedAgentMemories.Select(m => $"- {m.Memory}")) : "(No memories)" },
                 { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseDomainsDocumentsContent.Count().ToString() }
             });
@@ -1051,10 +1051,10 @@ namespace AgentMesh.Application.Workflows
             var output = await _documentationAgent.ExecuteAsync(new DocumentationAgentInput
             {
                 EnrichedUserRequest = enrichedUserRequest,
-                Intent = state.UserRequest.Intent ?? string.Empty,
-                SupportingIntentInformation = state.UserRequest.SupportingIntentInformation,
-                Entities = state.UserRequest.EntitiesByDomain,
-                UserPreferences = state.UserRequest.UserPreferences,
+                Intent = state.ClassifiedUserRequest.Intent ?? string.Empty,
+                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
+                Entities = state.ClassifiedUserRequest.EntitiesByDomain,
+                UserPreferences = state.ClassifiedUserRequest.UserPreferences,
                 AgentMemories = state.ExtractedAgentMemories.Select(m => m.Memory),
                 KnowledgeBaseDocumentsContent = serializedDocumentation
             }, cancellationToken);
@@ -1082,19 +1082,19 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Personal Assistant Agent...");
-            var enrichedUserRequest = state.UserRequest.Intent ?? "(No enriched user request)";
+            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Personal Assistant Agent", new Dictionary<string, string>
             {
                 { "Data", data ?? "(No data)" },
                 { "EnrichedUserRequest", enrichedUserRequest },
-                { "LanguageOfTheUser", state.UserRequest.LanguageOfTheUser ?? "(No language specified)" }
+                { "LanguageOfTheUser", state.ClassifiedUserRequest.LanguageOfTheUser ?? "(No language specified)" }
             });
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
                 Data = data,
                 EnrichedUserRequest = enrichedUserRequest,
-                LanguageOfTheUser = state.UserRequest.LanguageOfTheUser
+                LanguageOfTheUser = state.ClassifiedUserRequest.LanguageOfTheUser
             });
             state.FinalAnswer = personalAssistantOutput.Response;
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount, stopwatch.Elapsed, "Personal Assistant Agent");
@@ -1110,7 +1110,7 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Relevant Facts Evaluator Agent...");
-            var enrichedUserRequest = state.UserRequest.Intent ?? "(No enriched user request)";
+            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Relevant Facts Evaluator Agent", new Dictionary<string, string>
             {
                 { "User's request", enrichedUserRequest },
@@ -1140,7 +1140,7 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Agent Memory Saver...");
-            var enrichedUserRequest = state.UserRequest.Intent ?? "(No enriched user request)";
+            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Saver", new Dictionary<string, string>
             {
                 { "User's request", enrichedUserRequest },

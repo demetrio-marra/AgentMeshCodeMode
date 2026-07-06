@@ -10,7 +10,13 @@ namespace AgentMesh.Application.Models
     public class CodeModeWorkflowState(string userQuestion, IEnumerable<ContextMessage> contextMessages)
     {
         public string OriginalUserRequest { get; } = userQuestion;
-        public UserRequest UserRequest { get; set; } = new();
+        public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [.. contextMessages];
+
+        /// <summary>
+        /// Results of Intent detection and User Request classification, including the identified intent, user request type, and any relevant metadata.
+        /// </summary>
+        public StructuredUserRequest ClassifiedUserRequest { get; set; } = new();
+
         public IEnumerable<string> MissingPastMemories { get; set; } = [];
         public IEnumerable<RequirementsCollectorKnowledgeBase> MissingKnowledgeBaseSearchEntries { get; set; } = [];
         public string? BusinessRequirements { get; set; }
@@ -29,7 +35,6 @@ namespace AgentMesh.Application.Models
         public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; } = [];
         public IEnumerable<AgentMemoryQueryResultItem> ExtractedAgentMemories { get; set; } = [];
         public IEnumerable<DomainExpertAgentOutput.KnowledgeBaseAPIQuery> KnowledgeBaseAPIQueries { get; set; } = [];
-        public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [.. contextMessages];
 
         public KnowledgeBaseQueryResult FastKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 
