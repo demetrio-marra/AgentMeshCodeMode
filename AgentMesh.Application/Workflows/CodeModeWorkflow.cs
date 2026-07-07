@@ -441,83 +441,139 @@ namespace AgentMesh.Application.Workflows
         }
 
 
+        #region hybrid search executors
+
         private async Task ExecuteDomainsKnowledgeBaseServiceSearchAsync(CodeModeWorkflowState state)
         {
+            await ExecuteKnowledgeBaseServiceSearchAsync(
+                state,
+                _logger,
+                _workflowProgressNotifier,
+                _knowledgeBaseSearchExecutor,
+                _queriesCacheService,
+                _workflowConfiguration.EnableCacheService,
+                "KB Search Service",
+                DOMAINS_DOCUMENTATION_COLLECTION_NAME,
+                workflowState => workflowState.DomainsKnowledgeBaseQuery,
+                workflowState => workflowState.DomainsKnowledgeBaseQueryResults,
+                (workflowState, queryResult) => workflowState.DomainsKnowledgeBaseQueryResults = queryResult);
+        }
+
+
+        private async Task ExecuteAPIsKnowledgeBaseServiceSearchAsync(CodeModeWorkflowState state)
+        {
+            await ExecuteKnowledgeBaseServiceSearchAsync(
+                state,
+                _logger,
+                _workflowProgressNotifier,
+                _knowledgeBaseSearchExecutor,
+                _queriesCacheService,
+                _workflowConfiguration.EnableCacheService,
+                "APIs Knowledge Base Service",
+                APIS_DOCUMENTATION_COLLECTION_NAME,
+                workflowState => workflowState.APISKnowledgeBaseQuery,
+                workflowState => workflowState.APISKnowledgeBaseQueryResults,
+                (workflowState, queryResult) => workflowState.APISKnowledgeBaseQueryResults = queryResult);
+        }
+
+
+
+        private static async Task ExecuteKnowledgeBaseServiceSearchAsync(
+            CodeModeWorkflowState state,
+            ILogger logger,
+            IWorkflowProgressNotifier workflowProgressNotifier,
+            IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
+            IQueriesCacheService queriesCacheService,
+            bool enableCacheService,
+            string stepName,
+            string collectionName,
+            Func<CodeModeWorkflowState, IEnumerable<KnowledgeBaseQueryInputItem>> getQueries,
+            Func<CodeModeWorkflowState, KnowledgeBaseQueryResult> getExistingResults,
+            Action<CodeModeWorkflowState, KnowledgeBaseQueryResult> setResults)
+        {
             var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Knowledge Base Service...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Search Service", new Dictionary<string, string>
+            logger.LogDebug("Engaging Knowledge Base Service...");
+            await workflowProgressNotifier.NotifyWorkflowStepStart(stepName, new Dictionary<string, string>
             {
-                { "MissingKnowledgeBaseEntries", ToBulletList(state.DomainsKnowledgeBaseQuery) }
+                { "MissingKnowledgeBaseEntries", ToBulletList(getQueries(state)) }
             });
 
-            var queriesList = state.DomainsKnowledgeBaseQuery.ToList();
+            var queriesList = getQueries(state).ToList();
 
             KnowledgeBaseQueryInput queryInput = new()
             {
-                Collections = [DOMAINS_DOCUMENTATION_COLLECTION_NAME],
+                Collections = [collectionName],
                 UserIntent = state.ClassifiedUserRequest.Intent,
                 Queries = queriesList
             };
 
-            var brcOutput = await _knowledgeBaseSearchExecutor.ExecuteAsync(queryInput, CancellationToken.None);
+            var brcOutput = await knowledgeBaseSearchExecutor.ExecuteAsync(queryInput, CancellationToken.None);
 
-            var existingResults = state.DomainsKnowledgeBaseQueryResults.Results.ToList();
-            state.DomainsKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
+            var existingResults = getExistingResults(state).Results.ToList();
+            setResults(state, new KnowledgeBaseQueryResult
             {
                 Results = existingResults.Concat(brcOutput.Results).ToList()
-            };
+            });
 
-            if (_workflowConfiguration.EnableCacheService && brcOutput.Results.Any())
-            {
-                var cacheableQueries = queriesList
-                    .Where(entry => entry.SearchType != KnowledgeBaseQuerySearchType.Keyword)
-                    .ToList();
-
-                if (cacheableQueries.Any())
-                {
-                    var cacheItems = new List<KnowledgeBaseQueriesCacheItem>();
-                    foreach (var query in cacheableQueries)
-                    {
-                        foreach (var result in brcOutput.Results)
-                        {
-                            cacheItems.Add(new KnowledgeBaseQueriesCacheItem
-                            {
-                                FoundQuery = query.Query,
-                                FoundQueryType = query.SearchType,
-                                DocumentId = result.Id,
-                                DocumentFile = result.File,
-                                DocumentTitle = result.Title,
-                                DocumentSummary = result.Summary
-                            });
-                        }
-                    }
-
-                    var cacheUpdateResult = await _queriesCacheService.SetKnowledgeBaseCachedItemsAsync(cacheItems);
-                    
-                    var tokenUsageInfo = new AgentTokenUsageEntry
-                    {
-                        AgentName = "Query Cache Updater Service (Knowledge)",
-                        InputTokens = cacheUpdateResult.TotalTokens,
-                        OutputTokens = 0
-                    };
-                    state.AddStepUsage("KB Search Service", stopwatch.Elapsed, true, tokenUsageInfo);
-                }
-                else
-                {
-                    state.AddStepUsage("KB Search Service", stopwatch.Elapsed, false);
-                }
-            }
-            else
-            {
-                state.AddStepUsage("KB Search Service", stopwatch.Elapsed, false);
-            }
+            var cacheTokenUsageInfo = await BuildKnowledgeBaseCacheTokenUsageAsync(enableCacheService, queriesList, brcOutput.Results, queriesCacheService);
+            state.AddStepUsage(stepName, stopwatch.Elapsed, cacheTokenUsageInfo is not null, cacheTokenUsageInfo);
 
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "ExtractedKnowledgeBaseEntries", ToBulletList(brcOutput.Results.Select(m => $"File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Search Service", notifyDictionary);
+            await workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, notifyDictionary);
+        }
+
+        #endregion
+
+        private static async Task<AgentTokenUsageEntry?> BuildKnowledgeBaseCacheTokenUsageAsync(
+            bool enableCacheService,
+            IReadOnlyCollection<KnowledgeBaseQueryInputItem> queries,
+            IEnumerable<KnowledgeBaseQueryResultItem> queryResults,
+            IQueriesCacheService queriesCacheService)
+        {
+            var resultsList = queryResults.ToList();
+            if (!enableCacheService || !resultsList.Any())
+            {
+                return null;
+            }
+
+            var cacheableQueries = queries
+                .Where(entry => entry.SearchType != KnowledgeBaseQuerySearchType.Keyword)
+                .ToList();
+
+            if (!cacheableQueries.Any())
+            {
+                return null;
+            }
+
+            var cacheItems = new List<KnowledgeBaseQueriesCacheItem>();
+            foreach (var query in cacheableQueries)
+            {
+                foreach (var result in resultsList)
+                {
+                    cacheItems.Add(new KnowledgeBaseQueriesCacheItem
+                    {
+                        FoundQuery = query.Query,
+                        FoundQueryType = query.SearchType,
+                        DocumentId = result.Id,
+                        DocumentFile = result.File,
+                        DocumentTitle = result.Title,
+                        DocumentSummary = result.Summary
+                    });
+                }
+            }
+
+            var cacheUpdateResult = await queriesCacheService.SetKnowledgeBaseCachedItemsAsync(cacheItems);
+
+            return new AgentTokenUsageEntry
+            {
+                AgentName = "Query Cache Updater Service (Knowledge)",
+                InputTokens = cacheUpdateResult.TotalTokens,
+                OutputTokens = 0
+            };
         }
 
         private async Task ExecuteDomainsKnowledgeBaseServiceFastSearchAsync(CodeModeWorkflowState state)
@@ -649,86 +705,6 @@ namespace AgentMesh.Application.Workflows
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("API Fast Search Service", notifyDictionary);
         }
-
-        private async Task ExecuteAPIsKnowledgeBaseServiceSearchAsync(CodeModeWorkflowState state)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Knowledge Base Service...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("APIs Knowledge Base Service", new Dictionary<string, string>
-            {
-                { "MissingKnowledgeBaseEntries", ToBulletList(state.APISKnowledgeBaseQuery) }
-            });
-
-            var queriesList = state.APISKnowledgeBaseQuery.ToList();
-
-            KnowledgeBaseQueryInput queryInput = new()
-            {
-                Collections = [APIS_DOCUMENTATION_COLLECTION_NAME],
-                UserIntent = state.ClassifiedUserRequest.Intent,
-                Queries = queriesList
-            };
-
-            var brcOutput = await _knowledgeBaseSearchExecutor.ExecuteAsync(queryInput, CancellationToken.None);
-
-            var existingResults = state.APISKnowledgeBaseQueryResults.Results.ToList();
-            state.APISKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
-            {
-                Results = existingResults.Concat(brcOutput.Results).ToList()
-            };
-
-            if (_workflowConfiguration.EnableCacheService && brcOutput.Results.Any())
-            {
-                var cacheableQueries = queriesList
-                    .Where(entry => entry.SearchType != KnowledgeBaseQuerySearchType.Keyword)
-                    .ToList();
-
-                if (cacheableQueries.Any())
-                {
-                    var cacheItems = new List<KnowledgeBaseQueriesCacheItem>();
-                    foreach (var query in cacheableQueries)
-                    {
-                        foreach (var result in brcOutput.Results)
-                        {
-                            cacheItems.Add(new KnowledgeBaseQueriesCacheItem
-                            {
-                                FoundQuery = query.Query,
-                                FoundQueryType = query.SearchType,
-                                DocumentId = result.Id,
-                                DocumentFile = result.File,
-                                DocumentTitle = result.Title,
-                                DocumentSummary = result.Summary
-                            });
-                        }
-                    }
-
-                    var cacheUpdateResult = await _queriesCacheService.SetKnowledgeBaseCachedItemsAsync(cacheItems);
-
-                    var tokenUsageInfo = new AgentTokenUsageEntry
-                    {
-                        AgentName = "Query Cache Updater Service (Knowledge)",
-                        InputTokens = cacheUpdateResult.TotalTokens,
-                        OutputTokens = 0
-                    };
-                    state.AddStepUsage("APIs Knowledge Base Service", stopwatch.Elapsed, true, tokenUsageInfo);
-                }
-                else
-                {
-                    state.AddStepUsage("APIs Knowledge Base Service", stopwatch.Elapsed, false);
-                }
-            }
-            else
-            {
-                state.AddStepUsage("APIs Knowledge Base Service", stopwatch.Elapsed, false);
-            }
-
-            var notifyDictionary = new Dictionary<string, string>
-            {
-                { "ExtractedKnowledgeBaseEntries", ToBulletList(brcOutput.Results.Select(m => $"File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
-                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
-            };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("APIs Knowledge Base Service", notifyDictionary);
-        }
-
 
         private async Task ExecuteDomainExpertAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
