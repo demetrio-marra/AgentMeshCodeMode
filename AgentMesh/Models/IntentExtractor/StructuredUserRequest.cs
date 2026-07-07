@@ -1,5 +1,3 @@
-using static AgentMesh.Models.IntentExtractor.IntentExtractorAgentOutput;
-
 namespace AgentMesh.Models.IntentExtractor
 {
     /// <summary>
@@ -11,6 +9,7 @@ namespace AgentMesh.Models.IntentExtractor
         public string Intent { get; set; } = string.Empty;
         public string CanonicalizedIntent { get; set; } = string.Empty;
         public UserIntentCategoryValues IntentCategory { get; set; }
+        public UserIntentCategoryValues CanonicalizedIntentCategory { get; set; }
         public Dictionary<string, IEnumerable<string>> EntitiesByDomain { get; set; } = new();
         public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
         public IEnumerable<string> UserPreferences { get; set; } = [];

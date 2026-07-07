@@ -110,11 +110,11 @@ namespace AgentMesh.Application.Workflows
                 await ExecuteDomainsKnowledgeBaseDocumentsExtractorAsync(state);
             }
 
-            if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
+            if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.Documentation)
             {
                 await ExecuteDocumentationAgentAsync(state);
             }
-            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.TaskExecution)
+            else if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.TaskExecution)
             {
                 var domainExpertTask = ExecuteDomainExpertAsync(state);
                 var technicalAnalystTask = ExecuteTechnicalAnalystAsync(state);
@@ -167,9 +167,13 @@ namespace AgentMesh.Application.Workflows
                 }
                 goto WorkflowEnd;
             }
+            else if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.Other)
+            {
+                goto CompleteWorkflow;
+            }
             else
             {
-                throw new Exception($"Unknown user intent category: {state.ClassifiedUserRequest.IntentCategory}");
+                throw new Exception($"Unknown user intent category: {state.ClassifiedUserRequest.CanonicalizedIntentCategory}");
             } // end of if task execution
 
         CompleteWorkflow:
@@ -309,6 +313,7 @@ namespace AgentMesh.Application.Workflows
                 OriginalUserRequest = intentExtractorOutput.OriginalUserRequest,
                 Intent = intentExtractorOutput.UserIntent,
                 IntentCategory = intentExtractorOutput.UserIntentCategory,
+                CanonicalizedIntentCategory = intentExtractorOutput.UserIntentCategory,
                 LanguageOfTheUser = intentExtractorOutput.LanguageOfTheUser,
                 EntitiesByDomain = intentExtractorOutput.EntitiesByDomain,
                 SupportingIntentInformation = intentExtractorOutput.SupportingIntentInformation,
@@ -372,11 +377,13 @@ namespace AgentMesh.Application.Workflows
             });
 
             state.CanonicalizedIntent = output.DomainedIntent;
+            state.CanonicalizedIntentCategory = output.CanonicalizedIntentCategory;
             state.AddTokenUsage(IntentCanonicalizationAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Intent Canonicalization Agent");
 
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "DomainedIntent", state.CanonicalizedIntent },
+                { "CanonicalizedIntentCategory", state.CanonicalizedIntentCategory.ToString() },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Canonicalization Agent", notifyDictionary);
@@ -1048,11 +1055,11 @@ namespace AgentMesh.Application.Workflows
             var canonicalizedIntent = state.CanonicalizedIntent;
 
             string? data = null;
-            if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
+            if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.Documentation)
             {
                 data = state.DocumentationContent;
             }
-            else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.TaskExecution)
+            else if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.TaskExecution)
             {
                 if (state.CodeExecutionResultType == SandboxResultType.CallError)
                 {
