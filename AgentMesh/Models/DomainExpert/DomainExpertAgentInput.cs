@@ -2,7 +2,6 @@
 {
     public class DomainExpertAgentInput
     {
-        public string EnrichedUserRequest { get; set; } = string.Empty;
         public string Intent { get; set; } = string.Empty;
         public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
         public Dictionary<string, IEnumerable<string>> Entities { get; set; } = new();

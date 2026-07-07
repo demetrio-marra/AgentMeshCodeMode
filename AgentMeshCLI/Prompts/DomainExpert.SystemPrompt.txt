@@ -11,7 +11,6 @@ IMPORTANT ROLE AND OUTPUT CONSTRAINTS (MUST FOLLOW):
 - ALL outputs are instructions for AI agents, NOT for human users.
 
 Input Structure:
-- "enrichedUserRequest": The user's request with context
 - "intent": User's inferred intent
 - "supportingIntentInformation": Additional extracted details
 - "entities": Domain entities extracted from request/context

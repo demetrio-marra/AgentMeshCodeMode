@@ -691,10 +691,8 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Domain Expert Agent...");
-            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Domain Expert Agent", new Dictionary<string, string>
             {
-                { "EnrichedUserRequest", enrichedUserRequest },
                 { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.ClassifiedUserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
@@ -705,7 +703,6 @@ namespace AgentMesh.Application.Workflows
 
             var domainExpertOutput = await _domainExpertAgent.ExecuteAsync(new DomainExpertAgentInput
             {
-                EnrichedUserRequest = enrichedUserRequest,
                 Intent = state.ClassifiedUserRequest.Intent ?? string.Empty,
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
