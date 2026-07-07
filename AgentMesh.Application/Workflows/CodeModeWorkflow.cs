@@ -297,18 +297,19 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Intent Extractor Agent", new Dictionary<string, string>
             {
                 { "ContextMessages", "<omitted for brevity>. Total: " + chatHistory.Count().ToString() },
-                { "UserLastRequest", state.OriginalUserRequest }
+                { "UserLastRequest", state.UserLastRequest }
             });
 
             var intentExtractorOutput = await _intentExtractorAgent.ExecuteAsync(new IntentExtractorAgentInput
             {
                 ContextMessages = [.. state.InitialContextMessages],
-                UserLastRequest = state.OriginalUserRequest,
+                UserLastRequest = state.UserLastRequest,
                 ApplicationDomainList = _workflowConfiguration.ApplicationDomainList
             });
 
             state.ClassifiedUserRequest = new StructuredUserRequest
             {
+                OriginalUserRequest = intentExtractorOutput.OriginalUserRequest,
                 Intent = intentExtractorOutput.UserIntent,
                 IntentCategory = intentExtractorOutput.UserIntentCategory,
                 LanguageOfTheUser = intentExtractorOutput.LanguageOfTheUser,
@@ -323,6 +324,7 @@ namespace AgentMesh.Application.Workflows
 
             var notifyDictionary = new Dictionary<string, string>
             {
+                { "OriginalUserRequest", state.ClassifiedUserRequest.OriginalUserRequest },
                 { "ExtractedIntent", state.ClassifiedUserRequest.Intent ?? "(No intent extracted)" }
             };
             if (state.ClassifiedUserRequest.LanguageOfTheUser != null)

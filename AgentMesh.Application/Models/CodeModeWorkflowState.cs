@@ -8,8 +8,13 @@ namespace AgentMesh.Application.Models
 {
     public class CodeModeWorkflowState(string userQuestion, IEnumerable<ContextMessage> contextMessages)
     {
-        public string OriginalUserRequest { get; } = userQuestion;
+        public string UserLastRequest { get; } = userQuestion;
+
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [.. contextMessages];
+
+
+        public string OriginalUserRequest { get => ClassifiedUserRequest.OriginalUserRequest; set => ClassifiedUserRequest.OriginalUserRequest = value; }
+
 
         /// <summary>
         /// Results of Intent detection and User Request classification, including the identified intent, user request type, and any relevant metadata.
@@ -19,7 +24,7 @@ namespace AgentMesh.Application.Models
         /// <summary>
         /// Canonicalized user intent enriched with domain-specific terminology.
         /// </summary>
-        public string CanonicalizedIntent { get; set; } = string.Empty;
+        public string CanonicalizedIntent { get => ClassifiedUserRequest.CanonicalizedIntent; set => ClassifiedUserRequest.CanonicalizedIntent = value; }
 
         /// <summary>
         /// First knowledge base call, which is a fast query to retrieve relevant information from the knowledge base to assist in understanding the user's request and providing context for further processing.

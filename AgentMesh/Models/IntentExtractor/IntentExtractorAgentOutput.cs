@@ -2,6 +2,7 @@ namespace AgentMesh.Models.IntentExtractor
 {
     public class IntentExtractorAgentOutput : IAgentOutput
     {
+        public string OriginalUserRequest { get; set; } = string.Empty;
         public string UserIntent { get; set; } = string.Empty;
         public UserIntentCategoryValues UserIntentCategory { get; set; }
         public Dictionary<string, IEnumerable<string>> EntitiesByDomain { get; set; } = new();

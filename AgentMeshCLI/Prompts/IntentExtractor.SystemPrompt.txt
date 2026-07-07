@@ -7,6 +7,7 @@ Group entities by the domain of human knowledge they belong to.
 Extract concise, factual details that support or clarify the user intent.
 Extract user preferences about intent's fulfilling from the previous messages list.
 Extract facts the user mentions that are missing from the previous messages list.
+Build the original user request by combining the latest user request with prior conversation messages that are directly related to that latest request.
 An application domain list is available in the input as system information and can be used as guidance for domain grouping.
 
 
@@ -17,6 +18,13 @@ An application domain list is available in the input as system information and c
 
 
 # Output
+
+## Original user request
+A standalone text that combines:
+- the very last user request
+- the previous conversation messages that are directly related to that last request
+
+Do not include unrelated history. Preserve key details, constraints, and context needed to fully understand the latest request.
 
 ## User Intent
 A single, clear, standalone captured user's intent in a natural language sentence.
@@ -88,6 +96,7 @@ Output the language of the user.
 IMPORTANT: Do not wrap the output in backticks or any other formatting. Only output the JSON object.
 Return a JSON object with the following structure:
 {
+  "originalUserRequest": "Combined latest request and related prior messages.",
   "userIntent": "Captured user's intent in a natural language sentence.",
   "userIntentCategory": "taskExecution",
   "entitiesByDomain": {
@@ -114,6 +123,7 @@ Return a JSON object with the following structure:
 # Rules
 - remove assistant chatter
 - keep the user intent unchanged
+- originalUserRequest must include the latest request plus only relevant prior messages
 - supporting intent information must be concise, non-redundant, and grounded in the input
 - include only details not already captured in the user intent, userIntentCategory, or entitiesByDomain
 - userPreferences should capture explicit preferences from conversation history (e.g., format, constraints, requirements)

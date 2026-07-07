@@ -34,6 +34,7 @@ namespace AgentMesh.Application.Services
 
             var ret = new IntentExtractorAgentOutput
             {
+                OriginalUserRequest = result.Result.OriginalUserRequest,
                 UserIntent = result.Result.UserIntent,
                 UserIntentCategory = result.Result.UserIntentCategory,
                 EntitiesByDomain = result.Result.EntitiesByDomain,
@@ -160,6 +161,9 @@ namespace AgentMesh.Application.Services
 
         public class ParsedResponse
         {
+            [JsonPropertyName("originalUserRequest")]
+            public string OriginalUserRequest { get; set; } = string.Empty;
+
             [JsonPropertyName("userIntent")]
             public string UserIntent { get; set; } = string.Empty;
 

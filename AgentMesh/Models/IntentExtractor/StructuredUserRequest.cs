@@ -7,7 +7,9 @@ namespace AgentMesh.Models.IntentExtractor
     /// </summary>
     public class StructuredUserRequest
     {
+        public string OriginalUserRequest { get; set; } = string.Empty;
         public string Intent { get; set; } = string.Empty;
+        public string CanonicalizedIntent { get; set; } = string.Empty;
         public UserIntentCategoryValues IntentCategory { get; set; }
         public Dictionary<string, IEnumerable<string>> EntitiesByDomain { get; set; } = new();
         public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
