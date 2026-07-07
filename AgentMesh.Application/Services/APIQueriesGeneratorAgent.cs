@@ -2,7 +2,8 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Models.DomainExpert;
+using AgentMesh.Models.APIQueriesGenerator;
+using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,15 +12,40 @@ using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class DomainExpertAgent(
-        [FromKeyedServices(AgentMesh.Application.Configuration.DomainExpertAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+    public class APIQueriesGeneratorAgent(
+        [FromKeyedServices(AgentMesh.Application.Configuration.APIQueriesGeneratorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<DomainExpertAgent> logger) : AgentBase<DomainExpertAgent.ParsedResponse>(logger, AgentMesh.Application.Configuration.DomainExpertAgentConfiguration.AgentName, openAIClient, resilience), IDomainExpertAgent
+        ILogger<APIQueriesGeneratorAgent> logger) : AgentBase<APIQueriesGeneratorAgent.ParsedResponse>(logger, AgentMesh.Application.Configuration.APIQueriesGeneratorAgentConfiguration.AgentName, openAIClient, resilience), IAPIQueriesGeneratorAgent
     {
-        private readonly ILogger<DomainExpertAgent> _logger = logger;
+        private readonly ILogger<APIQueriesGeneratorAgent> _logger = logger;
+        private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];
 
-        public async Task<DomainExpertAgentOutput> ExecuteAsync(
-            DomainExpertAgentInput input,
+        private static KnowledgeBaseQueryInputItem TranslateKnowledgeBaseQuery(APIKnowledgeBaseQuery query)
+        {
+            var normalizedType = AllowedQueryTypes.FirstOrDefault(type => type.Equals(query.Type, StringComparison.OrdinalIgnoreCase));
+
+            if (normalizedType == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}");
+            }
+
+            var searchType = normalizedType switch
+            {
+                "lex" => KnowledgeBaseQuerySearchType.Keyword,
+                "vec" => KnowledgeBaseQuerySearchType.Semantic,
+                "hyde" => KnowledgeBaseQuerySearchType.HypotheticalDocument,
+                _ => throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}")
+            };
+
+            return new KnowledgeBaseQueryInputItem
+            {
+                Query = query.Query,
+                SearchType = searchType
+            };
+        }
+
+        public async Task<APIQueriesGeneratorAgentOutput> ExecuteAsync(
+            APIQueriesGeneratorAgentInput input,
             CancellationToken cancellationToken = default)
         {
             var inputMessages = new List<AgentMessage>();
@@ -75,9 +101,9 @@ namespace AgentMesh.Application.Services
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            return new DomainExpertAgentOutput
+            return new APIQueriesGeneratorAgentOutput
             {
-                BusinessRequirements = result.Result.BusinessRequirements,
+                APISKnowledgeBaseQuery = result.Result.KnowledgeBaseAPIQueries.Select(TranslateKnowledgeBaseQuery).ToList(),
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount
@@ -96,10 +122,18 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                if (string.IsNullOrWhiteSpace(responseDTO.BusinessRequirements))
+                responseDTO.KnowledgeBaseAPIQueries ??= [];
+
+                if (!responseDTO.KnowledgeBaseAPIQueries.Any())
                 {
-                    _logger.LogWarning("The model's response contains empty business requirements. Response text: {ResponseText}", rawResponseText);
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty business requirements.");
+                    _logger.LogWarning("The model's response contains empty knowledge base API queries. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty knowledge base API queries.");
+                }
+
+                if (responseDTO.KnowledgeBaseAPIQueries.Any(q => string.IsNullOrWhiteSpace(q.Query) || !AllowedQueryTypes.Contains(q.Type, StringComparer.OrdinalIgnoreCase)))
+                {
+                    _logger.LogWarning("The model's response contains invalid query entries. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains invalid query entries. Allowed types: lex, vec, hyde; query must be non-empty.");
                 }
 
                 return responseDTO;
@@ -113,8 +147,17 @@ namespace AgentMesh.Application.Services
 
         public class ParsedResponse
         {
-            [JsonPropertyName("businessRequirements")]
-            public string BusinessRequirements { get; set; } = string.Empty;
+            [JsonPropertyName("knowledgeBaseAPIQueries")]
+            public IEnumerable<APIKnowledgeBaseQuery> KnowledgeBaseAPIQueries { get; set; } = [];
+        }
+
+        public class APIKnowledgeBaseQuery
+        {
+            [JsonPropertyName("type")]
+            public string Type { get; set; } = string.Empty;
+
+            [JsonPropertyName("query")]
+            public string Query { get; set; } = string.Empty;
         }
     }
 }

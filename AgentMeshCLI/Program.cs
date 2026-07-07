@@ -133,6 +133,29 @@ namespace AgentMesh
 
             services.AddSingleton<IDomainExpertAgent, DomainExpertAgent>();
 
+            // APIQueriesGenerator agent config and client
+            services
+                .AddOptions<APIQueriesGeneratorAgentConfiguration>()
+                .Bind(configuration.GetSection(APIQueriesGeneratorAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<APIQueriesGeneratorAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(APIQueriesGeneratorAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<APIQueriesGeneratorAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IAPIQueriesGeneratorAgent, APIQueriesGeneratorAgent>();
+
             // Documentation agent config and client
             services
                 .AddOptions<DocumentationAgentConfiguration>()
