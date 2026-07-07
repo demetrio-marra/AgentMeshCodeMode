@@ -966,19 +966,25 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Results Presenter Agent...");
-            var sandboxResult = state.SandboxResult ?? "(No sandbox result)";
-            var enrichedUserRequest = state.CanonicalizedIntent;
+            var originalUserRequest = state.OriginalUserRequest;
+            var canonicalizedIntent = state.CanonicalizedIntent;
 
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
             {
-                { "Data", sandboxResult },
-                { "EnrichedUserRequest", enrichedUserRequest }
+                { "Data", state.SandboxResult ?? "(No sandbox result)" },
+                { "OriginalUserRequest", originalUserRequest },
+                { "CanonicalizedIntent", canonicalizedIntent },
+                { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
+                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" }
             });
 
             var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
             {
-                Data = sandboxResult,
-                EnrichedUserRequest = enrichedUserRequest
+                Data = state.SandboxResult,
+                OriginalUserRequest = originalUserRequest,
+                CanonicalizedIntent = canonicalizedIntent,
+                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
+                UserPreferences = state.ClassifiedUserRequest.UserPreferences
             });
             state.PresenterOutput = resultsPresenterOutput.Content;
             state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount, stopwatch.Elapsed, "Results Presenter Agent");
@@ -1039,7 +1045,8 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Personal Assistant Agent...");
-            var enrichedUserRequest = state.CanonicalizedIntent;
+            var originalUserRequest = state.OriginalUserRequest;
+            var canonicalizedIntent = state.CanonicalizedIntent;
 
             string? data = null;
             if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)
@@ -1061,15 +1068,21 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Personal Assistant Agent", new Dictionary<string, string>
             {
                 { "Data", data ?? "(No data)" },
-                { "EnrichedUserRequest", enrichedUserRequest },
+                { "OriginalUserRequest", originalUserRequest },
+                { "CanonicalizedIntent", canonicalizedIntent },
+                { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
+                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
                 { "LanguageOfTheUser", state.ClassifiedUserRequest.LanguageOfTheUser ?? "(No language specified)" }
             });
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
                 Data = data,
-                EnrichedUserRequest = enrichedUserRequest,
-                LanguageOfTheUser = state.ClassifiedUserRequest.LanguageOfTheUser
+                LanguageOfTheUser = state.ClassifiedUserRequest.LanguageOfTheUser,
+                OriginalUserRequest = originalUserRequest,
+                CanonicalizedIntent = canonicalizedIntent,
+                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
+                UserPreferences = state.ClassifiedUserRequest.UserPreferences
             });
             state.FinalAnswer = personalAssistantOutput.Response;
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount, stopwatch.Elapsed, "Personal Assistant Agent");

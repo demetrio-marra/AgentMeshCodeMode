@@ -17,12 +17,20 @@ namespace AgentMesh.Application.Services
             PersonalAssistantAgentInput input,
             CancellationToken cancellationToken = default)
         {
+            var requestContext = string.Join(Environment.NewLine + Environment.NewLine, new[]
+            {
+                $"Original user request:\n{input.OriginalUserRequest}",
+                $"Canonicalized intent:\n{input.CanonicalizedIntent}",
+                $"Supporting intent information:\n{string.Join(Environment.NewLine, input.SupportingIntentInformation.Select(item => $"- {item}"))}",
+                $"User preferences:\n{string.Join(Environment.NewLine, input.UserPreferences.Select(item => $"- {item}"))}"
+            });
+
             var inputMessages = new List<AgentMessage>
             {
                 new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
                 new() { Role = AgentMessageRole.System, Content = $"Respond in {input.LanguageOfTheUser}." },
                 new() { Role = AgentMessageRole.System, Content = $"Respond about this data:\n" + input.Data },
-                new() { Role = AgentMessageRole.User, Content = input.EnrichedUserRequest }
+                new() { Role = AgentMessageRole.User, Content = requestContext }
             };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
@@ -39,3 +47,4 @@ namespace AgentMesh.Application.Services
         protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
     }
 }
+
