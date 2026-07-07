@@ -7,5 +7,6 @@ namespace AgentMesh.Models.ResultsPresenter
         public string CanonicalizedIntent { get; set; } = string.Empty;
         public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
         public IEnumerable<string> UserPreferences { get; set; } = [];
+        public IEnumerable<string> Memories { get; set; } = [];
     }
 }
