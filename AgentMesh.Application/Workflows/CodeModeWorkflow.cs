@@ -91,11 +91,6 @@ namespace AgentMesh.Application.Workflows
                 await ExecuteDomainsKnowledgeBaseServiceFastSearchAsync(state);
             }
 
-            if (state.FastDomainsKnowledgeBaseQueryResults.Results.Any())
-            {
-                await ExecuteIntentCanonicalizationAsync(state);
-            }
-
             await ExecuteRequirementsCollectorAsync(state);
 
             var memoryTask = (_workflowConfiguration.EnableMemoryService && state.PastMemoriesQuery.Any())
@@ -107,6 +102,8 @@ namespace AgentMesh.Application.Workflows
                 : Task.CompletedTask;
 
             await Task.WhenAll(memoryTask, knowledgeBaseTask);
+
+            await ExecuteIntentCanonicalizationAsync(state);
 
             if (state.DomainsKnowledgeBaseQueryResults.Results.Any())
             {
@@ -362,7 +359,7 @@ namespace AgentMesh.Application.Workflows
             {
                 { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
                 { "EntitiesByDomain", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(e => $"[{kvp.Key}] {e}"))) : "(No entities)" },
-                { "FastKnowledgeBaseResults", state.FastDomainsKnowledgeBaseQueryResults.Results.Any() ? ToBulletList(state.FastDomainsKnowledgeBaseQueryResults.Results.Select(r => $"[{r.File}] {r.Title}")) : "(No fast knowledge base results)" }
+                { "KnowledgeBaseResults", state.DomainsKnowledgeBaseQueryResults.Results.Any() ? ToBulletList(state.DomainsKnowledgeBaseQueryResults.Results.Select(r => $"[{r.File}] {r.Title}")) : "(No knowledge base results)" }
             });
 
             var output = await _intentCanonicalizationAgent.ExecuteAsync(new IntentCanonicalizationAgentInput
@@ -392,7 +389,7 @@ namespace AgentMesh.Application.Workflows
 
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Requirements Collector Agent", new Dictionary<string, string>
             {
-                { "UserIntent", state.CanonicalizedIntent },
+                { "UserIntent", state.ClassifiedUserRequest.Intent },
                 { "UserIntentCategory", state.ClassifiedUserRequest.IntentCategory.ToString() },
                 { "EntitiesByDomain", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(e => $"[{kvp.Key}] {e}"))) : "(No entities)" },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
