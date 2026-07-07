@@ -356,7 +356,7 @@ namespace AgentMesh.Application.Workflows
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
                 { "MissingMemories", state.ClassifiedUserRequest.MissingMemories.Any() ? ToBulletList(state.ClassifiedUserRequest.MissingMemories) : "(No missing memories)" },
-                { "FastKnowledgeBaseResults", state.FastKnowledgeBaseQueryResults.Results.Any() ? ToBulletList(state.FastKnowledgeBaseQueryResults.Results.Select(r => $"[{r.File}] {r.Title}")) : "(No fast knowledge base results)" }
+                { "FastKnowledgeBaseResults", state.FastDomainsKnowledgeBaseQueryResults.Results.Any() ? ToBulletList(state.FastDomainsKnowledgeBaseQueryResults.Results.Select(r => $"[{r.File}] {r.Title}")) : "(No fast knowledge base results)" }
             });
 
             var output = await _requirementsCollectorAgent.ExecuteAsync(new RequirementsCollectorAgentInput
@@ -367,7 +367,7 @@ namespace AgentMesh.Application.Workflows
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
                 MissingMemories = state.ClassifiedUserRequest.MissingMemories,
-                FastKnowledgeBaseQueryResults = state.FastKnowledgeBaseQueryResults.Results
+                FastKnowledgeBaseQueryResults = state.FastDomainsKnowledgeBaseQueryResults.Results
             });
 
             state.PastMemoriesQuery = output.MissingPastMemories;
@@ -577,7 +577,7 @@ namespace AgentMesh.Application.Workflows
 
             var brcOutput = await _knowledgeBaseSearchFastExecutor.ExecuteAsync(queryInput, CancellationToken.None);
 
-            state.FastKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
+            state.FastDomainsKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
             {
                 Results = brcOutput.Results.ToList()
             };
@@ -586,12 +586,69 @@ namespace AgentMesh.Application.Workflows
 
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "FastKnowledgeBaseQueryResults", ToBulletList(state.FastKnowledgeBaseQueryResults.Results.Select(m => $"File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
+                { "FastKnowledgeBaseQueryResults", ToBulletList(state.FastDomainsKnowledgeBaseQueryResults.Results.Select(m => $"File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Fast Search Service", notifyDictionary);
         }
 
+        private async Task ExecuteAPIsKnowledgeBaseServiceFastSearchAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Knowledge Base Fast Service for APIs...");
+
+            var apisDisplay = ToBulletList(state.FastAPISKnowledgeBaseQuery);
+
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("API Fast Search Service", new Dictionary<string, string>
+            {
+                { "APIs", apisDisplay }
+            });
+
+            var queries = state.FastAPISKnowledgeBaseQuery
+                .Where(query => !string.IsNullOrWhiteSpace(query))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Select(query => new KnowledgeBaseQueryInputItem
+                {
+                    Query = query,
+                    SearchType = KnowledgeBaseQuerySearchType.Keyword
+                })
+                .ToList();
+
+            if (!queries.Any())
+            {
+                _logger.LogDebug("No APIs to search for in knowledge base");
+                state.AddStepUsage("API Fast Search Service", stopwatch.Elapsed, false);
+                await _workflowProgressNotifier.NotifyWorkflowStepEnd("API Fast Search Service", new Dictionary<string, string>
+                {
+                    { "FastAPISKnowledgeBaseQueryResults", "(No queries generated)" },
+                    { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+                });
+                return;
+            }
+
+            KnowledgeBaseQueryInput queryInput = new()
+            {
+                UserIntent = state.ClassifiedUserRequest.Intent,
+                Queries = queries,
+                Collections = [APIS_DOCUMENTATION_COLLECTION_NAME]
+            };
+
+            var brcOutput = await _knowledgeBaseSearchFastExecutor.ExecuteAsync(queryInput, CancellationToken.None);
+
+            state.FastAPISKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
+            {
+                Results = brcOutput.Results.ToList()
+            };
+
+            state.AddStepUsage("API Fast Search Service", stopwatch.Elapsed, false);
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "FastAPISKnowledgeBaseQueryResults", ToBulletList(state.FastAPISKnowledgeBaseQueryResults.Results.Select(m => $"File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("API Fast Search Service", notifyDictionary);
+        }
 
         private async Task ExecuteAPIsKnowledgeBaseServiceSearchAsync(CodeModeWorkflowState state)
         {

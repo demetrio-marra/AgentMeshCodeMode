@@ -20,7 +20,7 @@ namespace AgentMesh.Application.Models
         /// First knowledge base call, which is a fast query to retrieve relevant information from the knowledge base to assist in understanding the user's request and providing context for further processing.
         /// It is based on ClassifiedUserRequest.EntitiesByDomain
         /// </summary>
-        public KnowledgeBaseQueryResult FastKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
+        public KnowledgeBaseQueryResult FastDomainsKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 
 
         /// <summary>
@@ -52,6 +52,11 @@ namespace AgentMesh.Application.Models
 
         public string? BusinessRequirements { get; set; }
         public bool ShouldEngageCoder { get; set; }
+
+        public IEnumerable<string> FastAPISKnowledgeBaseQuery { get; set; } = [];
+
+        public KnowledgeBaseQueryResult FastAPISKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
+
         public IEnumerable<KnowledgeBaseQueryInputItem> APISKnowledgeBaseQuery { get; set; } = [];
 
         /// <summary>
