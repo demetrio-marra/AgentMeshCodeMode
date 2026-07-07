@@ -975,7 +975,8 @@ namespace AgentMesh.Application.Workflows
                 { "OriginalUserRequest", originalUserRequest },
                 { "CanonicalizedIntent", canonicalizedIntent },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
-                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" }
+                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
+                { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" }
             });
 
             var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
@@ -984,7 +985,8 @@ namespace AgentMesh.Application.Workflows
                 OriginalUserRequest = originalUserRequest,
                 CanonicalizedIntent = canonicalizedIntent,
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
-                UserPreferences = state.ClassifiedUserRequest.UserPreferences
+                UserPreferences = state.ClassifiedUserRequest.UserPreferences,
+                Memories = state.PastMemoriesQueryResults.Select(m => m.Memory)
             });
             state.PresenterOutput = resultsPresenterOutput.Content;
             state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount, stopwatch.Elapsed, "Results Presenter Agent");
@@ -1072,7 +1074,8 @@ namespace AgentMesh.Application.Workflows
                 { "CanonicalizedIntent", canonicalizedIntent },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
-                { "LanguageOfTheUser", state.ClassifiedUserRequest.LanguageOfTheUser ?? "(No language specified)" }
+                { "LanguageOfTheUser", state.ClassifiedUserRequest.LanguageOfTheUser ?? "(No language specified)" },
+                { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" }
             });
 
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
@@ -1082,7 +1085,8 @@ namespace AgentMesh.Application.Workflows
                 OriginalUserRequest = originalUserRequest,
                 CanonicalizedIntent = canonicalizedIntent,
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
-                UserPreferences = state.ClassifiedUserRequest.UserPreferences
+                UserPreferences = state.ClassifiedUserRequest.UserPreferences,
+                Memories = state.PastMemoriesQueryResults.Select(m => m.Memory)
             });
             state.FinalAnswer = personalAssistantOutput.Response;
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount, stopwatch.Elapsed, "Personal Assistant Agent");

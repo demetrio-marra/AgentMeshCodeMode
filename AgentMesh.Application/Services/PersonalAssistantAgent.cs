@@ -22,7 +22,8 @@ namespace AgentMesh.Application.Services
                 $"Original user request:\n{input.OriginalUserRequest}",
                 $"Canonicalized intent:\n{input.CanonicalizedIntent}",
                 $"Supporting intent information:\n{string.Join(Environment.NewLine, input.SupportingIntentInformation.Select(item => $"- {item}"))}",
-                $"User preferences:\n{string.Join(Environment.NewLine, input.UserPreferences.Select(item => $"- {item}"))}"
+                $"User preferences:\n{string.Join(Environment.NewLine, input.UserPreferences.Select(item => $"- {item}"))}",
+                $"Past memories:\n{string.Join(Environment.NewLine, input.Memories.Select(item => $"- {item}"))}"
             });
 
             var inputMessages = new List<AgentMessage>
