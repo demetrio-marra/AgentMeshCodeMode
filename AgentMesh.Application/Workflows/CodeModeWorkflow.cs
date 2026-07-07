@@ -49,6 +49,8 @@ namespace AgentMesh.Application.Workflows
         private const string DOMAINS_DOCUMENTATION_COLLECTION_NAME = "domains";
         private const string APIS_DOCUMENTATION_COLLECTION_NAME = "apis";
 
+        private const bool AUTOMATICALLY_FETCH_RELATED_APIS_DOCUMENTATION = true;
+
         private readonly ILogger<CodeModeWorkflow> _logger = logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
 
@@ -245,9 +247,9 @@ namespace AgentMesh.Application.Workflows
             }, CancellationToken.None);
 
             var apiFilePaths = apiKnowledgeBaseQueryResults.Results
-                .Select(result => result.File)
+                .Select(result => NormalizeKnowledgeBaseDocumentKey(result.File))
                 .Where(file => !string.IsNullOrWhiteSpace(file))
-                .Distinct()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
             var fetchedFilesContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsInput
@@ -255,13 +257,81 @@ namespace AgentMesh.Application.Workflows
                 FilePaths = apiFilePaths
             });
 
-            state.KnowledgeBaseAPIDocumentsContent = [.. apiKnowledgeBaseQueryResults.Results
-                .Join(fetchedFilesContent.Results, kb => kb.File, fc => fc.File, (kb, fc) => new { kb, fc })
-                .Select(kb => new KnowledgeBaseDocumentContent
+            var apiDocumentsByFile = fetchedFilesContent.Results
+                .Select(doc => new
                 {
-                    File = kb.kb.File,
-                    Content = kb.fc.Content
-                })];
+                    Key = NormalizeKnowledgeBaseDocumentKey(doc.File),
+                    Document = doc
+                })
+                .Where(item => !string.IsNullOrWhiteSpace(item.Key))
+                .GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    group => group.Key,
+                    group => new KnowledgeBaseDocumentContent
+                    {
+                        File = group.Key,
+                        Content = group.First().Document.Content
+                    },
+                    StringComparer.OrdinalIgnoreCase);
+
+            if (AUTOMATICALLY_FETCH_RELATED_APIS_DOCUMENTATION)
+            {
+                var pendingFilesToFetch = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var document in apiDocumentsByFile.Values)
+                {
+                    foreach (var linkedFile in ExtractLinkedDocumentPaths(document.File, document.Content))
+                    {
+                        if (!apiDocumentsByFile.ContainsKey(linkedFile))
+                        {
+                            pendingFilesToFetch.Add(linkedFile);
+                        }
+                    }
+                }
+
+                while (pendingFilesToFetch.Any())
+                {
+                    var filesToFetch = pendingFilesToFetch.ToList();
+                    pendingFilesToFetch.Clear();
+
+                    var linkedFilesContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new KnowledgeBaseGetDocsInput
+                    {
+                        FilePaths = filesToFetch
+                    });
+
+                    var newlyLoadedDocuments = linkedFilesContent.Results
+                        .Select(doc => new
+                        {
+                            Key = NormalizeKnowledgeBaseDocumentKey(doc.File),
+                            Document = doc
+                        })
+                        .Where(item => !string.IsNullOrWhiteSpace(item.Key) && !apiDocumentsByFile.ContainsKey(item.Key))
+                        .Select(item => new KnowledgeBaseDocumentContent
+                        {
+                            File = item.Key,
+                            Content = item.Document.Content
+                        })
+                        .ToList();
+
+                    foreach (var loadedDocument in newlyLoadedDocuments)
+                    {
+                        apiDocumentsByFile[loadedDocument.File] = loadedDocument;
+                    }
+
+                    foreach (var loadedDocument in newlyLoadedDocuments)
+                    {
+                        foreach (var linkedFile in ExtractLinkedDocumentPaths(loadedDocument.File, loadedDocument.Content))
+                        {
+                            if (!apiDocumentsByFile.ContainsKey(linkedFile))
+                            {
+                                pendingFilesToFetch.Add(linkedFile);
+                            }
+                        }
+                    }
+                }
+            }
+
+            state.KnowledgeBaseAPIDocumentsContent = [.. apiDocumentsByFile.Values];
 
             state.AddStepUsage("KB Documents Extractor Service (APIs)", stopwatch.Elapsed, false);
 
@@ -769,7 +839,8 @@ namespace AgentMesh.Application.Workflows
             var businessRequirements = state.BusinessRequirements ?? "(No business requirements)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Coder Agent", new Dictionary<string, string>
             {
-                { "BusinessRequirements", businessRequirements }
+                { "BusinessRequirements", businessRequirements },
+                { "KnowledgeBaseAPIDocuments", state.KnowledgeBaseAPIDocumentsContent.Any() ? string.Join("\n", state.KnowledgeBaseAPIDocumentsContent.Select(doc => $"- {doc.File}")) : "(No documents)" }
             });
 
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
@@ -975,6 +1046,120 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Documentation Agent", notifyDictionary);
         }
 
+
+        private static IEnumerable<string> ExtractLinkedDocumentPaths(string sourceFilePath, string? content)
+        {
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return [];
+            }
+
+            var links = MyRegex()
+                .Matches(content)
+                .Select(match => match.Groups[1].Value)
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Select(link => ResolveLinkedDocumentPath(sourceFilePath, link))
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return links;
+        }
+
+        private static string ResolveLinkedDocumentPath(string sourceFilePath, string rawLink)
+        {
+            var cleaned = rawLink.Trim();
+
+            var anchorIndex = cleaned.IndexOf('#');
+            if (anchorIndex >= 0)
+            {
+                cleaned = cleaned[..anchorIndex];
+            }
+
+            var queryStringIndex = cleaned.IndexOf('?');
+            if (queryStringIndex >= 0)
+            {
+                cleaned = cleaned[..queryStringIndex];
+            }
+
+            if (string.IsNullOrWhiteSpace(cleaned))
+            {
+                return string.Empty;
+            }
+
+            if (cleaned.Contains("://", StringComparison.OrdinalIgnoreCase)
+                || cleaned.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Empty;
+            }
+
+            var normalizedLink = cleaned.Replace('\\', '/');
+
+            if (normalizedLink.StartsWith("/"))
+            {
+                return NormalizeKnowledgeBasePath(normalizedLink.TrimStart('/'));
+            }
+
+            if (normalizedLink.StartsWith("./", StringComparison.Ordinal)
+                || normalizedLink.StartsWith("../", StringComparison.Ordinal))
+            {
+                var normalizedSource = sourceFilePath.Replace('\\', '/');
+                var sourceLastSlash = normalizedSource.LastIndexOf('/');
+                var sourceDirectory = sourceLastSlash >= 0 ? normalizedSource[..sourceLastSlash] : string.Empty;
+                var combined = string.IsNullOrWhiteSpace(sourceDirectory)
+                    ? normalizedLink
+                    : $"{sourceDirectory}/{normalizedLink}";
+
+                return NormalizeKnowledgeBasePath(combined);
+            }
+
+            return NormalizeKnowledgeBasePath(normalizedLink);
+        }
+
+        private static string NormalizeKnowledgeBaseDocumentKey(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return string.Empty;
+            }
+
+            var normalized = path.Trim().Replace('\\', '/');
+            if (normalized.StartsWith('/'))
+            {
+                normalized = normalized.TrimStart('/');
+            }
+
+            return NormalizeKnowledgeBasePath(normalized);
+        }
+
+        private static string NormalizeKnowledgeBasePath(string path)
+        {
+            var segments = path
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .ToList();
+
+            var normalizedSegments = new List<string>();
+            foreach (var segment in segments)
+            {
+                if (segment == ".")
+                {
+                    continue;
+                }
+
+                if (segment == "..")
+                {
+                    if (normalizedSegments.Count > 0)
+                    {
+                        normalizedSegments.RemoveAt(normalizedSegments.Count - 1);
+                    }
+                    continue;
+                }
+
+                normalizedSegments.Add(segment);
+            }
+
+            return string.Join("/", normalizedSegments);
+        }
 
         private static string SerializeDocumentation(IEnumerable<KnowledgeBaseDocumentContent> documents)
         {
