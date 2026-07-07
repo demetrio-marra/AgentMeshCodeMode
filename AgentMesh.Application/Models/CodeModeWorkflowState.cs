@@ -54,6 +54,11 @@ namespace AgentMesh.Application.Models
         public bool ShouldEngageCoder { get; set; }
         public IEnumerable<KnowledgeBaseQueryInputItem> APISKnowledgeBaseQuery { get; set; } = [];
 
+        /// <summary>
+        /// APIs knowledge base query results, which are used to retrieve relevant information from the APIs knowledge base to assist in understanding the user's request and providing context for further processing.
+        /// </summary>
+        public KnowledgeBaseQueryResult APISKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
+
 
 
         public string? DocumentationContent { get; set; }

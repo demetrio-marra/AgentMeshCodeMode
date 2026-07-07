@@ -121,6 +121,7 @@ namespace AgentMesh.Application.Workflows
 
                 if (state.APISKnowledgeBaseQuery.Any())
                 {
+                    await ExecuteAPIsKnowledgeBaseServiceSearchAsync(state);
                     await ExecuteAPIKnowledgeBaseDocumentsExtractorAsync(state);
                 }
 
@@ -231,15 +232,8 @@ namespace AgentMesh.Application.Workflows
             {
                 { "Queries", ToBulletList(state.APISKnowledgeBaseQuery) }
             });
-
-            var apiKnowledgeBaseQueryResults = await _knowledgeBaseSearchExecutor.ExecuteAsync(new KnowledgeBaseQueryInput
-            {
-                Collections = [APIS_DOCUMENTATION_COLLECTION_NAME],
-                UserIntent = state.ClassifiedUserRequest.Intent,
-                Queries = state.APISKnowledgeBaseQuery.ToList()
-            }, CancellationToken.None);
-
-            var apiFilePaths = apiKnowledgeBaseQueryResults.Results
+                     
+            var apiFilePaths = state.APISKnowledgeBaseQueryResults.Results
                 .Select(result => NormalizeKnowledgeBaseDocumentKey(result.File))
                 .Where(file => !string.IsNullOrWhiteSpace(file))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -644,6 +638,86 @@ namespace AgentMesh.Application.Workflows
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Fast Search Service", notifyDictionary);
+        }
+
+
+        private async Task ExecuteAPIsKnowledgeBaseServiceSearchAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Knowledge Base Service...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("APIs Knowledge Base Service", new Dictionary<string, string>
+            {
+                { "MissingKnowledgeBaseEntries", ToBulletList(state.APISKnowledgeBaseQuery) }
+            });
+
+            var queriesList = state.APISKnowledgeBaseQuery.ToList();
+
+            KnowledgeBaseQueryInput queryInput = new()
+            {
+                Collections = [APIS_DOCUMENTATION_COLLECTION_NAME],
+                UserIntent = state.ClassifiedUserRequest.Intent,
+                Queries = queriesList
+            };
+
+            var brcOutput = await _knowledgeBaseSearchExecutor.ExecuteAsync(queryInput, CancellationToken.None);
+
+            var existingResults = state.APISKnowledgeBaseQueryResults.Results.ToList();
+            state.APISKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
+            {
+                Results = existingResults.Concat(brcOutput.Results).ToList()
+            };
+
+            if (_workflowConfiguration.EnableCacheService && brcOutput.Results.Any())
+            {
+                var cacheableQueries = queriesList
+                    .Where(entry => entry.SearchType != KnowledgeBaseQuerySearchType.Keyword)
+                    .ToList();
+
+                if (cacheableQueries.Any())
+                {
+                    var cacheItems = new List<KnowledgeBaseQueriesCacheItem>();
+                    foreach (var query in cacheableQueries)
+                    {
+                        foreach (var result in brcOutput.Results)
+                        {
+                            cacheItems.Add(new KnowledgeBaseQueriesCacheItem
+                            {
+                                FoundQuery = query.Query,
+                                FoundQueryType = query.SearchType,
+                                DocumentId = result.Id,
+                                DocumentFile = result.File,
+                                DocumentTitle = result.Title,
+                                DocumentSummary = result.Summary
+                            });
+                        }
+                    }
+
+                    var cacheUpdateResult = await _queriesCacheService.SetKnowledgeBaseCachedItemsAsync(cacheItems);
+
+                    var tokenUsageInfo = new AgentTokenUsageEntry
+                    {
+                        AgentName = "Query Cache Updater Service (Knowledge)",
+                        InputTokens = cacheUpdateResult.TotalTokens,
+                        OutputTokens = 0
+                    };
+                    state.AddStepUsage("APIs Knowledge Base Service", stopwatch.Elapsed, true, tokenUsageInfo);
+                }
+                else
+                {
+                    state.AddStepUsage("APIs Knowledge Base Service", stopwatch.Elapsed, false);
+                }
+            }
+            else
+            {
+                state.AddStepUsage("APIs Knowledge Base Service", stopwatch.Elapsed, false);
+            }
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "ExtractedKnowledgeBaseEntries", ToBulletList(brcOutput.Results.Select(m => $"File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("APIs Knowledge Base Service", notifyDictionary);
         }
 
 
