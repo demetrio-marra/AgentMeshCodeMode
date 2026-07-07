@@ -133,28 +133,28 @@ namespace AgentMesh
 
             services.AddSingleton<IDomainExpertAgent, DomainExpertAgent>();
 
-            // APIQueriesGenerator agent config and client
+            // TechnicalAnalyst agent config and client
             services
-                .AddOptions<APIQueriesGeneratorAgentConfiguration>()
-                .Bind(configuration.GetSection(APIQueriesGeneratorAgentConfiguration.SectionName))
+                .AddOptions<TechnicalAnalystAgentConfiguration>()
+                .Bind(configuration.GetSection(TechnicalAnalystAgentConfiguration.SectionName))
                 .PostConfigure(options =>
                 {
                     options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
                 })
                 .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<APIQueriesGeneratorAgentConfiguration>>().Value);
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<TechnicalAnalystAgentConfiguration>>().Value);
 
-            services.AddKeyedSingleton<IOpenAIClient>(APIQueriesGeneratorAgentConfiguration.AgentName, (sp, _) =>
+            services.AddKeyedSingleton<IOpenAIClient>(TechnicalAnalystAgentConfiguration.AgentName, (sp, _) =>
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<APIQueriesGeneratorAgentConfiguration>();
+                var config = sp.GetRequiredService<TechnicalAnalystAgentConfiguration>();
                 var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
                 var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IAPIQueriesGeneratorAgent, APIQueriesGeneratorAgent>();
+            services.AddSingleton<ITechnicalAnalystAgent, TechnicalAnalystAgent>();
 
             // Documentation agent config and client
             services

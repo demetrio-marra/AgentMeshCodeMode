@@ -22,12 +22,14 @@ using AgentMesh.Models.AgentMemory;
 using System.Data;
 using AgentMesh.Models.QueriesCache;
 using AgentMesh.Models.DomainExpert;
+using AgentMesh.Models.TechnicalAnalyst;
 
 namespace AgentMesh.Application.Workflows
 {
     public partial class CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
         IWorkflowProgressNotifier workflowProgressNotifier,
         IDomainExpertAgent domainExpertAgent,
+        ITechnicalAnalystAgent technicalAnalystAgent,
         IDocumentationAgent documentationAgent,
         ICoderAgent coderAgent,
         ICodeFixerAgent codeFixerAgent,
@@ -51,6 +53,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
 
         private readonly IDomainExpertAgent _domainExpertAgent = domainExpertAgent;
+        private readonly ITechnicalAnalystAgent _technicalAnalystAgent = technicalAnalystAgent;
         private readonly IDocumentationAgent _documentationAgent = documentationAgent;
         private readonly ICoderAgent _coderAgent = coderAgent;
         private readonly ICodeFixerAgent _codeFixerAgent = codeFixerAgent;
@@ -116,7 +119,10 @@ namespace AgentMesh.Application.Workflows
             }
             else if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.TaskExecution)
             {
-                await ExecuteDomainExpertAsync(state);
+                var domainExpertTask = ExecuteDomainExpertAsync(state);
+                var technicalAnalystTask = ExecuteTechnicalAnalystAsync(state);
+
+                await Task.WhenAll(domainExpertTask, technicalAnalystTask);
 
                 if (state.APISKnowledgeBaseQuery.Any())
                 {
@@ -713,15 +719,47 @@ namespace AgentMesh.Application.Workflows
 
             state.ShouldEngageCoder = true;
             state.BusinessRequirements = domainExpertOutput.BusinessRequirements;
-            state.APISKnowledgeBaseQuery = domainExpertOutput.APISKnowledgeBaseQuery;
             state.AddTokenUsage(DomainExpertAgentConfiguration.AgentName, domainExpertOutput.InputTokenCount, domainExpertOutput.OutputTokenCount, stopwatch.Elapsed, "Domain Expert Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "BusinessRequirements", state.BusinessRequirements ?? "(No business requirements)" },
-                { "KnowledgeBaseAPIQueries", state.APISKnowledgeBaseQuery.Any() ? string.Join("\n", state.APISKnowledgeBaseQuery.Select(q => $"- {q}")) : "(No queries)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Domain Expert Agent", notifyDictionary);
+        }
+
+        private async Task ExecuteTechnicalAnalystAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Technical Analyst Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Technical Analyst Agent", new Dictionary<string, string>
+            {
+                { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
+                { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? string.Join("\n", state.ClassifiedUserRequest.SupportingIntentInformation.Select(i => $"- {i}")) : "(No supporting intent information)" },
+                { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? string.Join("\n", state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}"))) : "(No entities)" },
+                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? string.Join("\n", state.ClassifiedUserRequest.UserPreferences.Select(p => $"- {p}")) : "(No user preferences)" },
+                { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? string.Join("\n", state.PastMemoriesQueryResults.Select(m => $"- {m.Memory}")) : "(No memories)" },
+                { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() }
+            });
+
+            var technicalAnalystOutput = await _technicalAnalystAgent.ExecuteAsync(new TechnicalAnalystAgentInput
+            {
+                Intent = state.ClassifiedUserRequest.Intent ?? string.Empty,
+                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
+                Entities = state.ClassifiedUserRequest.EntitiesByDomain,
+                UserPreferences = state.ClassifiedUserRequest.UserPreferences,
+                AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
+                KnowledgeBaseDocumentsContent = string.Join("------" + Environment.NewLine, state.DomainsKnowledgeBaseDocumentsContent.Select(doc => doc.Print()))
+            }, cancellationToken);
+
+            state.APISKnowledgeBaseQuery = technicalAnalystOutput.APISKnowledgeBaseQuery;
+            state.AddTokenUsage(AgentMesh.Application.Configuration.TechnicalAnalystAgentConfiguration.AgentName, technicalAnalystOutput.InputTokenCount, technicalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Technical Analyst Agent");
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "KnowledgeBaseAPIQueries", state.APISKnowledgeBaseQuery.Any() ? string.Join("\n", state.APISKnowledgeBaseQuery.Select(q => $"- {q}")) : "(No queries)" },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Technical Analyst Agent", notifyDictionary);
         }
 
         private async Task ExecuteCoderAsync(CodeModeWorkflowState state)

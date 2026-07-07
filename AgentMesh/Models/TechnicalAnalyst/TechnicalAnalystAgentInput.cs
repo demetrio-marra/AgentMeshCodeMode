@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 
-namespace AgentMesh.Models.APIQueriesGenerator
+namespace AgentMesh.Models.TechnicalAnalyst
 {
-    public class APIQueriesGeneratorAgentInput
+    public class TechnicalAnalystAgentInput
     {
         public string Intent { get; set; } = string.Empty;
         public IEnumerable<string> SupportingIntentInformation { get; set; } = [];

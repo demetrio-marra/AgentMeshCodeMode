@@ -2,8 +2,8 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Models.APIQueriesGenerator;
 using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Models.TechnicalAnalyst;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -12,12 +12,12 @@ using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class APIQueriesGeneratorAgent(
-        [FromKeyedServices(AgentMesh.Application.Configuration.APIQueriesGeneratorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+    public class TechnicalAnalystAgent(
+        [FromKeyedServices(TechnicalAnalystAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<APIQueriesGeneratorAgent> logger) : AgentBase<APIQueriesGeneratorAgent.ParsedResponse>(logger, AgentMesh.Application.Configuration.APIQueriesGeneratorAgentConfiguration.AgentName, openAIClient, resilience), IAPIQueriesGeneratorAgent
+        ILogger<TechnicalAnalystAgent> logger) : AgentBase<TechnicalAnalystAgent.ParsedResponse>(logger, TechnicalAnalystAgentConfiguration.AgentName, openAIClient, resilience), ITechnicalAnalystAgent
     {
-        private readonly ILogger<APIQueriesGeneratorAgent> _logger = logger;
+        private readonly ILogger<TechnicalAnalystAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];
 
         private static KnowledgeBaseQueryInputItem TranslateKnowledgeBaseQuery(APIKnowledgeBaseQuery query)
@@ -44,8 +44,8 @@ namespace AgentMesh.Application.Services
             };
         }
 
-        public async Task<APIQueriesGeneratorAgentOutput> ExecuteAsync(
-            APIQueriesGeneratorAgentInput input,
+        public async Task<TechnicalAnalystAgentOutput> ExecuteAsync(
+            TechnicalAnalystAgentInput input,
             CancellationToken cancellationToken = default)
         {
             var inputMessages = new List<AgentMessage>();
@@ -101,7 +101,7 @@ namespace AgentMesh.Application.Services
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            return new APIQueriesGeneratorAgentOutput
+            return new TechnicalAnalystAgentOutput
             {
                 APISKnowledgeBaseQuery = result.Result.KnowledgeBaseAPIQueries.Select(TranslateKnowledgeBaseQuery).ToList(),
                 TokenCount = result.TotalTokenCount,

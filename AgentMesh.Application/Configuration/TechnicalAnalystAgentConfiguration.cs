@@ -1,11 +1,10 @@
-using System;
-
 namespace AgentMesh.Application.Configuration
 {
-    public class APIQueriesGeneratorAgentConfiguration
+    // intentionally left blank
+    public class TechnicalAnalystAgentConfiguration
     {
-        public const string SectionName = "Agents:APIQueriesGenerator";
-        public const string AgentName = "APIQueriesGenerator";
+        public const string SectionName = "Agents:TechnicalAnalyst";
+        public const string AgentName = "TechnicalAnalyst";
 
         public string LLM { get; set; } = string.Empty;
         public string ModelTemperature { get; set; } = string.Empty;

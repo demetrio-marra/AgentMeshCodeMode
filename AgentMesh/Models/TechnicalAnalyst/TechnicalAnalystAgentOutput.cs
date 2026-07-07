@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using AgentMesh.Models.KnowledgeBase;
 
-namespace AgentMesh.Models.APIQueriesGenerator
+namespace AgentMesh.Models.TechnicalAnalyst
 {
-    public class APIQueriesGeneratorAgentOutput : IAgentOutput
+    public class TechnicalAnalystAgentOutput : IAgentOutput
     {
         public IEnumerable<KnowledgeBaseQueryInputItem> APISKnowledgeBaseQuery { get; set; } = [];
         public int TokenCount { get; set; }
