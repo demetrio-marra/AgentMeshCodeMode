@@ -576,107 +576,100 @@ namespace AgentMesh.Application.Workflows
             };
         }
 
+        #region fast search executors
+
         private async Task ExecuteDomainsKnowledgeBaseServiceFastSearchAsync(CodeModeWorkflowState state)
         {
-            var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Knowledge Base Fast Service...");
-            
-            var domainsDisplay = ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.Select(kvp =>
-                $"{kvp.Key}: {string.Join(", ", kvp.Value)}"));
-            
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("KB Fast Search Service", new Dictionary<string, string>
-            {
-                { "Domains", domainsDisplay }
-            });
-
-            var queries = new List<KnowledgeBaseQueryInputItem>();
-            
-            foreach (var domainEntry in state.ClassifiedUserRequest.EntitiesByDomain)
-            {
-                var domain = domainEntry.Key;
-                var entities = domainEntry.Value;
-                // Add a keyword search for the domain
-                queries.Add(new KnowledgeBaseQueryInputItem
-                {
-                    Query = domain,
-                    SearchType = KnowledgeBaseQuerySearchType.Keyword,
-                });
-                // Add a keyword search for each entity in the domain
-                foreach (var entity in entities)
-                {
-                    queries.Add(new KnowledgeBaseQueryInputItem
-                    {
-                        Query = entity,
-                        SearchType = KnowledgeBaseQuerySearchType.Keyword
-                    });
-                }
-            }
-
-            if (!queries.Any())
-            {
-                _logger.LogDebug("No domains or entities to search for in knowledge base");
-                state.AddStepUsage("KB Fast Search Service", stopwatch.Elapsed, false);
-                await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Fast Search Service", new Dictionary<string, string>
-                {
-                    { "ExtractedKnowledgeBaseEntries", "(No queries generated)" },
-                    { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
-                });
-                return;
-            }
-
-            KnowledgeBaseQueryInput queryInput = new()
-            {
-                UserIntent = state.ClassifiedUserRequest.Intent,
-                Queries = queries,
-                Collections = [DOMAINS_DOCUMENTATION_COLLECTION_NAME]
-            };
-
-            var brcOutput = await _knowledgeBaseSearchFastExecutor.ExecuteAsync(queryInput, CancellationToken.None);
-
-            state.FastDomainsKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
-            {
-                Results = brcOutput.Results.ToList()
-            };
-
-            state.AddStepUsage("KB Fast Search Service", stopwatch.Elapsed, false);
-
-            var notifyDictionary = new Dictionary<string, string>
-            {
-                { "FastKnowledgeBaseQueryResults", ToBulletList(state.FastDomainsKnowledgeBaseQueryResults.Results.Select(m => $"File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
-                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
-            };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("KB Fast Search Service", notifyDictionary);
+            await ExecuteKnowledgeBaseServiceFastSearchAsync(
+                state,
+                _logger,
+                _workflowProgressNotifier,
+                _knowledgeBaseSearchFastExecutor,
+                _queriesCacheService,
+                _workflowConfiguration.EnableCacheService,
+                "Engaging Knowledge Base Fast Service...",
+                "No domains or entities to search for in knowledge base",
+                "KB Fast Search Service",
+                "Domains",
+                workflowState => ToBulletList(workflowState.ClassifiedUserRequest.EntitiesByDomain.Select(kvp => $"{kvp.Key}: {string.Join(", ", kvp.Value)}")),
+                "ExtractedKnowledgeBaseEntries",
+                "FastKnowledgeBaseQueryResults",
+                DOMAINS_DOCUMENTATION_COLLECTION_NAME,
+                workflowState => workflowState.ClassifiedUserRequest.EntitiesByDomain
+                    .SelectMany(domainEntry =>
+                        new[] { domainEntry.Key }
+                            .Concat(domainEntry.Value)
+                            .Select(entry => new KnowledgeBaseQueryInputItem
+                            {
+                                Query = entry,
+                                SearchType = KnowledgeBaseQuerySearchType.Keyword
+                            })),
+                (workflowState, queryResult) => workflowState.FastDomainsKnowledgeBaseQueryResults = queryResult);
         }
 
         private async Task ExecuteAPIsKnowledgeBaseServiceFastSearchAsync(CodeModeWorkflowState state)
         {
+            await ExecuteKnowledgeBaseServiceFastSearchAsync(
+                state,
+                _logger,
+                _workflowProgressNotifier,
+                _knowledgeBaseSearchFastExecutor,
+                _queriesCacheService,
+                _workflowConfiguration.EnableCacheService,
+                "Engaging Knowledge Base Fast Service for APIs...",
+                "No APIs to search for in knowledge base",
+                "API Fast Search Service",
+                "APIs",
+                workflowState => ToBulletList(workflowState.FastAPISKnowledgeBaseQuery),
+                "FastAPISKnowledgeBaseQueryResults",
+                "FastAPISKnowledgeBaseQueryResults",
+                APIS_DOCUMENTATION_COLLECTION_NAME,
+                workflowState => workflowState.FastAPISKnowledgeBaseQuery
+                    .Where(query => !string.IsNullOrWhiteSpace(query))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Select(query => new KnowledgeBaseQueryInputItem
+                    {
+                        Query = query,
+                        SearchType = KnowledgeBaseQuerySearchType.Keyword
+                    }),
+                (workflowState, queryResult) => workflowState.FastAPISKnowledgeBaseQueryResults = queryResult);
+        }
+
+        private static async Task ExecuteKnowledgeBaseServiceFastSearchAsync(
+            CodeModeWorkflowState state,
+            ILogger logger,
+            IWorkflowProgressNotifier workflowProgressNotifier,
+            IKnowledgeBaseSearchFastExecutor knowledgeBaseSearchFastExecutor,
+            IQueriesCacheService queriesCacheService,
+            bool enableCacheService,
+            string logMessage,
+            string noQueriesLogMessage,
+            string stepName,
+            string startNotificationKey,
+            Func<CodeModeWorkflowState, string> getStartNotificationValue,
+            string emptyResultNotificationKey,
+            string resultsNotificationKey,
+            string collectionName,
+            Func<CodeModeWorkflowState, IEnumerable<KnowledgeBaseQueryInputItem>> buildQueries,
+            Action<CodeModeWorkflowState, KnowledgeBaseQueryResult> setResults)
+        {
             var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Knowledge Base Fast Service for APIs...");
+            logger.LogDebug(logMessage);
 
-            var apisDisplay = ToBulletList(state.FastAPISKnowledgeBaseQuery);
-
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("API Fast Search Service", new Dictionary<string, string>
+            await workflowProgressNotifier.NotifyWorkflowStepStart(stepName, new Dictionary<string, string>
             {
-                { "APIs", apisDisplay }
+                { startNotificationKey, getStartNotificationValue(state) }
             });
 
-            var queries = state.FastAPISKnowledgeBaseQuery
-                .Where(query => !string.IsNullOrWhiteSpace(query))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Select(query => new KnowledgeBaseQueryInputItem
-                {
-                    Query = query,
-                    SearchType = KnowledgeBaseQuerySearchType.Keyword
-                })
-                .ToList();
+            var queries = buildQueries(state).ToList();
 
             if (!queries.Any())
             {
-                _logger.LogDebug("No APIs to search for in knowledge base");
-                state.AddStepUsage("API Fast Search Service", stopwatch.Elapsed, false);
-                await _workflowProgressNotifier.NotifyWorkflowStepEnd("API Fast Search Service", new Dictionary<string, string>
+                logger.LogDebug(noQueriesLogMessage);
+                state.AddStepUsage(stepName, stopwatch.Elapsed, false);
+                await workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, new Dictionary<string, string>
                 {
-                    { "FastAPISKnowledgeBaseQueryResults", "(No queries generated)" },
+                    { emptyResultNotificationKey, "(No queries generated)" },
                     { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
                 });
                 return;
@@ -686,25 +679,29 @@ namespace AgentMesh.Application.Workflows
             {
                 UserIntent = state.ClassifiedUserRequest.Intent,
                 Queries = queries,
-                Collections = [APIS_DOCUMENTATION_COLLECTION_NAME]
+                Collections = [collectionName]
             };
 
-            var brcOutput = await _knowledgeBaseSearchFastExecutor.ExecuteAsync(queryInput, CancellationToken.None);
+            var brcOutput = await knowledgeBaseSearchFastExecutor.ExecuteAsync(queryInput, CancellationToken.None);
 
-            state.FastAPISKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
+            setResults(state, new KnowledgeBaseQueryResult
             {
                 Results = brcOutput.Results.ToList()
-            };
+            });
 
-            state.AddStepUsage("API Fast Search Service", stopwatch.Elapsed, false);
+            var cacheTokenUsageInfo = await BuildKnowledgeBaseCacheTokenUsageAsync(enableCacheService, queries, brcOutput.Results, queriesCacheService);
+            state.AddStepUsage(stepName, stopwatch.Elapsed, cacheTokenUsageInfo is not null, cacheTokenUsageInfo);
 
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "FastAPISKnowledgeBaseQueryResults", ToBulletList(state.FastAPISKnowledgeBaseQueryResults.Results.Select(m => $"File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
+                { resultsNotificationKey, ToBulletList(brcOutput.Results.Select(m => $"File: {m.File}, Title: {m.Title}, Relevance: {m.Relevance}")) },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("API Fast Search Service", notifyDictionary);
+            await workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, notifyDictionary);
         }
+
+        #endregion
+
 
         private async Task ExecuteDomainExpertAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
