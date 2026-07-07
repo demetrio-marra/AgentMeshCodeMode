@@ -1,14 +1,15 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
+using AgentMesh.Application.Configuration;
 using AgentMesh.Models;
 using AgentMesh.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Models.CodeFixer;
 using AgentMesh.Models.Coder;
 using AgentMesh.Models.CodeSandbox;
 using AgentMesh.Models.Documentation;
+using AgentMesh.Models.IntentCanonicalization;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.PersonalAssistant;
 using AgentMesh.Models.ResultsPresenter;
@@ -37,6 +38,7 @@ namespace AgentMesh.Application.Workflows
         IResultsPresenterAgent resultsPresenterAgent,
         IJSSandboxExecutor jsSandboxExecutor,
         IIntentExtractorAgent intentExtractorAgent,
+        IIntentCanonicalizationAgent intentCanonicalizationAgent,
         IRequirementsCollectorAgent requirementsCollectorAgent,
         IPersonalAssistantAgent personalAssistantAgent,
         IAgentMemoryRetrieverExecutor agentMemoryRetriever,
@@ -61,6 +63,7 @@ namespace AgentMesh.Application.Workflows
         private readonly IResultsPresenterAgent _resultsPresenterAgent = resultsPresenterAgent;
         private readonly IJSSandboxExecutor _jsSandboxExecutor = jsSandboxExecutor;
         private readonly IIntentExtractorAgent _intentExtractorAgent = intentExtractorAgent;
+        private readonly IIntentCanonicalizationAgent _intentCanonicalizationAgent = intentCanonicalizationAgent;
         private readonly IRequirementsCollectorAgent _requirementsCollectorAgent = requirementsCollectorAgent;
         private readonly IPersonalAssistantAgent _personalAssistantAgent = personalAssistantAgent;
         private readonly IAgentMemoryRetrieverExecutor _agentMemoryRetriever = agentMemoryRetriever;
@@ -88,8 +91,12 @@ namespace AgentMesh.Application.Workflows
                 await ExecuteDomainsKnowledgeBaseServiceFastSearchAsync(state);
             }
 
-            await ExecuteRequirementsCollectorAsync(state);
+            if (state.FastDomainsKnowledgeBaseQueryResults.Results.Any())
+            {
+                await ExecuteIntentCanonicalizationAsync(state);
+            }
 
+            await ExecuteRequirementsCollectorAsync(state);
 
             var memoryTask = (_workflowConfiguration.EnableMemoryService && state.PastMemoriesQuery.Any())
                 ? ExecuteAgentMemoryServiceAsync(state)
@@ -310,6 +317,7 @@ namespace AgentMesh.Application.Workflows
                 UserPreferences = intentExtractorOutput.UserPreferences,
                 MissingMemories = intentExtractorOutput.MissingMemories
             };
+            state.CanonicalizedIntent = state.ClassifiedUserRequest.Intent ?? string.Empty;
 
             state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount, stopwatch.Elapsed, "Intent Extractor Agent");
 
@@ -343,6 +351,38 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Extractor Agent", notifyDictionary);
         }
 
+        private async Task ExecuteIntentCanonicalizationAsync(CodeModeWorkflowState state)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Intent Canonicalization Agent...");
+
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Intent Canonicalization Agent", new Dictionary<string, string>
+            {
+                { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
+                { "EntitiesByDomain", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(e => $"[{kvp.Key}] {e}"))) : "(No entities)" },
+                { "FastKnowledgeBaseResults", state.FastDomainsKnowledgeBaseQueryResults.Results.Any() ? ToBulletList(state.FastDomainsKnowledgeBaseQueryResults.Results.Select(r => $"[{r.File}] {r.Title}")) : "(No fast knowledge base results)" }
+            });
+
+            var output = await _intentCanonicalizationAgent.ExecuteAsync(new IntentCanonicalizationAgentInput
+            {
+                Intent = state.ClassifiedUserRequest.Intent ?? string.Empty,
+                UserIntentCategory = state.ClassifiedUserRequest.IntentCategory,
+                EntitiesByDomain = state.ClassifiedUserRequest.EntitiesByDomain,
+                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
+                FastDomainsKnowledgeBaseQueryResults = state.FastDomainsKnowledgeBaseQueryResults.Results
+            });
+
+            state.CanonicalizedIntent = output.DomainedIntent;
+            state.AddTokenUsage(IntentCanonicalizationAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Intent Canonicalization Agent");
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "DomainedIntent", state.CanonicalizedIntent },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Canonicalization Agent", notifyDictionary);
+        }
+
         private async Task ExecuteRequirementsCollectorAsync(CodeModeWorkflowState state)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -350,7 +390,7 @@ namespace AgentMesh.Application.Workflows
 
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Requirements Collector Agent", new Dictionary<string, string>
             {
-                { "UserIntent", state.ClassifiedUserRequest.Intent ?? "(No intent extracted)" },
+                { "UserIntent", state.CanonicalizedIntent },
                 { "UserIntentCategory", state.ClassifiedUserRequest.IntentCategory.ToString() },
                 { "EntitiesByDomain", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(e => $"[{kvp.Key}] {e}"))) : "(No entities)" },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
@@ -361,7 +401,7 @@ namespace AgentMesh.Application.Workflows
 
             var output = await _requirementsCollectorAgent.ExecuteAsync(new RequirementsCollectorAgentInput
             {
-                UserIntent = state.ClassifiedUserRequest.Intent ?? string.Empty,
+                UserIntent = state.CanonicalizedIntent,
                 UserIntentCategory = state.ClassifiedUserRequest.IntentCategory,
                 EntitiesByDomain = state.ClassifiedUserRequest.EntitiesByDomain,
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
@@ -503,7 +543,7 @@ namespace AgentMesh.Application.Workflows
             KnowledgeBaseQueryInput queryInput = new()
             {
                 Collections = [collectionName],
-                UserIntent = state.ClassifiedUserRequest.Intent,
+                UserIntent = state.CanonicalizedIntent,
                 Queries = queriesList
             };
 
@@ -677,7 +717,7 @@ namespace AgentMesh.Application.Workflows
 
             KnowledgeBaseQueryInput queryInput = new()
             {
-                UserIntent = state.ClassifiedUserRequest.Intent,
+                UserIntent = state.CanonicalizedIntent,
                 Queries = queries,
                 Collections = [collectionName]
             };
@@ -709,7 +749,7 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Domain Expert Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Domain Expert Agent", new Dictionary<string, string>
             {
-                { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
+                { "Intent", state.CanonicalizedIntent },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"[{kvp.Key}] {v}"))) : "(No entities)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
@@ -719,7 +759,7 @@ namespace AgentMesh.Application.Workflows
 
             var domainExpertOutput = await _domainExpertAgent.ExecuteAsync(new DomainExpertAgentInput
             {
-                Intent = state.ClassifiedUserRequest.Intent ?? string.Empty,
+                Intent = state.CanonicalizedIntent,
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
@@ -744,7 +784,7 @@ namespace AgentMesh.Application.Workflows
             _logger.LogDebug("Engaging Technical Analyst Agent...");
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Technical Analyst Agent", new Dictionary<string, string>
             {
-                { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
+                { "Intent", state.CanonicalizedIntent },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"[{kvp.Key}] {v}"))) : "(No entities)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
@@ -754,7 +794,7 @@ namespace AgentMesh.Application.Workflows
 
             var technicalAnalystOutput = await _technicalAnalystAgent.ExecuteAsync(new TechnicalAnalystAgentInput
             {
-                Intent = state.ClassifiedUserRequest.Intent ?? string.Empty,
+                Intent = state.CanonicalizedIntent,
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
@@ -925,7 +965,8 @@ namespace AgentMesh.Application.Workflows
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Results Presenter Agent...");
             var sandboxResult = state.SandboxResult ?? "(No sandbox result)";
-            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
+            var enrichedUserRequest = state.CanonicalizedIntent;
+
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
             {
                 { "Data", sandboxResult },
@@ -952,11 +993,11 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Documentation Agent...");
-            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
+            var enrichedUserRequest = state.CanonicalizedIntent;
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Documentation Agent", new Dictionary<string, string>
             {
                 { "EnrichedUserRequest", enrichedUserRequest },
-                { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
+                { "Intent", state.CanonicalizedIntent },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"[{kvp.Key}] {v}"))) : "(No entities)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
@@ -969,7 +1010,7 @@ namespace AgentMesh.Application.Workflows
             var output = await _documentationAgent.ExecuteAsync(new DocumentationAgentInput
             {
                 EnrichedUserRequest = enrichedUserRequest,
-                Intent = state.ClassifiedUserRequest.Intent ?? string.Empty,
+                Intent = state.CanonicalizedIntent,
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
@@ -996,7 +1037,7 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Personal Assistant Agent...");
-            var enrichedUserRequest = state.ClassifiedUserRequest.Intent ?? "(No enriched user request)";
+            var enrichedUserRequest = state.CanonicalizedIntent;
 
             string? data = null;
             if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Documentation)

@@ -17,6 +17,11 @@ namespace AgentMesh.Application.Models
         public StructuredUserRequest ClassifiedUserRequest { get; set; } = new();
 
         /// <summary>
+        /// Canonicalized user intent enriched with domain-specific terminology.
+        /// </summary>
+        public string CanonicalizedIntent { get; set; } = string.Empty;
+
+        /// <summary>
         /// First knowledge base call, which is a fast query to retrieve relevant information from the knowledge base to assist in understanding the user's request and providing context for further processing.
         /// It is based on ClassifiedUserRequest.EntitiesByDomain
         /// </summary>
