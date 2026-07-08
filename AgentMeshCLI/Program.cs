@@ -225,29 +225,6 @@ namespace AgentMesh
 
             services.AddSingleton<ICoderAgent, CoderAgent>();
 
-            // Results Presenter agent config and client
-            services
-                .AddOptions<ResultsPresenterAgentConfiguration>()
-                .Bind(configuration.GetSection(ResultsPresenterAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<ResultsPresenterAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(ResultsPresenterAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<ResultsPresenterAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-            services.AddSingleton<IResultsPresenterAgent, ResultsPresenterAgent>();
-
             // CodeFixer agent config and client
             services
                 .AddOptions<CodeFixerAgentConfiguration>()

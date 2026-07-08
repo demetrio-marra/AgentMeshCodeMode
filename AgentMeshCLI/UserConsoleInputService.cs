@@ -19,7 +19,6 @@ namespace AgentMesh
         TechnicalAnalystAgentConfiguration technicalAnalystConfiguration,
         CoderAgentConfiguration coderConfiguration,
         CodeFixerAgentConfiguration codeFixerConfiguration,
-        ResultsPresenterAgentConfiguration resultsPresenterConfiguration,
         DomainExpertAgentConfiguration domainExpertConfiguration,
         IntentExtractorAgentConfiguration intentExtractorConfiguration,
         IntentCanonicalizationAgentConfiguration intentCanonicalizationConfiguration,
@@ -42,7 +41,6 @@ namespace AgentMesh
         private readonly TechnicalAnalystAgentConfiguration _technicalAnalystConfiguration = technicalAnalystConfiguration;
         private readonly CoderAgentConfiguration _coderConfiguration = coderConfiguration;
         private readonly CodeFixerAgentConfiguration _codeFixerConfiguration = codeFixerConfiguration;
-        private readonly ResultsPresenterAgentConfiguration _resultsPresenterConfiguration = resultsPresenterConfiguration;
         private readonly DomainExpertAgentConfiguration _domainExpertConfiguration = domainExpertConfiguration;
         private readonly IntentExtractorAgentConfiguration _intentExtractorConfiguration = intentExtractorConfiguration;
         private readonly IntentCanonicalizationAgentConfiguration _intentCanonicalizationConfiguration = intentCanonicalizationConfiguration;
@@ -132,7 +130,6 @@ namespace AgentMesh
                     { TechnicalAnalystAgentConfiguration.AgentName, _llmsConfiguration[_technicalAnalystConfiguration.LLM].CostPerMillionInputTokens },
                     { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionInputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionInputTokens },
-                    { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionInputTokens },
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionInputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
@@ -153,7 +150,6 @@ namespace AgentMesh
                     { TechnicalAnalystAgentConfiguration.AgentName, _llmsConfiguration[_technicalAnalystConfiguration.LLM].CostPerMillionOutputTokens },
                     { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionOutputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionOutputTokens },
-                    { ResultsPresenterAgentConfiguration.AgentName, _llmsConfiguration[_resultsPresenterConfiguration.LLM].CostPerMillionOutputTokens },
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionOutputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens },
@@ -371,7 +367,6 @@ namespace AgentMesh
                 ConsoleHelper.PrintAgentConfiguration("Domain Expert", DomainExpertAgentConfiguration.AgentName, _domainExpertConfiguration);
             }
 
-            ConsoleHelper.PrintAgentConfiguration("Results Presenter", ResultsPresenterAgentConfiguration.AgentName, _resultsPresenterConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Conversation Summarizer", ConversationSummarizerAgent.AgentName, _conversationSummarizerConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Documentation", DocumentationAgent.AgentName, _documentationAgentConfiguration);

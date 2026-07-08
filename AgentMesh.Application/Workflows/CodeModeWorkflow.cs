@@ -12,7 +12,6 @@ using AgentMesh.Models.Documentation;
 using AgentMesh.Models.IntentCanonicalization;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.PersonalAssistant;
-using AgentMesh.Models.ResultsPresenter;
 using AgentMesh.Models.RequirementsCollector;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
@@ -36,7 +35,6 @@ namespace AgentMesh.Application.Workflows
         ICoderAgent coderAgent,
         ICodeFixerAgent codeFixerAgent,
         ICodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent,
-        IResultsPresenterAgent resultsPresenterAgent,
         IDomainExpertAgent domainExpertAgent,
         IJSSandboxExecutor jsSandboxExecutor,
         IIntentExtractorAgent intentExtractorAgent,
@@ -62,7 +60,6 @@ namespace AgentMesh.Application.Workflows
         private readonly ICoderAgent _coderAgent = coderAgent;
         private readonly ICodeFixerAgent _codeFixerAgent = codeFixerAgent;
         private readonly ICodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
-        private readonly IResultsPresenterAgent _resultsPresenterAgent = resultsPresenterAgent;
         private readonly IDomainExpertAgent _domainExpertAgent = domainExpertAgent;
         private readonly IJSSandboxExecutor _jsSandboxExecutor = jsSandboxExecutor;
         private readonly IIntentExtractorAgent _intentExtractorAgent = intentExtractorAgent;
@@ -979,43 +976,6 @@ namespace AgentMesh.Application.Workflows
 
             return detectorOutput.Analysis;
         }
-
-        private async Task ExecuteResultsPresenterAsync(CodeModeWorkflowState state)
-        {
-            var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Results Presenter Agent...");
-            var originalUserRequest = state.OriginalUserRequest;
-            var canonicalizedIntent = state.CanonicalizedIntent;
-
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Results Presenter Agent", new Dictionary<string, string>
-            {
-                { "Data", state.SandboxResult ?? "(No sandbox result)" },
-                { "OriginalUserRequest", originalUserRequest },
-                { "CanonicalizedIntent", canonicalizedIntent },
-                { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
-                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
-                { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" }
-            });
-
-            var resultsPresenterOutput = await _resultsPresenterAgent.ExecuteAsync(new ResultsPresenterAgentInput
-            {
-                Data = state.SandboxResult,
-                OriginalUserRequest = originalUserRequest,
-                CanonicalizedIntent = canonicalizedIntent,
-                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
-                UserPreferences = state.ClassifiedUserRequest.UserPreferences,
-                Memories = state.PastMemoriesQueryResults.Select(m => m.Memory)
-            });
-            state.PresenterOutput = resultsPresenterOutput.Content;
-            state.AddTokenUsage(ResultsPresenterAgentConfiguration.AgentName, resultsPresenterOutput.InputTokenCount, resultsPresenterOutput.OutputTokenCount, stopwatch.Elapsed, "Results Presenter Agent");
-            var notifyDictionary = new Dictionary<string, string>
-            {
-                { "Content", state.PresenterOutput },
-                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
-            };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Results Presenter Agent", notifyDictionary);
-        }
-
 
         private async Task ExecuteDocumentationAgentAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
