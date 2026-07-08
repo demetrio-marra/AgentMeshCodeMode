@@ -236,6 +236,27 @@ namespace AgentMesh.Infrastructure.QMD
 
             if (!httpResponse.IsSuccessStatusCode)
             {
+                // Check if this is a session expiration error (404 with "Session not found" or 400 with "Missing session ID")
+                var isSessionError = (httpResponse.StatusCode == System.Net.HttpStatusCode.NotFound || 
+                                     httpResponse.StatusCode == System.Net.HttpStatusCode.BadRequest) && 
+                                    body.Contains("\"error\"") && 
+                                    (body.Contains("Session not found", StringComparison.OrdinalIgnoreCase) ||
+                                     body.Contains("Missing session ID", StringComparison.OrdinalIgnoreCase));
+
+                if (isSessionError && request.Method != "initialize")
+                {
+                    // Reset the session state
+                    _logger.LogWarning("MCP session expired or not found. Resetting session and retrying request.");
+                    _sessionId = null;
+                    _initialized = false;
+
+                    // Re-initialize the session before retrying
+                    await EnsureInitializedAsync(cancellationToken).ConfigureAwait(false);
+
+                    // Retry the request with the new session
+                    return await SendRpcAsync<TParams, TResult>(request, cancellationToken).ConfigureAwait(false);
+                }
+
                 throw new HttpRequestException(
                     $"MCP request '{request.Method}' failed with status {(int)httpResponse.StatusCode} {httpResponse.ReasonPhrase}: {body}");
             }
