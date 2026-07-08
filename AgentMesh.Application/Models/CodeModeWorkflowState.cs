@@ -85,6 +85,7 @@ namespace AgentMesh.Application.Models
         public string? SandboxResult { get; set; }
         public string? SandboxExecutionId { get; set; }
         public SandboxResultType CodeExecutionResultType { get; set; }
+        public bool ExecutionError { get => CodeExecutionResultType != SandboxResultType.Success; }
         public string? DomainExpertOutput { get; set; }
         public string? FinalAnswer { get; set; }
 

@@ -1095,6 +1095,7 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Personal Assistant Agent", new Dictionary<string, string>
             {
                 { "Data", data ?? "(No data)" },
+                { "ExecutionError", state.ExecutionError.ToString() },
                 { "OriginalUserRequest", originalUserRequest },
                 { "CanonicalizedIntent", canonicalizedIntent },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
@@ -1106,6 +1107,7 @@ namespace AgentMesh.Application.Workflows
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
                 Data = data,
+                ExecutionError = state.ExecutionError,
                 LanguageOfTheUser = state.ClassifiedUserRequest.LanguageOfTheUser,
                 OriginalUserRequest = originalUserRequest,
                 CanonicalizedIntent = canonicalizedIntent,
