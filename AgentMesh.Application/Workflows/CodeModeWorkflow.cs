@@ -116,16 +116,17 @@ namespace AgentMesh.Application.Workflows
             }
             else if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.TaskExecution)
             {
-                var functionalAnalystTask = ExecuteFunctionalAnalystAsync(state);
-                var technicalAnalystTask = ExecuteTechnicalAnalystAsync(state);
+                var functionAnalystTask = ExecuteFunctionalAnalystAsync(state);
+                var apisKnowledgeBaseServiceSearchTask = ExecuteAPIsKnowledgeBaseServiceSearchAsync(state);
 
-                await Task.WhenAll(functionalAnalystTask, technicalAnalystTask);
+                await Task.WhenAll(functionAnalystTask, apisKnowledgeBaseServiceSearchTask);
 
-                if (state.APISKnowledgeBaseQuery.Any())
+                if (state.APISKnowledgeBaseQueryResults.Results.Any())
                 {
-                    await ExecuteAPIsKnowledgeBaseServiceSearchAsync(state);
                     await ExecuteAPIKnowledgeBaseDocumentsExtractorAsync(state);
                 }
+
+                await ExecuteTechnicalAnalystAsync(state);
 
                 await ExecuteCoderAsync(state);
 
@@ -526,7 +527,7 @@ namespace AgentMesh.Application.Workflows
                 _workflowConfiguration.EnableCacheService,
                 "APIs Knowledge Base Service",
                 APIS_DOCUMENTATION_COLLECTION_NAME,
-                workflowState => workflowState.APISKnowledgeBaseQuery,
+                workflowState => workflowState.DomainsKnowledgeBaseQuery,
                 workflowState => workflowState.APISKnowledgeBaseQueryResults,
                 (workflowState, queryResult) => workflowState.APISKnowledgeBaseQueryResults = queryResult);
         }
@@ -801,29 +802,30 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Technical Analyst Agent", new Dictionary<string, string>
             {
                 { "Intent", state.CanonicalizedIntent },
+                { "BusinessRequirements", state.BusinessRequirements ?? "(No business requirements)" },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"[{kvp.Key}] {v}"))) : "(No entities)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
                 { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
-                { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(d => d.File)) : "(No documents)" }
+                { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseAPIDocumentsContent.Any() ? ToBulletList(state.KnowledgeBaseAPIDocumentsContent.Select(d => d.File)) : "(No documents)" }
             });
 
             var technicalAnalystOutput = await _technicalAnalystAgent.ExecuteAsync(new TechnicalAnalystAgentInput
             {
                 Intent = state.CanonicalizedIntent,
+                BusinessRequirements = state.BusinessRequirements ?? string.Empty,
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
                 AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
-                KnowledgeBaseDocumentsContent = SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent),
-                LanguageOfKnowledgeBase = _workflowConfiguration.LanguageOfKnowledgeBase
+                KnowledgeBaseDocumentsContent = SerializeDocumentation(state.KnowledgeBaseAPIDocumentsContent)
             }, cancellationToken);
 
-            state.APISKnowledgeBaseQuery = technicalAnalystOutput.APISKnowledgeBaseQuery;
+            state.TechnicalSpecification = technicalAnalystOutput.TechnicalSpecification;
             state.AddTokenUsage(AgentMesh.Application.Configuration.TechnicalAnalystAgentConfiguration.AgentName, technicalAnalystOutput.InputTokenCount, technicalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Technical Analyst Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "KnowledgeBaseAPIQueries", state.APISKnowledgeBaseQuery.Any() ? ToBulletList(state.APISKnowledgeBaseQuery) : "(No queries)" },
+                { "TechnicalSpecification", state.TechnicalSpecification ?? "(No technical specification)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Technical Analyst Agent", notifyDictionary);

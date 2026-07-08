@@ -2,7 +2,6 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.TechnicalAnalyst;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,31 +17,6 @@ namespace AgentMesh.Application.Services
         ILogger<TechnicalAnalystAgent> logger) : AgentBase<TechnicalAnalystAgent.ParsedResponse>(logger, TechnicalAnalystAgentConfiguration.AgentName, openAIClient, resilience), ITechnicalAnalystAgent
     {
         private readonly ILogger<TechnicalAnalystAgent> _logger = logger;
-        private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];
-
-        private static KnowledgeBaseQueryInputItem TranslateKnowledgeBaseQuery(APIKnowledgeBaseQuery query)
-        {
-            var normalizedType = AllowedQueryTypes.FirstOrDefault(type => type.Equals(query.Type, StringComparison.OrdinalIgnoreCase));
-
-            if (normalizedType == null)
-            {
-                throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}");
-            }
-
-            var searchType = normalizedType switch
-            {
-                "lex" => KnowledgeBaseQuerySearchType.Keyword,
-                "vec" => KnowledgeBaseQuerySearchType.Semantic,
-                "hyde" => KnowledgeBaseQuerySearchType.HypotheticalDocument,
-                _ => throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}")
-            };
-
-            return new KnowledgeBaseQueryInputItem
-            {
-                Query = query.Query,
-                SearchType = searchType
-            };
-        }
 
         public async Task<TechnicalAnalystAgentOutput> ExecuteAsync(
             TechnicalAnalystAgentInput input,
@@ -91,18 +65,18 @@ namespace AgentMesh.Application.Services
                 });
             }
 
-            if (!string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
-            {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"KnowledgeBaseDocumentsContent: {input.KnowledgeBaseDocumentsContent}" });
-            }
-
-            if (!string.IsNullOrWhiteSpace(input.LanguageOfKnowledgeBase))
+            if (!string.IsNullOrWhiteSpace(input.BusinessRequirements))
             {
                 inputMessages.Add(new AgentMessage
                 {
                     Role = AgentMessageRole.System,
-                    Content = $"LanguageOfKnowledgeBase: {input.LanguageOfKnowledgeBase}"
+                    Content = $"Business Requirements:\n{input.BusinessRequirements}"
                 });
+            }
+
+            if (!string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
+            {
+                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"KnowledgeBaseDocumentsContent: {input.KnowledgeBaseDocumentsContent}" });
             }
 
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
@@ -112,7 +86,7 @@ namespace AgentMesh.Application.Services
 
             return new TechnicalAnalystAgentOutput
             {
-                APISKnowledgeBaseQuery = result.Result.KnowledgeBaseAPIQueries.Select(TranslateKnowledgeBaseQuery).ToList(),
+                TechnicalSpecification = result.Result.TechnicalSpecification,
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount
@@ -131,18 +105,10 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                responseDTO.KnowledgeBaseAPIQueries ??= [];
-
-                if (!responseDTO.KnowledgeBaseAPIQueries.Any())
+                if (string.IsNullOrWhiteSpace(responseDTO.TechnicalSpecification))
                 {
-                    _logger.LogWarning("The model's response contains empty knowledge base API queries. Response text: {ResponseText}", rawResponseText);
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty knowledge base API queries.");
-                }
-
-                if (responseDTO.KnowledgeBaseAPIQueries.Any(q => string.IsNullOrWhiteSpace(q.Query) || !AllowedQueryTypes.Contains(q.Type, StringComparer.OrdinalIgnoreCase)))
-                {
-                    _logger.LogWarning("The model's response contains invalid query entries. Response text: {ResponseText}", rawResponseText);
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains invalid query entries. Allowed types: lex, vec, hyde; query must be non-empty.");
+                    _logger.LogWarning("The model's response contains an empty technical specification. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains an empty technical specification.");
                 }
 
                 return responseDTO;
@@ -156,17 +122,8 @@ namespace AgentMesh.Application.Services
 
         public class ParsedResponse
         {
-            [JsonPropertyName("knowledgeBaseAPIQueries")]
-            public IEnumerable<APIKnowledgeBaseQuery> KnowledgeBaseAPIQueries { get; set; } = [];
-        }
-
-        public class APIKnowledgeBaseQuery
-        {
-            [JsonPropertyName("type")]
-            public string Type { get; set; } = string.Empty;
-
-            [JsonPropertyName("query")]
-            public string Query { get; set; } = string.Empty;
+            [JsonPropertyName("technicalSpecification")]
+            public string TechnicalSpecification { get; set; } = string.Empty;
         }
     }
 }

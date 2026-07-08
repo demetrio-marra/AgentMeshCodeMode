@@ -8,6 +8,6 @@ namespace AgentMesh.Models.TechnicalAnalyst
         public IEnumerable<string> UserPreferences { get; set; } = [];
         public IEnumerable<string> AgentMemories { get; set; } = [];
         public string KnowledgeBaseDocumentsContent { get; set; } = string.Empty;
-        public string LanguageOfKnowledgeBase { get; set; } = string.Empty;
+        public string BusinessRequirements { get; set; } = string.Empty;
     }
 }

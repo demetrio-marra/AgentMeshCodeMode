@@ -63,6 +63,7 @@ namespace AgentMesh.Application.Models
 
 
         public string? BusinessRequirements { get; set; }
+        public string? TechnicalSpecification { get; set; }
         public bool ShouldEngageCoder { get; set; }
 
         public IEnumerable<string> FastAPISKnowledgeBaseQuery { get; set; } = [];
