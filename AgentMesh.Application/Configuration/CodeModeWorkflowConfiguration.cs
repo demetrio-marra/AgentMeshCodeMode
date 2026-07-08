@@ -9,5 +9,6 @@ namespace AgentMesh.Application.Configuration
         public bool EnableCodeCorrection { get; set; } = true;
         public bool RerankOnHybridSearch { get; set; } = true;
         public IEnumerable<string> ApplicationDomainList { get; set; } = [];
+        public string LanguageOfKnowledgeBase { get; set; } = string.Empty;
     }
 }
