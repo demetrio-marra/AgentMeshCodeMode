@@ -44,15 +44,6 @@ namespace AgentMesh.Application.Contracts
         Task<KnowledgeBaseQueryResult> FindAsync(KnowledgeBaseQueryInput query, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Asynchronously retrieves the content of a knowledge base entry identified by the specified ID.
-        /// </summary>
-        /// <param name="id">The unique identifier of the knowledge base entry to retrieve. Cannot be null or empty.</param>
-        /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains the content of the knowledge
-        /// base entry as a <see cref="KnowledgeBaseDocumentContent"/> object, or null if the entry does not exist.</returns>
-        Task<KnowledgeBaseDocumentContent> GetKnowledgeBaseEntryContentAsync(string id, CancellationToken cancellationToken = default);
-
-        /// <summary>
         /// Asynchronously retrieves the content of multiple knowledge base entries identified by the specified file names.
         /// </summary>
         /// <param name="fileNames">A collection of unique identifiers of the knowledge base entries to retrieve. Cannot be null or empty.</param>

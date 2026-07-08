@@ -12,12 +12,6 @@ namespace AgentMesh.Infrastructure.QMD
 
         private readonly QMDHttpProxy _httpProxy = httpProxy;
 
-        async Task<KnowledgeBaseDocumentContent> IKnowledgeBaseService.GetKnowledgeBaseEntryContentAsync(string id, CancellationToken cancellationToken)
-        {
-            await Task.CompletedTask;
-            throw new NotImplementedException();
-        }
-
         async Task<IEnumerable<KnowledgeBaseDocumentContent>> IKnowledgeBaseService.GetKnowledgeBaseEntriesContentAsync(IEnumerable<string> fileNames, CancellationToken cancellationToken)
         {
             var query = new DTOs.MultiGet.MultiGetToolRequest
@@ -28,13 +22,6 @@ namespace AgentMesh.Infrastructure.QMD
             var ret = await _httpProxy.MultiGetAsync(query, cancellationToken);
 
             return [.. ret.Files.Where(f => f != null).Select(kv => new KnowledgeBaseDocumentContent { File = kv.Uri, Content = kv.Text ?? string.Empty })];
-        }
-
-
-        public async Task<string> GetKnowledgeBaseEntryContentAsync(string id, CancellationToken cancellationToken = default)
-        {
-            var ret = await _httpProxy.GetAsync(new DTOs.Get.GetToolRequest { File = id }, cancellationToken) ?? throw new Exception($"Failed to retrieve content for knowledge base entry with ID: {id}");
-            return ret.Text;
         }
 
 
