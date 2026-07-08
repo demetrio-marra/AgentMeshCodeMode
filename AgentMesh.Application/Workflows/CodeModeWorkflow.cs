@@ -373,7 +373,7 @@ namespace AgentMesh.Application.Workflows
             {
                 { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
                 { "EntitiesByDomain", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(e => $"[{kvp.Key}] {e}"))) : "(No entities)" },
-                { "KnowledgeBaseResults", state.DomainsKnowledgeBaseQueryResults.Results.Any() ? ToBulletList(state.DomainsKnowledgeBaseQueryResults.Results.Select(r => $"[{r.File}] {r.Title}")) : "(No knowledge base results)" }
+                { "DomainsKnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(f => f.File)) : "(No knowledge base results)" }
             });
 
             var output = await _intentCanonicalizationAgent.ExecuteAsync(new IntentCanonicalizationAgentInput
@@ -382,7 +382,7 @@ namespace AgentMesh.Application.Workflows
                 UserIntentCategory = state.ClassifiedUserRequest.IntentCategory,
                 EntitiesByDomain = state.ClassifiedUserRequest.EntitiesByDomain,
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
-                FastDomainsKnowledgeBaseQueryResults = state.FastDomainsKnowledgeBaseQueryResults.Results
+                DomainDocumentationContents = state.DomainsKnowledgeBaseDocumentsContent.Any() ? SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent) : "(No knowledge base results)",
             });
 
             state.CanonicalizedIntent = output.DomainedIntent;
@@ -391,7 +391,7 @@ namespace AgentMesh.Application.Workflows
 
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "DomainedIntent", state.CanonicalizedIntent },
+                { "CanonicalizedIntent", state.CanonicalizedIntent },
                 { "CanonicalizedIntentCategory", state.CanonicalizedIntentCategory.ToString() },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };

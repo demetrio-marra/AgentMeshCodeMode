@@ -9,7 +9,7 @@ Re-evaluate the captured user intent category after considering all input eviden
 - captured user intent category
 - entities by domain
 - supporting intent information
-- domains knowledge base results
+- domains knowledge base documentation
 
 # Mission
 Produce one canonical intent sentence that:
@@ -17,6 +17,7 @@ Produce one canonical intent sentence that:
 - uses explicit domain terms for entities, relations, and features whenever evidence supports them
 - remains concise and unambiguous
 - does not invent unsupported details
+- **ALWAYS** uses a third-person perspective, even if the original user intent was in first or second person
 
 Also output a canonicalized intent category that can differ from the captured user intent category when evidence supports reclassification.
 Allowed values:

@@ -29,9 +29,7 @@ namespace AgentMesh.Application.Services
                 ? string.Join("\n", input.SupportingIntentInformation.Select(i => $"- {i}"))
                 : "(No supporting intent information)";
 
-            var fastKnowledgeBaseResultsText = input.FastDomainsKnowledgeBaseQueryResults.Any()
-                ? string.Join("\n", input.FastDomainsKnowledgeBaseQueryResults.Select(r => $"- File: {r.File}; Title: {r.Title}; Relevance: {(r.Relevance.HasValue ? r.Relevance.Value.ToString("0.####") : "n/a")}; Summary: {r.Summary ?? "n/a"}"))
-                : "(No fast domains knowledge base results)";
+            var domainDocuments = input.DomainDocumentationContents;
 
             var userMessage = $"""
 Captured user intent:
@@ -46,8 +44,8 @@ Entities by domain:
 Supporting intent information:
 {supportingIntentInformationText}
 
-Fast domains knowledge base results:
-{fastKnowledgeBaseResultsText}
+Domains knowledge base documents:
+{domainDocuments}
 """;
 
             var inputMessages = new List<AgentMessage>

@@ -9,6 +9,6 @@ namespace AgentMesh.Models.IntentCanonicalization
         public UserIntentCategoryValues UserIntentCategory { get; set; }
         public Dictionary<string, IEnumerable<string>> EntitiesByDomain { get; set; } = new();
         public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
-        public IEnumerable<KnowledgeBaseQueryResultItem> FastDomainsKnowledgeBaseQueryResults { get; set; } = [];
+        public string DomainDocumentationContents { get; set; } = string.Empty;
     }
 }
