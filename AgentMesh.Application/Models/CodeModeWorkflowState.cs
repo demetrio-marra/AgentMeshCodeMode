@@ -70,7 +70,7 @@ namespace AgentMesh.Application.Models
 
         public KnowledgeBaseQueryResult FastAPISKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 
-        public IEnumerable<KnowledgeBaseQueryInputItem> APISKnowledgeBaseQuery { get; set; } = [];
+        public IEnumerable<KnowledgeBaseQueryInputItem> CanonicalizedAPIQueries { get; set; } = [];
 
         /// <summary>
         /// APIs knowledge base query results, which are used to retrieve relevant information from the APIs knowledge base to assist in understanding the user's request and providing context for further processing.

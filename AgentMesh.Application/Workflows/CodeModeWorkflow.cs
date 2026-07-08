@@ -373,7 +373,9 @@ namespace AgentMesh.Application.Workflows
             {
                 { "Intent", state.ClassifiedUserRequest.Intent ?? "(No intent)" },
                 { "EntitiesByDomain", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(e => $"[{kvp.Key}] {e}"))) : "(No entities)" },
-                { "DomainsKnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(f => f.File)) : "(No knowledge base results)" }
+                { "DomainsKnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(f => f.File)) : "(No knowledge base results)" },
+                { "NonCanonicalizedQueries", state.DomainsKnowledgeBaseQuery.Any() ? ToBulletList(state.DomainsKnowledgeBaseQuery) : "(No non-canonicalized queries)" },
+                { "LanguageOfKnowledgeBase", _workflowConfiguration.LanguageOfKnowledgeBase }
             });
 
             var output = await _intentCanonicalizationAgent.ExecuteAsync(new IntentCanonicalizationAgentInput
@@ -383,16 +385,20 @@ namespace AgentMesh.Application.Workflows
                 EntitiesByDomain = state.ClassifiedUserRequest.EntitiesByDomain,
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
                 DomainDocumentationContents = state.DomainsKnowledgeBaseDocumentsContent.Any() ? SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent) : "(No knowledge base results)",
+                NonCanonicalizedQueries = state.DomainsKnowledgeBaseQuery,
+                LanguageOfKnowledgeBase = _workflowConfiguration.LanguageOfKnowledgeBase
             });
 
             state.CanonicalizedIntent = output.DomainedIntent;
             state.CanonicalizedIntentCategory = output.CanonicalizedIntentCategory;
+            state.CanonicalizedAPIQueries = output.CanonicalizedAPIQueries;
             state.AddTokenUsage(IntentCanonicalizationAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Intent Canonicalization Agent");
 
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "CanonicalizedIntent", state.CanonicalizedIntent },
                 { "CanonicalizedIntentCategory", state.CanonicalizedIntentCategory.ToString() },
+                { "CanonicalizedAPIQueries", state.CanonicalizedAPIQueries.Any() ? ToBulletList(state.CanonicalizedAPIQueries) : "(No canonicalized API queries)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Intent Canonicalization Agent", notifyDictionary);
@@ -527,7 +533,7 @@ namespace AgentMesh.Application.Workflows
                 _workflowConfiguration.EnableCacheService,
                 "APIs Knowledge Base Service",
                 APIS_DOCUMENTATION_COLLECTION_NAME,
-                workflowState => workflowState.DomainsKnowledgeBaseQuery,
+                workflowState => workflowState.CanonicalizedAPIQueries,
                 workflowState => workflowState.APISKnowledgeBaseQueryResults,
                 (workflowState, queryResult) => workflowState.APISKnowledgeBaseQueryResults = queryResult);
         }
