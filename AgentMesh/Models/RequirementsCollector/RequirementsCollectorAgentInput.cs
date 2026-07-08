@@ -12,5 +12,6 @@ namespace AgentMesh.Models.RequirementsCollector
         public IEnumerable<string> UserPreferences { get; set; } = [];
         public IEnumerable<string> MissingMemories { get; set; } = [];
         public IEnumerable<KnowledgeBaseQueryResultItem> FastKnowledgeBaseQueryResults { get; set; } = [];
+        public string LanguageOfKnowledgeBase { get; set; } = string.Empty;
     }
 }

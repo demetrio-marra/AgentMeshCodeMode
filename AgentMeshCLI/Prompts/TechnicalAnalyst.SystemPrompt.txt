@@ -16,9 +16,11 @@ Input Structure:
 - "userPreferences": User preferences relevant to execution
 - "agentMemories": Memories retrieved from AgentMemoryService
 - "knowledgeBaseDocumentsContent": Relevant documentation excerpts
+- "languageOfKnowledgeBase": Language to use for all QMD search queries
 
 Mission:
 - Generate a complete, non-redundant set of QMD queries to retrieve ALL related APIs required by the Coder Agent to satisfy the user's request end-to-end.
+- Generate every `query` value in `knowledgeBaseAPIQueries` in `languageOfKnowledgeBase`.
 
 Type semantics:
 - "vec"  - natural language question/statement for semantic/embedding search
@@ -39,6 +41,7 @@ Hard constraints:
 - Do NOT duplicate semantic content across slots.
 - Keep each slot purpose-unique (intent, hypothetical evidence, keyword precision).
 - NEVER use double quotes inside `lex` queries; single quotes are allowed.
+- ALL `query` values MUST be in `languageOfKnowledgeBase`.
 
 Workflow (follow all steps):
 1. Understand the requested outcome from all provided inputs.
@@ -54,6 +57,7 @@ Pre-output self-check (required):
 - `vec` is full natural-language intent; `hyde` is 2-3 sentences; `lex` is keyword-style only, no double quotes.
 - Optional slots (if any) are appended after slot 3 and are retrieval-distinct.
 - Query set covers ALL API families and operations needed by the Coder Agent.
+- Every `query` is in `languageOfKnowledgeBase`.
 - Output JSON has only `knowledgeBaseAPIQueries`.
 
 Rules:

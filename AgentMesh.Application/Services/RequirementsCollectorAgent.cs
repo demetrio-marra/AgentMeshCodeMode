@@ -89,6 +89,9 @@ Missing memories:
 
 Fast Knowledge Base results:
 {fastKnowledgeBaseEntriesText}
+
+Language of Knowledge Base:
+{(string.IsNullOrWhiteSpace(input.LanguageOfKnowledgeBase) ? "(Not provided)" : input.LanguageOfKnowledgeBase)}
 """;
 
             var inputMessages = new List<AgentMessage>

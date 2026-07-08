@@ -415,7 +415,8 @@ namespace AgentMesh.Application.Workflows
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
                 MissingMemories = state.ClassifiedUserRequest.MissingMemories,
-                FastKnowledgeBaseQueryResults = state.FastDomainsKnowledgeBaseQueryResults.Results
+                FastKnowledgeBaseQueryResults = state.FastDomainsKnowledgeBaseQueryResults.Results,
+                LanguageOfKnowledgeBase = _workflowConfiguration.LanguageOfKnowledgeBase
             });
 
             state.PastMemoriesQuery = output.MissingPastMemories;
@@ -807,7 +808,8 @@ namespace AgentMesh.Application.Workflows
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
                 AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
-                KnowledgeBaseDocumentsContent = string.Join("------" + Environment.NewLine, state.DomainsKnowledgeBaseDocumentsContent.Select(doc => doc.Print()))
+                KnowledgeBaseDocumentsContent = string.Join("------" + Environment.NewLine, state.DomainsKnowledgeBaseDocumentsContent.Select(doc => doc.Print())),
+                LanguageOfKnowledgeBase = _workflowConfiguration.LanguageOfKnowledgeBase
             }, cancellationToken);
 
             state.APISKnowledgeBaseQuery = technicalAnalystOutput.APISKnowledgeBaseQuery;

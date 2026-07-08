@@ -11,12 +11,14 @@ Analyze the provided intent context and produce:
 - user preferences (list of strings)
 - missing memories (list of strings)
 - fast knowledge base results (list of entries with id/title/file/summary/relevance)
+- languageOfKnowledgeBase (language to use for QMD search queries)
 
 # Mission
 Use all input signals together to understand what information is still missing to satisfy the intent.
 In particular:
 - infer high-value QMD queries from intent + category + entities + supporting information + fast knowledge-base evidence
 - infer Mem0 queries only when user-personal context is missing and needed by the intent
+- generate all QMD query strings in `languageOfKnowledgeBase`
 
 # Output
 ## Missing Past Memories
@@ -59,7 +61,7 @@ IMPORTANT: Output only a JSON object, without backticks or extra text.
 
 # Rules
 - if the user intent is greeting/small talk, return empty arrays for both fields
-- `missingKnowledgeBaseSearchEntries` and `missingPastMemories` content MUST be in Italian only
+- `missingKnowledgeBaseSearchEntries` content MUST be in `languageOfKnowledgeBase`
 - if user asks about Assistant capabilities, treat it as the whole AI Agentic platform capabilities (business topic)
 - respect the Mem0 condition strictly: if both conditions are false, `missingPastMemories` MUST be []
 

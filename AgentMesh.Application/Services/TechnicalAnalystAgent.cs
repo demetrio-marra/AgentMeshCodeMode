@@ -96,6 +96,15 @@ namespace AgentMesh.Application.Services
                 inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"KnowledgeBaseDocumentsContent: {input.KnowledgeBaseDocumentsContent}" });
             }
 
+            if (!string.IsNullOrWhiteSpace(input.LanguageOfKnowledgeBase))
+            {
+                inputMessages.Add(new AgentMessage
+                {
+                    Role = AgentMessageRole.System,
+                    Content = $"LanguageOfKnowledgeBase: {input.LanguageOfKnowledgeBase}"
+                });
+            }
+
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.Intent });
 
