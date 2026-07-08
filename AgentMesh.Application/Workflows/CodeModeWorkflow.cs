@@ -103,13 +103,13 @@ namespace AgentMesh.Application.Workflows
 
             await Task.WhenAll(memoryTask, knowledgeBaseTask);
 
-            await ExecuteIntentCanonicalizationAsync(state);
-
             if (state.DomainsKnowledgeBaseQueryResults.Results.Any())
             {
                 await ExecuteDomainsKnowledgeBaseDocumentsExtractorAsync(state);
             }
 
+            await ExecuteIntentCanonicalizationAsync(state);
+          
             if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.Documentation)
             {
                 await ExecuteDocumentationAgentAsync(state);
