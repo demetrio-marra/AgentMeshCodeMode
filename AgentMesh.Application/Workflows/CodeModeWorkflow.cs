@@ -24,6 +24,8 @@ using System.Data;
 using AgentMesh.Models.QueriesCache;
 using AgentMesh.Models.FunctionalAnalyst;
 using AgentMesh.Models.TechnicalAnalyst;
+using AgentMesh.Models.DomainExpert;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Workflows
 {
@@ -36,6 +38,7 @@ namespace AgentMesh.Application.Workflows
         ICodeFixerAgent codeFixerAgent,
         ICodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent,
         IResultsPresenterAgent resultsPresenterAgent,
+        IDomainExpertAgent domainExpertAgent,
         IJSSandboxExecutor jsSandboxExecutor,
         IIntentExtractorAgent intentExtractorAgent,
         IIntentCanonicalizationAgent intentCanonicalizationAgent,
@@ -61,6 +64,7 @@ namespace AgentMesh.Application.Workflows
         private readonly ICodeFixerAgent _codeFixerAgent = codeFixerAgent;
         private readonly ICodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
         private readonly IResultsPresenterAgent _resultsPresenterAgent = resultsPresenterAgent;
+        private readonly IDomainExpertAgent _domainExpertAgent = domainExpertAgent;
         private readonly IJSSandboxExecutor _jsSandboxExecutor = jsSandboxExecutor;
         private readonly IIntentExtractorAgent _intentExtractorAgent = intentExtractorAgent;
         private readonly IIntentCanonicalizationAgent _intentCanonicalizationAgent = intentCanonicalizationAgent;
@@ -157,12 +161,12 @@ namespace AgentMesh.Application.Workflows
                         }
                     }
 
-                    await ExecuteResultsPresenterAsync(state);
+                    await ExecuteDomainExpertAgentAsync(state);
                     await CompleteWorkflowAsync(state);
                 }
                 else
                 {
-                    await ExecuteResultsPresenterAsync(state);
+                    await ExecuteDomainExpertAgentAsync(state);
                     await CompleteWorkflowAsync(state);
                 }
                 goto WorkflowEnd;
@@ -773,7 +777,7 @@ namespace AgentMesh.Application.Workflows
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
                 AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
-                KnowledgeBaseDocumentsContent = string.Join("------" + Environment.NewLine, state.DomainsKnowledgeBaseDocumentsContent.Select(doc => doc.Print()))
+                KnowledgeBaseDocumentsContent = SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent)
             }, cancellationToken);
 
             state.ShouldEngageCoder = true;
@@ -808,7 +812,7 @@ namespace AgentMesh.Application.Workflows
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
                 AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
-                KnowledgeBaseDocumentsContent = string.Join("------" + Environment.NewLine, state.DomainsKnowledgeBaseDocumentsContent.Select(doc => doc.Print())),
+                KnowledgeBaseDocumentsContent = SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent),
                 LanguageOfKnowledgeBase = _workflowConfiguration.LanguageOfKnowledgeBase
             }, cancellationToken);
 
@@ -830,7 +834,7 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Coder Agent", new Dictionary<string, string>
             {
                 { "BusinessRequirements", businessRequirements },
-                { "KnowledgeBaseAPIDocuments", state.KnowledgeBaseAPIDocumentsContent.Any() ? ToBulletList(state.KnowledgeBaseAPIDocumentsContent.Select(doc => doc.File)) : "(No documents)" }
+                { "KnowledgeBaseAPIDocuments", state.KnowledgeBaseAPIDocumentsContent.Any() ? SerializeDocumentation(state.KnowledgeBaseAPIDocumentsContent) : "(No documents)" }
             });
 
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
@@ -1045,10 +1049,46 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Documentation Agent", notifyDictionary);
         }
 
-        private static string SerializeDocumentation(IEnumerable<KnowledgeBaseDocumentContent> documents)
+
+        private async Task ExecuteDomainExpertAgentAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
-            var serializedDocs = documents.Select(kv => $"{kv.Content}\n\nOriginal file: {kv.File}");
-            return string.Join(Environment.NewLine + "---" + Environment.NewLine + "---", serializedDocs);
+            var stopwatch = Stopwatch.StartNew();
+            _logger.LogDebug("Engaging Domain Expert Agent...");
+
+            var dataToComment = state.SandboxResult ?? string.Empty;
+            var serializedDocumentation = SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent);
+
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Domain Expert Agent", new Dictionary<string, string>
+            {
+                { "Intent", state.CanonicalizedIntent },
+                { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
+                { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"[{kvp.Key}] {v}"))) : "(No entities)" },
+                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
+                { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
+                { "DomainsKnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() },
+                { "DataToComment", string.IsNullOrWhiteSpace(dataToComment) ? "(No sandbox result)" : dataToComment }
+            });
+
+            var output = await _domainExpertAgent.ExecuteAsync(new DomainExpertAgentInput
+            {
+                Intent = state.CanonicalizedIntent,
+                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
+                Entities = state.ClassifiedUserRequest.EntitiesByDomain,
+                UserPreferences = state.ClassifiedUserRequest.UserPreferences,
+                AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
+                KnowledgeBaseDocumentsContent = serializedDocumentation,
+                DataToComment = dataToComment
+            }, cancellationToken);
+
+            state.DomainExpertOutput = output.DomainExpertComment;
+            state.AddTokenUsage(DomainExpertAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Domain Expert Agent");
+
+            var notifyDictionary = new Dictionary<string, string>
+            {
+                { "Content", state.DomainExpertOutput },
+                { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
+            };
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Domain Expert Agent", notifyDictionary);
         }
 
         private async Task CompleteWorkflowAsync(CodeModeWorkflowState state)
@@ -1071,7 +1111,18 @@ namespace AgentMesh.Application.Workflows
                 }
                 else
                 {
-                    data = state.PresenterOutput;
+                    data = $"""
+                            This is the raw output from the code execution sandbox:
+                            {state.SandboxResult}
+                            """;
+                    if (!string.IsNullOrEmpty(state.DomainExpertOutput))
+                    {
+                        data = data + $"""
+                            ------------------------------------------------------
+                            This is the comment from the Domain Expert Agent regarding the code execution result:
+                            {state.DomainExpertOutput}
+                            """;
+                    }
                 }
             }
 
@@ -1125,6 +1176,12 @@ namespace AgentMesh.Application.Workflows
 
         [System.Text.RegularExpressions.GeneratedRegex(@"\[\[(.*?)\]\]")]
         private static partial System.Text.RegularExpressions.Regex MyRegex();
+
+        private static string SerializeDocumentation(IEnumerable<KnowledgeBaseDocumentContent> documents)
+        {
+            var serializedDocs = documents.Select(kv => $"{kv.Content}\n\nOriginal file: {kv.File}");
+            return string.Join(Environment.NewLine + "---" + Environment.NewLine + "---", serializedDocs);
+        }
     }
 }
 

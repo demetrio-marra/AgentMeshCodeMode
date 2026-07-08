@@ -86,6 +86,7 @@ namespace AgentMesh.Application.Models
         public string? SandboxExecutionId { get; set; }
         public SandboxResultType CodeExecutionResultType { get; set; }
         public string? PresenterOutput { get; set; }
+        public string? DomainExpertOutput { get; set; }
         public string? FinalAnswer { get; set; }
 
         public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; } = [];
