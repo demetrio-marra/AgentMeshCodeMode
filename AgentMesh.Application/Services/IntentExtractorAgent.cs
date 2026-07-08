@@ -27,6 +27,7 @@ namespace AgentMesh.Application.Services
             {
                 new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
                 new() { Role = AgentMessageRole.System, Content = BuildApplicationDomainSystemMessage(input.ApplicationDomainList) },
+                new() { Role = AgentMessageRole.System, Content = BuildKnowledgeBaseLanguageSystemMessage(input.LanguageOfKnowledgeBase) },
                 new() { Role = AgentMessageRole.User, Content = userMessage },
             };
 
@@ -61,6 +62,11 @@ namespace AgentMesh.Application.Services
             return domains.Length == 0
                 ? "Application domain list available for this request: none."
                 : $"Application domain list available for this request: {string.Join(", ", domains)}.";
+        }
+
+        private static string BuildKnowledgeBaseLanguageSystemMessage(string languageOfKnowledgeBase)
+        {
+            return $"Knowledge base language for this request: {languageOfKnowledgeBase}. Use this language when producing domain labels and entities.";
         }
 
         protected override ParsedResponse ParseStructuredResponse(string rawResponseText)

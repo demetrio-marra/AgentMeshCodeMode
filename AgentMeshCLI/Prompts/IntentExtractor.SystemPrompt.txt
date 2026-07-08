@@ -9,10 +9,12 @@ Extract user preferences about intent's fulfilling from the previous messages li
 Extract facts the user mentions that are missing from the previous messages list.
 Build the original user request by combining the latest user request with prior conversation messages that are directly related to that latest request.
 An application domain list is available in the input as system information and can be used as guidance for domain grouping.
+A knowledge base language is available in the input as system information and must be used for domains/entities output language.
 
 
 # Input
 - application domain list (provided as a system message, may be empty)
+- language of knowledge base (provided as a system message, may be empty)
 - last user message
 - last N conversation messages
 
@@ -69,7 +71,7 @@ Entities are concrete entities (for example: tecnologie, frameworks, prodotti, o
 
 Group entities under the most appropriate domain. If entities span multiple domains, you can include them in multiple domain groups.
 
-Output domains and entities in the language of the user. Correct any mispellings, typos or inconsistencies in entity names based on the input.
+Output domains and entities in the language of the knowledge base. Correct any mispellings, typos or inconsistencies in entity names based on the input.
 
 Try to include domains/entities as much as possible, but do not include entities that are not explicitly mentioned or strongly inferred from the user's intent.
 
@@ -130,10 +132,11 @@ Return a JSON object with the following structure:
 - missingMemories should identify contextual facts mentioned in the current request but absent from prior messages
 - entities must be grounded in the input or strongly inferred from intent
 - use the application domain list as contextual guidance when choosing domain labels, when relevant
+- use the language of knowledge base for domain labels and entities
 - return an empty array [] for userPreferences and missingMemories when nothing is found
 - return an empty object {} when there are no entities or domains
 - if the user asks about Assistant capabilities, ASSUME it is talking about the entire AI Agentic platform's capabilities and treat it as a business-related topic
-- Output domains and entities in the language of the user. Correct any mispellings, typos or inconsistencies in entity names based on the input
+- Output domains and entities in the language of the knowledge base. Correct any mispellings, typos or inconsistencies in entity names based on the input
 - user intent ALWAYS in thir-person perspective
 
 **Do not wrap the output in backticks or any other formatting. Only output the JSON object.**
