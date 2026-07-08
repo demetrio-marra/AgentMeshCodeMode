@@ -22,14 +22,14 @@ using System.Diagnostics;
 using AgentMesh.Models.AgentMemory;
 using System.Data;
 using AgentMesh.Models.QueriesCache;
-using AgentMesh.Models.DomainExpert;
+using AgentMesh.Models.FunctionalAnalyst;
 using AgentMesh.Models.TechnicalAnalyst;
 
 namespace AgentMesh.Application.Workflows
 {
     public partial class CodeModeWorkflow(ILogger<CodeModeWorkflow> logger,
         IWorkflowProgressNotifier workflowProgressNotifier,
-        IDomainExpertAgent domainExpertAgent,
+        IFunctionalAnalystAgent functionalAnalystAgent,
         ITechnicalAnalystAgent technicalAnalystAgent,
         IDocumentationAgent documentationAgent,
         ICoderAgent coderAgent,
@@ -54,7 +54,7 @@ namespace AgentMesh.Application.Workflows
         private readonly ILogger<CodeModeWorkflow> _logger = logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
 
-        private readonly IDomainExpertAgent _domainExpertAgent = domainExpertAgent;
+        private readonly IFunctionalAnalystAgent _functionalAnalystAgent = functionalAnalystAgent;
         private readonly ITechnicalAnalystAgent _technicalAnalystAgent = technicalAnalystAgent;
         private readonly IDocumentationAgent _documentationAgent = documentationAgent;
         private readonly ICoderAgent _coderAgent = coderAgent;
@@ -116,10 +116,10 @@ namespace AgentMesh.Application.Workflows
             }
             else if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.TaskExecution)
             {
-                var domainExpertTask = ExecuteDomainExpertAsync(state);
+                var functionalAnalystTask = ExecuteFunctionalAnalystAsync(state);
                 var technicalAnalystTask = ExecuteTechnicalAnalystAsync(state);
 
-                await Task.WhenAll(domainExpertTask, technicalAnalystTask);
+                await Task.WhenAll(functionalAnalystTask, technicalAnalystTask);
 
                 if (state.APISKnowledgeBaseQuery.Any())
                 {
@@ -749,11 +749,11 @@ namespace AgentMesh.Application.Workflows
         #endregion
 
 
-        private async Task ExecuteDomainExpertAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
+        private async Task ExecuteFunctionalAnalystAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
         {
             var stopwatch = Stopwatch.StartNew();
-            _logger.LogDebug("Engaging Domain Expert Agent...");
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Domain Expert Agent", new Dictionary<string, string>
+            _logger.LogDebug("Engaging Functional Analyst Agent...");
+            await _workflowProgressNotifier.NotifyWorkflowStepStart("Functional Analyst Agent", new Dictionary<string, string>
             {
                 { "Intent", state.CanonicalizedIntent },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
@@ -763,7 +763,7 @@ namespace AgentMesh.Application.Workflows
                 { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() }
             });
 
-            var domainExpertOutput = await _domainExpertAgent.ExecuteAsync(new DomainExpertAgentInput
+            var functionalAnalystOutput = await _functionalAnalystAgent.ExecuteAsync(new FunctionalAnalystAgentInput
             {
                 Intent = state.CanonicalizedIntent,
                 SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
@@ -774,14 +774,14 @@ namespace AgentMesh.Application.Workflows
             }, cancellationToken);
 
             state.ShouldEngageCoder = true;
-            state.BusinessRequirements = domainExpertOutput.BusinessRequirements;
-            state.AddTokenUsage(DomainExpertAgentConfiguration.AgentName, domainExpertOutput.InputTokenCount, domainExpertOutput.OutputTokenCount, stopwatch.Elapsed, "Domain Expert Agent");
+            state.BusinessRequirements = functionalAnalystOutput.BusinessRequirements;
+            state.AddTokenUsage(FunctionalAnalystAgentConfiguration.AgentName, functionalAnalystOutput.InputTokenCount, functionalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Functional Analyst Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "BusinessRequirements", state.BusinessRequirements ?? "(No business requirements)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Domain Expert Agent", notifyDictionary);
+            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Functional Analyst Agent", notifyDictionary);
         }
 
         private async Task ExecuteTechnicalAnalystAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)

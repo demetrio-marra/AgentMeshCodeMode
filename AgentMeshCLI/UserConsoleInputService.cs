@@ -1,7 +1,7 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
+using AgentMesh.Application.Configuration;
 using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Models;
@@ -15,7 +15,7 @@ namespace AgentMesh
     internal class UserConsoleInputService(
         IWorkflow workflow,
         IWorkflowProgressNotifier workflowProgressNotifier,
-        DomainExpertAgentConfiguration domainExpertConfiguration,
+        FunctionalAnalystAgentConfiguration functionalAnalystConfiguration,
         TechnicalAnalystAgentConfiguration technicalAnalystConfiguration,
         CoderAgentConfiguration coderConfiguration,
         CodeFixerAgentConfiguration codeFixerConfiguration,
@@ -37,7 +37,7 @@ namespace AgentMesh
     {
         private readonly IWorkflow _workflow = workflow;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-        private readonly DomainExpertAgentConfiguration _domainExpertConfiguration = domainExpertConfiguration;
+        private readonly FunctionalAnalystAgentConfiguration _functionalAnalystConfiguration = functionalAnalystConfiguration;
         private readonly TechnicalAnalystAgentConfiguration _technicalAnalystConfiguration = technicalAnalystConfiguration;
         private readonly CoderAgentConfiguration _coderConfiguration = coderConfiguration;
         private readonly CodeFixerAgentConfiguration _codeFixerConfiguration = codeFixerConfiguration;
@@ -126,7 +126,7 @@ namespace AgentMesh
                 {
                     { IntentExtractorAgentConfiguration.AgentName, _llmsConfiguration[_intentExtractorConfiguration.LLM].CostPerMillionInputTokens },
                     { IntentCanonicalizationAgentConfiguration.AgentName, _llmsConfiguration[_intentCanonicalizationConfiguration.LLM].CostPerMillionInputTokens },
-                    { DomainExpertAgentConfiguration.AgentName, _llmsConfiguration[_domainExpertConfiguration.LLM].CostPerMillionInputTokens },
+                    { FunctionalAnalystAgentConfiguration.AgentName, _llmsConfiguration[_functionalAnalystConfiguration.LLM].CostPerMillionInputTokens },
                     { TechnicalAnalystAgentConfiguration.AgentName, _llmsConfiguration[_technicalAnalystConfiguration.LLM].CostPerMillionInputTokens },
                     { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionInputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionInputTokens },
@@ -142,7 +142,7 @@ namespace AgentMesh
                 {
                     { IntentExtractorAgentConfiguration.AgentName, _llmsConfiguration[_intentExtractorConfiguration.LLM].CostPerMillionOutputTokens },
                     { IntentCanonicalizationAgentConfiguration.AgentName, _llmsConfiguration[_intentCanonicalizationConfiguration.LLM].CostPerMillionOutputTokens },
-                    { DomainExpertAgentConfiguration.AgentName, _llmsConfiguration[_domainExpertConfiguration.LLM].CostPerMillionOutputTokens },
+                    { FunctionalAnalystAgentConfiguration.AgentName, _llmsConfiguration[_functionalAnalystConfiguration.LLM].CostPerMillionOutputTokens },
                     { TechnicalAnalystAgentConfiguration.AgentName, _llmsConfiguration[_technicalAnalystConfiguration.LLM].CostPerMillionOutputTokens },
                     { CoderAgentConfiguration.AgentName, _llmsConfiguration[_coderConfiguration.LLM].CostPerMillionOutputTokens },
                     { CodeFixerAgentConfiguration.AgentName, _llmsConfiguration[_codeFixerConfiguration.LLM].CostPerMillionOutputTokens },
@@ -345,7 +345,7 @@ namespace AgentMesh
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Intent Extractor", IntentExtractorAgentConfiguration.AgentName, _intentExtractorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Intent Canonicalization", IntentCanonicalizationAgentConfiguration.AgentName, _intentCanonicalizationConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Domain Expert", DomainExpertAgentConfiguration.AgentName, _domainExpertConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Functional Analyst", FunctionalAnalystAgentConfiguration.AgentName, _functionalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Technical Analyst", TechnicalAnalystAgentConfiguration.AgentName, _technicalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, _coderConfiguration);
 

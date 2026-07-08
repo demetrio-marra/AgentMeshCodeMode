@@ -1,9 +1,9 @@
 namespace AgentMesh.Application.Configuration
 {
-    public class DomainExpertAgentConfiguration
+    public class FunctionalAnalystAgentConfiguration
     {
-        public const string SectionName = "Agents:DomainExpert";
-        public const string AgentName = "DomainExpert";
+        public const string SectionName = "Agents:FunctionalAnalyst";
+        public const string AgentName = "FunctionalAnalyst";
 
         public string LLM { get; set; } = string.Empty;
         public string ModelTemperature { get; set; } = string.Empty;

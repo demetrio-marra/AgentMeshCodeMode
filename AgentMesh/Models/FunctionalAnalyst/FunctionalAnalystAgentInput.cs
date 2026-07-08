@@ -1,6 +1,6 @@
-﻿namespace AgentMesh.Models.DomainExpert
+﻿namespace AgentMesh.Models.FunctionalAnalyst
 {
-    public class DomainExpertAgentInput
+    public class FunctionalAnalystAgentInput
     {
         public string Intent { get; set; } = string.Empty;
         public IEnumerable<string> SupportingIntentInformation { get; set; } = [];

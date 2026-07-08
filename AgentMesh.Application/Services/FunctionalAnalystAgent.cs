@@ -1,8 +1,7 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Models.DomainExpert;
+using AgentMesh.Models.FunctionalAnalyst;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,15 +10,15 @@ using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class DomainExpertAgent(
-        [FromKeyedServices(AgentMesh.Application.Configuration.DomainExpertAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+    public class FunctionalAnalystAgent(
+        [FromKeyedServices(AgentMesh.Application.Configuration.FunctionalAnalystAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<DomainExpertAgent> logger) : AgentBase<DomainExpertAgent.ParsedResponse>(logger, AgentMesh.Application.Configuration.DomainExpertAgentConfiguration.AgentName, openAIClient, resilience), IDomainExpertAgent
+        ILogger<FunctionalAnalystAgent> logger) : AgentBase<FunctionalAnalystAgent.ParsedResponse>(logger, AgentMesh.Application.Configuration.FunctionalAnalystAgentConfiguration.AgentName, openAIClient, resilience), IFunctionalAnalystAgent
     {
-        private readonly ILogger<DomainExpertAgent> _logger = logger;
+        private readonly ILogger<FunctionalAnalystAgent> _logger = logger;
 
-        public async Task<DomainExpertAgentOutput> ExecuteAsync(
-            DomainExpertAgentInput input,
+        public async Task<FunctionalAnalystAgentOutput> ExecuteAsync(
+            FunctionalAnalystAgentInput input,
             CancellationToken cancellationToken = default)
         {
             var inputMessages = new List<AgentMessage>();
@@ -75,7 +74,7 @@ namespace AgentMesh.Application.Services
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            return new DomainExpertAgentOutput
+            return new FunctionalAnalystAgentOutput
             {
                 BusinessRequirements = result.Result.BusinessRequirements,
                 TokenCount = result.TotalTokenCount,

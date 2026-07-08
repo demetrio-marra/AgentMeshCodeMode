@@ -110,28 +110,28 @@ namespace AgentMesh
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<LLMsConfiguration>>().Value);
 
-            // Domain Expert agent config and client
+            // FunctionalAnalyst agent config and client
             services
-                .AddOptions<DomainExpertAgentConfiguration>()
-                .Bind(configuration.GetSection(DomainExpertAgentConfiguration.SectionName))
+                .AddOptions<FunctionalAnalystAgentConfiguration>()
+                .Bind(configuration.GetSection(FunctionalAnalystAgentConfiguration.SectionName))
                 .PostConfigure(options =>
                 {
                     options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
                 })
                 .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<DomainExpertAgentConfiguration>>().Value);
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<FunctionalAnalystAgentConfiguration>>().Value);
 
-            services.AddKeyedSingleton<IOpenAIClient>(DomainExpertAgentConfiguration.AgentName, (sp, _) =>
+            services.AddKeyedSingleton<IOpenAIClient>(FunctionalAnalystAgentConfiguration.AgentName, (sp, _) =>
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<DomainExpertAgentConfiguration>();
+                var config = sp.GetRequiredService<FunctionalAnalystAgentConfiguration>();
                 var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
                 var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IDomainExpertAgent, DomainExpertAgent>();
+            services.AddSingleton<IFunctionalAnalystAgent, FunctionalAnalystAgent>();
 
             // TechnicalAnalyst agent config and client
             services

@@ -1,8 +1,8 @@
 ﻿using AgentMesh.Models.KnowledgeBase;
 
-namespace AgentMesh.Models.DomainExpert
+namespace AgentMesh.Models.FunctionalAnalyst
 {
-    public class DomainExpertAgentOutput : IAgentOutput
+    public class FunctionalAnalystAgentOutput : IAgentOutput
     {
         public string BusinessRequirements { get; set; } = string.Empty;
         public int TokenCount { get; set; }
