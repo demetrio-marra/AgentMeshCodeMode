@@ -32,7 +32,7 @@ An array of typed sub-query objects for QMD, with exactly two fields:
 
 Type semantics:
 - "vec"  - natural language question/statement for semantic/embedding search
-- "lex"  - BM25 keyword query; quoted phrases/domain terms/identifiers; NO full sentences
+- "lex"  - BM25 keyword query; quoted phrases/domain terms/identifiers; NO full sentences; NEVER use double quotes (single quotes allowed)
 - "hyde" - short paragraph written as if from the ideal answer document
 
 Slot ordering rules (strict):
@@ -43,6 +43,7 @@ Slot ordering rules (strict):
 
 Do NOT pad slot count.
 Do NOT use full sentences in "lex".
+Do NOT use double quotes in "lex" queries; single quotes are allowed.
 Do NOT duplicate semantic content across slots.
 
 # Output format
