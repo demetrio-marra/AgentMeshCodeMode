@@ -27,6 +27,15 @@ namespace AgentMesh.Application.Services
                 new() { Role = AgentMessageRole.System, Content = $"Business Requirements:\n{input.BusinessRequirements}" }
             };
 
+            if (!string.IsNullOrWhiteSpace(input.TechnicalSpecification))
+            {
+                inputMessages.Add(new AgentMessage
+                {
+                    Role = AgentMessageRole.System,
+                    Content = $"Technical Specification:\n{input.TechnicalSpecification}"
+                });
+            }
+
             var knowledgeBaseDocumentsContent = FormatKnowledgeBaseDocumentsContent(input.KnowledgeBaseAPIDocumentsContent);
             if (!string.IsNullOrWhiteSpace(knowledgeBaseDocumentsContent))
             {

@@ -394,6 +394,7 @@ ADDITIONAL NICE TO HAVE GUIDELINES
 INPUTS
 
 - Business Requirements: describe what the program must do, expected payload, constraints.
+- Technical Specification (optional): when provided, contains implementation-level guidance such as which APIs to call, in what order, how to handle specific cases, and how to structure the logic. You MUST follow these instructions precisely. They take precedence over your own judgment but never override the Hard Requirements or API Documentation.
 - Available company APIs: technical documentation of company APIs (inputs, outputs, error codes, etc). Always trust this as the source of truth for API behavior.
 Use ONLY these inputs. Do not assume anything that is not present in the inputs.
 

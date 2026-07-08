@@ -6,6 +6,8 @@ namespace AgentMesh.Models.Coder
     {
         public string BusinessRequirements { get; set; } = string.Empty;
 
+        public string TechnicalSpecification { get; set; } = string.Empty;
+
         /// <summary>
         /// Pre-fetched API documentation produced by the knowledge base service.
         /// Empty collection when no relevant documentation was found.

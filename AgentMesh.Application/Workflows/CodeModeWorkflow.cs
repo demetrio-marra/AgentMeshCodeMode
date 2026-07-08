@@ -836,15 +836,18 @@ namespace AgentMesh.Application.Workflows
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Coder Agent...");
             var businessRequirements = state.BusinessRequirements ?? "(No business requirements)";
+            var technicalSpecification = state.TechnicalSpecification ?? "(No technical specification)";
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Coder Agent", new Dictionary<string, string>
             {
                 { "BusinessRequirements", businessRequirements },
+                { "TechnicalSpecification", technicalSpecification },
                 { "KnowledgeBaseAPIDocuments", state.KnowledgeBaseAPIDocumentsContent.Any() ? ToBulletList(state.KnowledgeBaseAPIDocumentsContent.Select(s => s.File)) : "(No documents)" }
             });
 
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
             {
                 BusinessRequirements = businessRequirements,
+                TechnicalSpecification = technicalSpecification,
                 KnowledgeBaseAPIDocumentsContent = state.KnowledgeBaseAPIDocumentsContent.Select(doc => new KnowledgeBaseGetDocsOutputItem
                 {
                     File = doc.File,
