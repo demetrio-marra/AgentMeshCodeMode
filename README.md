@@ -13,16 +13,17 @@ A multi-agent AI workflow that leverages **dynamic JavaScript code generation** 
 
 ## :sparkles: Features
 
-- **Multi-agent orchestrated workflow** — specialized agents collaborate in a pipeline: routing, context analysis, business requirements extraction, code generation, static analysis, code fixing, execution, failure detection, and result presentation.
-- **Dynamic code generation** — the Coder agent generates JavaScript code targeting your company's predefined API surface.
-- **Sandboxed code execution** — generated code runs in an isolated JavaScript sandbox ([JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox)), deployed separately for security and isolation.
-- **Self-healing code pipeline** — static analysis and runtime failure detection agents feed back into a Code Fixer agent, iterating automatically to resolve issues.
-- **Semantic search with Qdrant** — retrieves contextual facts from a vector database (business processes, domain knowledge) relevant to the user's actionable requirements.
-- **Conversation summarization** — a dedicated agent summarizes growing conversation history to keep context manageable within token limits.
-- **Intelligent routing** — a Router agent classifies user intent and dispatches to the appropriate workflow branch (code generation, business advisory, or personal assistant).
-- **Multi-provider LLM support** — configure different LLM providers (HuggingFace, Together, Fireworks AI, or any OpenAI-compatible endpoint) per agent.
-- **Per-agent configuration** — each agent has its own LLM model, temperature, and system prompt, all configurable via `appsettings.json`.
-- **Token usage tracking** — tracks input/output token consumption per agent for cost monitoring.
+- **Multi-agent orchestrated workflow** – specialized agents collaborate in a pipeline: intent extraction, canonicalization, requirements collection, functional analysis, technical analysis, code generation, code fixing, execution, failure detection, and result presentation.
+- **Dynamic code generation** – the Coder agent generates JavaScript code targeting your company's predefined API surface.
+- **Sandboxed code execution** – generated code runs in an isolated JavaScript sandbox ([JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox)), deployed separately for security and isolation.
+- **Self-healing code pipeline** – static analysis and runtime failure detection agents feed back into a Code Fixer agent, iterating automatically to resolve issues.
+- **Semantic search with Qdrant** – retrieves contextual facts from a vector database (business processes, domain knowledge) relevant to the user's actionable requirements.
+- **Conversation summarization** – a dedicated agent summarizes growing conversation history to keep context manageable within token limits.
+- **Agent memory system** – leverages Mem0 for persistent, context-aware agent memory across conversations.
+- **MCP-based knowledge access** – integrates with QMD (Query Model Protocol) server for accessing knowledge bases and documentation.
+- **Multi-provider LLM support** – configure different LLM providers (HuggingFace, Together, Fireworks AI, or any OpenAI-compatible endpoint) per agent.
+- **Per-agent configuration** – each agent has its own LLM model, temperature, and system prompt, all configurable via `appsettings.json`.
+- **Token usage tracking** – tracks input/output token consumption per agent for cost monitoring.
 
 ## :building_construction: Architecture
 
@@ -33,56 +34,85 @@ A multi-agent AI workflow that leverages **dynamic JavaScript code generation** 
                  |
                  v
 +--------------------------+
-|   Context Analyzer Agent |----> Extracts relevant context & actionable
-+--------------------------+      requirements from conversation history
+|   Intent Extractor Agent |----> Extracts user intent from input
++--------------------------+
              |
              v
 +--------------------------+
-|        Router Agent      |----> Classifies intent -> routes to branch
+|  Intent Canonicalization |----> Normalizes intent format
+|        Agent             |
 +--------------------------+
-   |             |       |
-   v             v       v
-+--------+   +---------+  +------------------------+
-|Personal|   |Business |  |   Code Generation      |
-|Assistant   |Advisor  |  |   Pipeline             |
-+--------+   +---------+  |                        |
-                          |  +------------------+  |
-                          |  |Biz Requirements  |  |
-                          |  |Creator + Qdrant  |  |
-                          |  +------------------+  |
-                          |          |             |
-                          |  +------------------+  |
-                          |  |   Coder Agent    |  |
-                          |  +------------------+  |
-                          |          |             |
-                          |  +------------------+  |----> Code Fixer
-                          |  | Static Analyzer  |  |      (iterative)
-                          |  +------------------+  |
-                          |          |             |
-                          |  +------------------+  |----> Failure Detector
-                          |  | JS Sandbox Exec  |  |      + Code Fixer
-                          |  +------------------+  |      (iterative)
-                          |          |             |
-                          |  +------------------+  |
-                          |  |Results Presenter |  |
-                          |  +------------------+  |
-                          +------------------------+
+             |
+             v
++--------------------------+
+| Requirements Collector   |----> Transforms intent into structured
+|        Agent             |      requirements; queries QDrant/QMD
++--------------------------+
+             |
+             v
++--------------------------+
+| Functional Analyst Agent |----> Analyzes business requirements
++--------------------------+
+             |
+             v
++--------------------------+
+| Technical Analyst Agent  |----> Analyzes technical feasibility
++--------------------------+
+             |
+             v
++--------------------------+
+| Relevant Facts Evaluator |----> Filters and ranks relevant facts
+|        Agent             |      from knowledge base
++--------------------------+
+             |
+             v
++--------------------------+
+|    Coder Agent           |----> Generates JavaScript code against
++--------------------------+      predefined API references
+             |
+             v
++--------------------------+
+| Code Fixer Agent         |<---- Iterates on static/runtime errors
+| (with retry loop)        |
++--------------------------+
+             |
+             v
++--------------------------+
+|   JS Sandbox Executor    |----> Executes code in isolated environment
++--------------------------+
+             |
+             v
++--------------------------+
+| Code Execution Failures  |----> Detects and analyzes runtime failures
+|  Detector Agent          |
++--------------------------+
+             |
+             v
++--------------------------+
+| Documentation Agent      |----> Generates human-readable output
+|   & Results Presenter    |
++--------------------------+
+
+### Side-by-side Services
+
+- **Conversation Summarizer Agent** – runs periodically to compress conversation history
+- **Personal Assistant Agent** – handles general conversational queries
+- **Domain Expert Agent** – provides domain-specific guidance and context
+- **Agent Memory Executor** – manages persistent agent memory via Mem0
 ```
-
-### Conversation Summarizer
-
-A dedicated **Conversation Summarizer** agent runs in the background to compress conversation history when it exceeds a configurable token threshold, preserving the most recent messages while summarizing older context.
 
 ## :file_folder: Project Structure
 
 | Project | Description |
 |---|---|
-| `AgentMesh` | Core domain — agent interfaces, models, and contracts |
+| `AgentMesh` | Core domain – agent interfaces, models, and contracts |
 | `AgentMesh.Application` | Agent implementations, workflow orchestration, configuration models |
 | `AgentMeshCLI` | Console application entry point and DI composition root |
 | `AgentMesh.Infrastructure.OpenAIClient` | OpenAI-compatible API client with multi-provider support |
 | `AgentMesh.Infrastructure.JSSandbox` | Client for the external [JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) service |
-| `AgentMesh.Infrastructure.SemanticSearch` | Qdrant vector database integration for semantic search |
+| `AgentMesh.Infrastructure.QDrant` | Qdrant vector database integration for semantic search and caching |
+| `AgentMesh.Infrastructure.Mem0` | Mem0 agent memory service integration for persistent context |
+| `AgentMesh.Infrastructure.QMD` | Query Model Protocol (MCP) server integration for knowledge access |
 
 ## :rocket: Getting Started
 
@@ -91,6 +121,8 @@ A dedicated **Conversation Summarizer** agent runs in the background to compress
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - A running [Qdrant](https://qdrant.tech/) instance for semantic search
 - A deployed [JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) instance for sandboxed code execution
+- A [Mem0](https://mem0.ai/) instance for agent memory (optional but recommended)
+- A [QMD/MCP](https://modelcontextprotocol.io/) server for knowledge base access (optional)
 - API keys for your chosen LLM provider(s) (HuggingFace, Together, Fireworks AI, etc.)
 
 ### Setup
@@ -109,12 +141,14 @@ A dedicated **Conversation Summarizer** agent runs in the background to compress
 3. **Configure `appsettings.json`**
 
    Edit `AgentMeshCLI/appsettings.json` to set:
-   - **LLM providers** — endpoints and API keys (via environment variables) under `InferenceProviders`
-   - **LLMs** — model names and providers for each tier under `LLMs`
-   - **Agent settings** — per-agent LLM assignment, temperature, and system prompt files under `Agents`
-   - **Qdrant** — host, port, and collection name under `QDrantSemanticSearchService`
-   - **Embedding** — model endpoint and name under `Embedding`
-   - **Sandbox** — URL and sandbox name under `SESJSSandbox`
+   - **LLM providers** – endpoints and API keys (via environment variables) under `InferenceProviders`
+   - **LLMs** – model names and providers for each tier under `LLMs`
+   - **Agent settings** – per-agent LLM assignment, temperature, and system prompt files under `Agents`
+   - **Qdrant** – host, port, and collection names under `QDrantQueriesCacheService`
+   - **Embedding** – model endpoint and name under `Embedding`
+   - **Sandbox** – URL and sandbox name under `SESJSSandbox`
+   - **Agent Memory** – Mem0 service URL under `AgentMemoryService`
+   - **QMD** – MCP proxy configuration under `QMDHttpProxy`
 
 4. **Set environment variables** for API keys as required by your LLM providers.
 
@@ -138,18 +172,31 @@ The system is configured entirely through `appsettings.json`. Key sections:
     "FireworksAI": { "Endpoint": "https://api.fireworks.ai/inference/v1/" }
   },
   "LLMs": {
-    "CoderLLM":    { "Model": "...", "Provider": "HuggingFace" },
-    "20B-Class-LLM": { "Model": "...", "Provider": "HuggingFace" }
-    // ...
+    "AnalysisLLM":    { "Model": "...", "Provider": "HuggingFace" },
+    "CoderLLM":       { "Model": "...", "Provider": "HuggingFace" },
+    "CompletionLLM":  { "Model": "...", "Provider": "HuggingFace" }
   },
   "Agents": {
     "Coder": {
       "LLM": "CoderLLM",
       "ModelTemperature": "0.6",
-      "SystemPromptFile": "Prompts/Coder.SystemPrompt.txt",
-      "ApiReferenceFile": "Prompts/MyPlatform_Statistics/ApiReference.txt"
+      "SystemPromptFile": "Prompts/Coder.SystemPrompt.txt"
+    },
+    "CodeFixer": {
+      "LLM": "CoderLLM",
+      "ModelTemperature": "0.7",
+      "SystemPromptFile": "Prompts/CodeFixer.SystemPrompt.txt"
     }
     // ... other agents
+  },
+  "AgentMemoryService": {
+    "BaseUrl": "http://localhost:8000",
+    "TimeoutSeconds": 30
+  },
+  "QDrantQueriesCacheService": {
+    "Host": "localhost",
+    "Port": 6333,
+    "CollectionName": "queries_cache"
   }
 }
 ```
@@ -160,24 +207,28 @@ Each agent can use a different LLM tier, allowing cost optimization by assigning
 
 | Agent | Role |
 |---|---|
-| **Context Analyzer** | Extracts relevant context and actionable requirements from conversation history |
-| **Router** | Classifies user intent and dispatches to the appropriate workflow branch |
-| **Business Requirements Creator** | Transforms user requests into structured business requirements; queries Qdrant for related domain facts |
-| **Business Advisor** | Answers business-related questions using domain knowledge |
+| **Intent Extractor** | Extracts user intent and actionable requirements from input |
+| **Intent Canonicalization** | Normalizes and standardizes intent representation |
+| **Requirements Collector** | Transforms user requests into structured business requirements; queries knowledge base |
+| **Functional Analyst** | Analyzes business requirements and feasibility |
+| **Technical Analyst** | Validates technical approach and architecture |
+| **Domain Expert** | Provides domain-specific guidance and contextual knowledge |
+| **Relevant Facts Evaluator** | Filters and prioritizes relevant facts from knowledge base |
 | **Coder** | Generates JavaScript code against predefined API references |
-| **Code Static Analyzer** | Validates generated code for correctness and code smells |
 | **Code Fixer** | Repairs code based on static analysis or runtime error feedback |
 | **Code Execution Failures Detector** | Analyzes sandbox execution results for runtime failures |
-| **Results Presenter** | Formats and presents execution results to the user |
-| **Personal Assistant** | Handles general conversational queries |
+| **Documentation Agent** | Generates formatted documentation and presents results |
+| **Personal Assistant** | Handles general conversational queries and small talk |
 | **Conversation Summarizer** | Compresses conversation history to stay within token limits |
 
 ## :link: External Dependencies
 
-| Service | Purpose | Repository |
+| Service | Purpose | Reference |
 |---|---|---|
 | **JSCodeSandbox** | Sandboxed JavaScript execution environment | [github.com/demetrio-marra/JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) |
-| **Qdrant** | Vector database for semantic search | [qdrant.tech](https://qdrant.tech/) |
+| **Qdrant** | Vector database for semantic search and query caching | [qdrant.tech](https://qdrant.tech/) |
+| **Mem0** | Agent memory and context persistence service | [mem0.ai](https://mem0.ai/) |
+| **Model Context Protocol (MCP)** | Knowledge base access and document retrieval | [modelcontextprotocol.io](https://modelcontextprotocol.io/) |
 
 ## :gear: Tech Stack
 
@@ -186,6 +237,8 @@ Each agent can use a different LLM tier, allowing cost optimization by assigning
 - **OpenAI SDK** (OpenAI-compatible API client)
 - **Qdrant.Client** for vector search
 - **Polly** for resilience and retry policies
+- **Mem0 SDK** for agent memory
+- **Model Context Protocol** for knowledge access
 
 ## :page_facing_up: License
 
