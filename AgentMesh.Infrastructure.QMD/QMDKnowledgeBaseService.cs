@@ -75,7 +75,7 @@ namespace AgentMesh.Infrastructure.QMD
         }
 
 
-        public async Task<KnowledgeBaseQueryResult> FindAsync(KnowledgeBaseQueryInput query, CancellationToken cancellationToken = default)
+        public async Task<KnowledgeBaseQueryResult> FindAsync(KnowledgeBaseQueryInput query, bool rerank = true, CancellationToken cancellationToken = default)
         {
             var dbQuery = new DTOs.Query.QueryToolRequest
             {
@@ -85,7 +85,7 @@ namespace AgentMesh.Infrastructure.QMD
                     Query = q.Query
                 })],
                 Collections = [.. query.Collections],
-                Rerank = true,
+                Rerank = rerank,
                 Intent = query.UserIntent
             };
 

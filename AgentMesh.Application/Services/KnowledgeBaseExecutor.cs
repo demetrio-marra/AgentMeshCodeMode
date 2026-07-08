@@ -1,12 +1,16 @@
-﻿using AgentMesh.Application.Contracts;
+﻿using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Contracts;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services
 {
-    public class KnowledgeBaseExecutor(IKnowledgeBaseService knowledgeBaseService) : IKnowledgeBaseSearchExecutor, IKnowledgeBaseGetDocsExecutor
+    public class KnowledgeBaseExecutor(
+        IKnowledgeBaseService knowledgeBaseService,
+        CodeModeWorkflowConfiguration codeModeWorkflowConfiguration) : IKnowledgeBaseSearchExecutor, IKnowledgeBaseGetDocsExecutor
     {
         private readonly IKnowledgeBaseService _knowledgeBaseService = knowledgeBaseService;
+        private readonly CodeModeWorkflowConfiguration _codeModeWorkflowConfiguration = codeModeWorkflowConfiguration;
 
         async Task<KnowledgeBaseGetDocsOutput> IExecutor<KnowledgeBaseGetDocsInput, KnowledgeBaseGetDocsOutput>.ExecuteAsync(KnowledgeBaseGetDocsInput input, CancellationToken cancellationToken)
         {
@@ -27,7 +31,7 @@ namespace AgentMesh.Application.Services
                 throw new ArgumentException("Input cannot be null or empty.", nameof(input));
             }
 
-            var result = await _knowledgeBaseService.FindAsync(input, cancellationToken);
+            var result = await _knowledgeBaseService.FindAsync(input, _codeModeWorkflowConfiguration.RerankOnHybridSearch, cancellationToken);
 
             return new KnowledgeBaseQueryResult
             {

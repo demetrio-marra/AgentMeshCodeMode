@@ -36,12 +36,13 @@ namespace AgentMesh.Application.Contracts
         Task<KnowledgeBaseQueryResult> SemanticSearchAsync(IEnumerable<string> searchTerms, IEnumerable<string>? collections = null, bool rerank = true, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Performs both keyword and semantic search using the specified search terms and returns matching knowledge base results asynchronously. Also reranks automatically for improved relevance.
+        /// Performs both keyword and semantic search using the specified search terms and returns matching knowledge base results asynchronously.
         /// </summary>
         /// <param name="query">A collection of search terms to use for the search. Each term is compared against the knowledge base.</param>
+        /// <param name="rerank">If <see langword="true"/>, the results are re-ranked for improved relevance; otherwise, the default ranking is used.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
         /// <returns>A <see cref="KnowledgeBaseQueryResult"/> object containing the results of the search. The object is empty if no matches are found.</returns>
-        Task<KnowledgeBaseQueryResult> FindAsync(KnowledgeBaseQueryInput query, CancellationToken cancellationToken = default);
+        Task<KnowledgeBaseQueryResult> FindAsync(KnowledgeBaseQueryInput query, bool rerank = true, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Asynchronously retrieves the content of multiple knowledge base entries identified by the specified file names.
