@@ -133,6 +133,29 @@ namespace AgentMesh
 
             services.AddSingleton<IFunctionalAnalystAgent, FunctionalAnalystAgent>();
 
+            // DomainExpert agent config and client
+            services
+                .AddOptions<DomainExpertAgentConfiguration>()
+                .Bind(configuration.GetSection(DomainExpertAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<DomainExpertAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(DomainExpertAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<DomainExpertAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IDomainExpertAgent, DomainExpertAgent>();
+
             // TechnicalAnalyst agent config and client
             services
                 .AddOptions<TechnicalAnalystAgentConfiguration>()
