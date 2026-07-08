@@ -162,7 +162,7 @@ namespace AgentMesh
 
                 if (_workflowConfiguration.EnableDomainExpert)
                 {
-                    agentInputCosts.Add(DomainExpertAgentConfiguration.AgentName, _llmsConfiguration[_domainExpertConfiguration.LLM].CostPerMillionOutputTokens);
+                    agentOutputCosts.Add(DomainExpertAgentConfiguration.AgentName, _llmsConfiguration[_domainExpertConfiguration.LLM].CostPerMillionOutputTokens);
                 }
 
                 ConsoleHelper.WriteLineWithColor($"\n\nConversation status: Count of messages {conversationContext.Conversation.Count()}. Count of tokens: {conversationContext.TokensCount}\n", ConsoleColor.Gray);

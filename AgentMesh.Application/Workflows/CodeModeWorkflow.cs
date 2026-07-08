@@ -25,7 +25,6 @@ using AgentMesh.Models.QueriesCache;
 using AgentMesh.Models.FunctionalAnalyst;
 using AgentMesh.Models.TechnicalAnalyst;
 using AgentMesh.Models.DomainExpert;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Workflows
 {
@@ -773,7 +772,7 @@ namespace AgentMesh.Application.Workflows
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"[{kvp.Key}] {v}"))) : "(No entities)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
                 { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
-                { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() }
+                { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(d => d.File)) : "(No documents)" }
             });
 
             var functionalAnalystOutput = await _functionalAnalystAgent.ExecuteAsync(new FunctionalAnalystAgentInput
@@ -783,7 +782,8 @@ namespace AgentMesh.Application.Workflows
                 Entities = state.ClassifiedUserRequest.EntitiesByDomain,
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
                 AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
-                KnowledgeBaseDocumentsContent = SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent)
+                KnowledgeBaseDocumentsContent = SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent),
+                DoNotComment = _workflowConfiguration.EnableDomainExpert
             }, cancellationToken);
 
             state.ShouldEngageCoder = true;
@@ -808,7 +808,7 @@ namespace AgentMesh.Application.Workflows
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"[{kvp.Key}] {v}"))) : "(No entities)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
                 { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
-                { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() }
+                { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(d => d.File)) : "(No documents)" }
             });
 
             var technicalAnalystOutput = await _technicalAnalystAgent.ExecuteAsync(new TechnicalAnalystAgentInput
@@ -840,7 +840,7 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Coder Agent", new Dictionary<string, string>
             {
                 { "BusinessRequirements", businessRequirements },
-                { "KnowledgeBaseAPIDocuments", state.KnowledgeBaseAPIDocumentsContent.Any() ? SerializeDocumentation(state.KnowledgeBaseAPIDocumentsContent) : "(No documents)" }
+                { "KnowledgeBaseAPIDocuments", state.KnowledgeBaseAPIDocumentsContent.Any() ? ToBulletList(state.KnowledgeBaseAPIDocumentsContent.Select(s => s.File)) : "(No documents)" }
             });
 
             var coderAgentOutput = await _coderAgent.ExecuteAsync(new CoderAgentInput
@@ -1030,7 +1030,7 @@ namespace AgentMesh.Application.Workflows
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"[{kvp.Key}] {v}"))) : "(No entities)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
                 { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
-                { "DomainsKnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() }
+                { "DomainsKnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(d => d.File)) : "(No documents)" }
             });
 
             var serializedDocumentation = SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent);
@@ -1071,7 +1071,7 @@ namespace AgentMesh.Application.Workflows
                 { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"[{kvp.Key}] {v}"))) : "(No entities)" },
                 { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
                 { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
-                { "DomainsKnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Count().ToString() },
+                { "DomainsKnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(d => d.File)) : "(No documents)" },
                 { "DataToComment", string.IsNullOrWhiteSpace(dataToComment) ? "(No sandbox result)" : dataToComment }
             });
 

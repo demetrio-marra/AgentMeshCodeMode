@@ -69,6 +69,15 @@ namespace AgentMesh.Application.Services
                 inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"KnowledgeBaseDocumentsContent: {input.KnowledgeBaseDocumentsContent}" });
             }
 
+            if (input.DoNotComment)
+            {
+                inputMessages.Add(new AgentMessage
+                {
+                    Role = AgentMessageRole.System,
+                    Content = "IMPORTANT REQUIREMENT: In `businessRequirements`, you MUST EXPLICITLY instruct the Coder Agent to produce a program that ONLY RETURNS DATA and DOES NOT add comments, insights, explanations, or narrative text in its output."
+                });
+            }
+
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.Intent });
 

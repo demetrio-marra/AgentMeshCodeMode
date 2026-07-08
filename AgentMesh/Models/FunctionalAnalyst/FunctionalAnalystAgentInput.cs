@@ -8,5 +8,6 @@
         public IEnumerable<string> UserPreferences { get; set; } = [];
         public IEnumerable<string> AgentMemories { get; set; } = [];
         public string KnowledgeBaseDocumentsContent { get; set; } = string.Empty;
+        public bool DoNotComment { get; set; }
     }
 }
