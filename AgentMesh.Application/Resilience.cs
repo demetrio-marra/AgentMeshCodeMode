@@ -3,6 +3,7 @@ using AgentMesh.Application.Exceptions;
 using Microsoft.Extensions.Logging;
 using Polly;
 using System.Net;
+using System.Net.Sockets;
 
 namespace AgentMesh.Application
 {
@@ -58,6 +59,7 @@ namespace AgentMesh.Application
                 .Handle<HttpRequestException>()
                 .Or<TaskCanceledException>()   // client-side timeout (HttpClient.Timeout firing)
                 .Or<TimeoutException>()        // e.g. Polly TimeoutPolicy, if you chain one in front of this
+                .Or<Exception>(IsHostNotFoundException)
                 .OrResult<HttpResponseMessage>(response =>
                     (int)response.StatusCode >= 500 ||
                     response.StatusCode == HttpStatusCode.RequestTimeout ||
@@ -90,5 +92,29 @@ namespace AgentMesh.Application
 
             return policy.ExecuteAsync(action);
         }
+
+        private static bool IsHostNotFoundException(Exception ex)
+        {
+            if (ex is SocketException socketEx)
+            {
+                return socketEx.SocketErrorCode == SocketError.HostNotFound
+                    || socketEx.SocketErrorCode == SocketError.NoData
+                    || socketEx.SocketErrorCode == SocketError.TryAgain;
+            }
+
+            if (ex is HttpRequestException httpRequestException && httpRequestException.InnerException is SocketException innerSocketEx)
+            {
+                return innerSocketEx.SocketErrorCode == SocketError.HostNotFound
+                    || innerSocketEx.SocketErrorCode == SocketError.NoData
+                    || innerSocketEx.SocketErrorCode == SocketError.TryAgain;
+            }
+
+            // Fallback for platform/runtime-specific wrapping where socket error code is not exposed.
+            return ex.Message.Contains("host not found", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("no such host", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("name or service not known", StringComparison.OrdinalIgnoreCase)
+                || ex.Message.Contains("temporary failure in name resolution", StringComparison.OrdinalIgnoreCase);
+        }
     }
 }
+

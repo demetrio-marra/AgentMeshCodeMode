@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using AgentMesh.Application;
 using AgentMesh.Infrastructure.QMD.Configuration;
 using AgentMesh.Infrastructure.QMD.DTOs.Get;
 using AgentMesh.Infrastructure.QMD.DTOs.JsonRpc;
@@ -28,6 +29,7 @@ namespace AgentMesh.Infrastructure.QMD
         private readonly HttpClient _httpClient;
         private readonly QMDHttpProxyConfiguration _configuration;
         private readonly ILogger<QMDHttpProxy> _logger;
+        private readonly Resilience _resilience;
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly SemaphoreSlim _handshakeLock = new(1, 1);
 
@@ -38,11 +40,13 @@ namespace AgentMesh.Infrastructure.QMD
         public QMDHttpProxy(
             HttpClient httpClient,
             QMDHttpProxyConfiguration configuration,
-            ILogger<QMDHttpProxy> logger)
+            ILogger<QMDHttpProxy> logger,
+            Resilience resilience)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _logger = logger;
+            _resilience = resilience;
 
             _httpClient.BaseAddress = new Uri(_configuration.BaseUrl, UriKind.Absolute);
             _httpClient.Timeout = TimeSpan.FromSeconds(_configuration.TimeoutSeconds);
@@ -214,11 +218,17 @@ namespace AgentMesh.Infrastructure.QMD
             JsonRpcRequest<TParams> request,
             CancellationToken cancellationToken)
         {
-            using var httpRequest = BuildHttpRequest(request);
-            using var httpResponse = await _httpClient.SendAsync(
-                httpRequest,
-                HttpCompletionOption.ResponseContentRead,
-                cancellationToken).ConfigureAwait(false);
+            using var httpResponse = await _resilience.SendWithRetryAsync(
+                async () =>
+                {
+                    using var httpRequest = BuildHttpRequest(request);
+                    return await _httpClient.SendAsync(
+                        httpRequest,
+                        HttpCompletionOption.ResponseContentRead,
+                        cancellationToken).ConfigureAwait(false);
+                },
+                $"MCP request '{request.Method}'",
+                _logger).ConfigureAwait(false);
 
             CaptureSessionId(httpResponse);
 
@@ -247,11 +257,17 @@ namespace AgentMesh.Infrastructure.QMD
             JsonRpcRequest<TParams> notification,
             CancellationToken cancellationToken)
         {
-            using var httpRequest = BuildHttpRequest(notification);
-            using var httpResponse = await _httpClient.SendAsync(
-                httpRequest,
-                HttpCompletionOption.ResponseContentRead,
-                cancellationToken).ConfigureAwait(false);
+            using var httpResponse = await _resilience.SendWithRetryAsync(
+                async () =>
+                {
+                    using var httpRequest = BuildHttpRequest(notification);
+                    return await _httpClient.SendAsync(
+                        httpRequest,
+                        HttpCompletionOption.ResponseContentRead,
+                        cancellationToken).ConfigureAwait(false);
+                },
+                $"MCP notification '{notification.Method}'",
+                _logger).ConfigureAwait(false);
 
             CaptureSessionId(httpResponse);
 
