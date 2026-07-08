@@ -20,7 +20,7 @@ A multi-agent AI workflow that leverages **dynamic JavaScript code generation** 
 - **Semantic search with Qdrant** – retrieves contextual facts from a vector database (business processes, domain knowledge) relevant to the user's actionable requirements.
 - **Conversation summarization** – a dedicated agent summarizes growing conversation history to keep context manageable within token limits.
 - **Agent memory system** – leverages Mem0 for persistent, context-aware agent memory across conversations.
-- **MCP-based knowledge access** – integrates with QMD (Query Model Protocol) server for accessing knowledge bases and documentation.
+- **Knowledge base integration** – integrates with QMD for accessing knowledge bases and documentation.
 - **Multi-provider LLM support** – configure different LLM providers (HuggingFace, Together, Fireworks AI, or any OpenAI-compatible endpoint) per agent.
 - **Per-agent configuration** – each agent has its own LLM model, temperature, and system prompt, all configurable via `appsettings.json`.
 - **Token usage tracking** – tracks input/output token consumption per agent for cost monitoring.
@@ -112,7 +112,7 @@ A multi-agent AI workflow that leverages **dynamic JavaScript code generation** 
 | `AgentMesh.Infrastructure.JSSandbox` | Client for the external [JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) service |
 | `AgentMesh.Infrastructure.QDrant` | Qdrant vector database integration for semantic search and caching |
 | `AgentMesh.Infrastructure.Mem0` | Mem0 agent memory service integration for persistent context |
-| `AgentMesh.Infrastructure.QMD` | Query Model Protocol (MCP) server integration for knowledge access |
+| `AgentMesh.Infrastructure.QMD` | QMD knowledge base and documentation integration for knowledge access |
 
 ## :rocket: Getting Started
 
@@ -122,7 +122,7 @@ A multi-agent AI workflow that leverages **dynamic JavaScript code generation** 
 - A running [Qdrant](https://qdrant.tech/) instance for semantic search
 - A deployed [JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) instance for sandboxed code execution
 - A [Mem0](https://mem0.ai/) instance for agent memory (optional but recommended)
-- A [QMD/MCP](https://modelcontextprotocol.io/) server for knowledge base access (optional)
+- A [QMD](https://github.com/tobi/qmd) instance for knowledge base access (optional)
 - API keys for your chosen LLM provider(s) (HuggingFace, Together, Fireworks AI, etc.)
 
 ### Setup
@@ -148,7 +148,7 @@ A multi-agent AI workflow that leverages **dynamic JavaScript code generation** 
    - **Embedding** – model endpoint and name under `Embedding`
    - **Sandbox** – URL and sandbox name under `SESJSSandbox`
    - **Agent Memory** – Mem0 service URL under `AgentMemoryService`
-   - **QMD** – MCP proxy configuration under `QMDHttpProxy`
+   - **QMD** – QMD proxy configuration under `QMDHttpProxy`
 
 4. **Set environment variables** for API keys as required by your LLM providers.
 
@@ -228,7 +228,7 @@ Each agent can use a different LLM tier, allowing cost optimization by assigning
 | **JSCodeSandbox** | Sandboxed JavaScript execution environment | [github.com/demetrio-marra/JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) |
 | **Qdrant** | Vector database for semantic search and query caching | [qdrant.tech](https://qdrant.tech/) |
 | **Mem0** | Agent memory and context persistence service | [mem0.ai](https://mem0.ai/) |
-| **Model Context Protocol (MCP)** | Knowledge base access and document retrieval | [modelcontextprotocol.io](https://modelcontextprotocol.io/) |
+| **QMD** | Knowledge base and documentation access | [github.com/tobi/qmd](https://github.com/tobi/qmd) |
 
 ## :gear: Tech Stack
 
@@ -238,7 +238,7 @@ Each agent can use a different LLM tier, allowing cost optimization by assigning
 - **Qdrant.Client** for vector search
 - **Polly** for resilience and retry policies
 - **Mem0 SDK** for agent memory
-- **Model Context Protocol** for knowledge access
+- **QMD** for knowledge base integration
 
 ## :page_facing_up: License
 
