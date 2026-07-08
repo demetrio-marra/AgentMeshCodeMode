@@ -161,12 +161,18 @@ namespace AgentMesh.Application.Workflows
                         }
                     }
 
-                    await ExecuteDomainExpertAgentAsync(state);
+                    if (_workflowConfiguration.EnableDomainExpert)
+                    {
+                        await ExecuteDomainExpertAgentAsync(state);
+                    }
                     await CompleteWorkflowAsync(state);
                 }
                 else
                 {
-                    await ExecuteDomainExpertAgentAsync(state);
+                    if (_workflowConfiguration.EnableDomainExpert)
+                    {
+                        await ExecuteDomainExpertAgentAsync(state);
+                    }
                     await CompleteWorkflowAsync(state);
                 }
                 goto WorkflowEnd;
