@@ -89,6 +89,7 @@ namespace AgentMesh.Application.Services
                 TechnicalSpecification = result.Result.TechnicalSpecification,
                 RequestRejected = result.Result.RequestRejected,
                 ReasonOfRejection = result.Result.ReasonOfRejection,
+                SelectedAPIsFileLocations = result.Result.SelectedAPIsFileLocations,
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount
@@ -124,6 +125,11 @@ namespace AgentMesh.Application.Services
                     responseDTO.ReasonOfRejection = null;
                 }
 
+                if (responseDTO.SelectedAPIsFileLocations == null)
+                {
+                    responseDTO.SelectedAPIsFileLocations = Array.Empty<string>();
+                }
+
                 return responseDTO;
             }
             catch (JsonException ex)
@@ -144,6 +150,9 @@ namespace AgentMesh.Application.Services
 
             [JsonPropertyName("reasonOfRejection")]
             public string? ReasonOfRejection { get; set; }
+
+            [JsonPropertyName("selectedAPIsFileLocations")]
+            public IEnumerable<string> SelectedAPIsFileLocations { get; set; } = Array.Empty<string>();
         }
     }
 }
