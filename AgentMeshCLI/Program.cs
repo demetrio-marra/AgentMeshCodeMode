@@ -2,6 +2,7 @@ using AgentMesh.Application;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
+using AgentMesh.Application.Services.Executors;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.Mem0.Configuration;
 using AgentMesh.Infrastructure.Mem0.Services;
@@ -420,6 +421,28 @@ namespace AgentMesh
             services.AddSingleton<IJSSandbox, SESJSSandboxClient>();
 
             services.AddSingleton<IWorkflowProgressNotifier, ConsoleWorkflowProgressNotifier>();
+
+            services.AddSingleton<KnowledgeBaseDocumentsExtractorWorkflowExecutor>();
+            services.AddSingleton<DomainsKnowledgeBaseDocumentsExtractorWorkflowExecutor>();
+            services.AddSingleton<APIKnowledgeBaseDocumentsExtractorWorkflowExecutor>();
+            services.AddSingleton<IntentExtractorWorkflowExecutor>();
+            services.AddSingleton<IntentCanonicalizationWorkflowExecutor>();
+            services.AddSingleton<RequirementsCollectorWorkflowExecutor>();
+            services.AddSingleton<AgentMemoryServiceWorkflowExecutor>();
+            services.AddSingleton<KnowledgeBaseServiceSearchWorkflowExecutor>();
+            services.AddSingleton<DomainsKnowledgeBaseServiceSearchWorkflowExecutor>();
+            services.AddSingleton<APIsKnowledgeBaseServiceSearchWorkflowExecutor>();
+            services.AddSingleton<KnowledgeBaseServiceFastSearchWorkflowExecutor>();
+            services.AddSingleton<DomainsKnowledgeBaseServiceFastSearchWorkflowExecutor>();
+            services.AddSingleton<APIsKnowledgeBaseServiceFastSearchWorkflowExecutor>();
+            services.AddSingleton<FunctionalAnalystWorkflowExecutor>();
+            services.AddSingleton<TechnicalAnalystWorkflowExecutor>();
+            services.AddSingleton<CoderWorkflowExecutor>();
+            services.AddSingleton<CodeFixerForRuntimeErrorsWorkflowExecutor>();
+            services.AddSingleton<JSSandboxWorkflowExecutor>();
+            services.AddSingleton<CodeExecutionFailuresDetectorWorkflowExecutor>();
+            services.AddSingleton<DocumentationWorkflowExecutor>();
+            services.AddSingleton<DomainExpertWorkflowExecutor>();
 
             services.AddSingleton<IWorkflow, CodeModeWorkflow>();
             services.AddSingleton<UserConsoleInputService>();
