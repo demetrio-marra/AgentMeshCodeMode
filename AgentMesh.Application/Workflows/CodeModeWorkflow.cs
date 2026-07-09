@@ -121,6 +121,11 @@ namespace AgentMesh.Application.Workflows
 
                 await Task.WhenAll(functionAnalystTask, apisKnowledgeBaseServiceSearchTask);
 
+                if (state.FunctionalAnalystRejected)
+                {
+                    goto CompleteWorkflow;
+                }
+
                 if (state.APISKnowledgeBaseQueryResults.Results.Any())
                 {
                     await ExecuteAPIKnowledgeBaseDocumentsExtractorAsync(state);
@@ -790,12 +795,16 @@ namespace AgentMesh.Application.Workflows
                 DoNotComment = _workflowConfiguration.EnableDomainExpert
             }, cancellationToken);
 
-            state.ShouldEngageCoder = true;
+            state.ShouldEngageCoder = !functionalAnalystOutput.RequestRejected;
             state.BusinessRequirements = functionalAnalystOutput.BusinessRequirements;
+            state.FunctionalAnalystRejected = functionalAnalystOutput.RequestRejected;
+            state.FunctionalAnalystRejectReasons = functionalAnalystOutput.ReasonOfRejection;
             state.AddTokenUsage(FunctionalAnalystAgentConfiguration.AgentName, functionalAnalystOutput.InputTokenCount, functionalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Functional Analyst Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "BusinessRequirements", state.BusinessRequirements ?? "(No business requirements)" },
+                { "FunctionalAnalystRejected", state.FunctionalAnalystRejected.ToString() },
+                { "FunctionalAnalystRejectReasons", state.FunctionalAnalystRejectReasons ?? "(No rejection reasons)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Functional Analyst Agent", notifyDictionary);
@@ -1082,7 +1091,14 @@ namespace AgentMesh.Application.Workflows
             }
             else if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.TaskExecution)
             {
-                if (state.CodeExecutionResultType == SandboxResultType.CallError)
+                if (state.FunctionalAnalystRejected)
+                {
+                    data = $"""
+                            The request made by the user was rejected. The reason for rejection is as follows:
+                            {state.FunctionalAnalystRejectReasons}
+                            """;
+                }
+                else if (state.CodeExecutionResultType == SandboxResultType.CallError)
                 {
                     data = state.SandboxResult;
                 }

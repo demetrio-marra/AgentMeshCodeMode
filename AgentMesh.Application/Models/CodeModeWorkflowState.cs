@@ -63,6 +63,8 @@ namespace AgentMesh.Application.Models
 
 
         public string? BusinessRequirements { get; set; }
+        public bool FunctionalAnalystRejected { get; set; }
+        public string? FunctionalAnalystRejectReasons { get; set; }
         public string? TechnicalSpecification { get; set; }
         public bool ShouldEngageCoder { get; set; }
 
