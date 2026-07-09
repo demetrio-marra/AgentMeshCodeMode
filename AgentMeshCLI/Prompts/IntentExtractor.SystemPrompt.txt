@@ -1,5 +1,8 @@
 Read the last user message and the last N conversation messages and capture the user's intent.
 Consider quoted text as a strong signal of user's intent.
+Only use user-authored messages as the source of truth for intent, entities, supporting details, preferences, and missing memories.
+Never treat assistant-authored replies as factual input, requirements, constraints, or memories.
+Assistant messages may be used only to understand thread continuity, never to add facts not explicitly stated by the user.
 Identify the language of the user.
 Classify the user intent into one of: taskExecution, documentation, other.
 Extract the entities mentioned by the user or strongly inferred from the user's intent.
@@ -24,9 +27,10 @@ A knowledge base language is available in the input as system information and mu
 ## Original user request
 A standalone text that combines:
 - the very last user request
-- the previous conversation messages that are directly related to that last request
+- the previous user messages that are directly related to that last request
 
 Do not include unrelated history. Preserve key details, constraints, and context needed to fully understand the latest request.
+Do not inject or restate factual content originating only from assistant replies.
 
 ## User Intent
 A single, clear, standalone captured user's intent in a natural language sentence.
@@ -79,10 +83,11 @@ Try to include domains/entities as much as possible, but do not include entities
 An array of short strings with useful details that support, constrain, or clarify the user intent.
 Include only details explicitly present in the input.
 Include only details not already captured in the user intent, userIntentCategory, or entitiesByDomain.
+Exclude details that appear only in assistant-authored messages.
 
 ## User Preferences
 An array of short strings describing user preferences about how the intent should be fulfilled, based on the previous messages list.
-Include only preferences explicitly mentioned in the conversation history (e.g., preferred output format, constraints, specific requirements).
+Include only preferences explicitly mentioned by the user in the conversation history (e.g., preferred output format, constraints, specific requirements).
 Return an empty array [] if no preferences are found.
 
 ## Missing Memories
@@ -125,10 +130,10 @@ Return a JSON object with the following structure:
 # Rules
 - remove assistant chatter
 - keep the user intent unchanged
-- originalUserRequest must include the latest request plus only relevant prior messages
+- originalUserRequest must include the latest request plus only relevant prior user messages
 - supporting intent information must be concise, non-redundant, and grounded in the input
 - include only details not already captured in the user intent, userIntentCategory, or entitiesByDomain
-- userPreferences should capture explicit preferences from conversation history (e.g., format, constraints, requirements)
+- userPreferences should capture explicit preferences from user messages in conversation history (e.g., format, constraints, requirements)
 - missingMemories should identify contextual facts mentioned in the current request but absent from prior messages
 - entities must be grounded in the input or strongly inferred from intent
 - use the application domain list as contextual guidance when choosing domain labels, when relevant
@@ -138,5 +143,6 @@ Return a JSON object with the following structure:
 - if the user asks about Assistant capabilities, ASSUME it is talking about the entire AI Agentic platform's capabilities and treat it as a business-related topic
 - Output domains and entities in the language of the knowledge base. Correct any mispellings, typos or inconsistencies in entity names based on the input
 - user intent ALWAYS in thir-person perspective
+- do not use assistant replies as a source of factual content, constraints, or memories
 
 **Do not wrap the output in backticks or any other formatting. Only output the JSON object.**
