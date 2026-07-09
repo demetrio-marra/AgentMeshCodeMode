@@ -845,12 +845,14 @@ namespace AgentMesh.Application.Workflows
             state.TechnicalSpecification = technicalAnalystOutput.TechnicalSpecification;
             state.TechnicalAnalystRejected = technicalAnalystOutput.RequestRejected;
             state.TechnicalAnalystRejectReasons = technicalAnalystOutput.ReasonOfRejection;
+            state.SelectedAPIsFileLocations = technicalAnalystOutput.SelectedAPIsFileLocations;
             state.AddTokenUsage(AgentMesh.Application.Configuration.TechnicalAnalystAgentConfiguration.AgentName, technicalAnalystOutput.InputTokenCount, technicalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Technical Analyst Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "TechnicalSpecification", state.TechnicalSpecification ?? "(No technical specification)" },
                 { "TechnicalAnalystRejected", state.TechnicalAnalystRejected.ToString() },
                 { "TechnicalAnalystRejectReasons", state.TechnicalAnalystRejectReasons ?? "(No rejection reasons)" },
+                { "SelectedAPIsFileLocations", state.SelectedAPIsFileLocations.Any() ? string.Join(", ", state.SelectedAPIsFileLocations) : "(No selected APIs)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Technical Analyst Agent", notifyDictionary);

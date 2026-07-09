@@ -82,6 +82,9 @@ namespace AgentMesh.Application.Models
         public KnowledgeBaseQueryResult APISKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 
 
+        public IEnumerable<string> SelectedAPIsFileLocations { get; set; } = [];
+
+
 
         public string? DocumentationContent { get; set; }
         public string? GeneratedCode { get; set; }
