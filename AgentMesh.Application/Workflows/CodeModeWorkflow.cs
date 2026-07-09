@@ -228,14 +228,12 @@ namespace AgentMesh.Application.Workflows
                 else
                 {
                     data = $"""
-                            This is the raw output from the code execution sandbox:
                             {state.SandboxResult}
                             """;
                     if (!string.IsNullOrEmpty(state.DomainExpertOutput))
                     {
                         data += $"""
-                            ------------------------------------------------------
-                            This is the comment from the Domain Expert Agent regarding the code execution result:
+
                             {state.DomainExpertOutput}
                             """;
                     }
@@ -265,11 +263,31 @@ namespace AgentMesh.Application.Workflows
                 UserPreferences = state.ClassifiedUserRequest.UserPreferences,
                 Memories = state.PastMemoriesQueryResults.Select(m => m.Memory)
             });
-            state.FinalAnswer = personalAssistantOutput.Response;
+
+            state.PersonalAssistantIsDataAnActualError = personalAssistantOutput.IsDataAnActualError;
+            state.PersonalAssistantOpeningSentence = personalAssistantOutput.OpeningSentence;
+            state.PersonalAssistantClosingSentence = personalAssistantOutput.ClosingSentence;
+            state.PersonalAssistantConvenienceErrorSentence = personalAssistantOutput.ConvenienceErrorSentence;
+
+            if (personalAssistantOutput.IsDataAnActualError)
+            {
+                state.FinalAnswer = personalAssistantOutput.ConvenienceErrorSentence;
+            }
+            else
+            {
+                state.FinalAnswer = string.Join(Environment.NewLine + Environment.NewLine,
+                    new[] { personalAssistantOutput.OpeningSentence, data, personalAssistantOutput.ClosingSentence }
+                    .Where(s => !string.IsNullOrWhiteSpace(s)));
+            }
+
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount, stopwatch.Elapsed, "Personal Assistant Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "Response", state.FinalAnswer },
+                { "IsDataAnActualError", state.PersonalAssistantIsDataAnActualError.ToString() },
+                { "OpeningSentence", state.PersonalAssistantOpeningSentence ?? string.Empty },
+                { "ClosingSentence", state.PersonalAssistantClosingSentence ?? string.Empty },
+                { "ConvenienceErrorSentence", state.PersonalAssistantConvenienceErrorSentence ?? string.Empty },
+                { "Response", state.FinalAnswer ?? string.Empty },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch.Elapsed) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Personal Assistant Agent", notifyDictionary);

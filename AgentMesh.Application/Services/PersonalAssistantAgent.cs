@@ -1,18 +1,23 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.PersonalAssistant;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
     public class PersonalAssistantAgent(
         [FromKeyedServices(PersonalAssistantAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<PersonalAssistantAgent> logger) : AgentBase<string>(logger, PersonalAssistantAgentConfiguration.AgentName, openAIClient, resilience), IPersonalAssistantAgent
+        ILogger<PersonalAssistantAgent> logger) : AgentBase<PersonalAssistantAgent.ParsedResponse>(logger, PersonalAssistantAgentConfiguration.AgentName, openAIClient, resilience), IPersonalAssistantAgent
     {
+        private readonly ILogger<PersonalAssistantAgent> _logger = logger;
+
         public async Task<PersonalAssistantAgentOutput> ExecuteAsync(
             PersonalAssistantAgentInput input,
             CancellationToken cancellationToken = default)
@@ -31,7 +36,7 @@ namespace AgentMesh.Application.Services
             {
                 new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
                 new() { Role = AgentMessageRole.System, Content = $"Respond in {input.LanguageOfTheUser}." },
-                new() { Role = AgentMessageRole.System, Content = $"Respond about this data:\n" + input.Data },
+                new() { Role = AgentMessageRole.System, Content = $"Data:\n" + input.Data },
                 new() { Role = AgentMessageRole.User, Content = requestContext }
             };
 
@@ -39,14 +44,64 @@ namespace AgentMesh.Application.Services
 
             return new PersonalAssistantAgentOutput
             {
-                Response = result.Result,
+                IsDataAnActualError = result.Result.IsDataAnActualError,
+                OpeningSentence = result.Result.OpeningSentence,
+                ClosingSentence = result.Result.ClosingSentence,
+                ConvenienceErrorSentence = result.Result.ConvenienceErrorSentence,
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount
             };
         }
 
-        protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
+        protected override ParsedResponse ParseStructuredResponse(string rawResponseText)
+        {
+            try
+            {
+                var responseDTO = JsonSerializer.Deserialize<ParsedResponse>(rawResponseText);
+
+                if (responseDTO == null)
+                {
+                    _logger.LogWarning("The model's response could not be deserialized into the expected format. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
+                }
+
+                if (responseDTO.IsDataAnActualError && string.IsNullOrWhiteSpace(responseDTO.ConvenienceErrorSentence))
+                {
+                    _logger.LogWarning("The model's response signals an error but contains no convenienceErrorSentence. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response signals an error but contains no convenienceErrorSentence.");
+                }
+
+                if (!responseDTO.IsDataAnActualError &&
+                    (string.IsNullOrWhiteSpace(responseDTO.OpeningSentence) || string.IsNullOrWhiteSpace(responseDTO.ClosingSentence)))
+                {
+                    _logger.LogWarning("The model's response is missing openingSentence or closingSentence. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response is missing openingSentence or closingSentence.");
+                }
+
+                return responseDTO;
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogWarning(ex, "Failed to deserialize the model's response. Response text: {ResponseText}", rawResponseText);
+                throw new BadStructuredResponseException(rawResponseText, "Failed to parse the model's response.", ex);
+            }
+        }
+
+        public class ParsedResponse
+        {
+            [JsonPropertyName("isDataAnActualError")]
+            public bool IsDataAnActualError { get; set; }
+
+            [JsonPropertyName("openingSentence")]
+            public string? OpeningSentence { get; set; }
+
+            [JsonPropertyName("closingSentence")]
+            public string? ClosingSentence { get; set; }
+
+            [JsonPropertyName("convenienceErrorSentence")]
+            public string? ConvenienceErrorSentence { get; set; }
+        }
     }
 }
 

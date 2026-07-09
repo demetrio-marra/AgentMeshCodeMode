@@ -95,6 +95,12 @@ namespace AgentMesh.Application.Models
         public SandboxResultType CodeExecutionResultType { get; set; }
         public bool ExecutionError { get => CodeExecutionResultType != SandboxResultType.Success; }
         public string? DomainExpertOutput { get; set; }
+
+        public bool PersonalAssistantIsDataAnActualError { get; set; }
+        public string? PersonalAssistantOpeningSentence { get; set; }
+        public string? PersonalAssistantClosingSentence { get; set; }
+        public string? PersonalAssistantConvenienceErrorSentence { get; set; }
+
         public string? FinalAnswer { get; set; }
 
         public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; } = [];
