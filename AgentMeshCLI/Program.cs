@@ -2,7 +2,6 @@ using AgentMesh.Application;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
-using AgentMesh.Application.Services.Executors;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.Mem0.Configuration;
 using AgentMesh.Infrastructure.Mem0.Services;
@@ -18,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Models.Workflows;
+using AgentMesh.Application.Workflows.Steps;
 
 namespace AgentMesh
 {
@@ -422,27 +422,27 @@ namespace AgentMesh
 
             services.AddSingleton<IWorkflowProgressNotifier, ConsoleWorkflowProgressNotifier>();
 
-            services.AddSingleton<KnowledgeBaseDocumentsExtractorWorkflowExecutor>();
-            services.AddSingleton<DomainsKnowledgeBaseDocumentsExtractorWorkflowExecutor>();
-            services.AddSingleton<APIKnowledgeBaseDocumentsExtractorWorkflowExecutor>();
-            services.AddSingleton<IntentExtractorWorkflowExecutor>();
-            services.AddSingleton<IntentCanonicalizationWorkflowExecutor>();
-            services.AddSingleton<RequirementsCollectorWorkflowExecutor>();
-            services.AddSingleton<AgentMemoryServiceWorkflowExecutor>();
-            services.AddSingleton<KnowledgeBaseServiceSearchWorkflowExecutor>();
-            services.AddSingleton<DomainsKnowledgeBaseServiceSearchWorkflowExecutor>();
-            services.AddSingleton<APIsKnowledgeBaseServiceSearchWorkflowExecutor>();
-            services.AddSingleton<KnowledgeBaseServiceFastSearchWorkflowExecutor>();
-            services.AddSingleton<DomainsKnowledgeBaseServiceFastSearchWorkflowExecutor>();
-            services.AddSingleton<APIsKnowledgeBaseServiceFastSearchWorkflowExecutor>();
-            services.AddSingleton<FunctionalAnalystWorkflowExecutor>();
-            services.AddSingleton<TechnicalAnalystWorkflowExecutor>();
-            services.AddSingleton<CoderWorkflowExecutor>();
-            services.AddSingleton<CodeFixerForRuntimeErrorsWorkflowExecutor>();
-            services.AddSingleton<JSSandboxWorkflowExecutor>();
-            services.AddSingleton<CodeExecutionFailuresDetectorWorkflowExecutor>();
-            services.AddSingleton<DocumentationWorkflowExecutor>();
-            services.AddSingleton<DomainExpertWorkflowExecutor>();
+            services.AddSingleton<KnowledgeBaseDocumentsExtractorWorkflowStep>();
+            services.AddSingleton<DomainsKnowledgeBaseDocumentsExtractorWorkflowStep>();
+            services.AddSingleton<APIKnowledgeBaseDocumentsExtractorWorkflowStep>();
+            services.AddSingleton<IntentExtractorWorkflowStep>();
+            services.AddSingleton<IntentCanonicalizationWorkflowStep>();
+            services.AddSingleton<RequirementsCollectorWorkflowStep>();
+            services.AddSingleton<AgentMemoryServiceWorkflowStep>();
+            services.AddSingleton<KnowledgeBaseServiceSearchWorkflowStep>();
+            services.AddSingleton<DomainsKnowledgeBaseServiceSearchWorkflowStep>();
+            services.AddSingleton<APIsKnowledgeBaseServiceSearchWorkflowStep>();
+            services.AddSingleton<KnowledgeBaseServiceFastSearchWorkflowStep>();
+            services.AddSingleton<DomainsKnowledgeBaseServiceFastSearchWorkflowStep>();
+            services.AddSingleton<APIsKnowledgeBaseServiceFastSearchWorkflowStep>();
+            services.AddSingleton<FunctionalAnalystWorkflowStep>();
+            services.AddSingleton<TechnicalAnalystWorkflowStep>();
+            services.AddSingleton<CoderWorkflowStep>();
+            services.AddSingleton<CodeFixerForRuntimeErrorsWorkflowStep>();
+            services.AddSingleton<JSSandboxWorkflowStep>();
+            services.AddSingleton<CodeExecutionFailuresDetectorWorkflowStep>();
+            services.AddSingleton<DocumentationWorkflowStep>();
+            services.AddSingleton<DomainExpertWorkflowStep>();
 
             services.AddSingleton<IWorkflow, CodeModeWorkflow>();
             services.AddSingleton<UserConsoleInputService>();

@@ -1,15 +1,16 @@
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.RequirementsCollector;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace AgentMesh.Application.Services.Executors;
+namespace AgentMesh.Application.Workflows.Steps;
 
-public class RequirementsCollectorWorkflowExecutor(
+public class RequirementsCollectorWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     IRequirementsCollectorAgent requirementsCollectorAgent,

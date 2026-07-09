@@ -7,9 +7,9 @@ using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace AgentMesh.Application.Services.Executors;
+namespace AgentMesh.Application.Workflows.Steps;
 
-public class FunctionalAnalystWorkflowExecutor(
+public class FunctionalAnalystWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     IFunctionalAnalystAgent functionalAnalystAgent,

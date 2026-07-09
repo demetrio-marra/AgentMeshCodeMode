@@ -7,9 +7,9 @@ using AgentMesh.Models.CodeSandbox;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace AgentMesh.Application.Services.Executors;
+namespace AgentMesh.Application.Workflows.Steps;
 
-public class JSSandboxWorkflowExecutor(
+public class JSSandboxWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     IJSSandboxExecutor jsSandboxExecutor)

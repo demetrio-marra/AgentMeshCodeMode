@@ -1,6 +1,7 @@
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models;
 using AgentMesh.Models.IntentExtractor;
@@ -8,9 +9,9 @@ using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace AgentMesh.Application.Services.Executors;
+namespace AgentMesh.Application.Workflows.Steps;
 
-public class IntentExtractorWorkflowExecutor(
+public class IntentExtractorWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     IIntentExtractorAgent intentExtractorAgent,

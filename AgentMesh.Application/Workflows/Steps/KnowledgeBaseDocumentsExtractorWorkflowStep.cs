@@ -6,9 +6,9 @@ using AgentMesh.Models.KnowledgeBase;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace AgentMesh.Application.Services.Executors;
+namespace AgentMesh.Application.Workflows.Steps;
 
-public class KnowledgeBaseDocumentsExtractorWorkflowExecutor(
+public class KnowledgeBaseDocumentsExtractorWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor)

@@ -10,9 +10,9 @@ using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace AgentMesh.Application.Services.Executors;
+namespace AgentMesh.Application.Workflows.Steps;
 
-public class AgentMemoryServiceWorkflowExecutor(
+public class AgentMemoryServiceWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     IAgentMemoryRetrieverExecutor agentMemoryRetriever,

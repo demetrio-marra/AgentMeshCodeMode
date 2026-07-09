@@ -2,14 +2,14 @@ using AgentMesh.Application.Models;
 using AgentMesh.Services;
 using AgentMesh.Application.Workflows;
 
-namespace AgentMesh.Application.Services.Executors;
+namespace AgentMesh.Application.Workflows.Steps;
 
-public class DomainsKnowledgeBaseServiceSearchWorkflowExecutor(
-    KnowledgeBaseServiceSearchWorkflowExecutor knowledgeBaseServiceSearchWorkflowExecutor)
+public class DomainsKnowledgeBaseServiceSearchWorkflowStep(
+    KnowledgeBaseServiceSearchWorkflowStep knowledgeBaseServiceSearchWorkflowExecutor)
 {
     private const string DomainsDocumentationCollectionName = "domains";
 
-    private readonly KnowledgeBaseServiceSearchWorkflowExecutor _knowledgeBaseServiceSearchWorkflowExecutor = knowledgeBaseServiceSearchWorkflowExecutor;
+    private readonly KnowledgeBaseServiceSearchWorkflowStep _knowledgeBaseServiceSearchWorkflowExecutor = knowledgeBaseServiceSearchWorkflowExecutor;
 
     public async Task ExecuteDomainsKnowledgeBaseServiceSearchAsync(CodeModeWorkflowState state)
     {

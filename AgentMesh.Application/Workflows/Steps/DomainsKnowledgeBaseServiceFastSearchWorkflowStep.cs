@@ -3,14 +3,14 @@ using AgentMesh.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.KnowledgeBase;
 
-namespace AgentMesh.Application.Services.Executors;
+namespace AgentMesh.Application.Workflows.Steps;
 
-public class DomainsKnowledgeBaseServiceFastSearchWorkflowExecutor(
-    KnowledgeBaseServiceFastSearchWorkflowExecutor knowledgeBaseServiceFastSearchWorkflowExecutor)
+public class DomainsKnowledgeBaseServiceFastSearchWorkflowStep(
+    KnowledgeBaseServiceFastSearchWorkflowStep knowledgeBaseServiceFastSearchWorkflowExecutor)
 {
     private const string DomainsDocumentationCollectionName = "domains";
 
-    private readonly KnowledgeBaseServiceFastSearchWorkflowExecutor _knowledgeBaseServiceFastSearchWorkflowExecutor = knowledgeBaseServiceFastSearchWorkflowExecutor;
+    private readonly KnowledgeBaseServiceFastSearchWorkflowStep _knowledgeBaseServiceFastSearchWorkflowExecutor = knowledgeBaseServiceFastSearchWorkflowExecutor;
 
     public async Task ExecuteDomainsKnowledgeBaseServiceFastSearchAsync(CodeModeWorkflowState state)
     {

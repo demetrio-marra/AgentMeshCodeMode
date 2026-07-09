@@ -7,9 +7,9 @@ using AgentMesh.Models.KnowledgeBase;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace AgentMesh.Application.Services.Executors;
+namespace AgentMesh.Application.Workflows.Steps;
 
-public class KnowledgeBaseServiceFastSearchWorkflowExecutor(
+public class KnowledgeBaseServiceFastSearchWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     IKnowledgeBaseSearchFastExecutor knowledgeBaseSearchFastExecutor,

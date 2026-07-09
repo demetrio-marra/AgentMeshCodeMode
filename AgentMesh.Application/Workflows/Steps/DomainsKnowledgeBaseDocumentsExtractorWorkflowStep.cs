@@ -3,12 +3,12 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.KnowledgeBase;
 
-namespace AgentMesh.Application.Services.Executors;
+namespace AgentMesh.Application.Workflows.Steps;
 
-public class DomainsKnowledgeBaseDocumentsExtractorWorkflowExecutor(
-    KnowledgeBaseDocumentsExtractorWorkflowExecutor knowledgeBaseDocumentsExtractorWorkflowExecutor)
+public class DomainsKnowledgeBaseDocumentsExtractorWorkflowStep(
+    KnowledgeBaseDocumentsExtractorWorkflowStep knowledgeBaseDocumentsExtractorWorkflowExecutor)
 {
-    private readonly KnowledgeBaseDocumentsExtractorWorkflowExecutor _knowledgeBaseDocumentsExtractorWorkflowExecutor = knowledgeBaseDocumentsExtractorWorkflowExecutor;
+    private readonly KnowledgeBaseDocumentsExtractorWorkflowStep _knowledgeBaseDocumentsExtractorWorkflowExecutor = knowledgeBaseDocumentsExtractorWorkflowExecutor;
 
     public async Task ExecuteDomainsKnowledgeBaseDocumentsExtractorAsync(CodeModeWorkflowState state)
     {

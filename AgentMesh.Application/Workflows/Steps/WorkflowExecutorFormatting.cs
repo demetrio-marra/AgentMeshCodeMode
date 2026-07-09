@@ -2,7 +2,7 @@ using AgentMesh.Services;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.KnowledgeBase;
 
-namespace AgentMesh.Application.Services.Executors;
+namespace AgentMesh.Application.Workflows.Steps;
 
 public static class WorkflowExecutorFormatting
 {
