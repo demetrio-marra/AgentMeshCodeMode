@@ -66,6 +66,8 @@ namespace AgentMesh.Application.Models
         public bool FunctionalAnalystRejected { get; set; }
         public string? FunctionalAnalystRejectReasons { get; set; }
         public string? TechnicalSpecification { get; set; }
+        public bool TechnicalAnalystRejected { get; set; }
+        public string? TechnicalAnalystRejectReasons { get; set; }
         public bool ShouldEngageCoder { get; set; }
 
         public IEnumerable<string> FastAPISKnowledgeBaseQuery { get; set; } = [];

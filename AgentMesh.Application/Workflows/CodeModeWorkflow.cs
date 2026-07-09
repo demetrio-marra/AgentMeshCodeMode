@@ -133,6 +133,11 @@ namespace AgentMesh.Application.Workflows
 
                 await ExecuteTechnicalAnalystAsync(state);
 
+                if (state.TechnicalAnalystRejected)
+                {
+                    goto CompleteWorkflow;
+                }
+
                 await ExecuteCoderAsync(state);
 
                 await ExecuteJSSandboxAsync(state, false);
@@ -836,11 +841,16 @@ namespace AgentMesh.Application.Workflows
                 KnowledgeBaseDocumentsContent = SerializeDocumentation(state.KnowledgeBaseAPIDocumentsContent)
             }, cancellationToken);
 
+            state.ShouldEngageCoder = state.ShouldEngageCoder && !technicalAnalystOutput.RequestRejected;
             state.TechnicalSpecification = technicalAnalystOutput.TechnicalSpecification;
+            state.TechnicalAnalystRejected = technicalAnalystOutput.RequestRejected;
+            state.TechnicalAnalystRejectReasons = technicalAnalystOutput.ReasonOfRejection;
             state.AddTokenUsage(AgentMesh.Application.Configuration.TechnicalAnalystAgentConfiguration.AgentName, technicalAnalystOutput.InputTokenCount, technicalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Technical Analyst Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
                 { "TechnicalSpecification", state.TechnicalSpecification ?? "(No technical specification)" },
+                { "TechnicalAnalystRejected", state.TechnicalAnalystRejected.ToString() },
+                { "TechnicalAnalystRejectReasons", state.TechnicalAnalystRejectReasons ?? "(No rejection reasons)" },
                 { "ELAPSED_TIME", GetElapsedTime(stopwatch) }
             };
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Technical Analyst Agent", notifyDictionary);
@@ -1096,6 +1106,13 @@ namespace AgentMesh.Application.Workflows
                     data = $"""
                             The request made by the user was rejected. The reason for rejection is as follows:
                             {state.FunctionalAnalystRejectReasons}
+                            """;
+                }
+                else if (state.TechnicalAnalystRejected)
+                {
+                    data = $"""
+                            The request made by the user was rejected. The reason for rejection is as follows:
+                            {state.TechnicalAnalystRejectReasons}
                             """;
                 }
                 else if (state.CodeExecutionResultType == SandboxResultType.CallError)

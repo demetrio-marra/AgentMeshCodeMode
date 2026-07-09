@@ -87,6 +87,8 @@ namespace AgentMesh.Application.Services
             return new TechnicalAnalystAgentOutput
             {
                 TechnicalSpecification = result.Result.TechnicalSpecification,
+                RequestRejected = result.Result.RequestRejected,
+                ReasonOfRejection = result.Result.ReasonOfRejection,
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount
@@ -105,10 +107,21 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                if (string.IsNullOrWhiteSpace(responseDTO.TechnicalSpecification))
+                if (!responseDTO.RequestRejected && string.IsNullOrWhiteSpace(responseDTO.TechnicalSpecification))
                 {
-                    _logger.LogWarning("The model's response contains an empty technical specification. Response text: {ResponseText}", rawResponseText);
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains an empty technical specification.");
+                    _logger.LogWarning("The model's response contains an empty technical specification for a non-rejected request. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains an empty technical specification for a non-rejected request.");
+                }
+
+                if (responseDTO.RequestRejected && string.IsNullOrWhiteSpace(responseDTO.ReasonOfRejection))
+                {
+                    _logger.LogWarning("The model's response rejected the request without providing reasonOfRejection. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response rejected the request without providing reasonOfRejection.");
+                }
+
+                if (!responseDTO.RequestRejected)
+                {
+                    responseDTO.ReasonOfRejection = null;
                 }
 
                 return responseDTO;
@@ -124,6 +137,13 @@ namespace AgentMesh.Application.Services
         {
             [JsonPropertyName("technicalSpecification")]
             public string TechnicalSpecification { get; set; } = string.Empty;
+
+            [JsonRequired]
+            [JsonPropertyName("requestRejected")]
+            public bool RequestRejected { get; set; }
+
+            [JsonPropertyName("reasonOfRejection")]
+            public string? ReasonOfRejection { get; set; }
         }
     }
 }
