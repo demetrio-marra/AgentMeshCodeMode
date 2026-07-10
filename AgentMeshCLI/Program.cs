@@ -63,11 +63,11 @@ namespace AgentMesh
             services.AddSingleton<IKnowledgeBaseSearchFastExecutor>(sp => sp.GetRequiredService<KnowledgeBaseSearchFastExecutor>());
             services.AddSingleton<IKnowledgeBaseGetDocsExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
 
-            // Queries cache service configuration
-            var queriesCacheServiceConfig = new QDrantQueriesCacheServiceConfiguration();
-            configuration.GetSection("QDrantQueriesCacheService").Bind(queriesCacheServiceConfig);
-            services.AddSingleton(queriesCacheServiceConfig);
-            services.AddSingleton<IQueriesCacheService, QDrantQueriesCacheService>();
+            //// Queries cache service configuration
+            //var queriesCacheServiceConfig = new QDrantQueriesCacheServiceConfiguration();
+            //configuration.GetSection("QDrantQueriesCacheService").Bind(queriesCacheServiceConfig);
+            //services.AddSingleton(queriesCacheServiceConfig);
+            //services.AddSingleton<IQueriesCacheService, QDrantQueriesCacheService>();
 
             // Agent Memory Service configuration
             var agentMemoryConfig = new AgentMemoryServiceConfiguration();

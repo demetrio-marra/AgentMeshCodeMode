@@ -1,7 +1,5 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
-using AgentMesh.Application.Workflows;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
@@ -12,15 +10,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class KnowledgeBaseServiceSearchWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor,
-    IQueriesCacheService queriesCacheService,
-    CodeModeWorkflowConfiguration workflowConfiguration)
+    IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
-    private readonly IQueriesCacheService _queriesCacheService = queriesCacheService;
-    private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
 
     public async Task ExecuteKnowledgeBaseServiceSearchAsync(
         CodeModeWorkflowState state,
@@ -53,9 +47,6 @@ public class KnowledgeBaseServiceSearchWorkflowStep(
         {
             Results = existingResults.Concat(brcOutput.Results).ToList()
         });
-
-        var cacheTokenUsageInfo = await KnowledgeBaseCacheUsageBuilder.BuildKnowledgeBaseCacheTokenUsageAsync(_workflowConfiguration.EnableCacheService, queriesList, brcOutput.Results, _queriesCacheService);
-        state.AddStepUsage(stepName, stopwatch.Elapsed, cacheTokenUsageInfo is not null, cacheTokenUsageInfo);
 
         var notifyDictionary = new Dictionary<string, string>
         {
