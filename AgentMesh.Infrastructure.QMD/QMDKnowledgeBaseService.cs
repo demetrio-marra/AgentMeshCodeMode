@@ -6,6 +6,8 @@ namespace AgentMesh.Infrastructure.QMD
 {
     public class QMDKnowledgeBaseService(QMDHttpProxy httpProxy) : IKnowledgeBaseService
     {
+        private const int MAX_QUERIES = 10;
+
         private const string KEYWORDS_SEARCH_TYPE = "lex";
         private const string SEMANTIC_SEARCH_TYPE = "vec";
         private const string HYPOTHETICAL_SEARCH_TYPE = "hyde";
@@ -29,7 +31,7 @@ namespace AgentMesh.Infrastructure.QMD
         {
             var query = new DTOs.Query.QueryToolRequest
             {
-                Searches = [.. searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = KEYWORDS_SEARCH_TYPE, Query = term })],
+                Searches = [.. searchTerms.Take(MAX_QUERIES).Select(term => new DTOs.Query.QuerySubQuery { Type = KEYWORDS_SEARCH_TYPE, Query = term })],
                 Collections = collections?.ToList(),
                 Rerank = rerank
             };
@@ -54,7 +56,7 @@ namespace AgentMesh.Infrastructure.QMD
         {
             var query = new DTOs.Query.QueryToolRequest
             {
-                Searches = [.. searchTerms.Select(term => new DTOs.Query.QuerySubQuery { Type = SEMANTIC_SEARCH_TYPE, Query = term })],
+                Searches = [.. searchTerms.Take(MAX_QUERIES).Select(term => new DTOs.Query.QuerySubQuery { Type = SEMANTIC_SEARCH_TYPE, Query = term })],
                 Collections = collections?.ToList(),
                 Rerank = rerank
             };
@@ -79,7 +81,7 @@ namespace AgentMesh.Infrastructure.QMD
         {
             var dbQuery = new DTOs.Query.QueryToolRequest
             {
-                Searches = [.. query.Queries.Select(q => new DTOs.Query.QuerySubQuery
+                Searches = [.. query.Queries.Take(MAX_QUERIES).Select(q => new DTOs.Query.QuerySubQuery
                 {
                     Type = q.SearchType == KnowledgeBaseQuerySearchType.Keyword ? KEYWORDS_SEARCH_TYPE : q.SearchType == KnowledgeBaseQuerySearchType.Semantic ? SEMANTIC_SEARCH_TYPE : HYPOTHETICAL_SEARCH_TYPE,
                     Query = q.Query
