@@ -45,4 +45,6 @@ IMPORTANT: Output only a JSON object, without backticks or extra text.
 - `missingKnowledgeBaseSearchEntries` content MUST be in `languageOfKnowledgeBase`
 - if user asks about Assistant capabilities, treat it as the whole AI Agentic platform capabilities (business topic)
 - respect the Mem0 condition strictly: if both conditions are false, `missingPastMemories` MUST be []
+- generate `hyde` queries ONLY when captured user intent category is clearly `Documentation`
+- when captured user intent category is `TaskExecution` or `Other`, use only `lex` and/or `vec` query types
 

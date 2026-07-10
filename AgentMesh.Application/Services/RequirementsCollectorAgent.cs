@@ -1,6 +1,7 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
+using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RequirementsCollector;
 using AgentMesh.Services;
@@ -19,13 +20,18 @@ namespace AgentMesh.Application.Services
         private readonly ILogger<RequirementsCollectorAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];
 
-        private static KnowledgeBaseQueryInputItem TranslateKnowledgeBaseQuery(QueryItem query)
+        private static KnowledgeBaseQueryInputItem TranslateKnowledgeBaseQuery(QueryItem query, UserIntentCategoryValues intentCategory)
         {
             var normalizedType = AllowedQueryTypes.FirstOrDefault(type => type.Equals(query.Type, StringComparison.OrdinalIgnoreCase));
 
             if (normalizedType == null)
             {
                 throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}");
+            }
+
+            if (normalizedType == "hyde" && intentCategory != UserIntentCategoryValues.Documentation)
+            {
+                throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, "The 'hyde' query type is allowed only when user intent category is Documentation.");
             }
 
             var searchType = normalizedType switch
@@ -108,6 +114,12 @@ Language of Knowledge Base:
                 });
             }
 
+            inputMessages.Add(new AgentMessage
+            {
+                Role = AgentMessageRole.System,
+                Content = "Use 'hyde' query type only when captured user intent category is Documentation. For any other intent category, use only 'lex' and/or 'vec'."
+            });
+
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = userMessage });
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
@@ -116,7 +128,7 @@ Language of Knowledge Base:
 
             return new RequirementsCollectorAgentOutput
             {
-                MissingKnowledgeBaseSearchEntries = result.Result.MissingKnowledgeBaseSearchEntries.Select(TranslateKnowledgeBaseQuery).ToList(),
+                MissingKnowledgeBaseSearchEntries = result.Result.MissingKnowledgeBaseSearchEntries.Select(query => TranslateKnowledgeBaseQuery(query, input.UserIntentCategory)).ToList(),
                 MissingPastMemories = shouldCreateMem0Queries ? result.Result.MissingPastMemories : [],
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount,
