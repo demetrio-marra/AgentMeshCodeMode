@@ -2,7 +2,6 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Services;
-using AgentMesh.Application.Workflows;
 using AgentMesh.Models.RequirementsCollector;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
@@ -20,6 +19,7 @@ public class RequirementsCollectorWorkflowStep(
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly IRequirementsCollectorAgent _requirementsCollectorAgent = requirementsCollectorAgent;
     private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
+    private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
 
     public async Task ExecuteRequirementsCollectorAsync(CodeModeWorkflowState state)
     {
@@ -46,7 +46,8 @@ public class RequirementsCollectorWorkflowStep(
             UserPreferences = state.ClassifiedUserRequest.UserPreferences,
             MissingMemories = state.ClassifiedUserRequest.MissingMemories,
             FastKnowledgeBaseQueryResults = state.FastDomainsKnowledgeBaseQueryResults.Results,
-            LanguageOfKnowledgeBase = _workflowConfiguration.LanguageOfKnowledgeBase
+            LanguageOfKnowledgeBase = _workflowConfiguration.LanguageOfKnowledgeBase,
+            QmdQueryTypesReference = LoadQmdQueryTypesReference()
         });
 
         state.PastMemoriesQuery = output.MissingPastMemories;
@@ -65,6 +66,29 @@ public class RequirementsCollectorWorkflowStep(
         }
         notifyDictionary.Add("ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed));
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Requirements Collector Agent", notifyDictionary);
+    }
+
+    private string? LoadQmdQueryTypesReference()
+    {
+        var candidatePaths = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "Prompts", QmdQueryTypesFileName),
+            Path.Combine(Directory.GetCurrentDirectory(), "Prompts", QmdQueryTypesFileName),
+            Path.Combine(Directory.GetCurrentDirectory(), "AgentMeshCLI", "Prompts", QmdQueryTypesFileName)
+        };
+
+        foreach (var candidatePath in candidatePaths)
+        {
+            if (!File.Exists(candidatePath))
+            {
+                continue;
+            }
+
+            return File.ReadAllText(candidatePath);
+        }
+
+        _logger.LogWarning("Unable to locate QMD query types prompt file '{FileName}' in expected paths.", QmdQueryTypesFileName);
+        return null;
     }
 }
 

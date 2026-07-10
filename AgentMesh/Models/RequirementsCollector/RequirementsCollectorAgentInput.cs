@@ -13,5 +13,6 @@ namespace AgentMesh.Models.RequirementsCollector
         public IEnumerable<string> MissingMemories { get; set; } = [];
         public IEnumerable<KnowledgeBaseQueryResultItem> FastKnowledgeBaseQueryResults { get; set; } = [];
         public string LanguageOfKnowledgeBase { get; set; } = string.Empty;
+        public string? QmdQueryTypesReference { get; set; }
     }
 }
