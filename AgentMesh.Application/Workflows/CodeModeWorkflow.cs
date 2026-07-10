@@ -201,6 +201,9 @@ namespace AgentMesh.Application.Workflows
             var canonicalizedIntent = state.CanonicalizedIntent;
 
             string? data = null;
+            var requestFailed = false;
+            string? requestFailureReason = null;
+
             if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.Documentation)
             {
                 data = state.DocumentationContent;
@@ -209,21 +212,24 @@ namespace AgentMesh.Application.Workflows
             {
                 if (state.FunctionalAnalystRejected)
                 {
-                    data = $"""
+                    requestFailed = true;
+                    requestFailureReason = $"""
                             The request made by the user was rejected. The reason for rejection is as follows:
                             {state.FunctionalAnalystRejectReasons}
                             """;
                 }
                 else if (state.TechnicalAnalystRejected)
                 {
-                    data = $"""
+                    requestFailed = true;
+                    requestFailureReason = $"""
                             The request made by the user was rejected. The reason for rejection is as follows:
                             {state.TechnicalAnalystRejectReasons}
                             """;
                 }
-                else if (state.CodeExecutionResultType == SandboxResultType.CallError)
+                else if (state.CodeExecutionResultType != SandboxResultType.Success)
                 {
-                    data = state.SandboxResult;
+                    requestFailed = true;
+                    requestFailureReason = state.SandboxResult;
                 }
                 else
                 {
@@ -243,7 +249,8 @@ namespace AgentMesh.Application.Workflows
             await _workflowProgressNotifier.NotifyWorkflowStepStart("Personal Assistant Agent", new Dictionary<string, string>
             {
                 { "Data", data ?? "(No data)" },
-                { "ExecutionError", state.ExecutionError.ToString() },
+                { "RequestFailed", requestFailed.ToString() },
+                { "RequestFailureReason", requestFailureReason ?? "(No failure reason)" },
                 { "OriginalUserRequest", originalUserRequest },
                 { "CanonicalizedIntent", canonicalizedIntent },
                 { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
@@ -255,7 +262,8 @@ namespace AgentMesh.Application.Workflows
             var personalAssistantOutput = await _personalAssistantAgent.ExecuteAsync(new PersonalAssistantAgentInput
             {
                 Data = data,
-                ExecutionError = state.ExecutionError,
+                RequestFailed = requestFailed,
+                RequestFailureReason = requestFailureReason,
                 LanguageOfTheUser = state.ClassifiedUserRequest.LanguageOfTheUser,
                 OriginalUserRequest = originalUserRequest,
                 CanonicalizedIntent = canonicalizedIntent,

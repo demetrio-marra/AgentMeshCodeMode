@@ -26,7 +26,6 @@ namespace AgentMesh.Application.Services
             {
                 $"Original user request:\n{input.OriginalUserRequest}",
                 $"Canonicalized intent:\n{input.CanonicalizedIntent}",
-                $"Execution error:\n{input.ExecutionError}",
                 $"Supporting intent information:\n{string.Join(Environment.NewLine, input.SupportingIntentInformation.Select(item => $"- {item}"))}",
                 $"User preferences:\n{string.Join(Environment.NewLine, input.UserPreferences.Select(item => $"- {item}"))}",
                 $"Past memories:\n{string.Join(Environment.NewLine, input.Memories.Select(item => $"- {item}"))}"
@@ -36,9 +35,19 @@ namespace AgentMesh.Application.Services
             {
                 new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
                 new() { Role = AgentMessageRole.System, Content = $"Respond in {input.LanguageOfTheUser}." },
-                new() { Role = AgentMessageRole.System, Content = $"Data:\n" + input.Data },
-                new() { Role = AgentMessageRole.User, Content = requestContext }
+                new() { Role = AgentMessageRole.System, Content = $"Request failed: {input.RequestFailed}" }
             };
+
+            if (input.RequestFailed)
+            {
+                inputMessages.Add(new() { Role = AgentMessageRole.System, Content = $"Request failure reason: {input.RequestFailureReason}" });
+            }
+            else
+            {
+                inputMessages.Add(new() { Role = AgentMessageRole.System, Content = $"Data:\n" + input.Data });
+            }
+
+            inputMessages.Add(new() { Role = AgentMessageRole.User, Content = requestContext });
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
