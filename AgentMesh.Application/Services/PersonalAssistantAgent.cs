@@ -53,7 +53,6 @@ namespace AgentMesh.Application.Services
 
             return new PersonalAssistantAgentOutput
             {
-                IsDataAnActualError = result.Result.IsDataAnActualError,
                 OpeningSentence = result.Result.OpeningSentence,
                 ClosingSentence = result.Result.ClosingSentence,
                 ConvenienceErrorSentence = result.Result.ConvenienceErrorSentence,
@@ -75,18 +74,19 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                if (responseDTO.IsDataAnActualError && string.IsNullOrWhiteSpace(responseDTO.ConvenienceErrorSentence))
-                {
-                    _logger.LogWarning("The model's response signals an error but contains no convenienceErrorSentence. Response text: {ResponseText}", rawResponseText);
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response signals an error but contains no convenienceErrorSentence.");
-                }
+                // per decommentare dovremmo far arrivare in questa funzione il parametro di input RequestFailed, e poi fare un check su quello, ma non è chiaro se sia il caso di farlo qui o in un altro punto del flusso
+                //if (responseDTO.IsDataAnActualError && string.IsNullOrWhiteSpace(responseDTO.ConvenienceErrorSentence))
+                //{
+                //    _logger.LogWarning("The model's response signals an error but contains no convenienceErrorSentence. Response text: {ResponseText}", rawResponseText);
+                //    throw new BadStructuredResponseException(rawResponseText, "The model's response signals an error but contains no convenienceErrorSentence.");
+                //}
 
-                if (!responseDTO.IsDataAnActualError &&
-                    (string.IsNullOrWhiteSpace(responseDTO.OpeningSentence) || string.IsNullOrWhiteSpace(responseDTO.ClosingSentence)))
-                {
-                    _logger.LogWarning("The model's response is missing openingSentence or closingSentence. Response text: {ResponseText}", rawResponseText);
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response is missing openingSentence or closingSentence.");
-                }
+                //if (!responseDTO.IsDataAnActualError &&
+                //    (string.IsNullOrWhiteSpace(responseDTO.OpeningSentence) || string.IsNullOrWhiteSpace(responseDTO.ClosingSentence)))
+                //{
+                //    _logger.LogWarning("The model's response is missing openingSentence or closingSentence. Response text: {ResponseText}", rawResponseText);
+                //    throw new BadStructuredResponseException(rawResponseText, "The model's response is missing openingSentence or closingSentence.");
+                //}
 
                 return responseDTO;
             }
@@ -99,8 +99,6 @@ namespace AgentMesh.Application.Services
 
         public class ParsedResponse
         {
-            [JsonPropertyName("isDataAnActualError")]
-            public bool IsDataAnActualError { get; set; }
 
             [JsonPropertyName("openingSentence")]
             public string? OpeningSentence { get; set; }

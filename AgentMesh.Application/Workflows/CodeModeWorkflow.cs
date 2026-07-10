@@ -272,12 +272,11 @@ namespace AgentMesh.Application.Workflows
                 Memories = state.PastMemoriesQueryResults.Select(m => m.Memory)
             });
 
-            state.PersonalAssistantIsDataAnActualError = personalAssistantOutput.IsDataAnActualError;
             state.PersonalAssistantOpeningSentence = personalAssistantOutput.OpeningSentence;
             state.PersonalAssistantClosingSentence = personalAssistantOutput.ClosingSentence;
             state.PersonalAssistantConvenienceErrorSentence = personalAssistantOutput.ConvenienceErrorSentence;
 
-            if (personalAssistantOutput.IsDataAnActualError)
+            if (requestFailed)
             {
                 state.FinalAnswer = personalAssistantOutput.ConvenienceErrorSentence;
             }
@@ -291,7 +290,6 @@ namespace AgentMesh.Application.Workflows
             state.AddTokenUsage(PersonalAssistantAgentConfiguration.AgentName, personalAssistantOutput.InputTokenCount, personalAssistantOutput.OutputTokenCount, stopwatch.Elapsed, "Personal Assistant Agent");
             var notifyDictionary = new Dictionary<string, string>
             {
-                { "IsDataAnActualError", state.PersonalAssistantIsDataAnActualError.ToString() },
                 { "OpeningSentence", state.PersonalAssistantOpeningSentence ?? string.Empty },
                 { "ClosingSentence", state.PersonalAssistantClosingSentence ?? string.Empty },
                 { "ConvenienceErrorSentence", state.PersonalAssistantConvenienceErrorSentence ?? string.Empty },
