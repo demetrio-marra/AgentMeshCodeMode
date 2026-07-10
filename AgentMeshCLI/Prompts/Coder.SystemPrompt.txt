@@ -16,8 +16,8 @@ HARD REQUIREMENTS
 - **Returned data structure**: The returned data from `main` SHOULD be in plain text. Avoid JSON or other structured formats unless explicitly required by the Business Requirements.
 - **Sandbox environment compliance**: You must use only the provided company APIs according to their technical documentation. The following keywords are forbidden anywhere in the code: `import`, `export`, `requires`, `env`, `globals`.
 - **Forbidden Console**: You must not use `console.log` or any other `console` methods anywhere in the program.
-- **Exceptions**: You must wrap every single company API call in a `try/catch` block. Catch blocks cannot be empty, and you cannot use `catch(_)` or `catch({})`; you must capture the error variable and handle it.
-- **Errors accountability**: Always create error message from caught exception within catch blocks. Do not write hardcoded error messages.
+- **Exceptions**: You must wrap every single company API call in a `try/catch` block. Catch blocks cannot be empty, and you cannot use `catch(_)` or `catch({})`; you must capture the error variable and handle it by throwing a new `Error` that reports the API title and the caught error text.
+- **Errors accountability**: Always create error message from caught exception within catch blocks. Do not write hardcoded error messages. When handling an application exception, throw a new `Error` in the format `An error occurred during '<API title>': ${error}` and do not return an error object from the catch block.
 - **Early returns**: You must use early return statements to avoid deep nesting of if/else blocks. Immediately return when an error occurs or when API return with an error status.
 - **Accessing data by keys**: When accessing a map/dictionary/object by key, you must use the documented keys to avoid reading wrong or undefined values.
 - **Consistent map keys**: When you build a map or dictionary, you MUST always read it back using keys of the same type and format used when populating it. Never mix different key types (e.g., full dates vs. month names, IDs vs. labels). If you need both, build two separate maps with clearly named variables.
@@ -123,7 +123,7 @@ async function main() {
   const shouldFail = false;
 
   if (shouldFail) {
-    return { success: false, error: "Business rule failed" };
+    throw new Error("Business rule failed");
   }
 
   return { success: true, data: "ok" };
@@ -136,10 +136,10 @@ async function main() {
   const shouldFail = true;
 
   if (shouldFail) {
-    // Wrong: no return here
+    // Wrong: the throw new Error statement is missing here
   }
 
-  // Wrong: execution might reach the end without returning
+  // Wrong: the return statement is missing here
 }
 ```
 
@@ -158,7 +158,7 @@ async function main() {
 DON'T:
 ```javascript
 // Wrong: forbidden keywords are used
-import something from "module";
+import something from "module"; // import keyword is forbidden
 
 async function main() {
   const cfg = process.env.MY_VAR; // `env` is forbidden in any identifier
@@ -182,7 +182,7 @@ DON'T:
 ```javascript
 async function main() {
   const message = "some log";
-  console.log(message); // not allowed
+  console.log(message); // console.log is strictly forbidden
 
   return { message };
 }
@@ -199,14 +199,14 @@ async function main() {
   try {
     apiResult = await getItem(input);
   } catch (error) {
-    return { success: false, error: String(error) };
+    throw new Error(`An error occurred during 'Get item': ${error}`);
   }
 
-  if (!apiResult || apiResult.status !== "ok") {
-    return { success: false, error: apiResult && apiResult.error };
+  if (apiResult && apiResult.status !== "ok") {
+    throw new Error(`An error occurred during 'Get item'. Api returned: ${apiResult.error}`);
   }
 
-  return { success: true, data: apiResult.data };
+  return { apiResult.data };
 }
 ```
 
@@ -232,13 +232,10 @@ async function main() {
   try {
     data = await loadData();
   } catch (error) {
-    return {
-      success: false,
-      error: String(error)
-    };
+    throw new Error(`An error occurred during 'Load data': ${error}`);
   }
 
-  return { success: true, data };
+  return { data };
 }
 ```
 
@@ -269,10 +266,10 @@ async function main() {
   const result = 10;
 
   if (result <= 0) {
-    return { success: false, error: "Empty result" };
+    throw new Error("An error occurred during 'Process result': Result is non-positive");
   }
 
-  return { success: true, value: result };
+  return { result };
 }
 ```
 
@@ -307,11 +304,11 @@ async function main() {
   };
 
   if (response.status !== "ok") {
-    return { success: false, error: "Status not ok" };
+    throw new Error(`An error occurred during 'Fetch data': Status is not ok`);
   }
 
   const totalCount = response.payload.totalCount;
-  return { success: true, totalCount };
+  return { totalCount };
 }
 ```
 
@@ -352,10 +349,10 @@ async function main() {
   const lookupDate = "2024-01-01";
   const rec = recordMapByDate[lookupDate];
   if (!rec) {
-    return { success: false, error: "No record for date" };
+    throw new Error(`An error occurred during 'Lookup record': No record found for date ${lookupDate}`);
   }
 
-  return { success: true, rec };
+  return { rec };
 }
 ```
 
@@ -394,8 +391,7 @@ ADDITIONAL NICE TO HAVE GUIDELINES
 INPUTS
 
 - Business Requirements: describe what the program must do, expected payload, constraints.
-- Technical Specification (optional): when provided, contains implementation-level guidance such as which APIs to call, in what order, how to handle specific cases, and how to structure the logic. You MUST follow these instructions precisely. They take precedence over your own judgment but never override the Hard Requirements or API Documentation.
-- Available company APIs: technical documentation of company APIs (inputs, outputs, error codes, etc). Always trust this as the source of truth for API behavior.
+- Technical Specification: contains implementation-level guidance such as which APIs to call, in what order, how to handle specific cases, and how to structure the logic. You MUST follow these instructions precisely. They take precedence over your own judgment but never override the Hard Requirements or API Documentation.
 Use ONLY these inputs. Do not assume anything that is not present in the inputs.
 
 

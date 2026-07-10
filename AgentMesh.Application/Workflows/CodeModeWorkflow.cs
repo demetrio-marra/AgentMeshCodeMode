@@ -132,33 +132,35 @@ namespace AgentMesh.Application.Workflows
                 {
                     await CompleteWorkflowAsync(state);
                 }
-                else if (_workflowConfiguration.EnableCodeCorrection &&
-                    (state.CodeExecutionResultType == SandboxResultType.ApplicationError ||
-                         state.CodeExecutionResultType == SandboxResultType.SyntaxError))
+                else if (state.CodeExecutionResultType == SandboxResultType.ApplicationError ||
+                         state.CodeExecutionResultType == SandboxResultType.SyntaxError)
                 {
-                    for (int i = 0; i < 2 && state.CodeExecutionFailuresDetectorIterationCount < 2; i++)
+                    if (_workflowConfiguration.EnableCodeCorrection)
                     {
-                        var analysis = await _codeExecutionFailuresDetectorWorkflowStep.ExecuteCodeExecutionFailuresDetectorAsync(state, i + 1);
-
-                        if (analysis.Equals(JavascriptCodeExecutionFailuresDetectorAgent.NO_ERROR, StringComparison.OrdinalIgnoreCase))
+                        for (int i = 0; i < 2 && state.CodeExecutionFailuresDetectorIterationCount < 2; i++)
                         {
-                            break;
+                            var analysis = await _codeExecutionFailuresDetectorWorkflowStep.ExecuteCodeExecutionFailuresDetectorAsync(state, i + 1);
+
+                            if (analysis.Equals(JavascriptCodeExecutionFailuresDetectorAgent.NO_ERROR, StringComparison.OrdinalIgnoreCase))
+                            {
+                                break;
+                            }
+
+                            await _codeFixerForRuntimeErrorsWorkflowStep.ExecuteCodeFixerForRuntimeErrorsAsync(state, analysis, i + 1);
+
+                            var sandBoxError = await _jsSandboxWorkflowStep.ExecuteJSSandboxAsync(state, true);
+                            if (sandBoxError)
+                            {
+                                break;
+                            }
                         }
 
-                        await _codeFixerForRuntimeErrorsWorkflowStep.ExecuteCodeFixerForRuntimeErrorsAsync(state, analysis, i + 1);
-
-                        var sandBoxError = await _jsSandboxWorkflowStep.ExecuteJSSandboxAsync(state, true);
-                        if (sandBoxError)
+                        if (_workflowConfiguration.EnableDomainExpert)
                         {
-                            break;
+                            await _domainExpertWorkflowStep.ExecuteDomainExpertAgentAsync(state);
                         }
+                        await CompleteWorkflowAsync(state);
                     }
-
-                    if (_workflowConfiguration.EnableDomainExpert)
-                    {
-                        await _domainExpertWorkflowStep.ExecuteDomainExpertAgentAsync(state);
-                    }
-                    await CompleteWorkflowAsync(state);
                 }
                 else
                 {
