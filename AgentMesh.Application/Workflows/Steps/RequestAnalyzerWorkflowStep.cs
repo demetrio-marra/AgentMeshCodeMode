@@ -59,6 +59,7 @@ public class RequestAnalyzerWorkflowStep(
   "intent": "string",
   "conversationTopic": "string",
   "mentionedActivities": ["string"],
+  "userPreferences": ["string"],
   "userProvidedData": ["string"],
   "missingValues": ["string"],
   "languageOfTheUser": "string"
@@ -72,8 +73,9 @@ public class RequestAnalyzerWorkflowStep(
             { "Intent", agentOutput.Intent },
             { "Conversation topic", agentOutput.ConversationTopic ?? "(No conversation topic extracted)" },
             { "Language of the user", agentOutput.LanguageOfTheUser },
-            { "Mentioned features", WorkflowExecutorFormatting.ToBulletList(agentOutput.UserRequestedActions) },
-            { "Mentioned values", WorkflowExecutorFormatting.ToBulletList(agentOutput.UserProvidedData) },
+            { "User requested actions", WorkflowExecutorFormatting.ToBulletList(agentOutput.UserRequestedActions) },
+            { "User preferences", WorkflowExecutorFormatting.ToBulletList(agentOutput.UserPreferences) },
+            { "User provided data", WorkflowExecutorFormatting.ToBulletList(agentOutput.UserProvidedData) },
             { "Missing values", WorkflowExecutorFormatting.ToBulletList(agentOutput.MissingValues) }
         };
        

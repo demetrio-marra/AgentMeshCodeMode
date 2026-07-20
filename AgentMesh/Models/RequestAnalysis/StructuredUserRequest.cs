@@ -26,6 +26,11 @@
         public IEnumerable<string> UserProvidedData { get; set; } = [];
 
         /// <summary>
+        /// A collection of preferences or settings expressed by the user in their request, which may influence how the request is processed or responded to.
+        /// </summary>
+        public IEnumerable<string> UserPreferences { get; set; } = [];
+
+        /// <summary>
         /// A collection of values or information that the user's request indicates are missing but necessary to complete the request.
         /// </summary>
         public IEnumerable<string> MissingValues { get; set; } = [];

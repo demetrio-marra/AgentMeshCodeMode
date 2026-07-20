@@ -37,6 +37,7 @@ namespace AgentMesh.Application.Services
                 Intent = result.Result.Intent,
                 ConversationTopic = result.Result.ConversationTopic,
                 UserRequestedActions = result.Result.UserRequestedActions,
+                UserPreferences = result.Result.UserPreferences,
                 UserProvidedData = result.Result.UserProvidedData,
                 MissingValues = result.Result.MissingValues,
                 LanguageOfTheUser = result.Result.LanguageOfTheUser,
@@ -83,6 +84,12 @@ namespace AgentMesh.Application.Services
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToArray();
 
+                responseDTO.UserPreferences = responseDTO.UserPreferences
+                    .Where(entry => !string.IsNullOrWhiteSpace(entry))
+                    .Select(entry => entry.Trim())
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
                 responseDTO.UserProvidedData = responseDTO.UserProvidedData
                     .Where(entry => !string.IsNullOrWhiteSpace(entry))
                     .Select(entry => entry.Trim())
@@ -114,6 +121,9 @@ namespace AgentMesh.Application.Services
 
             [JsonPropertyName("userRequestedActions")]
             public IEnumerable<string> UserRequestedActions { get; set; } = [];
+
+            [JsonPropertyName("userPreferences")]
+            public IEnumerable<string> UserPreferences { get; set; } = [];
             
             [JsonPropertyName("userProvidedData")]
             public IEnumerable<string> UserProvidedData { get; set; } = [];
