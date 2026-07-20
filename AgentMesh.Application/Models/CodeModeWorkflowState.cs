@@ -17,6 +17,7 @@ namespace AgentMesh.Application.Models
         public string OriginalUserRequest { get => ClassifiedUserRequest.OriginalUserRequest; set => ClassifiedUserRequest.OriginalUserRequest = value; }
 
         public AgentMesh.Models.RequestAnalysis.StructuredUserRequest? NewStructuredUserRequest { get; set; }
+        public AgentMesh.Models.RequestAnalysis.StructuredUserRequest? NewCanonicalizedStructuredUserRequest { get; set; }
 
 
         /// <summary>

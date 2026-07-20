@@ -35,7 +35,8 @@ namespace AgentMesh.Application.Workflows
         CodeExecutionFailuresDetectorWorkflowStep codeExecutionFailuresDetectorWorkflowStep,
         CodeFixerForRuntimeErrorsWorkflowStep codeFixerForRuntimeErrorsWorkflowStep,
         DomainExpertWorkflowStep domainExpertWorkflowStep,
-        RequestAnalyzerWorkflowStep requestAnalyzerWorkflowStep) : IWorkflow
+        RequestAnalyzerWorkflowStep requestAnalyzerWorkflowStep,
+        QueryExpanderWorkflowStep queryExpanderWorkflowStep) : IWorkflow
     {
         private readonly ILogger<CodeModeWorkflow> _logger = logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
@@ -60,6 +61,7 @@ namespace AgentMesh.Application.Workflows
         private readonly CodeFixerForRuntimeErrorsWorkflowStep _codeFixerForRuntimeErrorsWorkflowStep = codeFixerForRuntimeErrorsWorkflowStep;
         private readonly DomainExpertWorkflowStep _domainExpertWorkflowStep = domainExpertWorkflowStep;
         private readonly RequestAnalyzerWorkflowStep _requestAnalyzerWorkflowStep = requestAnalyzerWorkflowStep;
+        private readonly QueryExpanderWorkflowStep _queryExpanderWorkflowStep = queryExpanderWorkflowStep;
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
         {
@@ -69,22 +71,23 @@ namespace AgentMesh.Application.Workflows
 
             await _requestAnalyzerWorkflowStep.ExecuteRequestAnalyzerAsync(state, chatHistory);
 
+            await _queryExpanderWorkflowStep.ExecuteQueryExpanderAsync(state);
 
-            return new WorkflowResult { };
+            //return new WorkflowResult { };
 
-            await _intentExtractorWorkflowStep.ExecuteIntentExtractorAsync(state, chatHistory);
+            //await _intentExtractorWorkflowStep.ExecuteIntentExtractorAsync(state, chatHistory);
 
-            if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Other)
-            {
-                goto CompleteWorkflow;
-            }
+            //if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Other)
+            //{
+            //    goto CompleteWorkflow;
+            //}
 
-            if (state.ClassifiedUserRequest.EntitiesByDomain.Any())
-            {
-                await _domainsKnowledgeBaseServiceFastSearchWorkflowStep.ExecuteDomainsKnowledgeBaseServiceFastSearchAsync(state);
-            }
+            //if (state.ClassifiedUserRequest.EntitiesByDomain.Any())
+            //{
+            //    await _domainsKnowledgeBaseServiceFastSearchWorkflowStep.ExecuteDomainsKnowledgeBaseServiceFastSearchAsync(state);
+            //}
 
-            await _requirementsCollectorWorkflowStep.ExecuteRequirementsCollectorAsync(state);
+            //await _requirementsCollectorWorkflowStep.ExecuteRequirementsCollectorAsync(state);
 
             var memoryTask = (_workflowConfiguration.EnableMemoryService && state.PastMemoriesQuery.Any())
                 ? _agentMemoryServiceWorkflowStep.ExecuteAgentMemoryServiceAsync(state)
@@ -100,6 +103,8 @@ namespace AgentMesh.Application.Workflows
             {
                 await _domainsKnowledgeBaseDocumentsExtractorWorkflowStep.ExecuteDomainsKnowledgeBaseDocumentsExtractorAsync(state);
             }
+
+           // return new WorkflowResult { };
 
             await _intentCanonicalizationWorkflowStep.ExecuteIntentCanonicalizationAsync(state);
 
