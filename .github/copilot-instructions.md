@@ -17,8 +17,8 @@ This file provides guidance for GitHub Copilot when working in this repository. 
 
 Every agent in AgentMesh follows a consistent, layered architecture spread across two projects:
 
-- **`AgentMesh`** — the contracts/models project (interfaces, input/output DTOs)
-- **`AgentMesh.Application`** — the application project (configurations, implementations)
+- **`AgentMesh`** ï¿½ the contracts/models project (interfaces, input/output DTOs)
+- **`AgentMesh.Application`** ï¿½ the application project (configurations, implementations)
 
 Registration of each agent is done manually in **`AgentMeshCLI/Program.cs`**.
 
@@ -31,6 +31,7 @@ Registration of each agent is done manually in **`AgentMeshCLI/Program.cs`**.
 | Interface | `AgentMesh` | `Services/I<AgentName>Agent.cs` |
 | Configuration | `AgentMesh.Application` | `Configuration/<AgentName>AgentConfiguration.cs` |
 | Implementation | `AgentMesh.Application` | `Services/<AgentName>Agent.cs` |
+| Implementation (Workflow step) | `AgentMesh.Application` | `Workflows/Steps/<AgentName>WorkflowStep.cs` |
 | System prompt | `AgentMeshCLI` | `Prompts/<AgentName>.SystemPrompt.txt` |
 | `appsettings.json` entry | `AgentMeshCLI` | Add section under `Agents` |
 | DI registration | `AgentMeshCLI` | `Program.cs` |
@@ -39,7 +40,7 @@ Registration of each agent is done manually in **`AgentMeshCLI/Program.cs`**.
 
 ### 1.2 Step-by-Step Guide
 
-#### Step 1 — Define the Input DTO (`AgentMesh` project)
+#### Step 1 ï¿½ Define the Input DTO (`AgentMesh` project)
 
 Create `AgentMesh/Models/<AgentName>/<AgentName>AgentInput.cs`.
 
@@ -55,7 +56,7 @@ namespace AgentMesh.Models.<AgentName>
 }
 ```
 
-#### Step 2 — Define the Output DTO (`AgentMesh` project)
+#### Step 2 ï¿½ Define the Output DTO (`AgentMesh` project)
 
 Create `AgentMesh/Models/<AgentName>/<AgentName>AgentOutput.cs`.
 
@@ -74,11 +75,11 @@ namespace AgentMesh.Models.<AgentName>
 }
 ```
 
-#### Step 3 — Define the Interface (`AgentMesh` project)
+#### Step 3 ï¿½ Define the Interface (`AgentMesh` project)
 
 Create `AgentMesh/Services/I<AgentName>Agent.cs`.
 
-Every agent interface extends `IExecutor<TInput, TOutput>` and is intentionally left empty — it serves only as a named contract for DI:
+Every agent interface extends `IExecutor<TInput, TOutput>` and is intentionally left empty ï¿½ it serves only as a named contract for DI:
 
 ```csharp
 using AgentMesh.Models.<AgentName>;
@@ -91,7 +92,7 @@ namespace AgentMesh.Services
 }
 ```
 
-#### Step 4 — Define the Configuration (`AgentMesh.Application` project)
+#### Step 4 ï¿½ Define the Configuration (`AgentMesh.Application` project)
 
 Create `AgentMesh.Application/Configuration/<AgentName>AgentConfiguration.cs`.
 
@@ -113,7 +114,7 @@ namespace AgentMesh.Application.Configuration
 }
 ```
 
-#### Step 5 — Implement the Agent (`AgentMesh.Application` project)
+#### Step 5 ï¿½ Implement the Agent (`AgentMesh.Application` project)
 
 Create `AgentMesh.Application/Services/<AgentName>Agent.cs`.
 
@@ -122,7 +123,7 @@ Create `AgentMesh.Application/Services/<AgentName>Agent.cs`.
 - Resolve the keyed `IOpenAIClient` using `[FromKeyedServices(<AgentName>AgentConfiguration.AgentName)]`.
 - Build the `List<AgentMessage>` inside `ExecuteAsync`, then call `ExecuteWithRetryAsync`.
 - Map the `AgentResponse<TParsed>` result onto the output DTO, including all token counts.
-- Implement `ParseStructuredResponse` to extract the structured data from the raw LLM text. Throw `BadStructuredResponseException` if the format is invalid — this triggers automatic retry via the `Resilience` policy.
+- Implement `ParseStructuredResponse` to extract the structured data from the raw LLM text. Throw `BadStructuredResponseException` if the format is invalid ï¿½ this triggers automatic retry via the `Resilience` policy.
 
 ```csharp
 using AgentMesh.Application.Configuration;
@@ -181,7 +182,82 @@ namespace AgentMesh.Application.Services
 }
 ```
 
-#### Step 6 — Create the System Prompt (`AgentMeshCLI` project)
+#### Step 6 ï¿½ Implement the Workflow step (`AgentMesh.Application` project)
+The workflow step is required to "glue" agent requests and responses to the workflow state.
+It also provide capability to display progress
+
+Create `AgentMesh.Application/Workflows/Steps/<AgentName>WorkflowStep.cs`.
+
+Example:
+
+```csharp
+using AgentMesh.Application.Models;
+using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Workflows;
+using AgentMesh.Models.FunctionalAnalyst;
+using AgentMesh.Services;
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+
+namespace AgentMesh.Application.Workflows.Steps;
+
+public class FunctionalAnalystWorkflowStep(
+    ILogger<CodeModeWorkflow> logger,
+    IWorkflowProgressNotifier workflowProgressNotifier,
+    IFunctionalAnalystAgent functionalAnalystAgent,
+    CodeModeWorkflowConfiguration workflowConfiguration)
+{
+    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
+    private readonly IFunctionalAnalystAgent _functionalAnalystAgent = functionalAnalystAgent;
+    private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
+
+    public async Task ExecuteFunctionalAnalystAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        _logger.LogDebug("Engaging Functional Analyst Agent...");
+        await _workflowProgressNotifier.NotifyWorkflowStepStart("Functional Analyst Agent", new Dictionary<string, string>
+        {
+            { "Intent", state.CanonicalizedIntent },
+            { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? WorkflowExecutorFormatting.ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
+            { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? WorkflowExecutorFormatting.ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"[{kvp.Key}] {v}"))) : "(No entities)" },
+            { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
+            { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? WorkflowExecutorFormatting.ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
+            { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? WorkflowExecutorFormatting.ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(d => d.File)) : "(No documents)" }
+        });
+
+        var functionalAnalystOutput = await _functionalAnalystAgent.ExecuteAsync(new FunctionalAnalystAgentInput
+        {
+            Intent = state.CanonicalizedIntent,
+            SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
+            Entities = state.ClassifiedUserRequest.EntitiesByDomain,
+            UserPreferences = state.ClassifiedUserRequest.UserPreferences,
+            AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
+            KnowledgeBaseDocumentsContent = WorkflowExecutorFormatting.SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent),
+            DoNotComment = _workflowConfiguration.EnableDomainExpert
+        }, cancellationToken);
+
+        state.ShouldEngageCoder = !functionalAnalystOutput.RequestRejected;
+        state.BusinessRequirements = functionalAnalystOutput.BusinessRequirements;
+        state.FunctionalAnalystRejected = functionalAnalystOutput.RequestRejected;
+        state.FunctionalAnalystRejectReasons = functionalAnalystOutput.ReasonOfRejection;
+        state.AddTokenUsage(FunctionalAnalystAgentConfiguration.AgentName, functionalAnalystOutput.InputTokenCount, functionalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Functional Analyst Agent");
+        var notifyDictionary = new Dictionary<string, string>
+        {
+            { "BusinessRequirements", state.BusinessRequirements ?? "(No business requirements)" },
+            { "FunctionalAnalystRejected", state.FunctionalAnalystRejected.ToString() },
+            { "FunctionalAnalystRejectReasons", state.FunctionalAnalystRejectReasons ?? "(No rejection reasons)" },
+            { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
+        };
+        await _workflowProgressNotifier.NotifyWorkflowStepEnd("Functional Analyst Agent", notifyDictionary);
+    }
+}
+
+
+```
+
+#### Step 7 ï¿½ Create the System Prompt (`AgentMeshCLI` project)
 
 Create `AgentMeshCLI/Prompts/<AgentName>.SystemPrompt.txt` with the agent's system prompt text.
 
@@ -193,7 +269,7 @@ Set **Copy to Output Directory** to `Copy if newer` in the file's properties (or
 </None>
 ```
 
-#### Step 7 — Add `appsettings.json` Configuration (`AgentMeshCLI` project)
+#### Step 8 ï¿½ Add `appsettings.json` Configuration (`AgentMeshCLI` project)
 
 Add a new entry under the `Agents` section in `AgentMeshCLI/appsettings.json`:
 
@@ -209,7 +285,7 @@ Add a new entry under the `Agents` section in `AgentMeshCLI/appsettings.json`:
 
 The `LLM` value must match a key defined in the top-level `LLMs` configuration dictionary.
 
-#### Step 8 — Register in the DI Container (`AgentMeshCLI/Program.cs`)
+#### Step 9 ï¿½ Register in the DI Container (`AgentMeshCLI/Program.cs`)
 
 Add the following registration block to `Program.cs`, following the same pattern used by all existing agents:
 
@@ -242,13 +318,13 @@ services.AddSingleton<I<AgentName>Agent, <AgentName>Agent>();
 
 ### 1.3 Key Conventions
 
-- **Agent name constant** — `AgentName` in the configuration class is used as the DI key for the keyed `IOpenAIClient` and must be unique across all agents.
-- **Keyed `IOpenAIClient`** — Each agent gets its own `IOpenAIClient` instance registered as a keyed singleton, pre-configured with the agent's LLM, provider, temperature, and system prompt. Always resolve it with `[FromKeyedServices(...)]` in the constructor.
-- **Retry on parse failure** — Throw `BadStructuredResponseException` (or `EmptyAgentResponseException`) from `ParseStructuredResponse` to trigger the automatic retry policy defined in `Resilience`. Return `default(T)` only when the response is valid but intentionally empty.
-- **Token counts** — Always propagate `TotalTokenCount`, `InputTokenCount`, and `OutputTokenCount` from `AgentResponse<T>` to the output DTO.
-- **`SystemPromptFile` vs `SystemPrompt`** — Prefer `SystemPromptFile` in `appsettings.json` to keep prompts in dedicated `.txt` files. The `ResolveConfigText` helper in `Program.cs` resolves the file path at startup and populates `SystemPrompt` automatically.
-- **Project placement** — Contracts and models belong in `AgentMesh`; all application logic and configuration belong in `AgentMesh.Application`. Do not add implementation details to the `AgentMesh` contracts project.
-- **Workflow wiring** — Adding a new agent to an existing or new `IWorkflow` implementation is a separate concern. Inject the agent's interface via the workflow constructor and call `ExecuteAsync` as needed within the workflow logic.
+- **Agent name constant** ï¿½ `AgentName` in the configuration class is used as the DI key for the keyed `IOpenAIClient` and must be unique across all agents.
+- **Keyed `IOpenAIClient`** ï¿½ Each agent gets its own `IOpenAIClient` instance registered as a keyed singleton, pre-configured with the agent's LLM, provider, temperature, and system prompt. Always resolve it with `[FromKeyedServices(...)]` in the constructor.
+- **Retry on parse failure** ï¿½ Throw `BadStructuredResponseException` (or `EmptyAgentResponseException`) from `ParseStructuredResponse` to trigger the automatic retry policy defined in `Resilience`. Return `default(T)` only when the response is valid but intentionally empty.
+- **Token counts** ï¿½ Always propagate `TotalTokenCount`, `InputTokenCount`, and `OutputTokenCount` from `AgentResponse<T>` to the output DTO.
+- **`SystemPromptFile` vs `SystemPrompt`** ï¿½ Prefer `SystemPromptFile` in `appsettings.json` to keep prompts in dedicated `.txt` files. The `ResolveConfigText` helper in `Program.cs` resolves the file path at startup and populates `SystemPrompt` automatically.
+- **Project placement** ï¿½ Contracts and models belong in `AgentMesh`; all application logic and configuration belong in `AgentMesh.Application`. Do not add implementation details to the `AgentMesh` contracts project.
+- **Workflow wiring** ï¿½ Adding a new agent to an existing or new `IWorkflow` implementation is a separate concern. Inject the agent's interface via the workflow constructor and call `ExecuteAsync` as needed within the workflow logic.
 
 
 ## 2. Updating existing Agents
@@ -259,6 +335,7 @@ When the user asks for changes agent features, usually it means to update its in
 - Update the system prompt to instruct the model to consider new properties/reconsider existing ones
 - Change the DTOs to reflect new properties
 - Update the Agent's class file, how input is sent and how response is parsed
+- Update the Agent's workflow step
 - Update the Agent's executor in the `CodeModeWorkflow.cs` file to trace properties in `notifyDictionary`
 - Update the `CodeModeWorkflowState.cs` properties involved in the change.
 
@@ -267,6 +344,7 @@ When the user asks to refactor the name of the agent keeping features unchanged,
 - Rename any file/folder/class/enum and any kind of c# entity related.
 - Update all references with the new names
 - Update the system prompt to reflect the new name
+- Update the workflow step
 - Update any text within  `CodeModeWorkflow.cs` and also trace properties in `notifyDictionary`
 - Update the agent's configuration printed at program startup
 
@@ -279,6 +357,6 @@ When the user asks to remove a no more useful or superseed agent, follow this wo
 3. Delete its configuration in `appSettings.json`
 4. Remove configuration binding from `Program.cs` as well as Dependency Injection
 5. Delete the .cs file
-6. Delete related DTOs and Executors
+6. Delete related DTOs, Workflow steps and Executors
 7. Ensure all folders belonging to it are deleted across the entire solution
 8. Delete the `<agentName>.SystemPrompt.txt` file 
