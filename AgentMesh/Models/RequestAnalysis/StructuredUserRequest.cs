@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Models
+﻿namespace AgentMesh.Models.RequestAnalysis
 {
     public class StructuredUserRequest
     {
@@ -8,11 +8,6 @@
         /// This property is used to capture the essence of the user's request and can be used for further processing, such as routing the request to the appropriate handler or generating a response.
         /// </summary>
         public string Intent { get; set; } = string.Empty;
-
-        /// <summary>
-        /// The category or classification of the user's intent, indicating the type of action or operation the user wants to perform.
-        /// </summary>
-        public UserIntentCategoryValues IntentCategory { get; set; }
 
         /// <summary>
         /// The main topic or subject that the user's request relates to, providing context for the conversation or interaction.

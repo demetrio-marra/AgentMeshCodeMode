@@ -31,6 +31,7 @@ namespace AgentMesh
         RelevantFactsEvaluatorAgentConfiguration relevantFactsEvaluatorConfiguration,
         IConversationSummarizerAgent conversationSummarizerAgent,
         IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
+        RequestAnalyzerAgentConfiguration requestAnalyzerAgentConfiguration,
         CodeModeWorkflowConfiguration workflowConfiguration,
         EmbeddingServiceConfiguration embeddingServiceConfiguration,
         IAgentMemorySaverExecutor agentMemorySaver)
@@ -53,6 +54,7 @@ namespace AgentMesh
         private readonly RelevantFactsEvaluatorAgentConfiguration _relevantFactsEvaluatorConfiguration = relevantFactsEvaluatorConfiguration;
         private readonly IConversationSummarizerAgent _conversationSummarizerAgent = conversationSummarizerAgent;
         private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
+        private readonly RequestAnalyzerAgentConfiguration _requestAnalyzerAgentConfiguration = requestAnalyzerAgentConfiguration;
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
         private readonly EmbeddingServiceConfiguration _embeddingServiceConfiguration = embeddingServiceConfiguration;
         private readonly IAgentMemorySaverExecutor _agentMemorySaver = agentMemorySaver;
@@ -134,6 +136,7 @@ namespace AgentMesh
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens },
+                    { RequestAnalyzerAgent.AgentName, _llmsConfiguration[_requestAnalyzerAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { "Embedding Service", _embeddingServiceConfiguration.CostPerMillionTokens }
                 };
 
@@ -153,7 +156,8 @@ namespace AgentMesh
                     { PersonalAssistantAgentConfiguration.AgentName, _llmsConfiguration[_personalAssistantConfiguration.LLM].CostPerMillionOutputTokens },
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens },
-                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens }
+                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens },
+                    { RequestAnalyzerAgent.AgentName, _llmsConfiguration[_requestAnalyzerAgentConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
                 if (_workflowConfiguration.EnableDomainExpert)
@@ -352,6 +356,7 @@ namespace AgentMesh
             Console.WriteLine("Sandbox Url: " + _sesJsSandboxConfiguration.SandboxServiceURL + ", SandboxName: " + _sesJsSandboxConfiguration.SandboxName + ", AgentId: " + _userConfiguration.AgentId);
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Intent Extractor", IntentExtractorAgentConfiguration.AgentName, _intentExtractorConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Request Analyzer", RequestAnalyzerAgent.AgentName, _requestAnalyzerAgentConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Intent Canonicalization", IntentCanonicalizationAgentConfiguration.AgentName, _intentCanonicalizationConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Functional Analyst", FunctionalAnalystAgentConfiguration.AgentName, _functionalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Technical Analyst", TechnicalAnalystAgentConfiguration.AgentName, _technicalAnalystConfiguration);

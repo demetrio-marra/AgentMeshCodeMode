@@ -387,6 +387,29 @@ namespace AgentMesh
 
             services.AddSingleton<IRelevantFactsEvaluatorAgent, RelevantFactsEvaluatorAgent>();
 
+            // RequestAnalyzer agent config and client
+            services
+                .AddOptions<RequestAnalyzerAgentConfiguration>()
+                .Bind(configuration.GetSection(RequestAnalyzerAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<RequestAnalyzerAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(RequestAnalyzerAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<RequestAnalyzerAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IRequestAnalyzerAgent, RequestAnalyzerAgent>();
+
             // conversation summarizer agent config and client
             services
                 .AddOptions<ConversationSummarizerAgentConfiguration>()
