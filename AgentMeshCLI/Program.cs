@@ -466,6 +466,7 @@ namespace AgentMesh
             services.AddSingleton<CodeExecutionFailuresDetectorWorkflowStep>();
             services.AddSingleton<DocumentationWorkflowStep>();
             services.AddSingleton<DomainExpertWorkflowStep>();
+            services.AddSingleton<RequestAnalyzerWorkflowStep>();
 
             services.AddSingleton<IWorkflow, CodeModeWorkflow>();
             services.AddSingleton<UserConsoleInputService>();

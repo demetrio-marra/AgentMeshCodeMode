@@ -36,9 +36,8 @@ namespace AgentMesh.Application.Services
             {
                 Intent = result.Result.Intent,
                 ConversationTopic = result.Result.ConversationTopic,
-                MentionedFeatures = result.Result.MentionedFeatures,
-                MentionedObjects = result.Result.MentionedObjects,
-                MentionedValues = result.Result.MentionedValues,
+                UserRequestedActions = result.Result.UserRequestedActions,
+                UserProvidedData = result.Result.UserProvidedData,
                 MissingValues = result.Result.MissingValues,
                 LanguageOfTheUser = result.Result.LanguageOfTheUser,
                 InputTokenCount = result.InputTokenCount,
@@ -54,7 +53,7 @@ namespace AgentMesh.Application.Services
         {
             try
             {
-                var responseDTO = JsonSerializer.Deserialize<ParsedResponse>(rawResponseText);
+                var responseDTO = JsonSerializer.Deserialize<ParsedResponse>(rawResponseText, AgentResponseJsonSerializationUtils.DefaultDeserializeOptions);
 
                 if (responseDTO == null)
                 {
@@ -78,19 +77,13 @@ namespace AgentMesh.Application.Services
                 responseDTO.Intent = responseDTO.Intent.Trim();
                 responseDTO.ConversationTopic = responseDTO.ConversationTopic?.Trim() ?? string.Empty;
 
-                responseDTO.MentionedFeatures = responseDTO.MentionedFeatures
+                responseDTO.UserRequestedActions = responseDTO.UserRequestedActions
                     .Where(entry => !string.IsNullOrWhiteSpace(entry))
                     .Select(entry => entry.Trim())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToArray();
 
-                responseDTO.MentionedObjects = responseDTO.MentionedObjects
-                    .Where(entry => !string.IsNullOrWhiteSpace(entry))
-                    .Select(entry => entry.Trim())
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
-
-                responseDTO.MentionedValues = responseDTO.MentionedValues
+                responseDTO.UserProvidedData = responseDTO.UserProvidedData
                     .Where(entry => !string.IsNullOrWhiteSpace(entry))
                     .Select(entry => entry.Trim())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -119,14 +112,11 @@ namespace AgentMesh.Application.Services
             [JsonPropertyName("conversationTopic")]
             public string ConversationTopic { get; set; } = string.Empty;
 
-            [JsonPropertyName("mentionedFeatures")]
-            public IEnumerable<string> MentionedFeatures { get; set; } = [];
-
-            [JsonPropertyName("mentionedObjects")]
-            public IEnumerable<string> MentionedObjects { get; set; } = [];
-
-            [JsonPropertyName("mentionedValues")]
-            public IEnumerable<string> MentionedValues { get; set; } = [];
+            [JsonPropertyName("userRequestedActions")]
+            public IEnumerable<string> UserRequestedActions { get; set; } = [];
+            
+            [JsonPropertyName("userProvidedData")]
+            public IEnumerable<string> UserProvidedData { get; set; } = [];
 
             [JsonPropertyName("missingValues")]
             public IEnumerable<string> MissingValues { get; set; } = [];

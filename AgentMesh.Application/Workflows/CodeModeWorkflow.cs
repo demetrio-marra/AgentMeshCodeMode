@@ -34,7 +34,8 @@ namespace AgentMesh.Application.Workflows
         JSSandboxWorkflowStep jsSandboxWorkflowStep,
         CodeExecutionFailuresDetectorWorkflowStep codeExecutionFailuresDetectorWorkflowStep,
         CodeFixerForRuntimeErrorsWorkflowStep codeFixerForRuntimeErrorsWorkflowStep,
-        DomainExpertWorkflowStep domainExpertWorkflowStep) : IWorkflow
+        DomainExpertWorkflowStep domainExpertWorkflowStep,
+        RequestAnalyzerWorkflowStep requestAnalyzerWorkflowStep) : IWorkflow
     {
         private readonly ILogger<CodeModeWorkflow> _logger = logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
@@ -58,12 +59,17 @@ namespace AgentMesh.Application.Workflows
         private readonly CodeExecutionFailuresDetectorWorkflowStep _codeExecutionFailuresDetectorWorkflowStep = codeExecutionFailuresDetectorWorkflowStep;
         private readonly CodeFixerForRuntimeErrorsWorkflowStep _codeFixerForRuntimeErrorsWorkflowStep = codeFixerForRuntimeErrorsWorkflowStep;
         private readonly DomainExpertWorkflowStep _domainExpertWorkflowStep = domainExpertWorkflowStep;
+        private readonly RequestAnalyzerWorkflowStep _requestAnalyzerWorkflowStep = requestAnalyzerWorkflowStep;
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
         {
             await _workflowProgressNotifier.NotifyWorkflowStart();
 
             var state = new CodeModeWorkflowState(userInput, chatHistory);
+
+            await _requestAnalyzerWorkflowStep.ExecuteRequestAnalyzerAsync(state, chatHistory);
+
+            return new WorkflowResult { };
 
             await _intentExtractorWorkflowStep.ExecuteIntentExtractorAsync(state, chatHistory);
 

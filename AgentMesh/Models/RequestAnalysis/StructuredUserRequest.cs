@@ -11,23 +11,19 @@
 
         /// <summary>
         /// The main topic or subject that the user's request relates to, providing context for the conversation or interaction.
+        /// If the user's request does not clearly indicate a specific topic, this property may be left empty or null.
         /// </summary>
-        public string ConversationTopic { get; set; } = string.Empty;
+        public string? ConversationTopic { get; set; } = string.Empty;
 
         /// <summary>
         /// A collection of features or capabilities mentioned by the user in their request.
         /// </summary>
-        public IEnumerable<string> MentionedFeatures { get; set; } = [];
-
-        /// <summary>
-        /// A collection of objects or entities referenced by the user in their request.
-        /// </summary>
-        public IEnumerable<string> MentionedObjects { get; set; } = [];
+        public IEnumerable<string> UserRequestedActions { get; set; } = [];
 
         /// <summary>
         /// A collection of specific values or parameters mentioned by the user that are relevant to their request.
         /// </summary>
-        public IEnumerable<string> MentionedValues { get; set; } = [];
+        public IEnumerable<string> UserProvidedData { get; set; } = [];
 
         /// <summary>
         /// A collection of values or information that the user's request indicates are missing but necessary to complete the request.
