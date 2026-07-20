@@ -32,11 +32,11 @@ public class RequestCanonicalizationWorkflowStep(
 
         await _workflowProgressNotifier.NotifyWorkflowStepStart("Request Canonicalization Agent", new Dictionary<string, string>
         {
-            { "StructuredUserRequest.Intent", structuredUserRequest.Intent },
-            { "StructuredUserRequest.ConversationTopic", structuredUserRequest.ConversationTopic ?? "(No conversation topic)" },
-            { "StructuredUserRequest.UserRequestedActions", structuredUserRequest.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(structuredUserRequest.UserRequestedActions) : "(No requested actions)" },
-            { "StructuredUserRequest.UserProvidedData", structuredUserRequest.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(structuredUserRequest.UserProvidedData) : "(No provided data)" },
-            { "StructuredUserRequest.UserPreferences", structuredUserRequest.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(structuredUserRequest.UserPreferences) : "(No user preferences)" },
+            { "Intent", structuredUserRequest.Intent },
+            { "ConversationTopic", structuredUserRequest.ConversationTopic ?? "(No conversation topic)" },
+            { "UserRequestedActions", structuredUserRequest.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(structuredUserRequest.UserRequestedActions) : "(No requested actions)" },
+            { "UserProvidedData", structuredUserRequest.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(structuredUserRequest.UserProvidedData) : "(No provided data)" },
+            { "UserPreferences", structuredUserRequest.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(structuredUserRequest.UserPreferences) : "(No user preferences)" },
             { "DomainsKnowledgeBaseQuery", state.DomainsKnowledgeBaseQuery.Any() ? WorkflowExecutorFormatting.ToBulletList(state.DomainsKnowledgeBaseQuery) : "(No queries)" },
             { "DomainsKnowledgeBaseDocumentsContent (files)", state.DomainsKnowledgeBaseDocumentsContent.Any() ? WorkflowExecutorFormatting.ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(s => s.File)) : "(No knowledge base results)" },
             { "LanguageOfKnowledgeBase", _workflowConfiguration.LanguageOfKnowledgeBase }
@@ -52,7 +52,6 @@ public class RequestCanonicalizationWorkflowStep(
         }, cancellationToken);
 
         state.NewCanonicalizedStructuredUserRequest = output.CanonicalizedStructuredUserRequest;
-        state.CanonicalizedIntentCategory = output.CanonicalizedIntentCategory;
         state.DomainsKnowledgeBaseQuery = output.CanonicalizedDomainsKnowledgeBaseQuery;
 
         state.AddTokenUsage(RequestCanonicalizationAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Request Canonicalization Agent");
@@ -60,12 +59,12 @@ public class RequestCanonicalizationWorkflowStep(
         var canonicalizedStructuredUserRequest = state.NewCanonicalizedStructuredUserRequest ?? new AgentMesh.Models.RequestAnalysis.StructuredUserRequest();
         var notifyDictionary = new Dictionary<string, string>
         {
-            { "CanonicalizedStructuredUserRequest.Intent", canonicalizedStructuredUserRequest.Intent },
-            { "CanonicalizedStructuredUserRequest.ConversationTopic", canonicalizedStructuredUserRequest.ConversationTopic ?? "(No conversation topic)" },
-            { "CanonicalizedStructuredUserRequest.UserRequestedActions", canonicalizedStructuredUserRequest.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(canonicalizedStructuredUserRequest.UserRequestedActions) : "(No requested actions)" },
-            { "CanonicalizedStructuredUserRequest.UserProvidedData", canonicalizedStructuredUserRequest.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(canonicalizedStructuredUserRequest.UserProvidedData) : "(No provided data)" },
-            { "CanonicalizedStructuredUserRequest.UserPreferences", canonicalizedStructuredUserRequest.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(canonicalizedStructuredUserRequest.UserPreferences) : "(No user preferences)" },
-            { "CanonicalizedIntentCategory", state.CanonicalizedIntentCategory.ToString() },
+            { "CanonicalizedIntent", canonicalizedStructuredUserRequest.Intent },
+            { "CanonicalizedIntentCategory", canonicalizedStructuredUserRequest.IntentCategory.ToString() },
+            { "CanonicalizedConversationTopic", canonicalizedStructuredUserRequest.ConversationTopic ?? "(No conversation topic)" },
+            { "CanonicalizedUserRequestedActions", canonicalizedStructuredUserRequest.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(canonicalizedStructuredUserRequest.UserRequestedActions) : "(No requested actions)" },
+            { "CanonicalizedUserProvidedData", canonicalizedStructuredUserRequest.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(canonicalizedStructuredUserRequest.UserProvidedData) : "(No provided data)" },
+            { "CanonicalizedUserPreferences", canonicalizedStructuredUserRequest.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(canonicalizedStructuredUserRequest.UserPreferences) : "(No user preferences)" },
             { "CanonicalizedDomainsKnowledgeBaseQuery", state.DomainsKnowledgeBaseQuery.Any() ? WorkflowExecutorFormatting.ToBulletList(state.DomainsKnowledgeBaseQuery) : "(No canonicalized queries)" },
             { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
         };

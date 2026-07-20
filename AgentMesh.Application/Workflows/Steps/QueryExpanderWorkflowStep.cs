@@ -14,6 +14,8 @@ public class QueryExpanderWorkflowStep(
     IQueryExpanderAgent queryExpanderAgent,
     CodeModeWorkflowConfiguration workflowConfiguration)
 {
+    private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
+
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly IQueryExpanderAgent _queryExpanderAgent = queryExpanderAgent;
@@ -28,6 +30,7 @@ public class QueryExpanderWorkflowStep(
         await _workflowProgressNotifier.NotifyWorkflowStepStart("Query Expander Agent", new Dictionary<string, string>
         {
             { "Intent", sr.Intent },
+            { "IntentCategory", sr.IntentCategory.ToString() },
             { "ConversationTopic", sr.ConversationTopic ?? "(No topic)" },
             { "UserRequestedActions", sr.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(sr.UserRequestedActions) : "(No actions)" },
             { "UserProvidedData", sr.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(sr.UserProvidedData) : "(No data)" },
@@ -37,10 +40,19 @@ public class QueryExpanderWorkflowStep(
 
         var queryExpanderOutput = await _queryExpanderAgent.ExecuteAsync(new QueryExpanderAgentInput
         {
-            StructuredUserRequest = sr       
+            StructuredUserRequest = sr,
+            GenerateHydeQueries = sr.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Documentation,
+            QmdQueryTypesReference = LoadQmdQueryTypesReference()
         }, cancellationToken);
 
-        state.DomainsKnowledgeBaseQuery = queryExpanderOutput.SearchQueries.ToList();
+        // filter also on return
+        var searchQueries = queryExpanderOutput.SearchQueries.ToList();
+        if (sr.IntentCategory != AgentMesh.Models.RequestAnalysis.UserIntentCategory.Documentation)
+        {
+            searchQueries = searchQueries.Where(q => q.SearchType != AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.HypotheticalDocument).ToList();
+        }
+
+        state.DomainsKnowledgeBaseQuery = searchQueries;
         state.AddTokenUsage(QueryExpanderAgentConfiguration.AgentName, queryExpanderOutput.InputTokenCount, queryExpanderOutput.OutputTokenCount, stopwatch.Elapsed, "Query Expander Agent");
 
         var notifyDictionary = new Dictionary<string, string>
@@ -49,5 +61,28 @@ public class QueryExpanderWorkflowStep(
             { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
         };
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Query Expander Agent", notifyDictionary);
+    }
+
+    private string? LoadQmdQueryTypesReference()
+    {
+        var candidatePaths = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "Prompts", QmdQueryTypesFileName),
+            Path.Combine(Directory.GetCurrentDirectory(), "Prompts", QmdQueryTypesFileName),
+            Path.Combine(Directory.GetCurrentDirectory(), "AgentMeshCLI", "Prompts", QmdQueryTypesFileName)
+        };
+
+        foreach (var candidatePath in candidatePaths)
+        {
+            if (!File.Exists(candidatePath))
+            {
+                continue;
+            }
+
+            return File.ReadAllText(candidatePath);
+        }
+
+        _logger.LogWarning("Unable to locate QMD query types prompt file '{FileName}' in expected paths.", QmdQueryTypesFileName);
+        return null;
     }
 }

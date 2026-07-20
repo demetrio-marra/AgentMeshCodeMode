@@ -1,3 +1,4 @@
+
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
@@ -35,6 +36,7 @@ namespace AgentMesh.Application.Services
             var ret = new RequestAnalyzerAgentOutput
             {
                 Intent = result.Result.Intent,
+                IntentCategory = result.Result.IntentCategory,
                 ConversationTopic = result.Result.ConversationTopic,
                 UserRequestedActions = result.Result.UserRequestedActions,
                 UserPreferences = result.Result.UserPreferences,
@@ -68,6 +70,12 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty intent.");
                 }
 
+                if (string.IsNullOrWhiteSpace(responseDTO.IntentCategoryRaw))
+                {
+                    _logger.LogWarning("The model's response contains empty intent category. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty intent category.");
+                }
+
                 if (string.IsNullOrWhiteSpace(responseDTO.LanguageOfTheUser))
                 {
                     _logger.LogWarning("The model's response contains empty language of the user. Response text: {ResponseText}", rawResponseText);
@@ -76,6 +84,7 @@ namespace AgentMesh.Application.Services
 
                 responseDTO.LanguageOfTheUser = responseDTO.LanguageOfTheUser.Trim();
                 responseDTO.Intent = responseDTO.Intent.Trim();
+                responseDTO.IntentCategory = ParseIntentCategory(responseDTO.IntentCategoryRaw);
                 responseDTO.ConversationTopic = responseDTO.ConversationTopic?.Trim() ?? string.Empty;
 
                 responseDTO.UserRequestedActions = responseDTO.UserRequestedActions
@@ -111,10 +120,26 @@ namespace AgentMesh.Application.Services
             }
         }
 
+        private static UserIntentCategory ParseIntentCategory(string intentCategory)
+        {
+            if (Enum.TryParse<UserIntentCategory>(intentCategory, true, out var parsedIntentCategory))
+            {
+                return parsedIntentCategory;
+            }
+
+            throw new BadStructuredResponseException(intentCategory, $"Unknown intent category: {intentCategory}");
+        }
+
         public class ParsedResponse
         {
             [JsonPropertyName("intent")]
             public string Intent { get; set; } = string.Empty;
+
+            [JsonPropertyName("intentCategory")]
+            public string IntentCategoryRaw { get; set; } = string.Empty;
+
+            [JsonIgnore]
+            public UserIntentCategory IntentCategory { get; set; }
 
             [JsonPropertyName("conversationTopic")]
             public string ConversationTopic { get; set; } = string.Empty;
@@ -124,7 +149,7 @@ namespace AgentMesh.Application.Services
 
             [JsonPropertyName("userPreferences")]
             public IEnumerable<string> UserPreferences { get; set; } = [];
-            
+
             [JsonPropertyName("userProvidedData")]
             public IEnumerable<string> UserProvidedData { get; set; } = [];
 

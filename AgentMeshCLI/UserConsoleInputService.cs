@@ -9,6 +9,7 @@ using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.RelevantFactsEvaluator;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
+using System.Runtime.CompilerServices;
 
 namespace AgentMesh
 {
@@ -34,7 +35,9 @@ namespace AgentMesh
         RequestAnalyzerAgentConfiguration requestAnalyzerAgentConfiguration,
         CodeModeWorkflowConfiguration workflowConfiguration,
         EmbeddingServiceConfiguration embeddingServiceConfiguration,
-        IAgentMemorySaverExecutor agentMemorySaver)
+        IAgentMemorySaverExecutor agentMemorySaver,
+        RequestCanonicalizationAgentConfiguration requestCanonicalizationAgentConfiguration,
+        QueryExpanderAgentConfiguration queryExpanderAgentConfiguration)
     {
         private readonly IWorkflow _workflow = workflow;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
@@ -58,6 +61,8 @@ namespace AgentMesh
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
         private readonly EmbeddingServiceConfiguration _embeddingServiceConfiguration = embeddingServiceConfiguration;
         private readonly IAgentMemorySaverExecutor _agentMemorySaver = agentMemorySaver;
+        private readonly RequestCanonicalizationAgentConfiguration _requestCanonicalizationAgentConfiguration = requestCanonicalizationAgentConfiguration;
+        private readonly QueryExpanderAgentConfiguration _queryExpanderAgentConfiguration = queryExpanderAgentConfiguration;
 
         public async Task Run()
         {
@@ -137,6 +142,8 @@ namespace AgentMesh
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens },
                     { RequestAnalyzerAgent.AgentName, _llmsConfiguration[_requestAnalyzerAgentConfiguration.LLM].CostPerMillionInputTokens },
+                    { RequestCanonicalizationAgentConfiguration.AgentName, _llmsConfiguration[_requestCanonicalizationAgentConfiguration.LLM].CostPerMillionInputTokens },
+                    { QueryExpanderAgentConfiguration.AgentName, _llmsConfiguration[_queryExpanderAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { "Embedding Service", _embeddingServiceConfiguration.CostPerMillionTokens }
                 };
 
@@ -157,7 +164,9 @@ namespace AgentMesh
                     { ConversationSummarizerAgent.AgentName, _llmsConfiguration[_conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
                     { DocumentationAgent.AgentName, _llmsConfiguration[_documentationAgentConfiguration.LLM].CostPerMillionOutputTokens },
                     { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens },
-                    { RequestAnalyzerAgent.AgentName, _llmsConfiguration[_requestAnalyzerAgentConfiguration.LLM].CostPerMillionOutputTokens }
+                    { RequestAnalyzerAgent.AgentName, _llmsConfiguration[_requestAnalyzerAgentConfiguration.LLM].CostPerMillionOutputTokens },
+                    { RequestCanonicalizationAgentConfiguration.AgentName, _llmsConfiguration[_requestCanonicalizationAgentConfiguration.LLM].CostPerMillionOutputTokens },
+                    { QueryExpanderAgentConfiguration.AgentName, _llmsConfiguration[_queryExpanderAgentConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
                 if (_workflowConfiguration.EnableDomainExpert)
@@ -355,9 +364,10 @@ namespace AgentMesh
         {
             Console.WriteLine("Sandbox Url: " + _sesJsSandboxConfiguration.SandboxServiceURL + ", SandboxName: " + _sesJsSandboxConfiguration.SandboxName + ", AgentId: " + _userConfiguration.AgentId);
             Console.WriteLine("Agent configurations:");
-            ConsoleHelper.PrintAgentConfiguration("Intent Extractor", IntentExtractorAgentConfiguration.AgentName, _intentExtractorConfiguration);
+            //ConsoleHelper.PrintAgentConfiguration("Intent Extractor", IntentExtractorAgentConfiguration.AgentName, _intentExtractorConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Request Analyzer", RequestAnalyzerAgent.AgentName, _requestAnalyzerAgentConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Intent Canonicalization", IntentCanonicalizationAgentConfiguration.AgentName, _intentCanonicalizationConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Query Expander", QueryExpanderAgentConfiguration.AgentName, _queryExpanderAgentConfiguration);
+            //ConsoleHelper.PrintAgentConfiguration("Intent Canonicalization", IntentCanonicalizationAgentConfiguration.AgentName, _intentCanonicalizationConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Functional Analyst", FunctionalAnalystAgentConfiguration.AgentName, _functionalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Technical Analyst", TechnicalAnalystAgentConfiguration.AgentName, _technicalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, _coderConfiguration);

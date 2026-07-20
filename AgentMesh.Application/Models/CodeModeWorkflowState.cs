@@ -16,7 +16,7 @@ namespace AgentMesh.Application.Models
 
         public string OriginalUserRequest { get => ClassifiedUserRequest.OriginalUserRequest; set => ClassifiedUserRequest.OriginalUserRequest = value; }
 
-        public AgentMesh.Models.RequestAnalysis.StructuredUserRequest? NewStructuredUserRequest { get; set; }
+        public AgentMesh.Models.RequestAnalysis.StructuredUserRequest NewStructuredUserRequest { get; set; } = new();
         public AgentMesh.Models.RequestAnalysis.StructuredUserRequest? NewCanonicalizedStructuredUserRequest { get; set; }
 
 
@@ -28,9 +28,7 @@ namespace AgentMesh.Application.Models
         /// <summary>
         /// Canonicalized user intent enriched with domain-specific terminology.
         /// </summary>
-        public string CanonicalizedIntent { get => ClassifiedUserRequest.CanonicalizedIntent; set => ClassifiedUserRequest.CanonicalizedIntent = value; }
-
-        public UserIntentCategoryValues CanonicalizedIntentCategory { get; set; }
+        public string CanonicalizedIntent { get => NewCanonicalizedStructuredUserRequest?.Intent ?? NewStructuredUserRequest.Intent; }
 
         /// <summary>
         /// First knowledge base call, which is a fast query to retrieve relevant information from the knowledge base to assist in understanding the user's request and providing context for further processing.

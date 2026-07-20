@@ -41,6 +41,7 @@ public class RequestAnalyzerWorkflowStep(
         var notifyDictionary = new Dictionary<string, string>
         {
             { "Intent", agentOutput.Intent },
+            { "Intent category", agentOutput.IntentCategory.ToString() },
             { "Conversation topic", agentOutput.ConversationTopic ?? "(No conversation topic extracted)" },
             { "Language of the user", agentOutput.LanguageOfTheUser },
             { "User requested actions", WorkflowExecutorFormatting.ToBulletList(agentOutput.UserRequestedActions) },
@@ -48,9 +49,8 @@ public class RequestAnalyzerWorkflowStep(
             { "User provided data", WorkflowExecutorFormatting.ToBulletList(agentOutput.UserProvidedData) },
             { "Missing values", WorkflowExecutorFormatting.ToBulletList(agentOutput.MissingValues) }
         };
-       
+
         notifyDictionary.Add("ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed));
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Request Analyzer Agent", notifyDictionary);
     }
 }
-

@@ -45,15 +45,13 @@ public class IntentCanonicalizationWorkflowStep(
             LanguageOfKnowledgeBase = _workflowConfiguration.LanguageOfKnowledgeBase
         });
 
-        state.CanonicalizedIntent = output.DomainedIntent;
-        state.CanonicalizedIntentCategory = output.CanonicalizedIntentCategory;
         state.CanonicalizedAPIQueries = output.CanonicalizedAPIQueries;
         state.AddTokenUsage(IntentCanonicalizationAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Intent Canonicalization Agent");
 
         var notifyDictionary = new Dictionary<string, string>
         {
             { "CanonicalizedIntent", state.CanonicalizedIntent },
-            { "CanonicalizedIntentCategory", state.CanonicalizedIntentCategory.ToString() },
+            //{ "CanonicalizedIntentCategory", state.CanonicalizedIntentCategory.ToString() },
             { "CanonicalizedAPIQueries", state.CanonicalizedAPIQueries.Any() ? WorkflowExecutorFormatting.ToBulletList(state.CanonicalizedAPIQueries) : "(No canonicalized API queries)" },
             { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
         };

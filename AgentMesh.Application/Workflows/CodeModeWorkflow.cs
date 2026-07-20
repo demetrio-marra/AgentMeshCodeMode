@@ -73,6 +73,11 @@ namespace AgentMesh.Application.Workflows
 
             await _requestAnalyzerWorkflowStep.ExecuteRequestAnalyzerAsync(state, chatHistory);
 
+            if (state.NewStructuredUserRequest!.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Other)
+            {
+                goto CompleteWorkflow;
+            }
+
             await _queryExpanderWorkflowStep.ExecuteQueryExpanderAsync(state);
 
             var memoryTask = (_workflowConfiguration.EnableMemoryService && state.PastMemoriesQuery.Any())

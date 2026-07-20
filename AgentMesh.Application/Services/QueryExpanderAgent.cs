@@ -92,6 +92,23 @@ User language:
                 new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
             };
 
+            if (input.GenerateHydeQueries)
+            {
+                inputMessages.Add(new AgentMessage
+                {
+                    Role = AgentMessageRole.System,
+                    Content = "You are allowed to generate hypothetical document (HyDE) queries. Use them only when necessary."
+                });
+            }
+            else
+            {
+                inputMessages.Add(new AgentMessage
+                {
+                    Role = AgentMessageRole.System,
+                    Content = "You are NOT allowed to generate hypothetical document (HyDE) queries. Do not generate them under any circumstances."
+                });
+            }
+
             if (!string.IsNullOrWhiteSpace(input.QmdQueryTypesReference))
             {
                 inputMessages.Add(new AgentMessage

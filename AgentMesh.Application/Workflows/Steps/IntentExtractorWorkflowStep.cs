@@ -54,7 +54,7 @@ public class IntentExtractorWorkflowStep(
             UserPreferences = intentExtractorOutput.UserPreferences,
             MissingMemories = intentExtractorOutput.MissingMemories
         };
-        state.CanonicalizedIntent = state.ClassifiedUserRequest.Intent ?? string.Empty;
+        //state.CanonicalizedIntent = state.ClassifiedUserRequest.Intent ?? string.Empty;
 
         state.AddTokenUsage(IntentExtractorAgentConfiguration.AgentName, intentExtractorOutput.InputTokenCount, intentExtractorOutput.OutputTokenCount, stopwatch.Elapsed, "Intent Extractor Agent");
 
