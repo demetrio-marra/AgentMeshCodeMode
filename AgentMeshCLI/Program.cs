@@ -410,6 +410,29 @@ namespace AgentMesh
 
             services.AddSingleton<IRequestAnalyzerAgent, RequestAnalyzerAgent>();
 
+            // QueryExpander agent config and client
+            services
+                .AddOptions<QueryExpanderAgentConfiguration>()
+                .Bind(configuration.GetSection(QueryExpanderAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<QueryExpanderAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(QueryExpanderAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<QueryExpanderAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IQueryExpanderAgent, QueryExpanderAgent>();
+
             // conversation summarizer agent config and client
             services
                 .AddOptions<ConversationSummarizerAgentConfiguration>()
@@ -467,6 +490,7 @@ namespace AgentMesh
             services.AddSingleton<DocumentationWorkflowStep>();
             services.AddSingleton<DomainExpertWorkflowStep>();
             services.AddSingleton<RequestAnalyzerWorkflowStep>();
+            services.AddSingleton<QueryExpanderWorkflowStep>();
 
             services.AddSingleton<IWorkflow, CodeModeWorkflow>();
             services.AddSingleton<UserConsoleInputService>();

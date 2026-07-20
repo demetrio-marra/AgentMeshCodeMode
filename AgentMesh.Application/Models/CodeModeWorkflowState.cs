@@ -2,6 +2,7 @@ using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Models
@@ -15,11 +16,13 @@ namespace AgentMesh.Application.Models
 
         public string OriginalUserRequest { get => ClassifiedUserRequest.OriginalUserRequest; set => ClassifiedUserRequest.OriginalUserRequest = value; }
 
+        public AgentMesh.Models.RequestAnalysis.StructuredUserRequest? NewStructuredUserRequest { get; set; }
+
 
         /// <summary>
         /// Results of Intent detection and User Request classification, including the identified intent, user request type, and any relevant metadata.
         /// </summary>
-        public StructuredUserRequest ClassifiedUserRequest { get; set; } = new();
+        public AgentMesh.Models.IntentExtractor.StructuredUserRequest ClassifiedUserRequest { get; set; } = new();
 
         /// <summary>
         /// Canonicalized user intent enriched with domain-specific terminology.

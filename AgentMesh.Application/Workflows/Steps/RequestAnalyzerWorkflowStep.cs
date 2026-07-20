@@ -34,39 +34,9 @@ public class RequestAnalyzerWorkflowStep(
             UserLastRequest = state.UserLastRequest
         });
 
-        // TODO: add the new object to the shared state
-
-        //state.ClassifiedUserRequest = new StructuredUserRequest
-        //{
-        //    OriginalUserRequest = intentExtractorOutput.OriginalUserRequest,
-        //    Intent = intentExtractorOutput.UserIntent,
-        //    IntentCategory = intentExtractorOutput.UserIntentCategory,
-        //    CanonicalizedIntentCategory = intentExtractorOutput.UserIntentCategory,
-        //    LanguageOfTheUser = intentExtractorOutput.LanguageOfTheUser,
-        //    EntitiesByDomain = intentExtractorOutput.EntitiesByDomain,
-        //    SupportingIntentInformation = intentExtractorOutput.SupportingIntentInformation,
-        //    UserPreferences = intentExtractorOutput.UserPreferences,
-        //    MissingMemories = intentExtractorOutput.MissingMemories
-        //};
-        //state.CanonicalizedIntent = state.ClassifiedUserRequest.Intent ?? string.Empty;
+        state.NewStructuredUserRequest = agentOutput;
 
         state.AddTokenUsage(RequestAnalyzerAgent.AgentName, agentOutput.InputTokenCount, agentOutput.OutputTokenCount, stopwatch.Elapsed, "Request Analyzer Agent");
-
-
-        /*
-         * Return your analysis as a JSON object with the following structure:
-{
-  "intent": "string",
-  "conversationTopic": "string",
-  "mentionedActivities": ["string"],
-  "userPreferences": ["string"],
-  "userProvidedData": ["string"],
-  "missingValues": ["string"],
-  "languageOfTheUser": "string"
-}
-         * 
-         */
-
 
         var notifyDictionary = new Dictionary<string, string>
         {

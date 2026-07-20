@@ -69,6 +69,7 @@ namespace AgentMesh.Application.Workflows
 
             await _requestAnalyzerWorkflowStep.ExecuteRequestAnalyzerAsync(state, chatHistory);
 
+
             return new WorkflowResult { };
 
             await _intentExtractorWorkflowStep.ExecuteIntentExtractorAsync(state, chatHistory);
