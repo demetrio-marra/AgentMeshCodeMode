@@ -30,7 +30,7 @@ namespace AgentMesh.Application.Models
         /// </summary>
         public string CanonicalizedIntent { get => ClassifiedUserRequest.CanonicalizedIntent; set => ClassifiedUserRequest.CanonicalizedIntent = value; }
 
-        public UserIntentCategoryValues CanonicalizedIntentCategory { get => ClassifiedUserRequest.CanonicalizedIntentCategory; set => ClassifiedUserRequest.CanonicalizedIntentCategory = value; }
+        public UserIntentCategoryValues CanonicalizedIntentCategory { get; set; }
 
         /// <summary>
         /// First knowledge base call, which is a fast query to retrieve relevant information from the knowledge base to assist in understanding the user's request and providing context for further processing.

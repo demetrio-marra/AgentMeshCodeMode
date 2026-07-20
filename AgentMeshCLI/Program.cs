@@ -318,6 +318,29 @@ namespace AgentMesh
 
             services.AddSingleton<IIntentCanonicalizationAgent, IntentCanonicalizationAgent>();
 
+            // RequestCanonicalization agent config and client
+            services
+                .AddOptions<RequestCanonicalizationAgentConfiguration>()
+                .Bind(configuration.GetSection(RequestCanonicalizationAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<RequestCanonicalizationAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(RequestCanonicalizationAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<RequestCanonicalizationAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IRequestCanonicalizationAgent, RequestCanonicalizationAgent>();
+
             // RequirementsCollector agent config and client
             services
                 .AddOptions<RequirementsCollectorAgentConfiguration>()
@@ -473,6 +496,7 @@ namespace AgentMesh
             services.AddSingleton<APIKnowledgeBaseDocumentsExtractorWorkflowStep>();
             services.AddSingleton<IntentExtractorWorkflowStep>();
             services.AddSingleton<IntentCanonicalizationWorkflowStep>();
+            services.AddSingleton<RequestCanonicalizationWorkflowStep>();
             services.AddSingleton<RequirementsCollectorWorkflowStep>();
             services.AddSingleton<AgentMemoryServiceWorkflowStep>();
             services.AddSingleton<KnowledgeBaseServiceSearchWorkflowStep>();

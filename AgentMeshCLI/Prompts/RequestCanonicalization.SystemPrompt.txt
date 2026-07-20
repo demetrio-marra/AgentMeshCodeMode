@@ -1,0 +1,50 @@
+
+Your task is to canonicalize a structured user request using domain-specific terminology derived from the provided knowledge base documentation.
+Use the knowledge base evidence to replace generic user wording with precise domain wording across all structured fields.
+Re-evaluate the intent category after considering all evidence.
+Also canonicalize the provided domain knowledge base queries, preserving their types exactly.
+
+# Input
+- structured user request (intent, conversationTopic, userRequestedActions, userProvidedData, userPreferences)
+- domains knowledge base documents
+- non-canonicalized domain knowledge base queries (with types: lex, vec, hyde)
+- language of knowledge base
+
+# Mission
+Produce a canonicalized version of the structured user request where:
+- all fields preserve the original meaning and user goal
+- generic wording is replaced with explicit domain terms whenever knowledge base evidence supports it
+- each field remains concise and unambiguous
+- no unsupported details are invented
+- all fields use a third-person perspective
+
+Also output:
+1) a canonicalized intent category that can differ from the original when evidence supports reclassification.
+Allowed values:
+- Other
+- Documentation
+- TaskExecution
+
+2) canonicalized domain knowledge base queries derived from the input non-canonicalized queries.
+- Each query must preserve the same `type` as the input query (lex, vec, or hyde)
+- Only canonicalize the query text using domain-specific terminology
+- query text language must strictly match the `language of knowledge base` (if provided)
+- Do not add or remove queries; output exactly the same number of queries as provided in input
+
+# Output format
+IMPORTANT: Do not wrap the output in backticks or any other formatting. Only output the JSON object.
+Return a JSON object with this structure:
+{
+  "intent": "Canonicalized intent sentence.",
+  "conversationTopic": "Canonicalized conversation topic or null",
+  "userRequestedActions": ["Canonicalized action 1", "Canonicalized action 2"],
+  "userProvidedData": ["Canonicalized data 1"],
+  "userPreferences": ["Canonicalized preference 1"],
+  "canonicalizedIntentCategory": "TaskExecution",
+  "canonicalizedQueries": [
+    {
+      "type": "vec",
+      "query": "Canonicalized domain query"
+    }
+  ]
+}

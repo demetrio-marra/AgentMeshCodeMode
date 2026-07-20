@@ -36,7 +36,8 @@ namespace AgentMesh.Application.Workflows
         CodeFixerForRuntimeErrorsWorkflowStep codeFixerForRuntimeErrorsWorkflowStep,
         DomainExpertWorkflowStep domainExpertWorkflowStep,
         RequestAnalyzerWorkflowStep requestAnalyzerWorkflowStep,
-        QueryExpanderWorkflowStep queryExpanderWorkflowStep) : IWorkflow
+        QueryExpanderWorkflowStep queryExpanderWorkflowStep,
+        RequestCanonicalizationWorkflowStep requestCanonicalizationWorkflowStep) : IWorkflow
     {
         private readonly ILogger<CodeModeWorkflow> _logger = logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
@@ -62,6 +63,7 @@ namespace AgentMesh.Application.Workflows
         private readonly DomainExpertWorkflowStep _domainExpertWorkflowStep = domainExpertWorkflowStep;
         private readonly RequestAnalyzerWorkflowStep _requestAnalyzerWorkflowStep = requestAnalyzerWorkflowStep;
         private readonly QueryExpanderWorkflowStep _queryExpanderWorkflowStep = queryExpanderWorkflowStep;
+        private readonly RequestCanonicalizationWorkflowStep _requestCanonicalizationWorkflowStep = requestCanonicalizationWorkflowStep;
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
         {
@@ -72,22 +74,6 @@ namespace AgentMesh.Application.Workflows
             await _requestAnalyzerWorkflowStep.ExecuteRequestAnalyzerAsync(state, chatHistory);
 
             await _queryExpanderWorkflowStep.ExecuteQueryExpanderAsync(state);
-
-            //return new WorkflowResult { };
-
-            //await _intentExtractorWorkflowStep.ExecuteIntentExtractorAsync(state, chatHistory);
-
-            //if (state.ClassifiedUserRequest.IntentCategory == UserIntentCategoryValues.Other)
-            //{
-            //    goto CompleteWorkflow;
-            //}
-
-            //if (state.ClassifiedUserRequest.EntitiesByDomain.Any())
-            //{
-            //    await _domainsKnowledgeBaseServiceFastSearchWorkflowStep.ExecuteDomainsKnowledgeBaseServiceFastSearchAsync(state);
-            //}
-
-            //await _requirementsCollectorWorkflowStep.ExecuteRequirementsCollectorAsync(state);
 
             var memoryTask = (_workflowConfiguration.EnableMemoryService && state.PastMemoriesQuery.Any())
                 ? _agentMemoryServiceWorkflowStep.ExecuteAgentMemoryServiceAsync(state)
@@ -104,9 +90,7 @@ namespace AgentMesh.Application.Workflows
                 await _domainsKnowledgeBaseDocumentsExtractorWorkflowStep.ExecuteDomainsKnowledgeBaseDocumentsExtractorAsync(state);
             }
 
-           // return new WorkflowResult { };
-
-            await _intentCanonicalizationWorkflowStep.ExecuteIntentCanonicalizationAsync(state);
+            await _requestCanonicalizationWorkflowStep.ExecuteRequestCanonicalizationAsync(state);
 
             if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.Documentation)
             {
