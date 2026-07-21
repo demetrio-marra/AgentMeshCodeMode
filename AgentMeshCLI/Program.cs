@@ -5,7 +5,6 @@ using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.Mem0.Configuration;
 using AgentMesh.Infrastructure.Mem0.Services;
-using AgentMesh.Infrastructure.QDrant;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.QMD;
@@ -453,8 +452,6 @@ namespace AgentMesh
             services.AddSingleton<KnowledgeBaseServiceSearchWorkflowStep>();
             services.AddSingleton<DomainsKnowledgeBaseServiceSearchWorkflowStep>();
             services.AddSingleton<APIsKnowledgeBaseServiceSearchWorkflowStep>();
-            services.AddSingleton<KnowledgeBaseServiceFastSearchWorkflowStep>();
-            services.AddSingleton<APIsKnowledgeBaseServiceFastSearchWorkflowStep>();
             services.AddSingleton<FunctionalAnalystWorkflowStep>();
             services.AddSingleton<TechnicalAnalystWorkflowStep>();
             services.AddSingleton<CoderWorkflowStep>();
