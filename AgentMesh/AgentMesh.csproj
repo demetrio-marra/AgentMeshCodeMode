@@ -7,14 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Application\**" />
+    <Compile Remove="Models\RequirementsCollector\**" />
     <Compile Remove="Models\Router\**" />
+    <EmbeddedResource Remove="Application\**" />
+    <EmbeddedResource Remove="Models\RequirementsCollector\**" />
     <EmbeddedResource Remove="Models\Router\**" />
+    <None Remove="Application\**" />
+    <None Remove="Models\RequirementsCollector\**" />
     <None Remove="Models\Router\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Application\Configuration\" />
-    <Folder Include="Models\RequirementsCollector\" />
   </ItemGroup>
 
 </Project>
