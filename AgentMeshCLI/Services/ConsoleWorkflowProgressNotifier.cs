@@ -23,19 +23,7 @@ namespace AgentMesh.Services
 
             foreach (var output in outputParameters)
             {
-                var lines = output.Value.Split('\n');
-                var paramPadding = output.Key.Length + 2;
-
-                if (lines.Length == 1)
-                {
-                    ConsoleHelper.WriteLineWithColor($"{output.Key}: {lines[0]}", ConsoleColor.White);
-                }
-                else
-                {
-                    var paddedLines = lines.Skip(1).Select(line => new string(' ', paramPadding) + line);
-                    var paramLines = lines[0] + Environment.NewLine + string.Join(Environment.NewLine, paddedLines);
-                    ConsoleHelper.WriteLineWithColor($"{output.Key}: {paramLines}", ConsoleColor.White);
-                }
+                WriteParameter(output.Key, output.Value);
             }
 
             ConsoleHelper.WriteLineWithColor("══════════════════════════════════════════════════════════════════════════", ConsoleColor.Gray);
@@ -48,21 +36,29 @@ namespace AgentMesh.Services
             ConsoleHelper.WriteLineWithColor($"\nWorkflow step '{stepName}' has started.", ConsoleColor.Cyan);
             foreach (var input in inputParameters)
             {
-                var lines = input.Value.Split('\n');
-                var paramPadding = input.Key.Length + 2;
-
-                if (lines.Length == 1)
-                {
-                    ConsoleHelper.WriteLineWithColor($"{input.Key}: {lines[0]}", ConsoleColor.White);
-                }
-                else
-                {
-                    var paddedLines = lines.Skip(1).Select(line => new string(' ', paramPadding) + line);
-                    var paramLines = lines[0] + Environment.NewLine + string.Join(Environment.NewLine, paddedLines);
-                    ConsoleHelper.WriteLineWithColor($"{input.Key}: {paramLines}", ConsoleColor.White);
-                }
+                WriteParameter(input.Key, input.Value);
             }
             await Task.CompletedTask;
+        }
+
+        private static void WriteParameter(string key, string value)
+        {
+            var lines = value.Split('\n');
+            var paramPadding = key.Length + 2;
+
+            ConsoleHelper.WriteWithColor($"{key}: ", ConsoleColor.DarkYellow);
+            ConsoleHelper.WriteLineWithColor(lines[0], ConsoleColor.White);
+
+            if (lines.Length <= 1)
+            {
+                return;
+            }
+
+            var paddedLines = lines.Skip(1).Select(line => new string(' ', paramPadding) + line);
+            foreach (var paddedLine in paddedLines)
+            {
+                ConsoleHelper.WriteLineWithColor(paddedLine, ConsoleColor.White);
+            }
         }
     }
 }

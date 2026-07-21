@@ -17,6 +17,14 @@ namespace AgentMesh.Helpers
             Console.WriteLine($"{friendlyName.PadLeft(30, ' ')}     LLM: {configuration.LLM.PadLeft(10, ' ')}    Temperature: {configuration.ModelTemperature.ToString().PadLeft(5, ' ')}");
         }
 
+        public static void WriteWithColor(string text, ConsoleColor color)
+        {
+            var previousColor = Console.ForegroundColor;
+            Console.ForegroundColor = color;
+            Console.Write(text);
+            Console.ForegroundColor = previousColor;
+        }
+
         public static void WriteLineWithColor(string message, ConsoleColor color)
         {
             var previousColor = Console.ForegroundColor;
