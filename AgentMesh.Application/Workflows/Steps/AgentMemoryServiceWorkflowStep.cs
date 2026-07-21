@@ -1,6 +1,6 @@
 using AgentMesh.Application.Models;
-using AgentMesh.Services;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Services;
 using AgentMesh.Models.AgentMemory;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -10,11 +10,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class AgentMemoryServiceWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IAgentMemoryRetrieverExecutor agentMemoryRetriever)
+    AgentMemoryExecutor agentMemoryRetriever)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly IAgentMemoryRetrieverExecutor _agentMemoryRetriever = agentMemoryRetriever;
+    private readonly AgentMemoryExecutor _agentMemoryRetriever = agentMemoryRetriever;
 
     public async Task ExecuteAgentMemoryServiceAsync(CodeModeWorkflowState state)
     {
@@ -30,7 +30,7 @@ public class AgentMemoryServiceWorkflowStep(
 
         await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Service", agentInput.ToDictionary());
 
-        var brcOutput = await _agentMemoryRetriever.ExecuteAsync(agentInput);
+        var brcOutput = await _agentMemoryRetriever.GetAsync(agentInput);
 
         var retrievedMemories = brcOutput.Items.ToList();
         state.PastMemoriesQueryResults = state.PastMemoriesQueryResults.Concat(retrievedMemories).ToList();

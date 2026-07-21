@@ -1,6 +1,5 @@
 ﻿using AgentMesh.Application.Contracts;
 using AgentMesh.Models.AgentMemory;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -8,13 +7,13 @@ namespace AgentMesh.Application.Services
 {
     public class AgentMemoryExecutor(IAgentMemoryService agentMemoryService,
         ILogger<AgentMemoryExecutor> logger,
-        UserConfiguration userConfiguration) : IAgentMemoryRetrieverExecutor, IAgentMemorySaverExecutor
+        UserConfiguration userConfiguration) 
     {
         private readonly ILogger<AgentMemoryExecutor> _logger = logger;
         private readonly IAgentMemoryService _agentMemoryService = agentMemoryService;
         private readonly UserConfiguration _userConfiguration = userConfiguration;
 
-        async Task IAgentMemorySaverExecutor.ExecuteAsync(AgentMemorySaverConversationInput input)
+        public async Task SaveAsync(AgentMemorySaverConversationInput input)
         {
             _logger.LogDebug("Executing AgentMemorySaver - SaveConversationHistoryAsync.");
             _logger.LogDebug("AgentMemorySaver - SaveConversationHistoryAsync Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
@@ -28,7 +27,7 @@ namespace AgentMesh.Application.Services
             _logger.LogDebug("AgentMemorySaver - SaveConversationHistoryAsync completed in {ElapsedMilliseconds}ms.", stopwatch.ElapsedMilliseconds);
         }
 
-        async Task<AgentMemoryRetrieverOutput> IAgentMemoryRetrieverExecutor.ExecuteAsync(AgentMemoryRetrieverInput input)
+        public async Task<AgentMemoryRetrieverOutput> GetAsync(AgentMemoryRetrieverInput input)
         {
             _logger.LogDebug("Executing AgentMemoryRetriever - ExecuteAsync.");
             _logger.LogDebug("AgentMemoryRetriever - ExecuteAsync Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));

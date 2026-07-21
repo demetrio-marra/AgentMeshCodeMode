@@ -57,10 +57,6 @@ namespace AgentMesh
 
             services.AddSingleton<IKnowledgeBaseService, QMDKnowledgeBaseService>();
             services.AddSingleton<KnowledgeBaseExecutor>();
-            services.AddSingleton<KnowledgeBaseSearchFastExecutor>();
-            services.AddSingleton<IKnowledgeBaseSearchExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
-            services.AddSingleton<IKnowledgeBaseSearchFastExecutor>(sp => sp.GetRequiredService<KnowledgeBaseSearchFastExecutor>());
-            services.AddSingleton<IKnowledgeBaseGetDocsExecutor>(sp => sp.GetRequiredService<KnowledgeBaseExecutor>());
 
             //// Queries cache service configuration
             //var queriesCacheServiceConfig = new QDrantQueriesCacheServiceConfiguration();
@@ -76,8 +72,6 @@ namespace AgentMesh
 
             // Register Agent Memory Executor - single implementation for both interfaces
             services.AddSingleton<AgentMemoryExecutor>();
-            services.AddSingleton<IAgentMemoryRetrieverExecutor>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
-            services.AddSingleton<IAgentMemorySaverExecutor>(sp => sp.GetRequiredService<AgentMemoryExecutor>());
 
             // QMD MCP server proxy configuration and HTTP client
             var qmdHttpProxyConfig = new QMDHttpProxyConfiguration();
@@ -131,7 +125,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IFunctionalAnalystAgent, FunctionalAnalystAgent>();
+            services.AddSingleton<FunctionalAnalystAgent>();
 
             // DomainExpert agent config and client
             services
@@ -154,7 +148,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IDomainExpertAgent, DomainExpertAgent>();
+            services.AddSingleton<DomainExpertAgent>();
 
             // TechnicalAnalyst agent config and client
             services
@@ -177,7 +171,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<ITechnicalAnalystAgent, TechnicalAnalystAgent>();
+            services.AddSingleton<TechnicalAnalystAgent>();
 
             // Documentation agent config and client
             services
@@ -200,7 +194,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IDocumentationAgent, DocumentationAgent>();
+            services.AddSingleton<DocumentationAgent>();
 
             // Coder agent config and client
             services
@@ -223,7 +217,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<ICoderAgent, CoderAgent>();
+            services.AddSingleton<CoderAgent>();
 
             // CodeFixer agent config and client
             services
@@ -246,7 +240,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<ICodeFixerAgent, CodeFixerAgent>();
+            services.AddSingleton<CodeFixerAgent>();
 
             // CodeExecutionFailuresDetector agent config and client
             services
@@ -269,7 +263,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<ICodeExecutionFailuresDetectorAgent, JavascriptCodeExecutionFailuresDetectorAgent>();
+            services.AddSingleton<JavascriptCodeExecutionFailuresDetectorAgent>();
 
             // RequestCanonicalization agent config and client
             services
@@ -292,7 +286,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IRequestCanonicalizationAgent, RequestCanonicalizationAgent>();
+            services.AddSingleton<RequestCanonicalizationAgent>();
 
             // PersonalAssistant agent config and client
             services
@@ -315,7 +309,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IPersonalAssistantAgent, PersonalAssistantAgent>();
+            services.AddSingleton<PersonalAssistantAgent>();
 
             // RelevantFactsEvaluator agent config and client
             services
@@ -338,7 +332,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IRelevantFactsEvaluatorAgent, RelevantFactsEvaluatorAgent>();
+            services.AddSingleton<RelevantFactsEvaluatorAgent>();
 
             // RequestAnalyzer agent config and client
             services
@@ -361,7 +355,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IRequestAnalyzerAgent, RequestAnalyzerAgent>();
+            services.AddSingleton<RequestAnalyzerAgent>();
 
             // QueryExpander agent config and client
             services
@@ -384,7 +378,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IQueryExpanderAgent, QueryExpanderAgent>();
+            services.AddSingleton<QueryExpanderAgent>();
 
             // Reranker agent config and client
             services
@@ -407,7 +401,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IRerankerAgent, RerankerAgent>();
+            services.AddSingleton<RerankerAgent>();
 
             // conversation summarizer agent config and client
             services
@@ -430,7 +424,7 @@ namespace AgentMesh
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<IConversationSummarizerAgent, ConversationSummarizerAgent>();
+            services.AddSingleton<ConversationSummarizerAgent>();
 
             // CodeModeWorkflow configuration
             services
@@ -439,7 +433,7 @@ namespace AgentMesh
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<CodeModeWorkflowConfiguration>>().Value);
 
-            services.AddSingleton<IJSSandboxExecutor, JSSandboxExecutor>();
+            services.AddSingleton<JSSandboxExecutor>();
             services.AddSingleton<IJSSandbox, SESJSSandboxClient>();
 
             services.AddSingleton<IWorkflowProgressNotifier, ConsoleWorkflowProgressNotifier>();

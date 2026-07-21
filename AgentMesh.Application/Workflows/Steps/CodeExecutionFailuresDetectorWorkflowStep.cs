@@ -4,7 +4,6 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.CodeExecutionFailuresDetector;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -13,11 +12,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class CodeExecutionFailuresDetectorWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    ICodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent)
+    JavascriptCodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly ICodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
+    private readonly JavascriptCodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
 
     public async Task<string> ExecuteCodeExecutionFailuresDetectorAsync(CodeModeWorkflowState state, int iteration)
     {

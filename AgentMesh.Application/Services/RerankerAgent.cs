@@ -4,7 +4,6 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Reranker;
-using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -15,7 +14,7 @@ namespace AgentMesh.Application.Services
     public class RerankerAgent(
         [FromKeyedServices(RerankerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<RerankerAgent> logger) : AgentBase<List<string>>(logger, RerankerAgentConfiguration.AgentName, openAIClient, resilience), IRerankerAgent
+        ILogger<RerankerAgent> logger) : AgentBase<List<string>>(logger, RerankerAgentConfiguration.AgentName, openAIClient, resilience)
     {
         private readonly ILogger<RerankerAgent> _logger = logger;
 

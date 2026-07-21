@@ -1,7 +1,7 @@
-using AgentMesh.Services;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.CodeSandbox;
 using Microsoft.Extensions.Logging;
@@ -12,11 +12,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class JSSandboxWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IJSSandboxExecutor jsSandboxExecutor)
+    JSSandboxExecutor jsSandboxExecutor)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly IJSSandboxExecutor _jsSandboxExecutor = jsSandboxExecutor;
+    private readonly JSSandboxExecutor _jsSandboxExecutor = jsSandboxExecutor;
 
     public async Task<bool> ExecuteJSSandboxAsync(CodeModeWorkflowState state, bool isReexecution)
     {

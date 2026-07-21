@@ -3,7 +3,6 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.PersonalAssistant;
-using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -14,7 +13,7 @@ namespace AgentMesh.Application.Services
     public class PersonalAssistantAgent(
         [FromKeyedServices(PersonalAssistantAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<PersonalAssistantAgent> logger) : AgentBase<PersonalAssistantAgent.ParsedResponse>(logger, PersonalAssistantAgentConfiguration.AgentName, openAIClient, resilience), IPersonalAssistantAgent
+        ILogger<PersonalAssistantAgent> logger) : AgentBase<PersonalAssistantAgent.ParsedResponse>(logger, PersonalAssistantAgentConfiguration.AgentName, openAIClient, resilience)
     {
         private readonly ILogger<PersonalAssistantAgent> _logger = logger;
 

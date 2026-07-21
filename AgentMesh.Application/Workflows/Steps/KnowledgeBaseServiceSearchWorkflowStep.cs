@@ -1,7 +1,7 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Services;
 using AgentMesh.Models.KnowledgeBase;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -10,11 +10,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class KnowledgeBaseServiceSearchWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IKnowledgeBaseSearchExecutor knowledgeBaseSearchExecutor)
+    KnowledgeBaseExecutor knowledgeBaseSearchExecutor)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly IKnowledgeBaseSearchExecutor _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
+    private readonly KnowledgeBaseExecutor _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
 
     public async Task ExecuteKnowledgeBaseServiceSearchAsync(
         CodeModeWorkflowState state,
@@ -40,7 +40,7 @@ public class KnowledgeBaseServiceSearchWorkflowStep(
             Queries = queriesList
         };
 
-        var brcOutput = await _knowledgeBaseSearchExecutor.ExecuteAsync(queryInput, CancellationToken.None);
+        var brcOutput = await _knowledgeBaseSearchExecutor.QueryAsync(queryInput, CancellationToken.None);
 
         var existingResults = getExistingResults(state).Results.ToList();
         setResults(state, new KnowledgeBaseQueryResult

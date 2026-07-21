@@ -1,8 +1,8 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Services;
 using AgentMesh.Models.QueryExpander;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -11,14 +11,14 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class QueryExpanderWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IQueryExpanderAgent queryExpanderAgent,
+    QueryExpanderAgent queryExpanderAgent,
     CodeModeWorkflowConfiguration workflowConfiguration)
 {
     private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
 
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly IQueryExpanderAgent _queryExpanderAgent = queryExpanderAgent;
+    private readonly QueryExpanderAgent _queryExpanderAgent = queryExpanderAgent;
     private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
 
     public async Task ExecuteQueryExpanderAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)

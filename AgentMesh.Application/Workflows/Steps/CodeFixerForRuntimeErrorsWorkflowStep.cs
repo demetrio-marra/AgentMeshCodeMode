@@ -1,9 +1,9 @@
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.CodeFixer;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -12,11 +12,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class CodeFixerForRuntimeErrorsWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    ICodeFixerAgent codeFixerAgent)
+    CodeFixerAgent codeFixerAgent)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly ICodeFixerAgent _codeFixerAgent = codeFixerAgent;
+    private readonly CodeFixerAgent _codeFixerAgent = codeFixerAgent;
 
     public async Task ExecuteCodeFixerForRuntimeErrorsAsync(CodeModeWorkflowState state, string analysis, int iteration)
     {

@@ -1,18 +1,17 @@
 ﻿using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Models.KnowledgeBase;
-using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services
 {
     public class KnowledgeBaseExecutor(
         IKnowledgeBaseService knowledgeBaseService,
-        CodeModeWorkflowConfiguration codeModeWorkflowConfiguration) : IKnowledgeBaseSearchExecutor, IKnowledgeBaseGetDocsExecutor
+        CodeModeWorkflowConfiguration codeModeWorkflowConfiguration)
     {
         private readonly IKnowledgeBaseService _knowledgeBaseService = knowledgeBaseService;
         private readonly CodeModeWorkflowConfiguration _codeModeWorkflowConfiguration = codeModeWorkflowConfiguration;
 
-        async Task<KnowledgeBaseGetDocsOutput> IExecutor<KnowledgeBaseGetDocsInput, KnowledgeBaseGetDocsOutput>.ExecuteAsync(KnowledgeBaseGetDocsInput input, CancellationToken cancellationToken)
+        public async Task<KnowledgeBaseGetDocsOutput> GetDocsAsync(KnowledgeBaseGetDocsInput input, CancellationToken cancellationToken)
         {
             if (input.FilePaths == null || !input.FilePaths.Any())
             {
@@ -23,8 +22,7 @@ namespace AgentMesh.Application.Services
             return new KnowledgeBaseGetDocsOutput { Results = [.. results.Select(r => new KnowledgeBaseGetDocsOutputItem { File = r.File, Content = r.Content })] };
         }
 
-
-        async Task<KnowledgeBaseQueryResult> IExecutor<KnowledgeBaseQueryInput, KnowledgeBaseQueryResult>.ExecuteAsync(KnowledgeBaseQueryInput input, CancellationToken cancellationToken)
+        public async Task<KnowledgeBaseQueryResult> QueryAsync(KnowledgeBaseQueryInput input, CancellationToken cancellationToken)
         {
             if (input == null)
             {

@@ -5,7 +5,6 @@ using AgentMesh.Application.Services;
 using AgentMesh.Models;
 using AgentMesh.Models.PersonalAssistant;
 using AgentMesh.Models.Workflows;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Application.Workflows.Steps;
@@ -15,7 +14,7 @@ namespace AgentMesh.Application.Workflows
     public partial class CodeModeWorkflow(
         ILogger<CodeModeWorkflow> logger,
         IWorkflowProgressNotifier workflowProgressNotifier,
-        IPersonalAssistantAgent personalAssistantAgent,
+        PersonalAssistantAgent personalAssistantAgent,
         CodeModeWorkflowConfiguration workflowConfiguration,
         AgentMemoryServiceWorkflowStep agentMemoryServiceWorkflowStep,
         DomainsKnowledgeBaseServiceSearchWorkflowStep domainsKnowledgeBaseServiceSearchWorkflowStep,
@@ -37,7 +36,7 @@ namespace AgentMesh.Application.Workflows
     {
         private readonly ILogger<CodeModeWorkflow> _logger = logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-        private readonly IPersonalAssistantAgent _personalAssistantAgent = personalAssistantAgent;
+        private readonly PersonalAssistantAgent _personalAssistantAgent = personalAssistantAgent;
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
 
         private readonly AgentMemoryServiceWorkflowStep _agentMemoryServiceWorkflowStep = agentMemoryServiceWorkflowStep;

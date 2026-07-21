@@ -1,10 +1,10 @@
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Coder;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -13,11 +13,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class CoderWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    ICoderAgent coderAgent)
+    CoderAgent coderAgent)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly ICoderAgent _coderAgent = coderAgent;
+    private readonly CoderAgent _coderAgent = coderAgent;
 
     public async Task ExecuteCoderAsync(CodeModeWorkflowState state)
     {

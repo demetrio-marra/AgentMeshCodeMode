@@ -1,12 +1,11 @@
 ﻿using AgentMesh.Application.Contracts;
 using AgentMesh.Models.CodeSandbox;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 namespace AgentMesh.Application.Services
 {
-    public class JSSandboxExecutor(IJSSandbox jSSandbox, UserConfiguration userConfiguration, ILogger<JSSandboxExecutor> logger) : IJSSandboxExecutor
+    public class JSSandboxExecutor(IJSSandbox jSSandbox, UserConfiguration userConfiguration, ILogger<JSSandboxExecutor> logger)
     {
         private readonly IJSSandbox _jsSandbox = jSSandbox;
         private readonly UserConfiguration _userConfiguration = userConfiguration;

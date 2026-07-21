@@ -1,8 +1,8 @@
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Services;
 using AgentMesh.Models.Documentation;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -11,11 +11,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class DocumentationWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IDocumentationAgent documentationAgent)
+    DocumentationAgent documentationAgent)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly IDocumentationAgent _documentationAgent = documentationAgent;
+    private readonly DocumentationAgent _documentationAgent = documentationAgent;
 
     public async Task ExecuteDocumentationAgentAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {

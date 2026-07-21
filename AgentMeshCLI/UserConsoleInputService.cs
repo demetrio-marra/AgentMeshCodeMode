@@ -27,12 +27,12 @@ namespace AgentMesh
         UserConfiguration userConfiguration,
         DocumentationAgentConfiguration documentationAgentConfiguration,
         RelevantFactsEvaluatorAgentConfiguration relevantFactsEvaluatorConfiguration,
-        IConversationSummarizerAgent conversationSummarizerAgent,
-        IRelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
+        ConversationSummarizerAgent conversationSummarizerAgent,
+        RelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
         RequestAnalyzerAgentConfiguration requestAnalyzerAgentConfiguration,
         CodeModeWorkflowConfiguration workflowConfiguration,
         EmbeddingServiceConfiguration embeddingServiceConfiguration,
-        IAgentMemorySaverExecutor agentMemorySaver,
+        AgentMemoryExecutor agentMemorySaver,
         RequestCanonicalizationAgentConfiguration requestCanonicalizationAgentConfiguration,
         QueryExpanderAgentConfiguration queryExpanderAgentConfiguration,
         RerankerAgentConfiguration rerankerAgentConfiguration)
@@ -51,12 +51,12 @@ namespace AgentMesh
         private readonly UserConfiguration _userConfiguration = userConfiguration;
         private readonly DocumentationAgentConfiguration _documentationAgentConfiguration = documentationAgentConfiguration;
         private readonly RelevantFactsEvaluatorAgentConfiguration _relevantFactsEvaluatorConfiguration = relevantFactsEvaluatorConfiguration;
-        private readonly IConversationSummarizerAgent _conversationSummarizerAgent = conversationSummarizerAgent;
-        private readonly IRelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
+        private readonly ConversationSummarizerAgent _conversationSummarizerAgent = conversationSummarizerAgent;
+        private readonly RelevantFactsEvaluatorAgent _relevantFactsEvaluatorAgent = relevantFactsEvaluatorAgent;
         private readonly RequestAnalyzerAgentConfiguration _requestAnalyzerAgentConfiguration = requestAnalyzerAgentConfiguration;
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
         private readonly EmbeddingServiceConfiguration _embeddingServiceConfiguration = embeddingServiceConfiguration;
-        private readonly IAgentMemorySaverExecutor _agentMemorySaver = agentMemorySaver;
+        private readonly AgentMemoryExecutor _agentMemorySaver = agentMemorySaver;
         private readonly RequestCanonicalizationAgentConfiguration _requestCanonicalizationAgentConfiguration = requestCanonicalizationAgentConfiguration;
         private readonly QueryExpanderAgentConfiguration _queryExpanderAgentConfiguration = queryExpanderAgentConfiguration;
         private readonly RerankerAgentConfiguration _rerankerAgentConfiguration = rerankerAgentConfiguration;
@@ -265,7 +265,7 @@ namespace AgentMesh
 
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-            await _agentMemorySaver.ExecuteAsync(new AgentMemorySaverConversationInput
+            await _agentMemorySaver.SaveAsync(new AgentMemorySaverConversationInput
             {
                 ConversationHistory = relevantConversation
             });

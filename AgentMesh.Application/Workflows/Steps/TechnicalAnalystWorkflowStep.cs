@@ -1,9 +1,9 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.TechnicalAnalyst;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -12,11 +12,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class TechnicalAnalystWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    ITechnicalAnalystAgent technicalAnalystAgent)
+    TechnicalAnalystAgent technicalAnalystAgent)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly ITechnicalAnalystAgent _technicalAnalystAgent = technicalAnalystAgent;
+    private readonly TechnicalAnalystAgent _technicalAnalystAgent = technicalAnalystAgent;
 
     public async Task ExecuteTechnicalAnalystAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {

@@ -1,9 +1,9 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Services;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Reranker;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -12,11 +12,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class RerankerWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IRerankerAgent rerankerAgent)
+    RerankerAgent rerankerAgent)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly IRerankerAgent _rerankerAgent = rerankerAgent;
+    private readonly RerankerAgent _rerankerAgent = rerankerAgent;
 
     public async Task ExecuteRerankerAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {

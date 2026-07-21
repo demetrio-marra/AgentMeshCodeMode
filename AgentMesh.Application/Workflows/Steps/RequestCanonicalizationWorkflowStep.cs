@@ -1,8 +1,8 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Services;
 using AgentMesh.Models.RequestCanonicalization;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -11,12 +11,12 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class RequestCanonicalizationWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IRequestCanonicalizationAgent requestCanonicalizationAgent,
+    RequestCanonicalizationAgent requestCanonicalizationAgent,
     CodeModeWorkflowConfiguration workflowConfiguration)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly IRequestCanonicalizationAgent _requestCanonicalizationAgent = requestCanonicalizationAgent;
+    private readonly RequestCanonicalizationAgent _requestCanonicalizationAgent = requestCanonicalizationAgent;
     private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
     private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
 

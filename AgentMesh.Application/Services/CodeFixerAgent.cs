@@ -3,7 +3,6 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.CodeFixer;
-using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
@@ -13,7 +12,7 @@ namespace AgentMesh.Application.Services
     public class CodeFixerAgent(
         [FromKeyedServices(CodeFixerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<CodeFixerAgent> logger) : AgentBase<string>(logger, CodeFixerAgentConfiguration.AgentName, openAIClient, resilience), ICodeFixerAgent
+        ILogger<CodeFixerAgent> logger) : AgentBase<string>(logger, CodeFixerAgentConfiguration.AgentName, openAIClient, resilience)
     {
         private readonly Regex JavascriptCodeRegex = new(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Multiline);
 

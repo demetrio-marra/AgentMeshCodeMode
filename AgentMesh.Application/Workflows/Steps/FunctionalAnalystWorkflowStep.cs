@@ -1,9 +1,9 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.FunctionalAnalyst;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -12,12 +12,12 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class FunctionalAnalystWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IFunctionalAnalystAgent functionalAnalystAgent,
+    FunctionalAnalystAgent functionalAnalystAgent,
     CodeModeWorkflowConfiguration workflowConfiguration)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly IFunctionalAnalystAgent _functionalAnalystAgent = functionalAnalystAgent;
+    private readonly FunctionalAnalystAgent _functionalAnalystAgent = functionalAnalystAgent;
     private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
 
     public async Task ExecuteFunctionalAnalystAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)

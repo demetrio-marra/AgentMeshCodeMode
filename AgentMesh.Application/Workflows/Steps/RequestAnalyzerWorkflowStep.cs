@@ -2,7 +2,6 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Services;
 using AgentMesh.Models;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -11,11 +10,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class RequestAnalyzerWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IRequestAnalyzerAgent requestAnalyzerAgent)
+    RequestAnalyzerAgent requestAnalyzerAgent)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly IRequestAnalyzerAgent _requestAnalyzerAgent = requestAnalyzerAgent;
+    private readonly RequestAnalyzerAgent _requestAnalyzerAgent = requestAnalyzerAgent;
 
     public async Task ExecuteRequestAnalyzerAsync(CodeModeWorkflowState state, IEnumerable<ContextMessage> chatHistory)
     {

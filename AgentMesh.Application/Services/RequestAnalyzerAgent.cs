@@ -3,7 +3,6 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.RequestAnalysis;
-using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -14,7 +13,7 @@ namespace AgentMesh.Application.Services
     public class RequestAnalyzerAgent(
         [FromKeyedServices(RequestAnalyzerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<RequestAnalyzerAgent> logger) : AgentBase<RequestAnalyzerAgent.ParsedResponse>(logger, RequestAnalyzerAgentConfiguration.AgentName, openAIClient, resilience), IRequestAnalyzerAgent
+        ILogger<RequestAnalyzerAgent> logger) : AgentBase<RequestAnalyzerAgent.ParsedResponse>(logger, RequestAnalyzerAgentConfiguration.AgentName, openAIClient, resilience)
     {
         public const string AgentName = RequestAnalyzerAgentConfiguration.AgentName;
         private readonly ILogger<RequestAnalyzerAgent> _logger = logger;

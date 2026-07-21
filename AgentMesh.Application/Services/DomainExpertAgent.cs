@@ -2,7 +2,6 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.DomainExpert;
-using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -13,7 +12,7 @@ namespace AgentMesh.Application.Services
     public class DomainExpertAgent(
         [FromKeyedServices(AgentMesh.Application.Configuration.DomainExpertAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<DomainExpertAgent> logger) : AgentBase<DomainExpertAgent.ParsedResponse>(logger, AgentMesh.Application.Configuration.DomainExpertAgentConfiguration.AgentName, openAIClient, resilience), IDomainExpertAgent
+        ILogger<DomainExpertAgent> logger) : AgentBase<DomainExpertAgent.ParsedResponse>(logger, AgentMesh.Application.Configuration.DomainExpertAgentConfiguration.AgentName, openAIClient, resilience)
     {
         private readonly ILogger<DomainExpertAgent> _logger = logger;
 

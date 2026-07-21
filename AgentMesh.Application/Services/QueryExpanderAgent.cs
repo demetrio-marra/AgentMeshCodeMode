@@ -4,7 +4,6 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.QueryExpander;
-using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -15,7 +14,7 @@ namespace AgentMesh.Application.Services
     public class QueryExpanderAgent(
         [FromKeyedServices(QueryExpanderAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<QueryExpanderAgent> logger) : AgentBase<QueryExpanderAgent.ParsedResponse>(logger, QueryExpanderAgentConfiguration.AgentName, openAIClient, resilience), IQueryExpanderAgent
+        ILogger<QueryExpanderAgent> logger) : AgentBase<QueryExpanderAgent.ParsedResponse>(logger, QueryExpanderAgentConfiguration.AgentName, openAIClient, resilience)
     {
         private readonly ILogger<QueryExpanderAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];

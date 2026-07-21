@@ -2,7 +2,6 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.FunctionalAnalyst;
-using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -13,7 +12,7 @@ namespace AgentMesh.Application.Services
     public class FunctionalAnalystAgent(
         [FromKeyedServices(AgentMesh.Application.Configuration.FunctionalAnalystAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<FunctionalAnalystAgent> logger) : AgentBase<FunctionalAnalystAgent.ParsedResponse>(logger, AgentMesh.Application.Configuration.FunctionalAnalystAgentConfiguration.AgentName, openAIClient, resilience), IFunctionalAnalystAgent
+        ILogger<FunctionalAnalystAgent> logger) : AgentBase<FunctionalAnalystAgent.ParsedResponse>(logger, AgentMesh.Application.Configuration.FunctionalAnalystAgentConfiguration.AgentName, openAIClient, resilience)
     {
         private readonly ILogger<FunctionalAnalystAgent> _logger = logger;
 

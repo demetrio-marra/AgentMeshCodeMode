@@ -8,7 +8,7 @@ namespace AgentMesh.Application.Services
 {
     public class ConversationSummarizerAgent([FromKeyedServices(ConversationSummarizerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
                                       Resilience resilience,
-                                      ILogger<ConversationSummarizerAgent> logger) : AgentBase<string>(logger, ConversationSummarizerAgentConfiguration.AgentName, openAIClient, resilience), IConversationSummarizerAgent
+                                      ILogger<ConversationSummarizerAgent> logger) : AgentBase<string>(logger, ConversationSummarizerAgentConfiguration.AgentName, openAIClient, resilience)
     {
         public const string SectionName = ConversationSummarizerAgentConfiguration.SectionName;
         public const string AgentName = ConversationSummarizerAgentConfiguration.AgentName;

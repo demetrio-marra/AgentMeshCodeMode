@@ -1,9 +1,9 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.DomainExpert;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -12,11 +12,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class DomainExpertWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IDomainExpertAgent domainExpertAgent)
+    DomainExpertAgent domainExpertAgent)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly IDomainExpertAgent _domainExpertAgent = domainExpertAgent;
+    private readonly DomainExpertAgent _domainExpertAgent = domainExpertAgent;
 
     public async Task ExecuteDomainExpertAgentAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {

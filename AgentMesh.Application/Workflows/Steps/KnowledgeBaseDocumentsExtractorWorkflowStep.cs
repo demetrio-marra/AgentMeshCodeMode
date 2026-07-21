@@ -1,6 +1,6 @@
-using AgentMesh.Services;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.KnowledgeBase;
 using Microsoft.Extensions.Logging;
@@ -11,11 +11,11 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class KnowledgeBaseDocumentsExtractorWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    IKnowledgeBaseGetDocsExecutor knowledgeBaseGetDocsExecutor)
+    KnowledgeBaseExecutor knowledgeBaseGetDocsExecutor)
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly IKnowledgeBaseGetDocsExecutor _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
+    private readonly KnowledgeBaseExecutor _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
 
     public async Task ExecuteKnowledgeBaseDocumentsExtractorAsync(
         CodeModeWorkflowState state,
@@ -42,10 +42,10 @@ public class KnowledgeBaseDocumentsExtractorWorkflowStep(
             { startNotificationKey, WorkflowExecutorFormatting.ToBulletList(filesToExtract) }
         });
 
-        var fetchedFilesContent = await _knowledgeBaseGetDocsExecutor.ExecuteAsync(new KnowledgeBaseGetDocsInput
+        var fetchedFilesContent = await _knowledgeBaseGetDocsExecutor.GetDocsAsync(new KnowledgeBaseGetDocsInput
         {
             FilePaths = filesToExtract
-        });
+        }, CancellationToken.None);
 
         var documentsByFile = buildDocumentsByFile(fetchedFilesContent.Results);
         var documents = documentsByFile.Values.ToList();

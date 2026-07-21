@@ -5,7 +5,6 @@ using AgentMesh.Application.Models;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.RequestCanonicalization;
-using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -16,7 +15,7 @@ namespace AgentMesh.Application.Services
     public class RequestCanonicalizationAgent(
         [FromKeyedServices(RequestCanonicalizationAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<RequestCanonicalizationAgent> logger) : AgentBase<RequestCanonicalizationAgent.ParsedResponse>(logger, RequestCanonicalizationAgentConfiguration.AgentName, openAIClient, resilience), IRequestCanonicalizationAgent
+        ILogger<RequestCanonicalizationAgent> logger) : AgentBase<RequestCanonicalizationAgent.ParsedResponse>(logger, RequestCanonicalizationAgentConfiguration.AgentName, openAIClient, resilience)
     {
         private readonly ILogger<RequestCanonicalizationAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];

@@ -1,6 +1,5 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Models.CodeExecutionFailuresDetector;
-using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -11,7 +10,7 @@ namespace AgentMesh.Application.Services
     public partial class JavascriptCodeExecutionFailuresDetectorAgent(
         [FromKeyedServices(CodeExecutionFailuresDetectorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<JavascriptCodeExecutionFailuresDetectorAgent> logger) : AgentBase<string>(logger, CodeExecutionFailuresDetectorAgentConfiguration.AgentName, openAIClient, resilience), ICodeExecutionFailuresDetectorAgent
+        ILogger<JavascriptCodeExecutionFailuresDetectorAgent> logger) : AgentBase<string>(logger, CodeExecutionFailuresDetectorAgentConfiguration.AgentName, openAIClient, resilience)
     {
         public const string NO_ERROR = "NO_ERROR";
 
