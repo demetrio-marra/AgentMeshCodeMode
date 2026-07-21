@@ -2,7 +2,6 @@ using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RequestAnalysis;
-using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Models
 {

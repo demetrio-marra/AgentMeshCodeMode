@@ -1,4 +1,6 @@
-﻿namespace AgentMesh.Models.Workflows
+﻿using AgentMesh.Models.Workflows;
+
+namespace AgentMesh.Application.Models
 {
     public abstract class BaseWorkflowState
     {
