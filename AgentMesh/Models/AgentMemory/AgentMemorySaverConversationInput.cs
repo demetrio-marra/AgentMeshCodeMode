@@ -1,3 +1,5 @@
+using AgentMesh.Models.ChatMessages;
+
 namespace AgentMesh.Models.AgentMemory
 {
     /// <summary>

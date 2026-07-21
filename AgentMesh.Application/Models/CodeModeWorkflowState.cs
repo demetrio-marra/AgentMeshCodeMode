@@ -1,5 +1,5 @@
-using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
+using AgentMesh.Models.ChatMessages;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RequestAnalysis;
 

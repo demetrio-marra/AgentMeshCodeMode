@@ -4,8 +4,8 @@ using AgentMesh.Application;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Infrastructure.Mem0.Configuration;
 using AgentMesh.Infrastructure.Mem0.Models;
-using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
+using AgentMesh.Models.ChatMessages;
 
 namespace AgentMesh.Infrastructure.Mem0.Services
 {

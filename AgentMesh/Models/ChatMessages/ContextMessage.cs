@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Models
+﻿namespace AgentMesh.Models.ChatMessages
 {
     public class ContextMessage
     {

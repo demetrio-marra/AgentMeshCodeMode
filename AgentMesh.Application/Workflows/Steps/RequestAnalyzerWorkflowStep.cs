@@ -1,11 +1,11 @@
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Services;
-using AgentMesh.Models;
 using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Services;
+using AgentMesh.Models.ChatMessages;
 
 namespace AgentMesh.Application.Workflows.Steps;
 

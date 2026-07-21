@@ -1,4 +1,4 @@
-using AgentMesh.Models;
+using AgentMesh.Models.ChatMessages;
 
 namespace AgentMesh.Application.Models
 {

@@ -4,11 +4,11 @@ using AgentMesh.Application.Services;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.JSSandbox;
-using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.RelevantFactsEvaluator;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
+using AgentMesh.Models.ChatMessages;
 
 namespace AgentMesh
 {
