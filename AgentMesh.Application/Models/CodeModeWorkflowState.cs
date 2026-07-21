@@ -1,6 +1,5 @@
 using AgentMesh.Models;
 using AgentMesh.Models.AgentMemory;
-using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.Workflows;
@@ -14,25 +13,24 @@ namespace AgentMesh.Application.Models
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [.. contextMessages];
 
 
-        public string OriginalUserRequest { get => ClassifiedUserRequest.OriginalUserRequest; set => ClassifiedUserRequest.OriginalUserRequest = value; }
-
         public AgentMesh.Models.RequestAnalysis.StructuredUserRequest NewStructuredUserRequest { get; set; } = new();
         public AgentMesh.Models.RequestAnalysis.StructuredUserRequest? NewCanonicalizedStructuredUserRequest { get; set; }
 
 
         /// <summary>
-        /// Results of Intent detection and User Request classification, including the identified intent, user request type, and any relevant metadata.
-        /// </summary>
-        public AgentMesh.Models.IntentExtractor.StructuredUserRequest ClassifiedUserRequest { get; set; } = new();
-
-        /// <summary>
         /// Canonicalized user intent enriched with domain-specific terminology.
         /// </summary>
         public string CanonicalizedIntent { get => NewCanonicalizedStructuredUserRequest?.Intent ?? NewStructuredUserRequest.Intent; }
+        public UserIntentCategory IntentCategory { get => NewCanonicalizedStructuredUserRequest?.IntentCategory ?? NewStructuredUserRequest.IntentCategory; }
+        public string LanguageOfTheUser { get => NewStructuredUserRequest.LanguageOfTheUser; }
+        public string ConversationTopic { get => (NewCanonicalizedStructuredUserRequest?.ConversationTopic ?? NewStructuredUserRequest.ConversationTopic) ?? "(no topic)"; }
+        public IEnumerable<string> UserPreferences { get => NewCanonicalizedStructuredUserRequest?.UserPreferences ?? NewStructuredUserRequest.UserPreferences; }
+        public IEnumerable<string> UserProvidedData { get => NewCanonicalizedStructuredUserRequest?.UserProvidedData ?? NewStructuredUserRequest.UserProvidedData; }
+        public IEnumerable<string> UserRequestedActions { get => NewCanonicalizedStructuredUserRequest?.UserRequestedActions ?? NewStructuredUserRequest.UserRequestedActions; }
 
         /// <summary>
         /// First knowledge base call, which is a fast query to retrieve relevant information from the knowledge base to assist in understanding the user's request and providing context for further processing.
-        /// It is based on ClassifiedUserRequest.EntitiesByDomain
+        /// It is based on NewStructuredUserRequest.EntitiesByDomain
         /// </summary>
         public KnowledgeBaseQueryResult FastDomainsKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
 
@@ -86,8 +84,6 @@ namespace AgentMesh.Application.Models
 
         public IEnumerable<string> SelectedAPIsFileLocations { get; set; } = [];
 
-
-
         public string? DocumentationContent { get; set; }
         public string? GeneratedCode { get; set; }
         public string? LastCodeWithLineNumbers { get => SourceCodeUtils.GetSourceCodeWithLineNumbers(GeneratedCode); }
@@ -105,8 +101,6 @@ namespace AgentMesh.Application.Models
         public string? FinalAnswer { get; set; }
 
         public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; } = [];
-
-
 
         public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseAPIDocumentsContent { get; set; } = [];
 

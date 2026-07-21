@@ -1,4 +1,3 @@
-using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
@@ -18,7 +17,6 @@ namespace AgentMesh.Application.Workflows
         IWorkflowProgressNotifier workflowProgressNotifier,
         IPersonalAssistantAgent personalAssistantAgent,
         CodeModeWorkflowConfiguration workflowConfiguration,
-        IntentExtractorWorkflowStep intentExtractorWorkflowStep,
         DomainsKnowledgeBaseServiceFastSearchWorkflowStep domainsKnowledgeBaseServiceFastSearchWorkflowStep,
         RequirementsCollectorWorkflowStep requirementsCollectorWorkflowStep,
         AgentMemoryServiceWorkflowStep agentMemoryServiceWorkflowStep,
@@ -44,7 +42,6 @@ namespace AgentMesh.Application.Workflows
         private readonly IPersonalAssistantAgent _personalAssistantAgent = personalAssistantAgent;
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
 
-        private readonly IntentExtractorWorkflowStep _intentExtractorWorkflowStep = intentExtractorWorkflowStep;
         private readonly DomainsKnowledgeBaseServiceFastSearchWorkflowStep _domainsKnowledgeBaseServiceFastSearchWorkflowStep = domainsKnowledgeBaseServiceFastSearchWorkflowStep;
         private readonly RequirementsCollectorWorkflowStep _requirementsCollectorWorkflowStep = requirementsCollectorWorkflowStep;
         private readonly AgentMemoryServiceWorkflowStep _agentMemoryServiceWorkflowStep = agentMemoryServiceWorkflowStep;
@@ -97,11 +94,11 @@ namespace AgentMesh.Application.Workflows
 
             await _requestCanonicalizationWorkflowStep.ExecuteRequestCanonicalizationAsync(state);
 
-            if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.Documentation)
+            if (state.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Documentation)
             {
                 await _documentationWorkflowStep.ExecuteDocumentationAgentAsync(state);
             }
-            else if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.TaskExecution)
+            else if (state.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.TaskExecution)
             {
                 var functionAnalystTask = _functionalAnalystWorkflowStep.ExecuteFunctionalAnalystAsync(state);
                 var apisKnowledgeBaseServiceSearchTask = _apisKnowledgeBaseServiceSearchWorkflowStep.ExecuteAPIsKnowledgeBaseServiceSearchAsync(state);
@@ -173,13 +170,13 @@ namespace AgentMesh.Application.Workflows
                 }
                 goto WorkflowEnd;
             }
-            else if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.Other)
+            else if (state.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Other)
             {
                 goto CompleteWorkflow;
             }
             else
             {
-                throw new Exception($"Unknown user intent category: {state.ClassifiedUserRequest.CanonicalizedIntentCategory}");
+                throw new Exception($"Unknown user intent category: {state.IntentCategory}");
             } // end of if task execution
 
         CompleteWorkflow:
@@ -200,18 +197,17 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Personal Assistant Agent...");
-            var originalUserRequest = state.OriginalUserRequest;
             var canonicalizedIntent = state.CanonicalizedIntent;
 
             string? data = null;
             var requestFailed = false;
             string? requestFailureReason = null;
 
-            if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.Documentation)
+            if (state.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Documentation)
             {
                 data = state.DocumentationContent;
             }
-            else if (state.ClassifiedUserRequest.CanonicalizedIntentCategory == UserIntentCategoryValues.TaskExecution)
+            else if (state.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.TaskExecution)
             {
                 if (state.FunctionalAnalystRejected)
                 {
@@ -254,11 +250,12 @@ namespace AgentMesh.Application.Workflows
                 { "Data", data ?? "(No data)" },
                 { "RequestFailed", requestFailed.ToString() },
                 { "RequestFailureReason", requestFailureReason ?? "(No failure reason)" },
-                { "OriginalUserRequest", originalUserRequest },
                 { "CanonicalizedIntent", canonicalizedIntent },
-                { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
-                { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
-                { "LanguageOfTheUser", state.ClassifiedUserRequest.LanguageOfTheUser ?? "(No language specified)" },
+                { "ConversationTopic", state.ConversationTopic },
+                { "UserPreferences", state.UserPreferences.Any() ? ToBulletList(state.UserPreferences) : "(No user preferences)" },
+                { "UserProvidedData", state.UserProvidedData.Any() ? ToBulletList(state.UserProvidedData) : "(No user provided data)" },
+                { "UserRequestedActions", state.UserRequestedActions.Any() ? ToBulletList(state.UserRequestedActions) : "(No user requested actions)" },
+                { "LanguageOfTheUser", state.LanguageOfTheUser },
                 { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" }
             });
 
@@ -267,11 +264,12 @@ namespace AgentMesh.Application.Workflows
                 Data = data,
                 RequestFailed = requestFailed,
                 RequestFailureReason = requestFailureReason,
-                LanguageOfTheUser = state.ClassifiedUserRequest.LanguageOfTheUser,
-                OriginalUserRequest = originalUserRequest,
+                LanguageOfTheUser = state.LanguageOfTheUser,
                 CanonicalizedIntent = canonicalizedIntent,
-                SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
-                UserPreferences = state.ClassifiedUserRequest.UserPreferences,
+                ConversationTopic = state.ConversationTopic,
+                UserPreferences = state.UserPreferences,
+                UserProvidedData = state.UserProvidedData,
+                UserRequestedActions = state.UserRequestedActions,
                 Memories = state.PastMemoriesQueryResults.Select(m => m.Memory)
             });
 
@@ -307,11 +305,12 @@ namespace AgentMesh.Application.Workflows
         private static string ToBulletList<T>(IEnumerable<T> items)
             => string.Join("\n", items.Select(item => $"- {item}"));
 
-        public string GetIngressExecutorName() => IntentExtractorAgentConfiguration.AgentName;
+        public string GetIngressExecutorName() => RequestAnalyzerAgentConfiguration.AgentName;
 
         public string GetEgressExecutorName() => PersonalAssistantAgentConfiguration.AgentName;
     }
 }
+
 
 
 

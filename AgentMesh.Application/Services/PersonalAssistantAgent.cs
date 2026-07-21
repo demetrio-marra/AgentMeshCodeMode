@@ -24,12 +24,13 @@ namespace AgentMesh.Application.Services
         {
             var requestContext = string.Join(Environment.NewLine + Environment.NewLine, new[]
             {
-                $"Original user request:\n{input.OriginalUserRequest}",
                 $"Canonicalized intent:\n{input.CanonicalizedIntent}",
-                $"Supporting intent information:\n{string.Join(Environment.NewLine, input.SupportingIntentInformation.Select(item => $"- {item}"))}",
+                $"Conversation topic:\n{input.ConversationTopic}",
+                $"User requested actions:\n{string.Join(Environment.NewLine, input.UserRequestedActions.Select(item => $"- {item}"))}",
+                $"User provided data:\n{string.Join(Environment.NewLine, input.UserProvidedData.Select(item => $"- {item}"))}",
                 $"User preferences:\n{string.Join(Environment.NewLine, input.UserPreferences.Select(item => $"- {item}"))}",
                 $"Past memories:\n{string.Join(Environment.NewLine, input.Memories.Select(item => $"- {item}"))}"
-            });
+            }.Where(s => !s.EndsWith(":\n")));
 
             var inputMessages = new List<AgentMessage>
             {
