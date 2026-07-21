@@ -87,6 +87,8 @@ namespace AgentMesh.Application.Models
 
         public int CodeExecutionFailuresDetectorIterationCount { get; set; }
 
+        public string? CodeExecutionAnalysis { get; set; }
+
         public string? SandboxResult { get; set; }
 
         public string? SandboxExecutionId { get; set; }

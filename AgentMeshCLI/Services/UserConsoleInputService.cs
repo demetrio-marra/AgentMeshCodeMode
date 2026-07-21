@@ -122,8 +122,8 @@ namespace AgentMesh.Services
                 conversationContext.TokensCount = inputMessageTokens + outputMessageTokens;
                 conversationContext.Conversation = currentConversation;
 
-                ConsoleHelper.WriteLineWithColor("\nResponse for user:", ConsoleColor.White);
-                ConsoleHelper.WriteLineWithColor(result.Response, ConsoleColor.Green);
+                ConsoleHelper.WriteLineWithColor("\nResponse for user:", ConsoleColor.Gray);
+                ConsoleHelper.WriteLineWithColor(result.Response, ConsoleColor.DarkGreen);
 
                 var agentInputCosts = new Dictionary<string, decimal>
                 {

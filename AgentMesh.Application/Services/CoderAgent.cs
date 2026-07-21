@@ -21,6 +21,13 @@ namespace AgentMesh.Application.Services
 
         public async Task<CoderAgentOutput> ExecuteAsync(CoderAgentInput input, CancellationToken cancellationToken = default)
         {
+            // Filter documents based on selected APIs
+            var filteredDocuments = input.SelectedAPIsFileLocations.Any()
+                ? input.KnowledgeBaseAPIDocumentsContent
+                    .Where(doc => input.SelectedAPIsFileLocations.Contains(doc.File, StringComparer.OrdinalIgnoreCase))
+                    .ToList()
+                : [];
+
             var inputMessages = new List<AgentMessage>
             {
                 new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
@@ -36,7 +43,7 @@ namespace AgentMesh.Application.Services
                 });
             }
 
-            var knowledgeBaseDocumentsContent = FormatKnowledgeBaseDocumentsContent(input.KnowledgeBaseAPIDocumentsContent);
+            var knowledgeBaseDocumentsContent = FormatKnowledgeBaseDocumentsContent(filteredDocuments);
             if (!string.IsNullOrWhiteSpace(knowledgeBaseDocumentsContent))
             {
                 inputMessages.Add(new AgentMessage

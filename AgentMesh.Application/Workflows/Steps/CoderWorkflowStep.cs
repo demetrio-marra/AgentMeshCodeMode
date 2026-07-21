@@ -2,7 +2,6 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Services;
-using AgentMesh.Application.Workflows;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Coder;
 using AgentMesh.Models.Workflows;
@@ -23,31 +22,28 @@ public class CoderWorkflowStep(
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly CoderAgent _coderAgent = coderAgent;
 
-    public async Task ExecuteCoderAsync(CodeModeWorkflowState state)
+    public async Task ExecuteCoderAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Coder Agent...");
 
-        var filteredDocuments = state.SelectedAPIsFileLocations.Any()
-            ? state.KnowledgeBaseAPIDocumentsContent
-                .Where(doc => state.SelectedAPIsFileLocations.Contains(doc.File, StringComparer.OrdinalIgnoreCase))
-                .ToList()
-            : [];
+        var docsToPass = state.KnowledgeBaseAPIDocumentsContent.Select(doc => new KnowledgeBaseGetDocsOutputItem
+        {
+            File = doc.File,
+            Content = doc.Content
+        });
 
         var agentInput = new CoderAgentInput
         {
             BusinessRequirements = state.BusinessRequirements ?? "(No business requirements)",
             TechnicalSpecification = state.TechnicalSpecification ?? "(No technical specification)",
-            KnowledgeBaseAPIDocumentsContent = filteredDocuments.Select(doc => new KnowledgeBaseGetDocsOutputItem
-            {
-                File = doc.File,
-                Content = doc.Content
-            })
+            SelectedAPIsFileLocations = state.SelectedAPIsFileLocations,
+            KnowledgeBaseAPIDocumentsContent = docsToPass
         };
 
         await _workflowProgressNotifier.NotifyWorkflowStepStart("Coder Agent", agentInput.ToDictionary());
 
-        var coderAgentOutput = await _coderAgent.ExecuteAsync(agentInput);
+        var coderAgentOutput = await _coderAgent.ExecuteAsync(agentInput, cancellationToken);
         state.GeneratedCode = coderAgentOutput.CodeToRun;
         state.AddTokenUsage(CoderAgentConfiguration.AgentName, coderAgentOutput.InputTokenCount, coderAgentOutput.OutputTokenCount, stopwatch.Elapsed, "Coder Agent");
 
@@ -59,7 +55,7 @@ public class CoderWorkflowStep(
     public async Task<WorkflowStepUsageEntry> ExecuteAsync(CodeModeWorkflowState stateObject, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
-        await ExecuteCoderAsync(stateObject);
+        await ExecuteCoderAsync(stateObject, cancellationToken);
 
         return new WorkflowStepUsageEntry
         {

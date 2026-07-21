@@ -22,33 +22,32 @@ public class CodeFixerForRuntimeErrorsWorkflowStep(
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly CodeFixerAgent _codeFixerAgent = codeFixerAgent;
 
-    public async Task ExecuteCodeFixerForRuntimeErrorsAsync(CodeModeWorkflowState state, string analysis, int iteration)
+    public async Task ExecuteCodeFixerForRuntimeErrorsAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
-        _logger.LogDebug("Engaging Code Fixer Agent for runtime errors... Iteration {Iteration}", iteration);
+        _logger.LogDebug("Engaging Code Fixer Agent for runtime errors...");
 
         var agentInput = new CodeFixerAgentInput
         {
             CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty,
-            Issues = [analysis]
+            Issues = [state.CodeExecutionAnalysis ?? string.Empty]
         };
 
-        await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", agentInput.ToDictionary());
+        await _workflowProgressNotifier.NotifyWorkflowStepStart("Code Fixer Agent for Runtime Errors", agentInput.ToDictionary());
 
-        var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(agentInput);
+        var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(agentInput, cancellationToken);
         state.GeneratedCode = codeFixerOutput.FixedCode;
-        state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Fixer Agent for Runtime Errors (Iteration {iteration})");
+        state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, "Code Fixer Agent for Runtime Errors");
 
         var notifyDictionary = codeFixerOutput.ToDictionary();
         notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
-        await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", notifyDictionary);
+        await _workflowProgressNotifier.NotifyWorkflowStepEnd("Code Fixer Agent for Runtime Errors", notifyDictionary);
     }
 
     public async Task<WorkflowStepUsageEntry> ExecuteAsync(CodeModeWorkflowState stateObject, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
-        var analysis = stateObject.SandboxResult ?? string.Empty;
-        await ExecuteCodeFixerForRuntimeErrorsAsync(stateObject, analysis, 1);
+        await ExecuteCodeFixerForRuntimeErrorsAsync(stateObject, cancellationToken);
 
         return new WorkflowStepUsageEntry
         {

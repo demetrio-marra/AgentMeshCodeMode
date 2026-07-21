@@ -136,14 +136,14 @@ namespace AgentMesh.Application.Workflows
                     {
                         for (int i = 0; i < 2 && state.CodeExecutionFailuresDetectorIterationCount < 2; i++)
                         {
-                            var analysis = await _codeExecutionFailuresDetectorWorkflowStep.ExecuteCodeExecutionFailuresDetectorAsync(state, i + 1);
+                            await _codeExecutionFailuresDetectorWorkflowStep.ExecuteCodeExecutionFailuresDetectorAsync(state);
 
-                            if (analysis.Equals(JavascriptCodeExecutionFailuresDetectorAgent.NO_ERROR, StringComparison.OrdinalIgnoreCase))
+                            if (state.CodeExecutionAnalysis?.Equals(JavascriptCodeExecutionFailuresDetectorAgent.NO_ERROR, StringComparison.OrdinalIgnoreCase) ?? false)
                             {
                                 break;
                             }
 
-                            await _codeFixerForRuntimeErrorsWorkflowStep.ExecuteCodeFixerForRuntimeErrorsAsync(state, analysis, i + 1);
+                            await _codeFixerForRuntimeErrorsWorkflowStep.ExecuteCodeFixerForRuntimeErrorsAsync(state);
 
                             var sandBoxError = await _jsSandboxWorkflowStep.ExecuteJSSandboxAsync(state, true);
                             if (sandBoxError)

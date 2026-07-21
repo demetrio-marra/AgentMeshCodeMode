@@ -79,13 +79,13 @@ namespace AgentMesh.Helpers
             var totalOutputCost = 0m;
 
             Console.WriteLine();
-            WriteLineWithColor("                                                   ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════╗", ConsoleColor.Cyan);
-            WriteLineWithColor("                                                   ║                                           TOKEN USAGE SUMMARY                                         ║", ConsoleColor.Cyan);
-            WriteLineWithColor("╔══════════════════════════════════════╦═══════════╬═══════════════════════════════════════════════════╦═══════════════════════════════════════════════════╬════════════════╗", ConsoleColor.Cyan);
-            WriteLineWithColor("║  Agent/Step                          ║ Elapsed   ║                   INPUT TOKENS                    ║                  OUTPUT TOKENS                    ║  TOTAL COST($) ║", ConsoleColor.Cyan);
-            WriteLineWithColor("╠══════════════════════════════════════╬═══════════╬═══════════════╦═══════════════╦═══════════════════╬═══════════════╦═══════════════╦═══════════════════╬════════════════╣", ConsoleColor.Cyan);
-            WriteLineWithColor("║                                      ║           ║    Tokens     ║  Percentage   ║      Cost ($)     ║    Tokens     ║  Percentage   ║      Cost ($)     ║                ║", ConsoleColor.Cyan);
-            WriteLineWithColor("╠══════════════════════════════════════╬═══════════╬═══════════════╬═══════════════╬═══════════════════╬═══════════════╬═══════════════╬═══════════════════╬════════════════╣", ConsoleColor.Cyan);
+            WriteLineWithColor("                                                   ╔═══════════════════════════════════════════════════════════════════════════════════════════════════════╗", ConsoleColor.Gray);
+            WriteLineWithColor("                                                   ║                                           TOKEN USAGE SUMMARY                                         ║", ConsoleColor.Gray);
+            WriteLineWithColor("╔══════════════════════════════════════╦═══════════╬═══════════════════════════════════════════════════╦═══════════════════════════════════════════════════╬════════════════╗", ConsoleColor.Gray);
+            WriteLineWithColor("║  Agent/Step                          ║ Elapsed   ║                   INPUT TOKENS                    ║                  OUTPUT TOKENS                    ║  TOTAL COST($) ║", ConsoleColor.Gray);
+            WriteLineWithColor("╠══════════════════════════════════════╬═══════════╬═══════════════╦═══════════════╦═══════════════════╬═══════════════╦═══════════════╦═══════════════════╬════════════════╣", ConsoleColor.Gray);
+            WriteLineWithColor("║                                      ║           ║    Tokens     ║  Percentage   ║      Cost ($)     ║    Tokens     ║  Percentage   ║      Cost ($)     ║                ║", ConsoleColor.Gray);
+            WriteLineWithColor("╠══════════════════════════════════════╬═══════════╬═══════════════╬═══════════════╬═══════════════════╬═══════════════╬═══════════════╬═══════════════════╬════════════════╣", ConsoleColor.Gray);
 
             foreach (var entry in tokenUsageEntries)
             {
@@ -135,9 +135,9 @@ namespace AgentMesh.Helpers
             var totalOutputCostStr = totalOutputCost.ToString("F6").PadLeft(17);
             var grandTotalCostStr = grandTotalCost.ToString("F6").PadLeft(14);
 
-            WriteLineWithColor("╠══════════════════════════════════════╬═══════════╬═══════════════╬═══════════════╬═══════════════════╬═══════════════╬═══════════════╬═══════════════════╬════════════════╣", ConsoleColor.Cyan);
+            WriteLineWithColor("╠══════════════════════════════════════╬═══════════╬═══════════════╬═══════════════╬═══════════════════╬═══════════════╬═══════════════╬═══════════════════╬════════════════╣", ConsoleColor.Gray);
             WriteLineWithColor($"║ TOTAL                                ║           ║ {totalInputTokensStr} ║               ║ {totalInputCostStr} ║ {totalOutputTokensStr} ║               ║ {totalOutputCostStr} ║ {grandTotalCostStr} ║", ConsoleColor.Yellow);
-            WriteLineWithColor("╚══════════════════════════════════════╩═══════════╩═══════════════╩═══════════════╩═══════════════════╩═══════════════╩═══════════════╩═══════════════════╩════════════════╝", ConsoleColor.Cyan);
+            WriteLineWithColor("╚══════════════════════════════════════╩═══════════╩═══════════════╩═══════════════╩═══════════════════╩═══════════════╩═══════════════╩═══════════════════╩════════════════╝", ConsoleColor.Gray);
             WriteLineWithColor($"Total elapsed workflow time: {ToHumanReadableDuration(totalElapsedWorkflow)}", ConsoleColor.Yellow);
             Console.WriteLine();
         }
