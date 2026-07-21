@@ -295,29 +295,6 @@ namespace AgentMesh
 
             services.AddSingleton<IRequestCanonicalizationAgent, RequestCanonicalizationAgent>();
 
-            // RequirementsCollector agent config and client
-            services
-                .AddOptions<RequirementsCollectorAgentConfiguration>()
-                .Bind(configuration.GetSection(RequirementsCollectorAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<RequirementsCollectorAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(RequirementsCollectorAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<RequirementsCollectorAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-            services.AddSingleton<IRequirementsCollectorAgent, RequirementsCollectorAgent>();
-
             // PersonalAssistant agent config and client
             services
                 .AddOptions<PersonalAssistantAgentConfiguration>()
@@ -449,7 +426,6 @@ namespace AgentMesh
             services.AddSingleton<DomainsKnowledgeBaseDocumentsExtractorWorkflowStep>();
             services.AddSingleton<APIKnowledgeBaseDocumentsExtractorWorkflowStep>();
             services.AddSingleton<RequestCanonicalizationWorkflowStep>();
-            services.AddSingleton<RequirementsCollectorWorkflowStep>();
             services.AddSingleton<AgentMemoryServiceWorkflowStep>();
             services.AddSingleton<KnowledgeBaseServiceSearchWorkflowStep>();
             services.AddSingleton<DomainsKnowledgeBaseServiceSearchWorkflowStep>();

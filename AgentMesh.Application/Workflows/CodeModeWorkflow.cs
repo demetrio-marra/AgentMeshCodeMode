@@ -18,7 +18,6 @@ namespace AgentMesh.Application.Workflows
         IPersonalAssistantAgent personalAssistantAgent,
         CodeModeWorkflowConfiguration workflowConfiguration,
         DomainsKnowledgeBaseServiceFastSearchWorkflowStep domainsKnowledgeBaseServiceFastSearchWorkflowStep,
-        RequirementsCollectorWorkflowStep requirementsCollectorWorkflowStep,
         AgentMemoryServiceWorkflowStep agentMemoryServiceWorkflowStep,
         DomainsKnowledgeBaseServiceSearchWorkflowStep domainsKnowledgeBaseServiceSearchWorkflowStep,
         DomainsKnowledgeBaseDocumentsExtractorWorkflowStep domainsKnowledgeBaseDocumentsExtractorWorkflowStep,
@@ -42,7 +41,6 @@ namespace AgentMesh.Application.Workflows
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
 
         private readonly DomainsKnowledgeBaseServiceFastSearchWorkflowStep _domainsKnowledgeBaseServiceFastSearchWorkflowStep = domainsKnowledgeBaseServiceFastSearchWorkflowStep;
-        private readonly RequirementsCollectorWorkflowStep _requirementsCollectorWorkflowStep = requirementsCollectorWorkflowStep;
         private readonly AgentMemoryServiceWorkflowStep _agentMemoryServiceWorkflowStep = agentMemoryServiceWorkflowStep;
         private readonly DomainsKnowledgeBaseServiceSearchWorkflowStep _domainsKnowledgeBaseServiceSearchWorkflowStep = domainsKnowledgeBaseServiceSearchWorkflowStep;
         private readonly DomainsKnowledgeBaseDocumentsExtractorWorkflowStep _domainsKnowledgeBaseDocumentsExtractorWorkflowStep = domainsKnowledgeBaseDocumentsExtractorWorkflowStep;
