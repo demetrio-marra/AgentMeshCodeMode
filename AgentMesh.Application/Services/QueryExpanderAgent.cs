@@ -109,12 +109,12 @@ User language:
                 });
             }
 
-            if (!string.IsNullOrWhiteSpace(input.QmdQueryTypesReference))
+            if (!string.IsNullOrWhiteSpace(input.DocumentationQueriesGenerationReference))
             {
                 inputMessages.Add(new AgentMessage
                 {
                     Role = AgentMessageRole.System,
-                    Content = $"QMD query types reference:\n{input.QmdQueryTypesReference}"
+                    Content = $"Documentation queries generation reference:\n{input.DocumentationQueriesGenerationReference}"
                 });
             }
 

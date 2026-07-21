@@ -35,7 +35,7 @@ public class RequestCanonicalizationWorkflowStep(
                 ? WorkflowExecutorFormatting.SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent)
                 : "(No knowledge base results)",
             LanguageOfKnowledgeBase = _workflowConfiguration.LanguageOfKnowledgeBase,
-            QmdQueryTypesReference = LoadQmdQueryTypesReference()
+            DocumentationQueriesGenerationReference = LoadDocumentationQueriesGenerationReference()
         };
 
         await _workflowProgressNotifier.NotifyWorkflowStepStart("Request Canonicalization Agent", agentInput.ToDictionary());
@@ -52,7 +52,7 @@ public class RequestCanonicalizationWorkflowStep(
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Request Canonicalization Agent", notifyDictionary);
     }
 
-    private string? LoadQmdQueryTypesReference()
+    private string? LoadDocumentationQueriesGenerationReference()
     {
         var candidatePaths = new[]
         {

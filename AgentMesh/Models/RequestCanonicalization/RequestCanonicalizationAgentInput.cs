@@ -10,7 +10,7 @@ namespace AgentMesh.Models.RequestCanonicalization
         public IEnumerable<KnowledgeBaseQueryInputItem> DomainsKnowledgeBaseQuery { get; set; } = [];
         public string DomainsKnowledgeBaseDocumentsContent { get; set; } = string.Empty;
         public string LanguageOfKnowledgeBase { get; set; } = string.Empty;
-        public string? QmdQueryTypesReference { get; set; }
+        public string? DocumentationQueriesGenerationReference { get; set; }
 
         public Dictionary<string, string> ToDictionary()
         {

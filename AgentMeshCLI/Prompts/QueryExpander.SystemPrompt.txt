@@ -7,7 +7,7 @@ Guidelines:
 2. Include queries for any specific topics, features, or capabilities mentioned
 3. Consider the user's preferences when formulating queries
 4. Address any missing values or gaps in information by generating queries to find them
-5. Use appropriate query types as documented in the QMD query types reference:
+5. Use appropriate query types as documented in the Documentation queries generation reference:
    - "vec" for semantic searches using natural language (conceptual understanding, paraphrases)
    - "lex" for keyword-based searches with boolean operators (exact terms, technical identifiers)
    - "hyde" for hypothetical document searches (passage-style answer text, exploratory matches)

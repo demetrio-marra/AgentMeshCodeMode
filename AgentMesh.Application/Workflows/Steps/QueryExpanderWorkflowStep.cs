@@ -32,7 +32,7 @@ public class QueryExpanderWorkflowStep(
         {
             StructuredUserRequest = sr,
             GenerateHydeQueries = sr.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Documentation,
-            QmdQueryTypesReference = LoadQmdQueryTypesReference()
+            DocumentationQueriesGenerationReference = LoadDocumentationQueriesGenerationReference()
         };
 
         await _workflowProgressNotifier.NotifyWorkflowStepStart("Query Expander Agent", agentInput.ToDictionary());
@@ -54,7 +54,7 @@ public class QueryExpanderWorkflowStep(
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Query Expander Agent", notifyDictionary);
     }
 
-    private string? LoadQmdQueryTypesReference()
+    private string? LoadDocumentationQueriesGenerationReference()
     {
         var candidatePaths = new[]
         {
