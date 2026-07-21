@@ -10,5 +10,15 @@ namespace AgentMesh.Models.FunctionalAnalyst
         public int TokenCount { get; set; }
         public int InputTokenCount { get; set; }
         public int OutputTokenCount { get; set; }
+
+        public Dictionary<string, string> ToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Business requirements", BusinessRequirements },
+                { "Request rejected", RequestRejected.ToString() },
+                { "Reason of rejection", ReasonOfRejection ?? string.Empty }
+            };
+        }
     }
 }

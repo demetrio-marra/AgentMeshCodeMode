@@ -15,5 +15,15 @@ namespace AgentMesh.Models.QueryExpander
         /// fixed md file documenting the query types and their expected structure, which can be used as a reference for generating queries in a consistent format.
         /// </summary>
         public string? QmdQueryTypesReference { get; set; }
+
+        public Dictionary<string, string> ToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Structured user request", System.Text.Json.JsonSerializer.Serialize(StructuredUserRequest) },
+                { "Generate hyde queries", GenerateHydeQueries.ToString() },
+                { "Qmd query types reference", QmdQueryTypesReference ?? string.Empty }
+            };
+        }
     }
 }

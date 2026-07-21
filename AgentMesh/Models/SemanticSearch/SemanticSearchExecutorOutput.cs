@@ -11,5 +11,13 @@ namespace AgentMesh.Models.SemanticSearch
         /// Empty string when no relevant documentation was found.
         /// </summary>
         public string ApiDocumentation { get; set; } = string.Empty;
+
+        public Dictionary<string, string> ToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Api documentation", ApiDocumentation }
+            };
+        }
     }
 }

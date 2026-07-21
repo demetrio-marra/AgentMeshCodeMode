@@ -1,4 +1,5 @@
 using AgentMesh.Models;
+using AgentMesh.Utils;
 
 namespace AgentMesh.Application.Models
 {
@@ -9,5 +10,14 @@ namespace AgentMesh.Application.Models
         public int TokenCount { get; set; }
         public int InputTokenCount { get; set; }
         public int OutputTokenCount { get; set; }
+
+        public Dictionary<string, string> ToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Summary", Summary },
+                { "New conversation", NewConversation.Any() ? $"Messages count: {NewConversation.Count()}" : "(No conversation)" }
+            };
+        }
     }
 }

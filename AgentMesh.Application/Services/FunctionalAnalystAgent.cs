@@ -28,21 +28,30 @@ namespace AgentMesh.Application.Services
                 inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Intent: {input.Intent}" });
             }
 
-            if (input.SupportingIntentInformation.Any())
+            if (!string.IsNullOrWhiteSpace(input.ConversationTopic))
             {
                 inputMessages.Add(new AgentMessage
                 {
                     Role = AgentMessageRole.System,
-                    Content = $"Supporting Intent Information:\n{string.Join("\n", input.SupportingIntentInformation.Select(i => $"- {i}"))}"
+                    Content = $"Conversation Topic: {input.ConversationTopic}"
                 });
             }
 
-            if (input.Entities.Any())
+            if (input.UserRequestedActions.Any())
             {
                 inputMessages.Add(new AgentMessage
                 {
                     Role = AgentMessageRole.System,
-                    Content = $"Entities:\n{string.Join("\n", input.Entities.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}")))}"
+                    Content = $"User Requested Actions:\n{string.Join("\n", input.UserRequestedActions.Select(i => $"- {i}"))}"
+                });
+            }
+
+            if (input.UserProvidedData.Any())
+            {
+                inputMessages.Add(new AgentMessage
+                {
+                    Role = AgentMessageRole.System,
+                    Content = $"User Provided Data:\n{string.Join("\n", input.UserProvidedData.Select(v => $"- {v}"))}"
                 });
             }
 

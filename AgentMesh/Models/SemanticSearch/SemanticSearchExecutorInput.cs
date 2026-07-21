@@ -1,3 +1,5 @@
+using AgentMesh.Utils;
+
 namespace AgentMesh.Models.SemanticSearch
 {
     /// <summary>
@@ -15,5 +17,14 @@ namespace AgentMesh.Models.SemanticSearch
         /// Optional role of the agent requesting the search, used to scope or filter results.
         /// </summary>
         public string? AgentRole { get; set; }
+
+        public Dictionary<string, string> ToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Actionable requirements", ActionableRequirements.Any() ? ListsFormatter.ToBulletList(ActionableRequirements) : "(No actionable requirements)" },
+                { "Agent role", AgentRole ?? string.Empty }
+            };
+        }
     }
 }

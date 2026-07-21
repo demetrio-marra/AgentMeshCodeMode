@@ -25,6 +25,7 @@ public class TechnicalAnalystWorkflowStep(
         await _workflowProgressNotifier.NotifyWorkflowStepStart("Technical Analyst Agent", new Dictionary<string, string>
         {
             { "Intent", state.Intent },
+            { "ConversationTopic", state.ConversationTopic },
             { "BusinessRequirements", state.BusinessRequirements ?? "(No business requirements)" },
             { "UserRequestedActions", state.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserRequestedActions) : "(No actions)" },
             { "UserProvidedData", state.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserProvidedData) : "(No data)" },
@@ -36,9 +37,10 @@ public class TechnicalAnalystWorkflowStep(
         var technicalAnalystOutput = await _technicalAnalystAgent.ExecuteAsync(new TechnicalAnalystAgentInput
         {
             Intent = state.Intent,
+            ConversationTopic = state.ConversationTopic,
             BusinessRequirements = state.BusinessRequirements ?? string.Empty,
-            SupportingIntentInformation = state.UserRequestedActions,
-            Entities = new Dictionary<string, IEnumerable<string>>(),
+            UserRequestedActions = state.UserRequestedActions,
+            UserProvidedData = state.UserProvidedData,
             UserPreferences = state.UserPreferences,
             AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
             KnowledgeBaseDocumentsContent = WorkflowExecutorFormatting.SerializeDocumentation(state.KnowledgeBaseAPIDocumentsContent)

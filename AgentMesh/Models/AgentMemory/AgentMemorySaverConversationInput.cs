@@ -1,5 +1,3 @@
-using AgentMesh.Models;
-
 namespace AgentMesh.Models.AgentMemory
 {
     /// <summary>
@@ -11,5 +9,13 @@ namespace AgentMesh.Models.AgentMemory
         /// Conversation history made of user and assistant messages.
         /// </summary>
         public IEnumerable<ContextMessage> ConversationHistory { get; set; } = [];
+
+        public Dictionary<string, string> ToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Conversation history", ConversationHistory.Any() ? $"Messages count: {ConversationHistory.Count()}" : "(No conversation history)" }
+            };
+        }
     }
 }

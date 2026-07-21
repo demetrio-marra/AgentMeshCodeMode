@@ -1,3 +1,5 @@
+using AgentMesh.Utils;
+
 namespace AgentMesh.Models.AgentMemory
 {
     /// <summary>
@@ -9,5 +11,13 @@ namespace AgentMesh.Models.AgentMemory
         /// The sentence or query that the agent will use to search its memory. This should be a natural language request that describes what the user is looking for in the agent's memory.
         /// </summary>
         public string Query { get; set; } = string.Empty;
+
+        public Dictionary<string, string> ToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Query", Query }
+            };
+        }
     }
 }

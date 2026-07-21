@@ -1,3 +1,5 @@
+using AgentMesh.Utils;
+
 namespace AgentMesh.Models.AgentMemory
 {
     /// <summary>
@@ -9,5 +11,13 @@ namespace AgentMesh.Models.AgentMemory
         /// The list of memory items that match the search query.
         /// </summary>
         public IEnumerable<AgentMemoryQueryResultItem> Items { get; set; } = [];
+
+        public Dictionary<string, string> ToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Items", Items.Any() ? ListsFormatter.ToBulletList(Items.Select(item => $"{item.Memory} Confidence: {item.Confidence}")) : "(No items found)" }
+            };
+        }
     }
 }

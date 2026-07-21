@@ -27,6 +27,7 @@ public class FunctionalAnalystWorkflowStep(
         await _workflowProgressNotifier.NotifyWorkflowStepStart("Functional Analyst Agent", new Dictionary<string, string>
         {
             { "Intent", state.Intent },
+            { "ConversationTopic", state.ConversationTopic },
             { "UserRequestedActions", state.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserRequestedActions) : "(No actions)" },
             { "UserProvidedData", state.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserProvidedData) : "(No data)" },
             { "UserPreferences", state.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserPreferences) : "(No user preferences)" },
@@ -37,8 +38,9 @@ public class FunctionalAnalystWorkflowStep(
         var functionalAnalystOutput = await _functionalAnalystAgent.ExecuteAsync(new FunctionalAnalystAgentInput
         {
             Intent = state.Intent,
-            SupportingIntentInformation = state.UserRequestedActions,
-            Entities = new Dictionary<string, IEnumerable<string>>(),
+            ConversationTopic = state.ConversationTopic,
+            UserRequestedActions = state.UserRequestedActions,
+            UserProvidedData = state.UserProvidedData,
             UserPreferences = state.UserPreferences,
             AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
             KnowledgeBaseDocumentsContent = WorkflowExecutorFormatting.SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent),

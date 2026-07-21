@@ -1,5 +1,6 @@
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RequestAnalysis;
+using AgentMesh.Utils;
 
 namespace AgentMesh.Models.RequestCanonicalization
 {
@@ -12,5 +13,15 @@ namespace AgentMesh.Models.RequestCanonicalization
         public int TokenCount { get; set; }
         public int InputTokenCount { get; set; }
         public int OutputTokenCount { get; set; }
+
+        public Dictionary<string, string> ToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Canonicalized structured user request", System.Text.Json.JsonSerializer.Serialize(CanonicalizedStructuredUserRequest) },
+                { "Canonicalized intent category", CanonicalizedIntentCategory.ToString() },
+                { "Canonicalized domains knowledge base query", CanonicalizedDomainsKnowledgeBaseQuery.Any() ? ListsFormatter.ToBulletList(CanonicalizedDomainsKnowledgeBaseQuery.Select(query => query.ToString())) : "(No queries specified)" }
+            };
+        }
     }
 }
