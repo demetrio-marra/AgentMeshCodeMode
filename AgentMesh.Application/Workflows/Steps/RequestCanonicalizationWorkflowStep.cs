@@ -25,7 +25,7 @@ public class RequestCanonicalizationWorkflowStep(
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Request Canonicalization Agent...");
 
-        var structuredUserRequest = state.NewStructuredUserRequest ?? new AgentMesh.Models.RequestAnalysis.StructuredUserRequest();
+        var structuredUserRequest = state.UserRequest ?? new AgentMesh.Models.RequestAnalysis.StructuredUserRequest();
 
         var agentInput = new RequestCanonicalizationAgentInput
         {
@@ -42,7 +42,7 @@ public class RequestCanonicalizationWorkflowStep(
 
         var output = await _requestCanonicalizationAgent.ExecuteAsync(agentInput, cancellationToken);
 
-        state.NewCanonicalizedStructuredUserRequest = output.CanonicalizedStructuredUserRequest;
+        state.CanonicalizedUserRequest = output.CanonicalizedStructuredUserRequest;
         state.DomainsKnowledgeBaseQuery = output.CanonicalizedDomainsKnowledgeBaseQuery;
 
         state.AddTokenUsage(RequestCanonicalizationAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Request Canonicalization Agent");

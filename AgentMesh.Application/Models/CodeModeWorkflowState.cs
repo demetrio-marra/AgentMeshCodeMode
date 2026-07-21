@@ -12,23 +12,16 @@ namespace AgentMesh.Application.Models
 
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [.. contextMessages];
 
-        public StructuredUserRequest NewStructuredUserRequest { get; set; } = new();
-        public StructuredUserRequest? NewCanonicalizedStructuredUserRequest { get; set; }
+        public StructuredUserRequest UserRequest { get; set; } = new();
+        public StructuredUserRequest? CanonicalizedUserRequest { get; set; }
 
-        public string Intent { get => NewCanonicalizedStructuredUserRequest?.Intent ?? NewStructuredUserRequest.Intent; }
-        public UserIntentCategory IntentCategory { get => NewCanonicalizedStructuredUserRequest?.IntentCategory ?? NewStructuredUserRequest.IntentCategory; }
-        public string LanguageOfTheUser { get => NewStructuredUserRequest.LanguageOfTheUser; }
-        public string ConversationTopic { get => (NewCanonicalizedStructuredUserRequest?.ConversationTopic ?? NewStructuredUserRequest.ConversationTopic) ?? "(no topic)"; }
-        public IEnumerable<string> UserPreferences { get => NewCanonicalizedStructuredUserRequest?.UserPreferences ?? NewStructuredUserRequest.UserPreferences; }
-        public IEnumerable<string> UserProvidedData { get => NewCanonicalizedStructuredUserRequest?.UserProvidedData ?? NewStructuredUserRequest.UserProvidedData; }
-        public IEnumerable<string> UserRequestedActions { get => NewCanonicalizedStructuredUserRequest?.UserRequestedActions ?? NewStructuredUserRequest.UserRequestedActions; }
-
-        /// <summary>
-        /// First knowledge base call, which is a fast query to retrieve relevant information from the knowledge base to assist in understanding the user's request and providing context for further processing.
-        /// It is based on NewStructuredUserRequest.EntitiesByDomain
-        /// </summary>
-        public KnowledgeBaseQueryResult FastDomainsKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
-
+        public string Intent { get => CanonicalizedUserRequest?.Intent ?? UserRequest.Intent; }
+        public UserIntentCategory IntentCategory { get => CanonicalizedUserRequest?.IntentCategory ?? UserRequest.IntentCategory; }
+        public string LanguageOfTheUser { get => UserRequest.LanguageOfTheUser; }
+        public string ConversationTopic { get => (CanonicalizedUserRequest?.ConversationTopic ?? UserRequest.ConversationTopic) ?? "(no topic)"; }
+        public IEnumerable<string> UserPreferences { get => CanonicalizedUserRequest?.UserPreferences ?? UserRequest.UserPreferences; }
+        public IEnumerable<string> UserProvidedData { get => CanonicalizedUserRequest?.UserProvidedData ?? UserRequest.UserProvidedData; }
+        public IEnumerable<string> UserRequestedActions { get => CanonicalizedUserRequest?.UserRequestedActions ?? UserRequest.UserRequestedActions; }
 
         public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseAPIDocumentsContent { get; set; } = [];
 

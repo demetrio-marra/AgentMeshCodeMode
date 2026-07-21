@@ -23,7 +23,7 @@ public class QueryExpanderWorkflowStep(
 
     public async Task ExecuteQueryExpanderAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
-        var sr = state.NewStructuredUserRequest!;
+        var sr = state.UserRequest!;
 
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Query Expander Agent...");

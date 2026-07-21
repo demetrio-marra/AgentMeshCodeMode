@@ -454,7 +454,6 @@ namespace AgentMesh
             services.AddSingleton<DomainsKnowledgeBaseServiceSearchWorkflowStep>();
             services.AddSingleton<APIsKnowledgeBaseServiceSearchWorkflowStep>();
             services.AddSingleton<KnowledgeBaseServiceFastSearchWorkflowStep>();
-            services.AddSingleton<DomainsKnowledgeBaseServiceFastSearchWorkflowStep>();
             services.AddSingleton<APIsKnowledgeBaseServiceFastSearchWorkflowStep>();
             services.AddSingleton<FunctionalAnalystWorkflowStep>();
             services.AddSingleton<TechnicalAnalystWorkflowStep>();

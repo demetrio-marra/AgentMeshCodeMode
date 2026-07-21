@@ -31,7 +31,7 @@ public class RerankerWorkflowStep(
 
         var agentInput = new RerankerAgentInput
         {
-            StructuredUserRequest = state.NewCanonicalizedStructuredUserRequest ?? state.NewStructuredUserRequest,
+            StructuredUserRequest = state.CanonicalizedUserRequest ?? state.UserRequest,
             QueryResults = candidates
         };
 

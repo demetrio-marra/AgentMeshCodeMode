@@ -32,7 +32,7 @@ public class RequestAnalyzerWorkflowStep(
 
         var agentOutput = await _requestAnalyzerAgent.ExecuteAsync(agentInput);
 
-        state.NewStructuredUserRequest = agentOutput;
+        state.UserRequest = agentOutput;
 
         state.AddTokenUsage(RequestAnalyzerAgent.AgentName, agentOutput.InputTokenCount, agentOutput.OutputTokenCount, stopwatch.Elapsed, "Request Analyzer Agent");
 

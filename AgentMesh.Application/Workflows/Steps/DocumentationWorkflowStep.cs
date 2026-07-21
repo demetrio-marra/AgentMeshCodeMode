@@ -24,7 +24,7 @@ public class DocumentationWorkflowStep(
 
         var agentInput = new DocumentationAgentInput
         {
-            UserRequest = state.NewCanonicalizedStructuredUserRequest ?? state.NewStructuredUserRequest,
+            UserRequest = state.CanonicalizedUserRequest ?? state.UserRequest,
             AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
             KnowledgeBaseDocumentsContent = WorkflowExecutorFormatting.SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent),
             LanguageOfTheUser = state.LanguageOfTheUser

@@ -17,7 +17,6 @@ namespace AgentMesh.Application.Workflows
         IWorkflowProgressNotifier workflowProgressNotifier,
         IPersonalAssistantAgent personalAssistantAgent,
         CodeModeWorkflowConfiguration workflowConfiguration,
-        DomainsKnowledgeBaseServiceFastSearchWorkflowStep domainsKnowledgeBaseServiceFastSearchWorkflowStep,
         AgentMemoryServiceWorkflowStep agentMemoryServiceWorkflowStep,
         DomainsKnowledgeBaseServiceSearchWorkflowStep domainsKnowledgeBaseServiceSearchWorkflowStep,
         DomainsKnowledgeBaseDocumentsExtractorWorkflowStep domainsKnowledgeBaseDocumentsExtractorWorkflowStep,
@@ -41,7 +40,6 @@ namespace AgentMesh.Application.Workflows
         private readonly IPersonalAssistantAgent _personalAssistantAgent = personalAssistantAgent;
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
 
-        private readonly DomainsKnowledgeBaseServiceFastSearchWorkflowStep _domainsKnowledgeBaseServiceFastSearchWorkflowStep = domainsKnowledgeBaseServiceFastSearchWorkflowStep;
         private readonly AgentMemoryServiceWorkflowStep _agentMemoryServiceWorkflowStep = agentMemoryServiceWorkflowStep;
         private readonly DomainsKnowledgeBaseServiceSearchWorkflowStep _domainsKnowledgeBaseServiceSearchWorkflowStep = domainsKnowledgeBaseServiceSearchWorkflowStep;
         private readonly DomainsKnowledgeBaseDocumentsExtractorWorkflowStep _domainsKnowledgeBaseDocumentsExtractorWorkflowStep = domainsKnowledgeBaseDocumentsExtractorWorkflowStep;
@@ -68,7 +66,7 @@ namespace AgentMesh.Application.Workflows
 
             await _requestAnalyzerWorkflowStep.ExecuteRequestAnalyzerAsync(state, chatHistory);
 
-            if (state.NewStructuredUserRequest!.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Other)
+            if (state.UserRequest!.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Other)
             {
                 goto CompleteWorkflow;
             }
