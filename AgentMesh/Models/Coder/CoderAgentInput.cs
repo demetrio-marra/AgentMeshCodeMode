@@ -1,4 +1,4 @@
-﻿using AgentMesh.Models.KnowledgeBase;
+﻿using AgentMesh.Utils;
 
 namespace AgentMesh.Models.Coder
 {
@@ -13,5 +13,15 @@ namespace AgentMesh.Models.Coder
         /// Empty collection when no relevant documentation was found.
         /// </summary>
         public IEnumerable<AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsOutputItem> KnowledgeBaseAPIDocumentsContent { get; set; } = [];
+
+        public Dictionary<string, string> ToDictionary()
+        {
+            return new Dictionary<string, string>
+            {
+                { "Business requirements", BusinessRequirements },
+                { "Technical specification", TechnicalSpecification },
+                { "Knowledge Base API documents content", KnowledgeBaseAPIDocumentsContent.Any() ? ListsFormatter.ToBulletList(KnowledgeBaseAPIDocumentsContent.Select(f => f.File)) : "(No relevant documentation found)" }
+            };
+        }
     }
 }
