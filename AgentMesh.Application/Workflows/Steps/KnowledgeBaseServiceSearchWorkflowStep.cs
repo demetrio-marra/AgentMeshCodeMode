@@ -2,6 +2,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -10,8 +11,10 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class KnowledgeBaseServiceSearchWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    KnowledgeBaseExecutor knowledgeBaseSearchExecutor)
+    KnowledgeBaseExecutor knowledgeBaseSearchExecutor) : IWorkflowStep<CodeModeWorkflowState>
 {
+    private const string WorkflowStepDisplayName = "Knowledge Base Service Search";
+
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly KnowledgeBaseExecutor _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
@@ -54,5 +57,25 @@ public class KnowledgeBaseServiceSearchWorkflowStep(
             { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
         };
         await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, notifyDictionary);
+    }
+
+    public async Task<WorkflowStepUsageEntry> ExecuteAsync(CodeModeWorkflowState stateObject, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        await ExecuteKnowledgeBaseServiceSearchAsync(
+            stateObject,
+            "KB Search Service",
+            "domains",
+            workflowState => workflowState.DomainsKnowledgeBaseQuery,
+            workflowState => workflowState.DomainsKnowledgeBaseQueryResults,
+            (workflowState, queryResult) => workflowState.DomainsKnowledgeBaseQueryResults = queryResult);
+
+        return new WorkflowStepUsageEntry
+        {
+            StepName = WorkflowStepDisplayName,
+            Elapsed = stopwatch.Elapsed,
+            IsAgentic = false
+        };
     }
 }

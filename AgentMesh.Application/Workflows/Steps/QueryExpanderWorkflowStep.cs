@@ -3,6 +3,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models.QueryExpander;
+using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -12,9 +13,10 @@ public class QueryExpanderWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     QueryExpanderAgent queryExpanderAgent,
-    CodeModeWorkflowConfiguration workflowConfiguration)
+    CodeModeWorkflowConfiguration workflowConfiguration) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
+    private const string WorkflowStepDisplayName = "Query Expander";
 
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
@@ -52,6 +54,19 @@ public class QueryExpanderWorkflowStep(
         var notifyDictionary = queryExpanderOutput.ToDictionary();
         notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Query Expander Agent", notifyDictionary);
+    }
+
+    public async Task<WorkflowStepUsageEntry> ExecuteAsync(CodeModeWorkflowState stateObject, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        await ExecuteQueryExpanderAsync(stateObject, cancellationToken);
+
+        return new WorkflowStepUsageEntry
+        {
+            StepName = WorkflowStepDisplayName,
+            Elapsed = stopwatch.Elapsed,
+            IsAgentic = false
+        };
     }
 
     private string? LoadDocumentationQueriesGenerationReference()

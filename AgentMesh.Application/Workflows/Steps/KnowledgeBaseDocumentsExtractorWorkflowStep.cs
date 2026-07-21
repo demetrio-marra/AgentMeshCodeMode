@@ -3,6 +3,7 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -11,8 +12,10 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class KnowledgeBaseDocumentsExtractorWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    KnowledgeBaseExecutor knowledgeBaseGetDocsExecutor)
+    KnowledgeBaseExecutor knowledgeBaseGetDocsExecutor) : IWorkflowStep<CodeModeWorkflowState>
 {
+    private const string WorkflowStepDisplayName = "Knowledge Base Documents Extractor";
+
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly KnowledgeBaseExecutor _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
@@ -59,6 +62,38 @@ public class KnowledgeBaseDocumentsExtractorWorkflowStep(
             { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
         };
         await _workflowProgressNotifier.NotifyWorkflowStepEnd(stepName, notifyDictionary);
+    }
+
+    public async Task<WorkflowStepUsageEntry> ExecuteAsync(CodeModeWorkflowState stateObject, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        await ExecuteKnowledgeBaseDocumentsExtractorAsync(
+            stateObject,
+            "Engaging Knowledge Base Documents Extractor Service...",
+            "KB Documents Extractor Service (Domain)",
+            "Documents",
+            workflowState => workflowState.DomainsKnowledgeBaseQueryResults.Results.Select(r => r.File),
+            file => file?.Trim() ?? string.Empty,
+            StringComparer.Ordinal,
+            results => results
+                .Where(doc => !string.IsNullOrWhiteSpace(doc.File))
+                .GroupBy(doc => doc.File!)
+                .ToDictionary(
+                    group => group.Key,
+                    group => new KnowledgeBaseDocumentContent
+                    {
+                        File = group.Key,
+                        Content = group.First().Content
+                    }),
+            (workflowState, documents) => workflowState.DomainsKnowledgeBaseDocumentsContent = documents);
+
+        return new WorkflowStepUsageEntry
+        {
+            StepName = WorkflowStepDisplayName,
+            Elapsed = stopwatch.Elapsed,
+            IsAgentic = false
+        };
     }
 }
 

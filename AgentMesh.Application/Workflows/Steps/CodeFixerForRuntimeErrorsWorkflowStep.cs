@@ -4,6 +4,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.CodeFixer;
+using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -12,8 +13,10 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class CodeFixerForRuntimeErrorsWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    CodeFixerAgent codeFixerAgent)
+    CodeFixerAgent codeFixerAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
+    private const string WorkflowStepDisplayName = "Code Fixer For Runtime Errors";
+
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly CodeFixerAgent _codeFixerAgent = codeFixerAgent;
@@ -38,6 +41,20 @@ public class CodeFixerForRuntimeErrorsWorkflowStep(
         var notifyDictionary = codeFixerOutput.ToDictionary();
         notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
         await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", notifyDictionary);
+    }
+
+    public async Task<WorkflowStepUsageEntry> ExecuteAsync(CodeModeWorkflowState stateObject, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var analysis = stateObject.SandboxResult ?? string.Empty;
+        await ExecuteCodeFixerForRuntimeErrorsAsync(stateObject, analysis, 1);
+
+        return new WorkflowStepUsageEntry
+        {
+            StepName = WorkflowStepDisplayName,
+            Elapsed = stopwatch.Elapsed,
+            IsAgentic = false
+        };
     }
 }
 

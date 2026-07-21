@@ -2,6 +2,7 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Services;
 using AgentMesh.Models;
+using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -10,8 +11,10 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class RequestAnalyzerWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    RequestAnalyzerAgent requestAnalyzerAgent)
+    RequestAnalyzerAgent requestAnalyzerAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
+    private const string WorkflowStepDisplayName = "Request Analyzer";
+
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly RequestAnalyzerAgent _requestAnalyzerAgent = requestAnalyzerAgent;
@@ -38,5 +41,18 @@ public class RequestAnalyzerWorkflowStep(
         var notifyDictionary = agentOutput.ToDictionary();
         notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Request Analyzer Agent", notifyDictionary);
+    }
+
+    public async Task<WorkflowStepUsageEntry> ExecuteAsync(CodeModeWorkflowState stateObject, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        await ExecuteRequestAnalyzerAsync(stateObject, stateObject.InitialContextMessages);
+
+        return new WorkflowStepUsageEntry
+        {
+            StepName = WorkflowStepDisplayName,
+            Elapsed = stopwatch.Elapsed,
+            IsAgentic = false
+        };
     }
 }

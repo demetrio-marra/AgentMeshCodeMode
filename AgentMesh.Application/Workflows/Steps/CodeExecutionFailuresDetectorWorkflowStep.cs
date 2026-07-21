@@ -4,6 +4,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.CodeExecutionFailuresDetector;
+using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -12,8 +13,10 @@ namespace AgentMesh.Application.Workflows.Steps;
 public class CodeExecutionFailuresDetectorWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    JavascriptCodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent)
+    JavascriptCodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
+    private const string WorkflowStepDisplayName = "Code Execution Failures Detector";
+
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly JavascriptCodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
@@ -40,6 +43,19 @@ public class CodeExecutionFailuresDetectorWorkflowStep(
         await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Execution Failures Detector Agent (Iteration {iteration})", notifyDictionary);
 
         return detectorOutput.Analysis;
+    }
+
+    public async Task<WorkflowStepUsageEntry> ExecuteAsync(CodeModeWorkflowState stateObject, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        await ExecuteCodeExecutionFailuresDetectorAsync(stateObject, 1);
+
+        return new WorkflowStepUsageEntry
+        {
+            StepName = WorkflowStepDisplayName,
+            Elapsed = stopwatch.Elapsed,
+            IsAgentic = false
+        };
     }
 }
 

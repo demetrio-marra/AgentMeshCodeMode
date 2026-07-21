@@ -3,6 +3,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models.RequestCanonicalization;
+using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -12,13 +13,14 @@ public class RequestCanonicalizationWorkflowStep(
     ILogger<CodeModeWorkflow> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     RequestCanonicalizationAgent requestCanonicalizationAgent,
-    CodeModeWorkflowConfiguration workflowConfiguration)
+    CodeModeWorkflowConfiguration workflowConfiguration) : IWorkflowStep<CodeModeWorkflowState>
 {
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly RequestCanonicalizationAgent _requestCanonicalizationAgent = requestCanonicalizationAgent;
     private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
     private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
+    private const string WorkflowStepDisplayName = "Request Canonicalization";
 
     public async Task ExecuteRequestCanonicalizationAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
@@ -50,6 +52,19 @@ public class RequestCanonicalizationWorkflowStep(
         var notifyDictionary = output.ToDictionary();
         notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Request Canonicalization Agent", notifyDictionary);
+    }
+
+    public async Task<WorkflowStepUsageEntry> ExecuteAsync(CodeModeWorkflowState stateObject, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        await ExecuteRequestCanonicalizationAsync(stateObject, cancellationToken);
+
+        return new WorkflowStepUsageEntry
+        {
+            StepName = WorkflowStepDisplayName,
+            Elapsed = stopwatch.Elapsed,
+            IsAgentic = false
+        };
     }
 
     private string? LoadDocumentationQueriesGenerationReference()

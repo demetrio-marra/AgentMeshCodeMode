@@ -1,12 +1,16 @@
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Models.Workflows;
+using System.Diagnostics;
 
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class APIKnowledgeBaseDocumentsExtractorWorkflowStep(
-    KnowledgeBaseDocumentsExtractorWorkflowStep knowledgeBaseDocumentsExtractorWorkflowExecutor)
+    KnowledgeBaseDocumentsExtractorWorkflowStep knowledgeBaseDocumentsExtractorWorkflowExecutor) : IWorkflowStep<CodeModeWorkflowState>
 {
+    private const string WorkflowStepDisplayName = "API Knowledge Base Documents Extractor";
+
     private readonly KnowledgeBaseDocumentsExtractorWorkflowStep _knowledgeBaseDocumentsExtractorWorkflowExecutor = knowledgeBaseDocumentsExtractorWorkflowExecutor;
 
     public async Task ExecuteAPIKnowledgeBaseDocumentsExtractorAsync(CodeModeWorkflowState state)
@@ -31,6 +35,19 @@ public class APIKnowledgeBaseDocumentsExtractorWorkflowStep(
                     },
                     StringComparer.OrdinalIgnoreCase),
             (workflowState, documents) => workflowState.KnowledgeBaseAPIDocumentsContent = documents);
+    }
+
+    public async Task<WorkflowStepUsageEntry> ExecuteAsync(CodeModeWorkflowState stateObject, CancellationToken cancellationToken = default)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        await ExecuteAPIKnowledgeBaseDocumentsExtractorAsync(stateObject);
+
+        return new WorkflowStepUsageEntry
+        {
+            StepName = WorkflowStepDisplayName,
+            Elapsed = stopwatch.Elapsed,
+            IsAgentic = false
+        };
     }
 }
 
