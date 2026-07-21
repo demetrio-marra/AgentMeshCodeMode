@@ -1,7 +1,7 @@
 ﻿using AgentMesh.Models.ChatMessages;
 using System.Text;
 
-namespace AgentMesh.Application
+namespace AgentMesh.Application.Utils
 {
     public class MessageSerializationUtils
     {

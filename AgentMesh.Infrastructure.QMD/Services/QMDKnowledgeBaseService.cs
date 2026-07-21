@@ -2,7 +2,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Models.KnowledgeBase;
 
-namespace AgentMesh.Infrastructure.QMD
+namespace AgentMesh.Infrastructure.QMD.Services
 {
     public class QMDKnowledgeBaseService(QMDHttpProxy httpProxy) : IKnowledgeBaseService
     {

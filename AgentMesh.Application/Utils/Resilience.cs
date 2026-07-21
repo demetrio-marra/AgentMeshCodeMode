@@ -5,7 +5,7 @@ using Polly;
 using System.Net;
 using System.Net.Sockets;
 
-namespace AgentMesh.Application
+namespace AgentMesh.Application.Utils
 {
     public class Resilience(ResilienceConfiguration configuration)
     {

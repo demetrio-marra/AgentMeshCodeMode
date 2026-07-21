@@ -1,13 +1,12 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using AgentMesh.Application;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Infrastructure.Mem0.Configuration;
+using AgentMesh.Application.Utils;
 using AgentMesh.Infrastructure.Mem0.Models;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.ChatMessages;
 
-namespace AgentMesh.Infrastructure.Mem0.Services
+namespace AgentMesh.Infrastructure.Mem0
 {
     public class Mem0AgentMemoryService : IAgentMemoryService
     {

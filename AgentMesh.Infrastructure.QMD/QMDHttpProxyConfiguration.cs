@@ -1,4 +1,6 @@
-namespace AgentMesh.Infrastructure.QMD.Configuration
+using AgentMesh.Infrastructure.QMD.Services;
+
+namespace AgentMesh.Infrastructure.QMD
 {
     /// <summary>
     /// Configuration for the <see cref="QMDHttpProxy"/> REST client that talks to the QMD MCP server

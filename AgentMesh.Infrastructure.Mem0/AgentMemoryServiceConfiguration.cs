@@ -1,4 +1,4 @@
-namespace AgentMesh.Infrastructure.Mem0.Configuration
+namespace AgentMesh.Infrastructure.Mem0
 {
     public class AgentMemoryServiceConfiguration
     {

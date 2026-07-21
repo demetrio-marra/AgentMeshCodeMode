@@ -2,7 +2,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Infrastructure.QDrant.Models;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.QueriesCache;
 using Microsoft.Extensions.Logging;

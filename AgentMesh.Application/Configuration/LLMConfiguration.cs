@@ -1,4 +1,4 @@
-namespace AgentMesh.Application.Models
+namespace AgentMesh.Application.Configuration
 {
     public class LLMConfiguration
     {

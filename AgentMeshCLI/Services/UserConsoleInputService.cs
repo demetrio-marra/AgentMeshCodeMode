@@ -7,10 +7,9 @@ using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.RelevantFactsEvaluator;
 using AgentMesh.Models.Workflows;
-using AgentMesh.Services;
 using AgentMesh.Models.ChatMessages;
 
-namespace AgentMesh
+namespace AgentMesh.Services
 {
     internal class UserConsoleInputService(
         IWorkflow workflow,

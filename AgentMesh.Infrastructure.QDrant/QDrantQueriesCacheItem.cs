@@ -1,6 +1,6 @@
 using AgentMesh.Models.KnowledgeBase;
 
-namespace AgentMesh.Infrastructure.QDrant.Models
+namespace AgentMesh.Infrastructure.QDrant
 {
     internal class QDrantQueriesCacheItem
     {

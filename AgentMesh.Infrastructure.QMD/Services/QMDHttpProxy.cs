@@ -1,8 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using AgentMesh.Application;
-using AgentMesh.Infrastructure.QMD.Configuration;
+using AgentMesh.Application.Utils;
 using AgentMesh.Infrastructure.QMD.DTOs.Get;
 using AgentMesh.Infrastructure.QMD.DTOs.JsonRpc;
 using AgentMesh.Infrastructure.QMD.DTOs.MultiGet;
@@ -10,7 +9,7 @@ using AgentMesh.Infrastructure.QMD.DTOs.Query;
 using AgentMesh.Infrastructure.QMD.DTOs.Status;
 using Microsoft.Extensions.Logging;
 
-namespace AgentMesh.Infrastructure.QMD
+namespace AgentMesh.Infrastructure.QMD.Services
 {
     /// <summary>
     /// REST client that proxies the QMD MCP server tools (<c>query</c>, <c>get</c>,

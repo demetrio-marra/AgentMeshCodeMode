@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Application
+﻿namespace AgentMesh.Application.Utils
 {
     public class SourceCodeUtils
     {

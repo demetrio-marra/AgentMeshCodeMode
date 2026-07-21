@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace AgentMesh.Application
+namespace AgentMesh.Application.Utils
 {
     public static class AgentResponseJsonSerializationUtils
     {
