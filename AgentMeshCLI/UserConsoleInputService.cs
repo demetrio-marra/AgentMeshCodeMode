@@ -9,6 +9,7 @@ using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.RelevantFactsEvaluator;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
+using AgentMesh.Application.Workflows.Steps;
 
 namespace AgentMesh
 {
@@ -139,7 +140,8 @@ namespace AgentMesh
                     { RequestAnalyzerAgent.AgentName, _llmsConfiguration[_requestAnalyzerAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { RequestCanonicalizationAgentConfiguration.AgentName, _llmsConfiguration[_requestCanonicalizationAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { QueryExpanderAgentConfiguration.AgentName, _llmsConfiguration[_queryExpanderAgentConfiguration.LLM].CostPerMillionInputTokens },
-                    { RerankerAgentConfiguration.AgentName, _llmsConfiguration[_rerankerAgentConfiguration.LLM].CostPerMillionInputTokens },
+                    { RerankerWorkflowStep.UsageAgentName, _llmsConfiguration[_rerankerAgentConfiguration.LLM].CostPerMillionInputTokens },
+                    { APIRerankerWorkflowStep.UsageAgentName, _llmsConfiguration[_rerankerAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { "Embedding Service", _embeddingServiceConfiguration.CostPerMillionTokens }
                 };
 
@@ -161,7 +163,8 @@ namespace AgentMesh
                     { RequestAnalyzerAgent.AgentName, _llmsConfiguration[_requestAnalyzerAgentConfiguration.LLM].CostPerMillionOutputTokens },
                     { RequestCanonicalizationAgentConfiguration.AgentName, _llmsConfiguration[_requestCanonicalizationAgentConfiguration.LLM].CostPerMillionOutputTokens },
                     { QueryExpanderAgentConfiguration.AgentName, _llmsConfiguration[_queryExpanderAgentConfiguration.LLM].CostPerMillionOutputTokens },
-                    { RerankerAgentConfiguration.AgentName, _llmsConfiguration[_rerankerAgentConfiguration.LLM].CostPerMillionOutputTokens }
+                    { RerankerWorkflowStep.UsageAgentName, _llmsConfiguration[_rerankerAgentConfiguration.LLM].CostPerMillionOutputTokens },
+                    { APIRerankerWorkflowStep.UsageAgentName, _llmsConfiguration[_rerankerAgentConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
                 if (_workflowConfiguration.EnableDomainExpert)
@@ -361,7 +364,8 @@ namespace AgentMesh
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Request Analyzer", RequestAnalyzerAgent.AgentName, _requestAnalyzerAgentConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Query Expander", QueryExpanderAgentConfiguration.AgentName, _queryExpanderAgentConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Reranker", RerankerAgentConfiguration.AgentName, _rerankerAgentConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Reranker (Domains)", RerankerWorkflowStep.UsageAgentName, _rerankerAgentConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Reranker (APIs)", APIRerankerWorkflowStep.UsageAgentName, _rerankerAgentConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Functional Analyst", FunctionalAnalystAgentConfiguration.AgentName, _functionalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Technical Analyst", TechnicalAnalystAgentConfiguration.AgentName, _technicalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, _coderConfiguration);
