@@ -12,13 +12,13 @@ using System.Diagnostics;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class TechnicalAnalystWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<TechnicalAnalystWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     TechnicalAnalystAgent technicalAnalystAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Technical Analyst";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<TechnicalAnalystWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly TechnicalAnalystAgent _technicalAnalystAgent = technicalAnalystAgent;
 

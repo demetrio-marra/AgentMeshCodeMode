@@ -10,13 +10,13 @@ using System.Diagnostics;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class KnowledgeBaseServiceSearchWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<KnowledgeBaseServiceSearchWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     KnowledgeBaseExecutor knowledgeBaseSearchExecutor) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Knowledge Base Service Search";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<KnowledgeBaseServiceSearchWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly KnowledgeBaseExecutor _knowledgeBaseSearchExecutor = knowledgeBaseSearchExecutor;
 

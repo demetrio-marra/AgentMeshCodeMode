@@ -12,13 +12,13 @@ using System.Diagnostics;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class RerankerWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<RerankerWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     RerankerAgent rerankerAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Reranker";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<RerankerWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly RerankerAgent _rerankerAgent = rerankerAgent;
 

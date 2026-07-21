@@ -12,13 +12,13 @@ using System.Diagnostics;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class JSSandboxWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<JSSandboxWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     JSSandboxExecutor jsSandboxExecutor) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "JS Sandbox";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<JSSandboxWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly JSSandboxExecutor _jsSandboxExecutor = jsSandboxExecutor;
 

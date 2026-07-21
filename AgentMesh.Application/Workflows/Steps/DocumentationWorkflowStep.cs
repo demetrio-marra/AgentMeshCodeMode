@@ -11,13 +11,13 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class DocumentationWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<DocumentationWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     DocumentationAgent documentationAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Documentation";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<DocumentationWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly DocumentationAgent _documentationAgent = documentationAgent;
 

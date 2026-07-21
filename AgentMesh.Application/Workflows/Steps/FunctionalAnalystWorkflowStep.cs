@@ -12,14 +12,14 @@ using System.Diagnostics;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class FunctionalAnalystWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<FunctionalAnalystWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     FunctionalAnalystAgent functionalAnalystAgent,
     CodeModeWorkflowConfiguration workflowConfiguration) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Functional Analyst";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<FunctionalAnalystWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly FunctionalAnalystAgent _functionalAnalystAgent = functionalAnalystAgent;
     private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;

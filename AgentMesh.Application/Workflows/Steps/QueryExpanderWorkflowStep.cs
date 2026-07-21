@@ -11,7 +11,7 @@ using System.Diagnostics;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class QueryExpanderWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<QueryExpanderWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     QueryExpanderAgent queryExpanderAgent,
     CodeModeWorkflowConfiguration workflowConfiguration) : IWorkflowStep<CodeModeWorkflowState>
@@ -19,7 +19,7 @@ public class QueryExpanderWorkflowStep(
     private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
     private const string WorkflowStepDisplayName = "Query Expander";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<QueryExpanderWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly QueryExpanderAgent _queryExpanderAgent = queryExpanderAgent;
     private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;

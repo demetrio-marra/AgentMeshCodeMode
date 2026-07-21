@@ -11,12 +11,12 @@ using System.Diagnostics;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class RequestCanonicalizationWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<RequestCanonicalizationWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     RequestCanonicalizationAgent requestCanonicalizationAgent,
     CodeModeWorkflowConfiguration workflowConfiguration) : IWorkflowStep<CodeModeWorkflowState>
 {
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<RequestCanonicalizationWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly RequestCanonicalizationAgent _requestCanonicalizationAgent = requestCanonicalizationAgent;
     private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;

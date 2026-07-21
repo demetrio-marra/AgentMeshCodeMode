@@ -10,13 +10,13 @@ using AgentMesh.Models.ChatMessages;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class RequestAnalyzerWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<RequestAnalyzerWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     RequestAnalyzerAgent requestAnalyzerAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Request Analyzer";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<RequestAnalyzerWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly RequestAnalyzerAgent _requestAnalyzerAgent = requestAnalyzerAgent;
 

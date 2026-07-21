@@ -12,13 +12,13 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class CodeFixerForRuntimeErrorsWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<CodeFixerForRuntimeErrorsWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     CodeFixerAgent codeFixerAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Code Fixer For Runtime Errors";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<CodeFixerForRuntimeErrorsWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly CodeFixerAgent _codeFixerAgent = codeFixerAgent;
 

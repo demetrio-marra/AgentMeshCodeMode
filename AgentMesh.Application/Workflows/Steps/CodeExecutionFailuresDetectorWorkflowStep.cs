@@ -12,13 +12,13 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class CodeExecutionFailuresDetectorWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<CodeExecutionFailuresDetectorWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     JavascriptCodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Code Execution Failures Detector";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<CodeExecutionFailuresDetectorWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly JavascriptCodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
 

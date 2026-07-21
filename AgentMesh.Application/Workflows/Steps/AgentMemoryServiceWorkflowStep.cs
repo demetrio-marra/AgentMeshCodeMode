@@ -10,13 +10,13 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class AgentMemoryServiceWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<AgentMemoryServiceWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     AgentMemoryExecutor agentMemoryRetriever) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Agent Memory Service";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<AgentMemoryServiceWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly AgentMemoryExecutor _agentMemoryRetriever = agentMemoryRetriever;
 

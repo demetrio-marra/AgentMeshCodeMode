@@ -12,13 +12,13 @@ using System.Diagnostics;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class DomainExpertWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<DomainExpertWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     DomainExpertAgent domainExpertAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Domain Expert";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<DomainExpertWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly DomainExpertAgent _domainExpertAgent = domainExpertAgent;
 

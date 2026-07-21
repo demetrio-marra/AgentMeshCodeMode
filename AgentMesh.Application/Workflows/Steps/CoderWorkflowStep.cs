@@ -13,13 +13,13 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class CoderWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<CoderWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     CoderAgent coderAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Coder";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<CoderWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly CoderAgent _coderAgent = coderAgent;
 

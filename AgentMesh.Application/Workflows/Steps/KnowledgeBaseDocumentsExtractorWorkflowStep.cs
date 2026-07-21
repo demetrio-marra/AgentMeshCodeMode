@@ -11,13 +11,13 @@ using System.Diagnostics;
 namespace AgentMesh.Application.Workflows.Steps;
 
 public class KnowledgeBaseDocumentsExtractorWorkflowStep(
-    ILogger<CodeModeWorkflow> logger,
+    ILogger<KnowledgeBaseDocumentsExtractorWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     KnowledgeBaseExecutor knowledgeBaseGetDocsExecutor) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Knowledge Base Documents Extractor";
 
-    private readonly ILogger<CodeModeWorkflow> _logger = logger;
+    private readonly ILogger<KnowledgeBaseDocumentsExtractorWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly KnowledgeBaseExecutor _knowledgeBaseGetDocsExecutor = knowledgeBaseGetDocsExecutor;
 
