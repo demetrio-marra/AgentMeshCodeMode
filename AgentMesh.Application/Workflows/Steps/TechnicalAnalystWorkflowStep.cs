@@ -55,7 +55,7 @@ public class TechnicalAnalystWorkflowStep(
             { "TechnicalSpecification", state.TechnicalSpecification ?? "(No technical specification)" },
             { "TechnicalAnalystRejected", state.TechnicalAnalystRejected.ToString() },
             { "TechnicalAnalystRejectReasons", state.TechnicalAnalystRejectReasons ?? "(No rejection reasons)" },
-            { "SelectedAPIsFileLocations", state.SelectedAPIsFileLocations.Any() ? string.Join(", ", state.SelectedAPIsFileLocations) : "(No selected APIs)" },
+            { "SelectedAPIsFileLocations", state.SelectedAPIsFileLocations.Any() ? WorkflowExecutorFormatting.ToBulletList(state.SelectedAPIsFileLocations) : "(No selected APIs)" },
             { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
         };
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Technical Analyst Agent", notifyDictionary);

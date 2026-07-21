@@ -5,6 +5,7 @@ IMPORTANT ROLE AND OUTPUT CONSTRAINTS (MUST FOLLOW):
 - ALL outputs are instructions for AI agents, NOT for human users.
 - Do not refer to yourself in the output.
 - Do not add extra properties.
+- Respond in the user's language when provided.
 
 Input Structure:
 - "intent": User's inferred intent

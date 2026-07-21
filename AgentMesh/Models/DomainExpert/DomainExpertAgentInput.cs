@@ -9,5 +9,6 @@ namespace AgentMesh.Models.DomainExpert
         public IEnumerable<string> AgentMemories { get; set; } = [];
         public string KnowledgeBaseDocumentsContent { get; set; } = string.Empty;
         public string DataToComment { get; set; } = string.Empty;
+        public string LanguageOfTheUser { get; set; } = string.Empty;
     }
 }

@@ -45,7 +45,8 @@ public class DomainExpertWorkflowStep(
             UserPreferences = state.UserPreferences,
             AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
             KnowledgeBaseDocumentsContent = serializedDocumentation,
-            DataToComment = dataToComment
+            DataToComment = dataToComment,
+            LanguageOfTheUser = state.LanguageOfTheUser
         }, cancellationToken);
 
         state.DomainExpertOutput = output.DomainExpertComment;

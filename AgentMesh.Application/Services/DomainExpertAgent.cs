@@ -75,6 +75,12 @@ namespace AgentMesh.Application.Services
             }
 
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
+            
+            if (!string.IsNullOrWhiteSpace(input.LanguageOfTheUser))
+            {
+                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"User's Language: {input.LanguageOfTheUser}" });
+            }
+            
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.DataToComment });
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
