@@ -36,7 +36,7 @@ public class KnowledgeBaseServiceSearchWorkflowStep(
         KnowledgeBaseQueryInput queryInput = new()
         {
             Collections = [collectionName],
-            UserIntent = state.CanonicalizedIntent,
+            UserIntent = state.Intent,
             Queries = queriesList
         };
 

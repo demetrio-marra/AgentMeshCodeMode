@@ -20,19 +20,16 @@ public class DomainsKnowledgeBaseServiceFastSearchWorkflowStep(
             "No domains or entities to search for in knowledge base",
             "KB Fast Search Service",
             "Domains",
-            workflowState => WorkflowExecutorFormatting.ToBulletList(workflowState.ClassifiedUserRequest.EntitiesByDomain.Select(kvp => $"{kvp.Key}: {string.Join(", ", kvp.Value)}")),
+            workflowState => WorkflowExecutorFormatting.ToBulletList(workflowState.UserProvidedData),
             "ExtractedKnowledgeBaseEntries",
             "FastKnowledgeBaseQueryResults",
             DomainsDocumentationCollectionName,
-            workflowState => workflowState.ClassifiedUserRequest.EntitiesByDomain
-                .SelectMany(domainEntry =>
-                    new[] { domainEntry.Key }
-                        .Concat(domainEntry.Value)
-                        .Select(entry => new KnowledgeBaseQueryInputItem
-                        {
-                            Query = entry,
-                            SearchType = KnowledgeBaseQuerySearchType.Keyword
-                        })),
+            workflowState => workflowState.UserProvidedData
+                .Select(entry => new KnowledgeBaseQueryInputItem
+                {
+                    Query = entry,
+                    SearchType = KnowledgeBaseQuerySearchType.Keyword
+                }),
             (workflowState, queryResult) => workflowState.FastDomainsKnowledgeBaseQueryResults = queryResult);
     }
 }

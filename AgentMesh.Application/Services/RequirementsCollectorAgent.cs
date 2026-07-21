@@ -1,8 +1,8 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.RequirementsCollector;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +20,7 @@ namespace AgentMesh.Application.Services
         private readonly ILogger<RequirementsCollectorAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];
 
-        private static KnowledgeBaseQueryInputItem TranslateKnowledgeBaseQuery(QueryItem query, UserIntentCategoryValues intentCategory)
+        private static KnowledgeBaseQueryInputItem TranslateKnowledgeBaseQuery(QueryItem query, UserIntentCategory intentCategory)
         {
             var normalizedType = AllowedQueryTypes.FirstOrDefault(type => type.Equals(query.Type, StringComparison.OrdinalIgnoreCase));
 
@@ -29,7 +29,7 @@ namespace AgentMesh.Application.Services
                 throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}");
             }
 
-            if (normalizedType == "hyde" && intentCategory != UserIntentCategoryValues.Documentation)
+            if (normalizedType == "hyde" && intentCategory != UserIntentCategory.Documentation)
             {
                 throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, "The 'hyde' query type is allowed only when user intent category is Documentation.");
             }

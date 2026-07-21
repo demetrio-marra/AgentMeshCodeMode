@@ -6,21 +6,16 @@ using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Models
 {
-    public class CodeModeWorkflowState(string userQuestion, IEnumerable<ContextMessage> contextMessages)
+    public class CodeModeWorkflowState(string userQuestion, IEnumerable<ContextMessage> contextMessages) : BaseWorkflowState()
     {
         public string UserLastRequest { get; } = userQuestion;
 
         public IEnumerable<ContextMessage> InitialContextMessages { get; set; } = [.. contextMessages];
 
+        public StructuredUserRequest NewStructuredUserRequest { get; set; } = new();
+        public StructuredUserRequest? NewCanonicalizedStructuredUserRequest { get; set; }
 
-        public AgentMesh.Models.RequestAnalysis.StructuredUserRequest NewStructuredUserRequest { get; set; } = new();
-        public AgentMesh.Models.RequestAnalysis.StructuredUserRequest? NewCanonicalizedStructuredUserRequest { get; set; }
-
-
-        /// <summary>
-        /// Canonicalized user intent enriched with domain-specific terminology.
-        /// </summary>
-        public string CanonicalizedIntent { get => NewCanonicalizedStructuredUserRequest?.Intent ?? NewStructuredUserRequest.Intent; }
+        public string Intent { get => NewCanonicalizedStructuredUserRequest?.Intent ?? NewStructuredUserRequest.Intent; }
         public UserIntentCategory IntentCategory { get => NewCanonicalizedStructuredUserRequest?.IntentCategory ?? NewStructuredUserRequest.IntentCategory; }
         public string LanguageOfTheUser { get => NewStructuredUserRequest.LanguageOfTheUser; }
         public string ConversationTopic { get => (NewCanonicalizedStructuredUserRequest?.ConversationTopic ?? NewStructuredUserRequest.ConversationTopic) ?? "(no topic)"; }
@@ -33,6 +28,9 @@ namespace AgentMesh.Application.Models
         /// It is based on NewStructuredUserRequest.EntitiesByDomain
         /// </summary>
         public KnowledgeBaseQueryResult FastDomainsKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
+
+
+        public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseAPIDocumentsContent { get; set; } = [];
 
 
         /// <summary>
@@ -63,18 +61,22 @@ namespace AgentMesh.Application.Models
 
 
         public string? BusinessRequirements { get; set; }
+
         public bool FunctionalAnalystRejected { get; set; }
+
         public string? FunctionalAnalystRejectReasons { get; set; }
+
         public string? TechnicalSpecification { get; set; }
+
         public bool TechnicalAnalystRejected { get; set; }
+
         public string? TechnicalAnalystRejectReasons { get; set; }
+
         public bool ShouldEngageCoder { get; set; }
 
         public IEnumerable<string> FastAPISKnowledgeBaseQuery { get; set; } = [];
 
         public KnowledgeBaseQueryResult FastAPISKnowledgeBaseQueryResults { get; set; } = new KnowledgeBaseQueryResult();
-
-        public IEnumerable<KnowledgeBaseQueryInputItem> CanonicalizedAPIQueries { get; set; } = [];
 
         /// <summary>
         /// APIs knowledge base query results, which are used to retrieve relevant information from the APIs knowledge base to assist in understanding the user's request and providing context for further processing.
@@ -85,50 +87,29 @@ namespace AgentMesh.Application.Models
         public IEnumerable<string> SelectedAPIsFileLocations { get; set; } = [];
 
         public string? DocumentationContent { get; set; }
+
         public string? GeneratedCode { get; set; }
+
         public string? LastCodeWithLineNumbers { get => SourceCodeUtils.GetSourceCodeWithLineNumbers(GeneratedCode); }
+
         public int CodeExecutionFailuresDetectorIterationCount { get; set; }
+
         public string? SandboxResult { get; set; }
+
         public string? SandboxExecutionId { get; set; }
+
         public SandboxResultType CodeExecutionResultType { get; set; }
+
         public bool ExecutionError { get => CodeExecutionResultType != SandboxResultType.Success; }
+
         public string? DomainExpertOutput { get; set; }
 
         public string? PersonalAssistantOpeningSentence { get; set; }
+
         public string? PersonalAssistantClosingSentence { get; set; }
+
         public string? PersonalAssistantConvenienceErrorSentence { get; set; }
 
         public string? FinalAnswer { get; set; }
-
-        public List<WorkflowStepUsageEntry> TokenUsageEntries { get; set; } = [];
-
-        public IEnumerable<KnowledgeBaseDocumentContent> KnowledgeBaseAPIDocumentsContent { get; set; } = [];
-
-        public void AddTokenUsage(string agentName, int inputTokenCount, int outputTokenCount, TimeSpan? elapsed = null, string? stepName = null)
-        {
-            TokenUsageEntries.Add(new WorkflowStepUsageEntry
-            {
-                StepName = stepName ?? agentName,
-                Elapsed = elapsed ?? TimeSpan.Zero,
-                IsAgentic = true,
-                TokensUsage = new AgentTokenUsageEntry
-                {
-                    AgentName = agentName,
-                    InputTokens = inputTokenCount,
-                    OutputTokens = outputTokenCount
-                }
-            });
-        }
-
-        public void AddStepUsage(string stepName, TimeSpan elapsed, bool isAgentic, AgentTokenUsageEntry? tokensUsage = null)
-        {
-            TokenUsageEntries.Add(new WorkflowStepUsageEntry
-            {
-                StepName = stepName,
-                Elapsed = elapsed,
-                IsAgentic = isAgentic,
-                TokensUsage = tokensUsage
-            });
-        }
     }
 }

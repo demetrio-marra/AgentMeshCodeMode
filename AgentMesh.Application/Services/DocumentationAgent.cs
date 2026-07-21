@@ -22,35 +22,30 @@ namespace AgentMesh.Application.Services
         {
             var inputMessages = new List<AgentMessage>();
 
-            if (!string.IsNullOrWhiteSpace(input.Intent))
-            {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Intent: {input.Intent}" });
-            }
-
-            if (input.SupportingIntentInformation.Any())
+            if (input.UserRequest.UserPreferences.Any())
             {
                 inputMessages.Add(new AgentMessage
                 {
                     Role = AgentMessageRole.System,
-                    Content = $"Supporting Intent Information:\n{string.Join("\n", input.SupportingIntentInformation.Select(i => $"- {i}"))}"
+                    Content = $"Supporting User Preferences:\n{string.Join("\n", input.UserRequest.UserPreferences.Select(i => $"- {i}"))}"
                 });
             }
 
-            if (input.Entities.Any())
+            if (input.UserRequest.UserProvidedData.Any())
             {
                 inputMessages.Add(new AgentMessage
                 {
                     Role = AgentMessageRole.System,
-                    Content = $"Entities:\n{string.Join("\n", input.Entities.SelectMany(kvp => kvp.Value.Select(v => $"- [{kvp.Key}] {v}")))}"
+                    Content = $"User provided data:\n{string.Join("\n", input.UserRequest.UserProvidedData.Select(i => $"- {i}"))}"
                 });
             }
 
-            if (input.UserPreferences.Any())
+            if (input.UserRequest.UserRequestedActions.Any())
             {
                 inputMessages.Add(new AgentMessage
                 {
                     Role = AgentMessageRole.System,
-                    Content = $"User Preferences:\n{string.Join("\n", input.UserPreferences.Select(p => $"- {p}"))}"
+                    Content = $"User Requested Actions:\n{string.Join("\n", input.UserRequest.UserRequestedActions.Select(a => $"- {a}"))}"
                 });
             }
 
@@ -74,7 +69,7 @@ namespace AgentMesh.Application.Services
 
 
             inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.EnrichedUserRequest });
+            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.UserRequest.Intent });
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 

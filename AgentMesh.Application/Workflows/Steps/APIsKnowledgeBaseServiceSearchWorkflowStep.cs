@@ -1,6 +1,4 @@
 using AgentMesh.Application.Models;
-using AgentMesh.Services;
-using AgentMesh.Application.Workflows;
 
 namespace AgentMesh.Application.Workflows.Steps;
 
@@ -13,11 +11,13 @@ public class APIsKnowledgeBaseServiceSearchWorkflowStep(
 
     public async Task ExecuteAPIsKnowledgeBaseServiceSearchAsync(CodeModeWorkflowState state)
     {
+        var apiQueries = state.DomainsKnowledgeBaseQuery.ToList();
+
         await _knowledgeBaseServiceSearchWorkflowExecutor.ExecuteKnowledgeBaseServiceSearchAsync(
             state,
             "APIs Knowledge Base Service",
             APIsDocumentationCollectionName,
-            workflowState => workflowState.CanonicalizedAPIQueries,
+            workflowState => apiQueries,
             workflowState => workflowState.APISKnowledgeBaseQueryResults,
             (workflowState, queryResult) => workflowState.APISKnowledgeBaseQueryResults = queryResult);
     }

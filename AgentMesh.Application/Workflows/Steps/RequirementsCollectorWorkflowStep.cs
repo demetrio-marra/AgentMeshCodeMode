@@ -28,23 +28,23 @@ public class RequirementsCollectorWorkflowStep(
 
         await _workflowProgressNotifier.NotifyWorkflowStepStart("Requirements Collector Agent", new Dictionary<string, string>
         {
-            { "UserIntent", state.ClassifiedUserRequest.Intent },
-            { "UserIntentCategory", state.ClassifiedUserRequest.IntentCategory.ToString() },
-            { "EntitiesByDomain", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? WorkflowExecutorFormatting.ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(e => $"[{kvp.Key}] {e}"))) : "(No entities)" },
-            { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? WorkflowExecutorFormatting.ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
-            { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
-            { "MissingMemories", state.ClassifiedUserRequest.MissingMemories.Any() ? WorkflowExecutorFormatting.ToBulletList(state.ClassifiedUserRequest.MissingMemories) : "(No missing memories)" },
+            { "UserIntent", state.Intent },
+            { "UserIntentCategory", state.IntentCategory.ToString() },
+            { "UserProvidedData", state.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserProvidedData) : "(No data)" },
+            { "UserRequestedActions", state.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserRequestedActions) : "(No actions)" },
+            { "UserPreferences", state.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserPreferences) : "(No user preferences)" },
+            { "MissingValues", state.NewStructuredUserRequest.MissingValues.Any() ? WorkflowExecutorFormatting.ToBulletList(state.NewStructuredUserRequest.MissingValues) : "(No missing values)" },
             { "FastKnowledgeBaseResults", state.FastDomainsKnowledgeBaseQueryResults.Results.Any() ? WorkflowExecutorFormatting.ToBulletList(state.FastDomainsKnowledgeBaseQueryResults.Results.Select(r => $"[{r.File}] {r.Title}")) : "(No fast knowledge base results)" }
         });
 
         var output = await _requirementsCollectorAgent.ExecuteAsync(new RequirementsCollectorAgentInput
         {
-            UserIntent = state.CanonicalizedIntent,
-            UserIntentCategory = state.ClassifiedUserRequest.IntentCategory,
-            EntitiesByDomain = state.ClassifiedUserRequest.EntitiesByDomain,
-            SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
-            UserPreferences = state.ClassifiedUserRequest.UserPreferences,
-            MissingMemories = state.ClassifiedUserRequest.MissingMemories,
+            UserIntent = state.Intent,
+            UserIntentCategory = state.IntentCategory,
+            EntitiesByDomain = new Dictionary<string, IEnumerable<string>>(),
+            SupportingIntentInformation = state.UserRequestedActions,
+            UserPreferences = state.UserPreferences,
+            MissingMemories = state.NewStructuredUserRequest.MissingValues,
             FastKnowledgeBaseQueryResults = state.FastDomainsKnowledgeBaseQueryResults.Results,
             LanguageOfKnowledgeBase = _workflowConfiguration.LanguageOfKnowledgeBase,
             QmdQueryTypesReference = LoadQmdQueryTypesReference()

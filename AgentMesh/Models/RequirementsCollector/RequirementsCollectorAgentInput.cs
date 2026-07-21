@@ -1,12 +1,12 @@
-using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Models.RequestAnalysis;
 
 namespace AgentMesh.Models.RequirementsCollector
 {
     public class RequirementsCollectorAgentInput
     {
         public string UserIntent { get; set; } = string.Empty;
-        public UserIntentCategoryValues UserIntentCategory { get; set; }
+        public UserIntentCategory UserIntentCategory { get; set; }
         public Dictionary<string, IEnumerable<string>> EntitiesByDomain { get; set; } = new();
         public IEnumerable<string> SupportingIntentInformation { get; set; } = [];
         public IEnumerable<string> UserPreferences { get; set; } = [];

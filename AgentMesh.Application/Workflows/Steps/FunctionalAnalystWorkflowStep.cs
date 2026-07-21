@@ -1,6 +1,6 @@
-using AgentMesh.Application.Models;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.FunctionalAnalyst;
 using AgentMesh.Services;
@@ -26,20 +26,20 @@ public class FunctionalAnalystWorkflowStep(
         _logger.LogDebug("Engaging Functional Analyst Agent...");
         await _workflowProgressNotifier.NotifyWorkflowStepStart("Functional Analyst Agent", new Dictionary<string, string>
         {
-            { "Intent", state.CanonicalizedIntent },
-            { "SupportingIntentInformation", state.ClassifiedUserRequest.SupportingIntentInformation.Any() ? WorkflowExecutorFormatting.ToBulletList(state.ClassifiedUserRequest.SupportingIntentInformation) : "(No supporting intent information)" },
-            { "Entities", state.ClassifiedUserRequest.EntitiesByDomain.Any() ? WorkflowExecutorFormatting.ToBulletList(state.ClassifiedUserRequest.EntitiesByDomain.SelectMany(kvp => kvp.Value.Select(v => $"[{kvp.Key}] {v}"))) : "(No entities)" },
-            { "UserPreferences", state.ClassifiedUserRequest.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(state.ClassifiedUserRequest.UserPreferences) : "(No user preferences)" },
+            { "Intent", state.Intent },
+            { "UserRequestedActions", state.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserRequestedActions) : "(No actions)" },
+            { "UserProvidedData", state.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserProvidedData) : "(No data)" },
+            { "UserPreferences", state.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserPreferences) : "(No user preferences)" },
             { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? WorkflowExecutorFormatting.ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
             { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? WorkflowExecutorFormatting.ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(d => d.File)) : "(No documents)" }
         });
 
         var functionalAnalystOutput = await _functionalAnalystAgent.ExecuteAsync(new FunctionalAnalystAgentInput
         {
-            Intent = state.CanonicalizedIntent,
-            SupportingIntentInformation = state.ClassifiedUserRequest.SupportingIntentInformation,
-            Entities = state.ClassifiedUserRequest.EntitiesByDomain,
-            UserPreferences = state.ClassifiedUserRequest.UserPreferences,
+            Intent = state.Intent,
+            SupportingIntentInformation = state.UserRequestedActions,
+            Entities = new Dictionary<string, IEnumerable<string>>(),
+            UserPreferences = state.UserPreferences,
             AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
             KnowledgeBaseDocumentsContent = WorkflowExecutorFormatting.SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent),
             DoNotComment = _workflowConfiguration.EnableDomainExpert

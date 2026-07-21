@@ -2,8 +2,8 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
-using AgentMesh.Models.IntentExtractor;
 using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.RequestCanonicalization;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -181,9 +181,9 @@ Language of Knowledge Base:
             }
         }
 
-        private static UserIntentCategoryValues ParseUserIntentCategory(string userIntentCategory, string rawOutput)
+        private static UserIntentCategory ParseUserIntentCategory(string userIntentCategory, string rawOutput)
         {
-            if (Enum.TryParse<UserIntentCategoryValues>(userIntentCategory, true, out var parsedCategory))
+            if (Enum.TryParse<UserIntentCategory>(userIntentCategory, true, out var parsedCategory))
             {
                 return parsedCategory;
             }
@@ -214,8 +214,8 @@ Language of Knowledge Base:
             [JsonPropertyName("canonicalizedQueries")]
             public IEnumerable<QueryItem> CanonicalizedQueries { get; set; } = [];
 
-            [JsonIgnore]
-            public UserIntentCategoryValues CanonicalizedIntentCategory { get; set; }
+            [JsonPropertyName("canonicalizedIntentCategory")]
+            public UserIntentCategory CanonicalizedIntentCategory { get; set; }
         }
 
         public class QueryItem

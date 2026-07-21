@@ -22,7 +22,6 @@ namespace AgentMesh.Application.Workflows
         AgentMemoryServiceWorkflowStep agentMemoryServiceWorkflowStep,
         DomainsKnowledgeBaseServiceSearchWorkflowStep domainsKnowledgeBaseServiceSearchWorkflowStep,
         DomainsKnowledgeBaseDocumentsExtractorWorkflowStep domainsKnowledgeBaseDocumentsExtractorWorkflowStep,
-        IntentCanonicalizationWorkflowStep intentCanonicalizationWorkflowStep,
         DocumentationWorkflowStep documentationWorkflowStep,
         FunctionalAnalystWorkflowStep functionalAnalystWorkflowStep,
         APIsKnowledgeBaseServiceSearchWorkflowStep apisKnowledgeBaseServiceSearchWorkflowStep,
@@ -47,7 +46,6 @@ namespace AgentMesh.Application.Workflows
         private readonly AgentMemoryServiceWorkflowStep _agentMemoryServiceWorkflowStep = agentMemoryServiceWorkflowStep;
         private readonly DomainsKnowledgeBaseServiceSearchWorkflowStep _domainsKnowledgeBaseServiceSearchWorkflowStep = domainsKnowledgeBaseServiceSearchWorkflowStep;
         private readonly DomainsKnowledgeBaseDocumentsExtractorWorkflowStep _domainsKnowledgeBaseDocumentsExtractorWorkflowStep = domainsKnowledgeBaseDocumentsExtractorWorkflowStep;
-        private readonly IntentCanonicalizationWorkflowStep _intentCanonicalizationWorkflowStep = intentCanonicalizationWorkflowStep;
         private readonly DocumentationWorkflowStep _documentationWorkflowStep = documentationWorkflowStep;
         private readonly FunctionalAnalystWorkflowStep _functionalAnalystWorkflowStep = functionalAnalystWorkflowStep;
         private readonly APIsKnowledgeBaseServiceSearchWorkflowStep _apisKnowledgeBaseServiceSearchWorkflowStep = apisKnowledgeBaseServiceSearchWorkflowStep;
@@ -91,8 +89,6 @@ namespace AgentMesh.Application.Workflows
             {
                 await _domainsKnowledgeBaseDocumentsExtractorWorkflowStep.ExecuteDomainsKnowledgeBaseDocumentsExtractorAsync(state);
             }
-
-            await _requestCanonicalizationWorkflowStep.ExecuteRequestCanonicalizationAsync(state);
 
             if (state.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Documentation)
             {
@@ -197,7 +193,7 @@ namespace AgentMesh.Application.Workflows
         {
             var stopwatch = Stopwatch.StartNew();
             _logger.LogDebug("Engaging Personal Assistant Agent...");
-            var canonicalizedIntent = state.CanonicalizedIntent;
+            var canonicalizedIntent = state.Intent;
 
             string? data = null;
             var requestFailed = false;
@@ -310,7 +306,3 @@ namespace AgentMesh.Application.Workflows
         public string GetEgressExecutorName() => PersonalAssistantAgentConfiguration.AgentName;
     }
 }
-
-
-
-

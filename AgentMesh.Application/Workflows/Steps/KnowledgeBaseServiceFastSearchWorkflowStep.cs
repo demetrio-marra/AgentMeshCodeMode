@@ -53,7 +53,7 @@ public class KnowledgeBaseServiceFastSearchWorkflowStep(
 
         KnowledgeBaseQueryInput queryInput = new()
         {
-            UserIntent = state.CanonicalizedIntent,
+            UserIntent = state.Intent,
             Queries = queries,
             Collections = [collectionName]
         };

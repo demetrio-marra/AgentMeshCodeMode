@@ -272,29 +272,6 @@ namespace AgentMesh
 
             services.AddSingleton<ICodeExecutionFailuresDetectorAgent, JavascriptCodeExecutionFailuresDetectorAgent>();
 
-            // IntentCanonicalization agent config and client
-            services
-                .AddOptions<IntentCanonicalizationAgentConfiguration>()
-                .Bind(configuration.GetSection(IntentCanonicalizationAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<IntentCanonicalizationAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(IntentCanonicalizationAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<IntentCanonicalizationAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-            services.AddSingleton<IIntentCanonicalizationAgent, IntentCanonicalizationAgent>();
-
             // RequestCanonicalization agent config and client
             services
                 .AddOptions<RequestCanonicalizationAgentConfiguration>()
@@ -471,7 +448,6 @@ namespace AgentMesh
             services.AddSingleton<KnowledgeBaseDocumentsExtractorWorkflowStep>();
             services.AddSingleton<DomainsKnowledgeBaseDocumentsExtractorWorkflowStep>();
             services.AddSingleton<APIKnowledgeBaseDocumentsExtractorWorkflowStep>();
-            services.AddSingleton<IntentCanonicalizationWorkflowStep>();
             services.AddSingleton<RequestCanonicalizationWorkflowStep>();
             services.AddSingleton<RequirementsCollectorWorkflowStep>();
             services.AddSingleton<AgentMemoryServiceWorkflowStep>();
