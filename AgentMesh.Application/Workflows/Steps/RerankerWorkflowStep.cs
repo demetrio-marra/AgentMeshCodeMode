@@ -14,8 +14,6 @@ public class RerankerWorkflowStep(
     IWorkflowProgressNotifier workflowProgressNotifier,
     IRerankerAgent rerankerAgent)
 {
-    public const string UsageAgentName = "Reranker(Domains)";
-
     private readonly ILogger<CodeModeWorkflow> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly IRerankerAgent _rerankerAgent = rerankerAgent;
@@ -29,9 +27,9 @@ public class RerankerWorkflowStep(
         }
 
         var stopwatch = Stopwatch.StartNew();
-        _logger.LogDebug("Engaging Domains Reranker Agent...");
+        _logger.LogDebug("Engaging Reranker Agent...");
 
-        await _workflowProgressNotifier.NotifyWorkflowStepStart("Domains Reranker Agent", new Dictionary<string, string>
+        await _workflowProgressNotifier.NotifyWorkflowStepStart("Reranker Agent", new Dictionary<string, string>
         {
             { "Intent", state.Intent },
             { "IntentCategory", state.IntentCategory.ToString() },
@@ -54,9 +52,9 @@ public class RerankerWorkflowStep(
             Results = rerankerOutput.QueryResults
         };
 
-        state.AddTokenUsage(UsageAgentName, rerankerOutput.InputTokenCount, rerankerOutput.OutputTokenCount, stopwatch.Elapsed, "Domains Reranker Agent");
+        state.AddTokenUsage(RerankerAgentConfiguration.AgentName, rerankerOutput.InputTokenCount, rerankerOutput.OutputTokenCount, stopwatch.Elapsed, "Reranker Agent");
 
-        await _workflowProgressNotifier.NotifyWorkflowStepEnd("Domains Reranker Agent", new Dictionary<string, string>
+        await _workflowProgressNotifier.NotifyWorkflowStepEnd("Reranker Agent", new Dictionary<string, string>
         {
             { "RerankedItems", state.DomainsKnowledgeBaseQueryResults.Results.Any() ? WorkflowExecutorFormatting.ToBulletList(state.DomainsKnowledgeBaseQueryResults.Results.Select(c => $"{c.Title} | {c.File}")) : "(No valuable items)" },
             { "ResultsCount", state.DomainsKnowledgeBaseQueryResults.Results.Count().ToString() },

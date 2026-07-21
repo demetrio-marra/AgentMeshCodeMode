@@ -25,7 +25,6 @@ namespace AgentMesh.Application.Workflows
         FunctionalAnalystWorkflowStep functionalAnalystWorkflowStep,
         APIsKnowledgeBaseServiceSearchWorkflowStep apisKnowledgeBaseServiceSearchWorkflowStep,
         APIKnowledgeBaseDocumentsExtractorWorkflowStep apiKnowledgeBaseDocumentsExtractorWorkflowStep,
-        APIRerankerWorkflowStep apiRerankerWorkflowStep,
         TechnicalAnalystWorkflowStep technicalAnalystWorkflowStep,
         CoderWorkflowStep coderWorkflowStep,
         JSSandboxWorkflowStep jsSandboxWorkflowStep,
@@ -50,7 +49,6 @@ namespace AgentMesh.Application.Workflows
         private readonly FunctionalAnalystWorkflowStep _functionalAnalystWorkflowStep = functionalAnalystWorkflowStep;
         private readonly APIsKnowledgeBaseServiceSearchWorkflowStep _apisKnowledgeBaseServiceSearchWorkflowStep = apisKnowledgeBaseServiceSearchWorkflowStep;
         private readonly APIKnowledgeBaseDocumentsExtractorWorkflowStep _apiKnowledgeBaseDocumentsExtractorWorkflowStep = apiKnowledgeBaseDocumentsExtractorWorkflowStep;
-        private readonly APIRerankerWorkflowStep _apiRerankerWorkflowStep = apiRerankerWorkflowStep;
         private readonly TechnicalAnalystWorkflowStep _technicalAnalystWorkflowStep = technicalAnalystWorkflowStep;
         private readonly CoderWorkflowStep _coderWorkflowStep = coderWorkflowStep;
         private readonly JSSandboxWorkflowStep _jsSandboxWorkflowStep = jsSandboxWorkflowStep;
@@ -111,11 +109,6 @@ namespace AgentMesh.Application.Workflows
                 if (state.FunctionalAnalystRejected)
                 {
                     goto CompleteWorkflow;
-                }
-
-                if (state.APISKnowledgeBaseQueryResults.Results.Any())
-                {
-                    await _apiRerankerWorkflowStep.ExecuteAPIRerankerAsync(state);
                 }
 
                 if (state.APISKnowledgeBaseQueryResults.Results.Any())

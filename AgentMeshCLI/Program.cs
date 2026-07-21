@@ -448,7 +448,6 @@ namespace AgentMesh
             services.AddSingleton<KnowledgeBaseDocumentsExtractorWorkflowStep>();
             services.AddSingleton<DomainsKnowledgeBaseDocumentsExtractorWorkflowStep>();
             services.AddSingleton<APIKnowledgeBaseDocumentsExtractorWorkflowStep>();
-            services.AddSingleton<APIRerankerWorkflowStep>();
             services.AddSingleton<RequestCanonicalizationWorkflowStep>();
             services.AddSingleton<AgentMemoryServiceWorkflowStep>();
             services.AddSingleton<KnowledgeBaseServiceSearchWorkflowStep>();
