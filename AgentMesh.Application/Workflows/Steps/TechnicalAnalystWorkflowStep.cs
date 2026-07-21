@@ -22,19 +22,8 @@ public class TechnicalAnalystWorkflowStep(
     {
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Technical Analyst Agent...");
-        await _workflowProgressNotifier.NotifyWorkflowStepStart("Technical Analyst Agent", new Dictionary<string, string>
-        {
-            { "Intent", state.Intent },
-            { "ConversationTopic", state.ConversationTopic },
-            { "BusinessRequirements", state.BusinessRequirements ?? "(No business requirements)" },
-            { "UserRequestedActions", state.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserRequestedActions) : "(No actions)" },
-            { "UserProvidedData", state.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserProvidedData) : "(No data)" },
-            { "UserPreferences", state.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserPreferences) : "(No user preferences)" },
-            { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? WorkflowExecutorFormatting.ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
-            { "KnowledgeBaseDocumentsContent", state.KnowledgeBaseAPIDocumentsContent.Any() ? WorkflowExecutorFormatting.ToBulletList(state.KnowledgeBaseAPIDocumentsContent.Select(d => d.File)) : "(No documents)" }
-        });
 
-        var technicalAnalystOutput = await _technicalAnalystAgent.ExecuteAsync(new TechnicalAnalystAgentInput
+        var agentInput = new TechnicalAnalystAgentInput
         {
             Intent = state.Intent,
             ConversationTopic = state.ConversationTopic,
@@ -44,7 +33,11 @@ public class TechnicalAnalystWorkflowStep(
             UserPreferences = state.UserPreferences,
             AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
             KnowledgeBaseDocumentsContent = WorkflowExecutorFormatting.SerializeDocumentation(state.KnowledgeBaseAPIDocumentsContent)
-        }, cancellationToken);
+        };
+
+        await _workflowProgressNotifier.NotifyWorkflowStepStart("Technical Analyst Agent", agentInput.ToDictionary());
+
+        var technicalAnalystOutput = await _technicalAnalystAgent.ExecuteAsync(agentInput, cancellationToken);
 
         state.ShouldEngageCoder = state.ShouldEngageCoder && !technicalAnalystOutput.RequestRejected;
         state.TechnicalSpecification = technicalAnalystOutput.TechnicalSpecification;
@@ -52,14 +45,9 @@ public class TechnicalAnalystWorkflowStep(
         state.TechnicalAnalystRejectReasons = technicalAnalystOutput.ReasonOfRejection;
         state.SelectedAPIsFileLocations = technicalAnalystOutput.SelectedAPIsFileLocations;
         state.AddTokenUsage(TechnicalAnalystAgentConfiguration.AgentName, technicalAnalystOutput.InputTokenCount, technicalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Technical Analyst Agent");
-        var notifyDictionary = new Dictionary<string, string>
-        {
-            { "TechnicalSpecification", state.TechnicalSpecification ?? "(No technical specification)" },
-            { "TechnicalAnalystRejected", state.TechnicalAnalystRejected.ToString() },
-            { "TechnicalAnalystRejectReasons", state.TechnicalAnalystRejectReasons ?? "(No rejection reasons)" },
-            { "SelectedAPIsFileLocations", state.SelectedAPIsFileLocations.Any() ? WorkflowExecutorFormatting.ToBulletList(state.SelectedAPIsFileLocations) : "(No selected APIs)" },
-            { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
-        };
+
+        var notifyDictionary = technicalAnalystOutput.ToDictionary();
+        notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Technical Analyst Agent", notifyDictionary);
     }
 }

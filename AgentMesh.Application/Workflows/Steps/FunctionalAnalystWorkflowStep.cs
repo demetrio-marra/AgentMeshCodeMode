@@ -24,18 +24,8 @@ public class FunctionalAnalystWorkflowStep(
     {
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Functional Analyst Agent...");
-        await _workflowProgressNotifier.NotifyWorkflowStepStart("Functional Analyst Agent", new Dictionary<string, string>
-        {
-            { "Intent", state.Intent },
-            { "ConversationTopic", state.ConversationTopic },
-            { "UserRequestedActions", state.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserRequestedActions) : "(No actions)" },
-            { "UserProvidedData", state.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserProvidedData) : "(No data)" },
-            { "UserPreferences", state.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserPreferences) : "(No user preferences)" },
-            { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? WorkflowExecutorFormatting.ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
-            { "KnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? WorkflowExecutorFormatting.ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(d => d.File)) : "(No documents)" }
-        });
 
-        var functionalAnalystOutput = await _functionalAnalystAgent.ExecuteAsync(new FunctionalAnalystAgentInput
+        var agentInput = new FunctionalAnalystAgentInput
         {
             Intent = state.Intent,
             ConversationTopic = state.ConversationTopic,
@@ -45,20 +35,20 @@ public class FunctionalAnalystWorkflowStep(
             AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
             KnowledgeBaseDocumentsContent = WorkflowExecutorFormatting.SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent),
             DoNotComment = _workflowConfiguration.EnableDomainExpert
-        }, cancellationToken);
+        };
+
+        await _workflowProgressNotifier.NotifyWorkflowStepStart("Functional Analyst Agent", agentInput.ToDictionary());
+
+        var functionalAnalystOutput = await _functionalAnalystAgent.ExecuteAsync(agentInput, cancellationToken);
 
         state.ShouldEngageCoder = !functionalAnalystOutput.RequestRejected;
         state.BusinessRequirements = functionalAnalystOutput.BusinessRequirements;
         state.FunctionalAnalystRejected = functionalAnalystOutput.RequestRejected;
         state.FunctionalAnalystRejectReasons = functionalAnalystOutput.ReasonOfRejection;
         state.AddTokenUsage(FunctionalAnalystAgentConfiguration.AgentName, functionalAnalystOutput.InputTokenCount, functionalAnalystOutput.OutputTokenCount, stopwatch.Elapsed, "Functional Analyst Agent");
-        var notifyDictionary = new Dictionary<string, string>
-        {
-            { "BusinessRequirements", state.BusinessRequirements ?? "(No business requirements)" },
-            { "FunctionalAnalystRejected", state.FunctionalAnalystRejected.ToString() },
-            { "FunctionalAnalystRejectReasons", state.FunctionalAnalystRejectReasons ?? "(No rejection reasons)" },
-            { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
-        };
+
+        var notifyDictionary = functionalAnalystOutput.ToDictionary();
+        notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Functional Analyst Agent", notifyDictionary);
     }
 }

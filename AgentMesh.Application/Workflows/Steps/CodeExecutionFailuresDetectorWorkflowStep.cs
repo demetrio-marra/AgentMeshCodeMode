@@ -23,24 +23,21 @@ public class CodeExecutionFailuresDetectorWorkflowStep(
     {
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Code Execution Failures Detector Agent... Iteration {Iteration}", iteration);
-        await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Execution Failures Detector Agent (Iteration {iteration})", new Dictionary<string, string>
-        {
-            { "CodeWithLineNumbers", state.LastCodeWithLineNumbers ?? "(No code available)" },
-            { "ExecutionResult", state.SandboxResult ?? "(No execution result)" }
-        });
 
-        var detectorOutput = await _codeExecutionFailuresDetectorAgent.ExecuteAsync(new CodeExecutionFailuresDetectorAgentInput
+        var agentInput = new CodeExecutionFailuresDetectorAgentInput
         {
             CodeWithLineNumbers = state.LastCodeWithLineNumbers ?? string.Empty,
             ExecutionResult = state.SandboxResult ?? string.Empty
-        });
+        };
+
+        await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Execution Failures Detector Agent (Iteration {iteration})", agentInput.ToDictionary());
+
+        var detectorOutput = await _codeExecutionFailuresDetectorAgent.ExecuteAsync(agentInput);
         state.CodeExecutionFailuresDetectorIterationCount++;
         state.AddTokenUsage(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, detectorOutput.InputTokenCount, detectorOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Execution Failures Detector Agent (Iteration {iteration})");
-        var notifyDictionary = new Dictionary<string, string>
-        {
-            { "Analysis", detectorOutput.Analysis },
-            { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
-        };
+
+        var notifyDictionary = detectorOutput.ToDictionary();
+        notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
         await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Execution Failures Detector Agent (Iteration {iteration})", notifyDictionary);
 
         return detectorOutput.Analysis;

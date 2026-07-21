@@ -23,22 +23,7 @@ public class DomainExpertWorkflowStep(
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Domain Expert Agent...");
 
-        var dataToComment = state.SandboxResult ?? string.Empty;
-        var serializedDocumentation = WorkflowExecutorFormatting.SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent);
-
-        await _workflowProgressNotifier.NotifyWorkflowStepStart("Domain Expert Agent", new Dictionary<string, string>
-        {
-            { "Intent", state.Intent },
-            { "ConversationTopic", state.ConversationTopic },
-            { "UserRequestedActions", state.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserRequestedActions) : "(No actions)" },
-            { "UserProvidedData", state.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserProvidedData) : "(No data)" },
-            { "UserPreferences", state.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserPreferences) : "(No user preferences)" },
-            { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? WorkflowExecutorFormatting.ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
-            { "DomainsKnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? WorkflowExecutorFormatting.ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(d => d.File)) : "(No documents)" },
-            { "DataToComment", string.IsNullOrWhiteSpace(dataToComment) ? "(No sandbox result)" : dataToComment }
-        });
-
-        var output = await _domainExpertAgent.ExecuteAsync(new DomainExpertAgentInput
+        var agentInput = new DomainExpertAgentInput
         {
             Intent = state.Intent,
             ConversationTopic = state.ConversationTopic,
@@ -46,19 +31,20 @@ public class DomainExpertWorkflowStep(
             UserProvidedData = state.UserProvidedData,
             UserPreferences = state.UserPreferences,
             AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
-            KnowledgeBaseDocumentsContent = serializedDocumentation,
-            DataToComment = dataToComment,
+            KnowledgeBaseDocumentsContent = WorkflowExecutorFormatting.SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent),
+            DataToComment = state.SandboxResult ?? string.Empty,
             LanguageOfTheUser = state.LanguageOfTheUser
-        }, cancellationToken);
+        };
+
+        await _workflowProgressNotifier.NotifyWorkflowStepStart("Domain Expert Agent", agentInput.ToDictionary());
+
+        var output = await _domainExpertAgent.ExecuteAsync(agentInput, cancellationToken);
 
         state.DomainExpertOutput = output.DomainExpertComment;
         state.AddTokenUsage(DomainExpertAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Domain Expert Agent");
 
-        var notifyDictionary = new Dictionary<string, string>
-        {
-            { "Content", state.DomainExpertOutput },
-            { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
-        };
+        var notifyDictionary = output.ToDictionary();
+        notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Domain Expert Agent", notifyDictionary);
     }
 }

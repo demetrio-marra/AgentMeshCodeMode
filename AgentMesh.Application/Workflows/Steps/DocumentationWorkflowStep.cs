@@ -21,35 +21,24 @@ public class DocumentationWorkflowStep(
     {
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Documentation Agent...");
-        await _workflowProgressNotifier.NotifyWorkflowStepStart("Documentation Agent", new Dictionary<string, string>
-        {
-            { "Intent", state.Intent },
-            { "IntentCategory", state.IntentCategory.ToString() },
-            { "ConversationTopic", state.ConversationTopic },
-            { "UserRequestedActions", state.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserRequestedActions) : "(No actions)" },
-            { "UserProvidedData", state.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserProvidedData) : "(No data)" },
-            { "UserPreferences", state.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserPreferences) : "(No preferences)" },            { "MemoriesFromAgentMemoryService", state.PastMemoriesQueryResults.Any() ? WorkflowExecutorFormatting.ToBulletList(state.PastMemoriesQueryResults.Select(m => m.Memory)) : "(No memories)" },
-            { "DomainsKnowledgeBaseDocumentsContent", state.DomainsKnowledgeBaseDocumentsContent.Any() ? WorkflowExecutorFormatting.ToBulletList(state.DomainsKnowledgeBaseDocumentsContent.Select(d => d.File)) : "(No documents)" }
-        });
 
-        var serializedDocumentation = WorkflowExecutorFormatting.SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent);
-
-        var output = await _documentationAgent.ExecuteAsync(new DocumentationAgentInput
+        var agentInput = new DocumentationAgentInput
         {
             UserRequest = state.NewCanonicalizedStructuredUserRequest ?? state.NewStructuredUserRequest,
             AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
-            KnowledgeBaseDocumentsContent = serializedDocumentation,
+            KnowledgeBaseDocumentsContent = WorkflowExecutorFormatting.SerializeDocumentation(state.DomainsKnowledgeBaseDocumentsContent),
             LanguageOfTheUser = state.LanguageOfTheUser
-        }, cancellationToken);
+        };
+
+        await _workflowProgressNotifier.NotifyWorkflowStepStart("Documentation Agent", agentInput.ToDictionary());
+
+        var output = await _documentationAgent.ExecuteAsync(agentInput, cancellationToken);
         state.DocumentationContent = output.Content;
 
         state.AddTokenUsage(DocumentationAgentConfiguration.AgentName, output.InputTokenCount, output.OutputTokenCount, stopwatch.Elapsed, "Documentation Agent");
-        var notifyDictionary = new Dictionary<string, string>
-        {
-            { "Content", state.DocumentationContent ?? "(No documentation content)" },
-            { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
-        };
 
+        var notifyDictionary = output.ToDictionary();
+        notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Documentation Agent", notifyDictionary);
     }
 }

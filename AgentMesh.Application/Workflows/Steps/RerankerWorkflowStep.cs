@@ -29,23 +29,15 @@ public class RerankerWorkflowStep(
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Reranker Agent...");
 
-        await _workflowProgressNotifier.NotifyWorkflowStepStart("Reranker Agent", new Dictionary<string, string>
-        {
-            { "Intent", state.Intent },
-            { "IntentCategory", state.IntentCategory.ToString() },
-            { "ConversationTopic", state.ConversationTopic },
-            { "UserRequestedActions", state.UserRequestedActions.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserRequestedActions) : "(No actions)" },
-            { "UserProvidedData", state.UserProvidedData.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserProvidedData) : "(No data)" },
-            { "UserPreferences", state.UserPreferences.Any() ? WorkflowExecutorFormatting.ToBulletList(state.UserPreferences) : "(No preferences)" },
-            //{ "MissingValues", state.MissingValues.Any() ? WorkflowExecutorFormatting.ToBulletList(state.MissingValues) : "(No missing values)" },
-            { "Candidates", WorkflowExecutorFormatting.ToBulletList(candidates.Select(c => $"{c.Title} | {c.File} | relevance:{(c.Relevance?.ToString("0.####") ?? "n/a")}")) }
-        });
-
-        var rerankerOutput = await _rerankerAgent.ExecuteAsync(new RerankerAgentInput
+        var agentInput = new RerankerAgentInput
         {
             StructuredUserRequest = state.NewCanonicalizedStructuredUserRequest ?? state.NewStructuredUserRequest,
             QueryResults = candidates
-        }, cancellationToken);
+        };
+
+        await _workflowProgressNotifier.NotifyWorkflowStepStart("Reranker Agent", agentInput.ToDictionary());
+
+        var rerankerOutput = await _rerankerAgent.ExecuteAsync(agentInput, cancellationToken);
 
         state.DomainsKnowledgeBaseQueryResults = new KnowledgeBaseQueryResult
         {
@@ -54,11 +46,8 @@ public class RerankerWorkflowStep(
 
         state.AddTokenUsage(RerankerAgentConfiguration.AgentName, rerankerOutput.InputTokenCount, rerankerOutput.OutputTokenCount, stopwatch.Elapsed, "Reranker Agent");
 
-        await _workflowProgressNotifier.NotifyWorkflowStepEnd("Reranker Agent", new Dictionary<string, string>
-        {
-            { "RerankedItems", state.DomainsKnowledgeBaseQueryResults.Results.Any() ? WorkflowExecutorFormatting.ToBulletList(state.DomainsKnowledgeBaseQueryResults.Results.Select(c => $"{c.Title} | {c.File}")) : "(No valuable items)" },
-            { "ResultsCount", state.DomainsKnowledgeBaseQueryResults.Results.Count().ToString() },
-            { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
-        });
+        var notifyDictionary = rerankerOutput.ToDictionary();
+        notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
+        await _workflowProgressNotifier.NotifyWorkflowStepEnd("Reranker Agent", notifyDictionary);
     }
 }

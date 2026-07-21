@@ -22,24 +22,21 @@ public class CodeFixerForRuntimeErrorsWorkflowStep(
     {
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Code Fixer Agent for runtime errors... Iteration {Iteration}", iteration);
-        await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", new Dictionary<string, string>
-        {
-            { "CodeToFix", state.LastCodeWithLineNumbers ?? "(No code available)" },
-            { "IssuesCount", "1" }
-        });
 
-        var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(new CodeFixerAgentInput
+        var agentInput = new CodeFixerAgentInput
         {
             CodeToFix = state.LastCodeWithLineNumbers ?? string.Empty,
             Issues = [analysis]
-        });
+        };
+
+        await _workflowProgressNotifier.NotifyWorkflowStepStart($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", agentInput.ToDictionary());
+
+        var codeFixerOutput = await _codeFixerAgent.ExecuteAsync(agentInput);
         state.GeneratedCode = codeFixerOutput.FixedCode;
         state.AddTokenUsage(CodeFixerAgentConfiguration.AgentName, codeFixerOutput.InputTokenCount, codeFixerOutput.OutputTokenCount, stopwatch.Elapsed, $"Code Fixer Agent for Runtime Errors (Iteration {iteration})");
-        var notifyDictionary = new Dictionary<string, string>
-        {
-            { "FixedCode", state.GeneratedCode },
-            { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
-        };
+
+        var notifyDictionary = codeFixerOutput.ToDictionary();
+        notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
         await _workflowProgressNotifier.NotifyWorkflowStepEnd($"Code Fixer Agent for Runtime Errors (Iteration {iteration})", notifyDictionary);
     }
 }

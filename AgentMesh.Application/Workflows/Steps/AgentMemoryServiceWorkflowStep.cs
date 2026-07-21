@@ -20,28 +20,25 @@ public class AgentMemoryServiceWorkflowStep(
     {
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Agent Memory Service...");
-        await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Service", new Dictionary<string, string>
-        {
-            { "MissingPastMemories", WorkflowExecutorFormatting.ToBulletList(state.PastMemoriesQuery) }
-        });
 
         var queriesList = state.PastMemoriesQuery.ToList();
 
-        var brcOutput = await _agentMemoryRetriever.ExecuteAsync(new AgentMemoryRetrieverInput
+        var agentInput = new AgentMemoryRetrieverInput
         {
             Query = string.Join(", ", queriesList)
-        });
+        };
+
+        await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Service", agentInput.ToDictionary());
+
+        var brcOutput = await _agentMemoryRetriever.ExecuteAsync(agentInput);
 
         var retrievedMemories = brcOutput.Items.ToList();
         state.PastMemoriesQueryResults = state.PastMemoriesQueryResults.Concat(retrievedMemories).ToList();
-        
+
         state.AddStepUsage("Agent Memory Service", stopwatch.Elapsed, false);
 
-        var notifyDictionary = new Dictionary<string, string>
-        {
-            { "ExtractedAgentMemories", WorkflowExecutorFormatting.ToBulletList(retrievedMemories.Select(m => m.Memory)) },
-            { "ELAPSED_TIME", WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed) }
-        };
+        var notifyDictionary = brcOutput.ToDictionary();
+        notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
         await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Service", notifyDictionary);
     }
 }
