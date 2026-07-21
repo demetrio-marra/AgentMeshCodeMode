@@ -387,6 +387,29 @@ namespace AgentMesh
 
             services.AddSingleton<IQueryExpanderAgent, QueryExpanderAgent>();
 
+            // Reranker agent config and client
+            services
+                .AddOptions<RerankerAgentConfiguration>()
+                .Bind(configuration.GetSection(RerankerAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<RerankerAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(RerankerAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<RerankerAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<IRerankerAgent, RerankerAgent>();
+
             // conversation summarizer agent config and client
             services
                 .AddOptions<ConversationSummarizerAgentConfiguration>()
@@ -443,6 +466,7 @@ namespace AgentMesh
             services.AddSingleton<DomainExpertWorkflowStep>();
             services.AddSingleton<RequestAnalyzerWorkflowStep>();
             services.AddSingleton<QueryExpanderWorkflowStep>();
+            services.AddSingleton<RerankerWorkflowStep>();
 
             services.AddSingleton<IWorkflow, CodeModeWorkflow>();
             services.AddSingleton<UserConsoleInputService>();

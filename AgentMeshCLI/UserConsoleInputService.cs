@@ -34,7 +34,8 @@ namespace AgentMesh
         EmbeddingServiceConfiguration embeddingServiceConfiguration,
         IAgentMemorySaverExecutor agentMemorySaver,
         RequestCanonicalizationAgentConfiguration requestCanonicalizationAgentConfiguration,
-        QueryExpanderAgentConfiguration queryExpanderAgentConfiguration)
+        QueryExpanderAgentConfiguration queryExpanderAgentConfiguration,
+        RerankerAgentConfiguration rerankerAgentConfiguration)
     {
         private readonly IWorkflow _workflow = workflow;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
@@ -58,6 +59,7 @@ namespace AgentMesh
         private readonly IAgentMemorySaverExecutor _agentMemorySaver = agentMemorySaver;
         private readonly RequestCanonicalizationAgentConfiguration _requestCanonicalizationAgentConfiguration = requestCanonicalizationAgentConfiguration;
         private readonly QueryExpanderAgentConfiguration _queryExpanderAgentConfiguration = queryExpanderAgentConfiguration;
+        private readonly RerankerAgentConfiguration _rerankerAgentConfiguration = rerankerAgentConfiguration;
 
         public async Task Run()
         {
@@ -137,6 +139,7 @@ namespace AgentMesh
                     { RequestAnalyzerAgent.AgentName, _llmsConfiguration[_requestAnalyzerAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { RequestCanonicalizationAgentConfiguration.AgentName, _llmsConfiguration[_requestCanonicalizationAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { QueryExpanderAgentConfiguration.AgentName, _llmsConfiguration[_queryExpanderAgentConfiguration.LLM].CostPerMillionInputTokens },
+                    { RerankerAgentConfiguration.AgentName, _llmsConfiguration[_rerankerAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { "Embedding Service", _embeddingServiceConfiguration.CostPerMillionTokens }
                 };
 
@@ -157,7 +160,8 @@ namespace AgentMesh
                     { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens },
                     { RequestAnalyzerAgent.AgentName, _llmsConfiguration[_requestAnalyzerAgentConfiguration.LLM].CostPerMillionOutputTokens },
                     { RequestCanonicalizationAgentConfiguration.AgentName, _llmsConfiguration[_requestCanonicalizationAgentConfiguration.LLM].CostPerMillionOutputTokens },
-                    { QueryExpanderAgentConfiguration.AgentName, _llmsConfiguration[_queryExpanderAgentConfiguration.LLM].CostPerMillionOutputTokens }
+                    { QueryExpanderAgentConfiguration.AgentName, _llmsConfiguration[_queryExpanderAgentConfiguration.LLM].CostPerMillionOutputTokens },
+                    { RerankerAgentConfiguration.AgentName, _llmsConfiguration[_rerankerAgentConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
                 if (_workflowConfiguration.EnableDomainExpert)
@@ -357,6 +361,7 @@ namespace AgentMesh
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Request Analyzer", RequestAnalyzerAgent.AgentName, _requestAnalyzerAgentConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Query Expander", QueryExpanderAgentConfiguration.AgentName, _queryExpanderAgentConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Reranker", RerankerAgentConfiguration.AgentName, _rerankerAgentConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Functional Analyst", FunctionalAnalystAgentConfiguration.AgentName, _functionalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Technical Analyst", TechnicalAnalystAgentConfiguration.AgentName, _technicalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, _coderConfiguration);
@@ -373,7 +378,7 @@ namespace AgentMesh
 
             ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, _personalAssistantConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Conversation Summarizer", ConversationSummarizerAgent.AgentName, _conversationSummarizerConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Documentation", DocumentationAgent.AgentName, _documentationAgentConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Documentation Manager", DocumentationAgent.AgentName, _documentationAgentConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Relevant Facts Evaluator", RelevantFactsEvaluatorAgentConfiguration.AgentName, _relevantFactsEvaluatorConfiguration);
             Console.WriteLine();
         }

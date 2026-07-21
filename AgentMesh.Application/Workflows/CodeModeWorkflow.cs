@@ -33,7 +33,8 @@ namespace AgentMesh.Application.Workflows
         DomainExpertWorkflowStep domainExpertWorkflowStep,
         RequestAnalyzerWorkflowStep requestAnalyzerWorkflowStep,
         QueryExpanderWorkflowStep queryExpanderWorkflowStep,
-        RequestCanonicalizationWorkflowStep requestCanonicalizationWorkflowStep) : IWorkflow
+        RequestCanonicalizationWorkflowStep requestCanonicalizationWorkflowStep,
+        RerankerWorkflowStep rerankerWorkflowStep) : IWorkflow
     {
         private readonly ILogger<CodeModeWorkflow> _logger = logger;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
@@ -57,6 +58,7 @@ namespace AgentMesh.Application.Workflows
         private readonly RequestAnalyzerWorkflowStep _requestAnalyzerWorkflowStep = requestAnalyzerWorkflowStep;
         private readonly QueryExpanderWorkflowStep _queryExpanderWorkflowStep = queryExpanderWorkflowStep;
         private readonly RequestCanonicalizationWorkflowStep _requestCanonicalizationWorkflowStep = requestCanonicalizationWorkflowStep;
+        private readonly RerankerWorkflowStep _rerankerWorkflowStep = rerankerWorkflowStep;
 
         public async Task<WorkflowResult> ExecuteAsync(string userInput, IEnumerable<ContextMessage> chatHistory)
         {
@@ -82,6 +84,11 @@ namespace AgentMesh.Application.Workflows
                 : Task.CompletedTask;
 
             await Task.WhenAll(memoryTask, knowledgeBaseTask);
+
+            if (state.DomainsKnowledgeBaseQueryResults.Results.Any())
+            {
+                await _rerankerWorkflowStep.ExecuteRerankerAsync(state);
+            }
 
             if (state.DomainsKnowledgeBaseQueryResults.Results.Any())
             {
