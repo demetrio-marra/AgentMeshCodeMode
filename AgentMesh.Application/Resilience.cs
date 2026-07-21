@@ -24,6 +24,10 @@ namespace AgentMesh.Application
                 .Or<EmptyAgentResponseException>()
                 .Or<Exception>(ex => ex.GetType().Name == "ClientResultException" && ex.Message.Contains("Tool choice is none, but model called a tool"))
                 .Or<Exception>(ex => ex.GetType().Name == "ClientResultException" && ex.Message.Contains("Service unavailable"))
+                .Or<Exception>(ex => ex.GetType().Name == "ClientResultException" && (
+                    ex.Message.Contains("Internal server error", StringComparison.OrdinalIgnoreCase)
+                    || ex.Message.Contains("status code 500", StringComparison.OrdinalIgnoreCase)
+                    || ex.Message.Contains("(500)", StringComparison.OrdinalIgnoreCase)))
                 .WaitAndRetryAsync(
                     retryCount: effectiveRetryCount,
                     sleepDurationProvider: attempt =>
