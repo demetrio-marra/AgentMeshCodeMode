@@ -1,4 +1,7 @@
-namespace AgentMesh.Models.Workflows
+using AgentMesh.Models;
+using AgentMesh.Models.Workflows;
+
+namespace AgentMesh.Services
 {
     public interface IWorkflow
     {

@@ -8,6 +8,7 @@ using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Application.Workflows.Steps;
+using AgentMesh.Services;
 
 namespace AgentMesh.Application.Workflows
 {

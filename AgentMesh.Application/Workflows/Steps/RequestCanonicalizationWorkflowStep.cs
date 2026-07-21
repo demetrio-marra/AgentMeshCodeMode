@@ -4,6 +4,7 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models.RequestCanonicalization;
 using AgentMesh.Models.Workflows;
+using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 

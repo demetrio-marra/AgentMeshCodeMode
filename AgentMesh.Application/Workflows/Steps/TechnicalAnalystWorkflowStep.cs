@@ -5,6 +5,7 @@ using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
 using AgentMesh.Models.TechnicalAnalyst;
 using AgentMesh.Models.Workflows;
+using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
