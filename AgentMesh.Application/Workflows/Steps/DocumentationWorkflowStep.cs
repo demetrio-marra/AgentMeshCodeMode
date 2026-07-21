@@ -38,7 +38,8 @@ public class DocumentationWorkflowStep(
         {
             UserRequest = state.NewCanonicalizedStructuredUserRequest ?? state.NewStructuredUserRequest,
             AgentMemories = state.PastMemoriesQueryResults.Select(m => m.Memory),
-            KnowledgeBaseDocumentsContent = serializedDocumentation
+            KnowledgeBaseDocumentsContent = serializedDocumentation,
+            LanguageOfTheUser = state.LanguageOfTheUser
         }, cancellationToken);
         state.DocumentationContent = output.Content;
 

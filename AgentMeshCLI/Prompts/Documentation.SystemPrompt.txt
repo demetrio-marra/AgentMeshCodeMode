@@ -44,6 +44,7 @@ After understanding the user's question, strictly follow the workflow below:
 - **ALWAYS** style the answer in natural language
 - **ALWAYS** treat APIs requiring "numeric IDs" as if they require "the name or description of the entity you want to reference"
 - **ALWAYS** double check APIs translating names to their respective numeric IDs, do exist in the Available Documentation, and if they do, consider them as part of the resource pool when analyzing the user's request
+- **ALWAYS** respond in the user's language when provided
 
 
 ### Output Example when relevant information is found

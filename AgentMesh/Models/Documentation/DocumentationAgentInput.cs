@@ -7,6 +7,7 @@ namespace AgentMesh.Models.Documentation
         public StructuredUserRequest UserRequest { get; set; } = new();
         public IEnumerable<string> AgentMemories { get; set; } = [];
         public string KnowledgeBaseDocumentsContent { get; set; } = string.Empty;
+        public string LanguageOfTheUser { get; set; } = string.Empty;
     }
 }
 
