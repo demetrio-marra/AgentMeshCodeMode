@@ -12,13 +12,12 @@ namespace AgentMesh.Models.Documentation
 
         public Dictionary<string, string> ToDictionary()
         {
-            return new Dictionary<string, string>
-            {
-                { "User request", System.Text.Json.JsonSerializer.Serialize(UserRequest) },
-                { "Agent memories", AgentMemories.Any() ? ListsFormatter.ToBulletList(AgentMemories) : "(No memories)" },
-                { "Knowledge base documents content", $"Size: {KnowledgeBaseDocumentsContent.Length}" },
-                { "Language of the user", LanguageOfTheUser }
-            };
+            var dictionary = UserRequest.ToDictionary();
+            dictionary.Add("Agent memories", AgentMemories.Any() ? ListsFormatter.ToBulletList(AgentMemories) : "(No memories)");
+            dictionary.Add("Knowledge base documents content", $"Size: {KnowledgeBaseDocumentsContent.Length}");
+            dictionary.Add("Language of the user", LanguageOfTheUser);
+
+            return dictionary;
         }
     }
 }

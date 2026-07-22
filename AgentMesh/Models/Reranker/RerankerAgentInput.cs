@@ -11,11 +11,10 @@ namespace AgentMesh.Models.Reranker
 
         public Dictionary<string, string> ToDictionary()
         {
-            return new Dictionary<string, string>
-            {
-                { "Structured user request", System.Text.Json.JsonSerializer.Serialize(StructuredUserRequest) },
-                { "Query results", QueryResults.Any() ? ListsFormatter.ToBulletList(QueryResults.Select(result => $"{result.File} {result.Title}")) : "(No query results)" }
-            };
+            var dictionary = StructuredUserRequest.ToDictionary();
+            dictionary.Add("Query results", QueryResults.Any() ? ListsFormatter.ToBulletList(QueryResults.Select(result => $"{result.File} {result.Title}")) : "(No query results)");
+
+            return dictionary;
         }
     }
 }

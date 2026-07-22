@@ -18,12 +18,11 @@ namespace AgentMesh.Models.QueryExpander
 
         public Dictionary<string, string> ToDictionary()
         {
-            return new Dictionary<string, string>
-            {
-                { "Structured user request", System.Text.Json.JsonSerializer.Serialize(StructuredUserRequest) },
-                { "Generate hyde queries", GenerateHydeQueries.ToString() },
-                { "Documentation queries generation reference", DocumentationQueriesGenerationReference ?? string.Empty }
-            };
+            var dictionary = StructuredUserRequest.ToDictionary();
+            dictionary.Add("Generate hyde queries", GenerateHydeQueries.ToString());
+            dictionary.Add("Documentation queries generation reference", DocumentationQueriesGenerationReference ?? string.Empty);
+
+            return dictionary;
         }
     }
 }
