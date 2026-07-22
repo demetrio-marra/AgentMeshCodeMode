@@ -1,7 +1,7 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
-using AgentMesh.Application.Models;
+using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.PersonalAssistant;
 using AgentMesh.Application.Utils;
 using Microsoft.Extensions.DependencyInjection;

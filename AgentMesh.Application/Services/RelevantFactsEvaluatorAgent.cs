@@ -1,13 +1,13 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
-using AgentMesh.Application.Models;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.ChatMessages;
 using AgentMesh.Application.Models.RelevantFactsEvaluator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Application.Services
 {

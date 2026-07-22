@@ -1,7 +1,6 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
-using AgentMesh.Application.Models;
 using AgentMesh.Application.Utils;
 using AgentMesh.Application.Models.RequestCanonicalization;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +10,7 @@ using System.Text.Json.Serialization;
 using AgentMesh.Models.RequestCanonicalization;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Application.Services
 {

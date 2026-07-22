@@ -1,5 +1,4 @@
-﻿using AgentMesh.Application.Models;
-using AgentMesh.Application.Models.KnowledgeBase;
+﻿using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Contracts

@@ -1,5 +1,6 @@
 ﻿using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Models;
+using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.ConversationSummarization;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.ChatMessages;
 using Microsoft.Extensions.DependencyInjection;

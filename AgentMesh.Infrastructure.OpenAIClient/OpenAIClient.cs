@@ -1,6 +1,7 @@
 ﻿using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
-using AgentMesh.Application.Models;
+using AgentMesh.Application.Models.ChatClient;
+using AgentMesh.Application.Models.ChatMessages;
 using OpenAI;
 using OpenAI.Chat;
 using System.ClientModel;
@@ -36,7 +37,7 @@ namespace AgentMesh.Infrastructure.OpenAIClient
         }
 
 
-        public async Task<OpenAIClientResponse> GenerateResponseAsync(IEnumerable<string> userInput, CancellationToken cancellationToken = default)
+        public async Task<ChatClientResponse> GenerateResponseAsync(IEnumerable<string> userInput, CancellationToken cancellationToken = default)
         {
             var messages = userInput.Select(input => new AgentMessage
             {
@@ -48,7 +49,7 @@ namespace AgentMesh.Infrastructure.OpenAIClient
         }
 
 
-        public async Task<OpenAIClientResponse> GenerateResponseAsync(IEnumerable<AgentMessage> messages, CancellationToken cancellationToken = default)
+        public async Task<ChatClientResponse> GenerateResponseAsync(IEnumerable<AgentMessage> messages, CancellationToken cancellationToken = default)
         {
             var chatMessages = new List<ChatMessage>();
 
@@ -117,7 +118,7 @@ namespace AgentMesh.Infrastructure.OpenAIClient
                 throw new BadStructuredResponseException("", "The response text is empty.");
             }
 
-            return new OpenAIClientResponse
+            return new ChatClientResponse
             {
                 Text = responseText,
                 TotalTokenCount = totalTokenCount,

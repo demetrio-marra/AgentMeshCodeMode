@@ -1,6 +1,5 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Services;
-using AgentMesh.Application.Workflows;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.QMD;
@@ -10,10 +9,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Workflows.Steps;
 using AgentMesh.Application.Utils;
 using AgentMesh.Infrastructure.Mem0;
 using AgentMesh.Infrastructure.QMD.Services;
+using AgentMesh.Application.Services.Workflows;
+using AgentMesh.Application.Services.Workflows.Steps;
 
 namespace AgentMesh
 {

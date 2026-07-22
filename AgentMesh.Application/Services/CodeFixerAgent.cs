@@ -1,12 +1,12 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
-using AgentMesh.Application.Models;
 using AgentMesh.Application.Utils;
 using AgentMesh.Application.Models.CodeFixer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
+using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Application.Services
 {

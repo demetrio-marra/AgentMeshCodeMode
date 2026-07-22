@@ -1,10 +1,11 @@
-﻿using AgentMesh.Application.Models;
+﻿using AgentMesh.Application.Models.ChatClient;
+using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Application.Contracts
 {
     public interface IOpenAIClient
     {
-        Task<OpenAIClientResponse> GenerateResponseAsync(IEnumerable<string> userInput, CancellationToken cancellationToken = default);
-        Task<OpenAIClientResponse> GenerateResponseAsync(IEnumerable<AgentMessage> messages, CancellationToken cancellationToken = default);
+        Task<ChatClientResponse> GenerateResponseAsync(IEnumerable<string> userInput, CancellationToken cancellationToken = default);
+        Task<ChatClientResponse> GenerateResponseAsync(IEnumerable<AgentMessage> messages, CancellationToken cancellationToken = default);
     }
 }
