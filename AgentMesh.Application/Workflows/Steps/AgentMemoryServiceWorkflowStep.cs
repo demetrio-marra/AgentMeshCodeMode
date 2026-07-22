@@ -25,7 +25,7 @@ public class AgentMemoryServiceWorkflowStep(
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Agent Memory Service...");
 
-        var queriesList = state.PastMemoriesQuery.ToList();
+        var queriesList = state.PastMemoriesQuery.Select(s => s.Memory).ToList();
 
         var agentInput = new AgentMemoryRetrieverInput
         {

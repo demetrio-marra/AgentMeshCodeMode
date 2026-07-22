@@ -29,7 +29,7 @@ namespace AgentMesh.Application.Models
         /// <summary>
         /// Past memories query, which is used to retrieve relevant information from the agent's memory to assist in understanding the user's request and providing context for further processing.
         /// </summary>
-        public IEnumerable<string> PastMemoriesQuery { get; set; } = [];
+        public IEnumerable<AgentMemoryItem> PastMemoriesQuery { get; set; } = [];
 
         /// <summary>
         /// Domain knowledge base query, which is used to retrieve relevant information from the domain-specific knowledge base to assist in understanding the user's request and providing context for further processing.
