@@ -48,77 +48,31 @@ namespace AgentMesh.Application.Services
             QueryExpanderAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            var userRequestedActionsText = input.StructuredUserRequest.UserRequestedActions.Any()
-                ? string.Join("\n", input.StructuredUserRequest.UserRequestedActions.Select(action => $"- {action}"))
-                : "(No requested actions)";
+            var userPayload = new
+            {
+                intent = input.StructuredUserRequest.Intent,
+                conversationTopic = input.StructuredUserRequest.ConversationTopic,
+                userRequestedActions = input.StructuredUserRequest.UserRequestedActions,
+                userProvidedData = input.StructuredUserRequest.UserProvidedData,
+                userPreferences = input.StructuredUserRequest.UserPreferences,
+                missingValues = input.StructuredUserRequest.MissingValues,
+                languageOfTheUser = input.StructuredUserRequest.LanguageOfTheUser
+            };
 
-            var userProvidedDataText = input.StructuredUserRequest.UserProvidedData.Any()
-                ? string.Join("\n", input.StructuredUserRequest.UserProvidedData.Select(data => $"- {data}"))
-                : "(No provided data)";
-
-            var userPreferencesText = input.StructuredUserRequest.UserPreferences.Any()
-                ? string.Join("\n", input.StructuredUserRequest.UserPreferences.Select(preference => $"- {preference}"))
-                : "(No user preferences)";
-
-            var missingValuesText = input.StructuredUserRequest.MissingValues.Any()
-                ? string.Join("\n", input.StructuredUserRequest.MissingValues.Select(value => $"- {value}"))
-                : "(No missing values)";
-
-            var userMessage = $"""
-User intent:
-{input.StructuredUserRequest.Intent}
-
-Conversation topic:
-{(string.IsNullOrWhiteSpace(input.StructuredUserRequest.ConversationTopic) ? "(Not specified)" : input.StructuredUserRequest.ConversationTopic)}
-
-Requested actions:
-{userRequestedActionsText}
-
-Provided data:
-{userProvidedDataText}
-
-User preferences:
-{userPreferencesText}
-
-Missing values:
-{missingValuesText}
-
-User language:
-{input.StructuredUserRequest.LanguageOfTheUser}
-""";
+            var systemMessages = new List<string>
+            {
+                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}.",
+                input.GenerateHydeQueries
+                    ? "You are allowed to generate hypothetical document (HyDE) queries. Use them only when necessary."
+                    : "You are NOT allowed to generate hypothetical document (HyDE) queries. Do not generate them under any circumstances.",
+                $"This is the documentation queries generation reference:\n{input.DocumentationQueriesGenerationReference}"
+            };
 
             var inputMessages = new List<AgentMessage>
             {
-                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
+                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
+                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
             };
-
-            if (input.GenerateHydeQueries)
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = "You are allowed to generate hypothetical document (HyDE) queries. Use them only when necessary."
-                });
-            }
-            else
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = "You are NOT allowed to generate hypothetical document (HyDE) queries. Do not generate them under any circumstances."
-                });
-            }
-
-            if (!string.IsNullOrWhiteSpace(input.DocumentationQueriesGenerationReference))
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"Documentation queries generation reference:\n{input.DocumentationQueriesGenerationReference}"
-                });
-            }
-
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = userMessage });
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 

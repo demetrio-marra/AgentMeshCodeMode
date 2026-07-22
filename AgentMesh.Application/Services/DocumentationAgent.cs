@@ -5,6 +5,7 @@ using AgentMesh.Application.Utils;
 using AgentMesh.Models.Documentation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace AgentMesh.Application.Services
 {
@@ -20,62 +21,39 @@ namespace AgentMesh.Application.Services
             DocumentationAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            var inputMessages = new List<AgentMessage>();
-
-            if (input.UserRequest.UserPreferences.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"Supporting User Preferences:\n{string.Join("\n", input.UserRequest.UserPreferences.Select(i => $"- {i}"))}"
-                });
-            }
-
-            if (input.UserRequest.UserProvidedData.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"User provided data:\n{string.Join("\n", input.UserRequest.UserProvidedData.Select(i => $"- {i}"))}"
-                });
-            }
-
-            if (input.UserRequest.UserRequestedActions.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"User Requested Actions:\n{string.Join("\n", input.UserRequest.UserRequestedActions.Select(a => $"- {a}"))}"
-                });
-            }
-
-            if (input.AgentMemories.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"Memories from AgentMemoryService:\n{string.Join("\n", input.AgentMemories.Select(m => $"- {m}"))}"
-                });
-            }
-
-            if (!string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
-            {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"KnowledgeBaseDocumentsContent: {input.KnowledgeBaseDocumentsContent}" });
-            }
-            else
+            if (string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
             {
                 _logger.LogInformation("No relevant API documentation found for the given actionable requirements.");
             }
 
-
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
+            var systemMessages = new List<string>
+            {
+                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}."
+            };
 
             if (!string.IsNullOrWhiteSpace(input.LanguageOfTheUser))
             {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"User's Language: {input.LanguageOfTheUser}" });
+                systemMessages.Add($"User's Language: {input.LanguageOfTheUser}");
+            }
+            if (!string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
+            {
+                systemMessages.Add($"Knowledge Base Documents Content:\n{input.KnowledgeBaseDocumentsContent}");
             }
 
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.UserRequest.Intent });
+            var userPayload = new
+            {
+                intent = input.UserRequest.Intent,
+                userPreferences = input.UserRequest.UserPreferences,
+                userProvidedData = input.UserRequest.UserProvidedData,
+                userRequestedActions = input.UserRequest.UserRequestedActions,
+                agentMemories = input.AgentMemories,
+            };
+
+            var inputMessages = new List<AgentMessage>
+            {
+                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
+                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
+            };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 

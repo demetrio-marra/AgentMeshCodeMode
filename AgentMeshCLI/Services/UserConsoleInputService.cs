@@ -118,7 +118,7 @@ namespace AgentMesh.Services
                 conversationContext.Conversation = currentConversation;
 
                 ConsoleHelper.WriteLineWithColor("\nResponse for user:", ConsoleColor.Gray);
-                ConsoleHelper.WriteLineWithColor(result.Response, ConsoleColor.DarkGreen);
+                ConsoleHelper.WriteLineWithColor(result.Response, ConsoleColor.Cyan);
 
                 var agentInputCosts = new Dictionary<string, decimal>
                 {

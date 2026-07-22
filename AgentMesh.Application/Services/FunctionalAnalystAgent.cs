@@ -21,74 +21,36 @@ namespace AgentMesh.Application.Services
             FunctionalAnalystAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            var inputMessages = new List<AgentMessage>();
-
-            if (!string.IsNullOrWhiteSpace(input.Intent))
+            var systemMessages = new List<string>
             {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Intent: {input.Intent}" });
-            }
+                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}."
+            };
 
-            if (!string.IsNullOrWhiteSpace(input.ConversationTopic))
+            if (input.DoNotComment)
             {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"Conversation Topic: {input.ConversationTopic}"
-                });
-            }
-
-            if (input.UserRequestedActions.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"User Requested Actions:\n{string.Join("\n", input.UserRequestedActions.Select(i => $"- {i}"))}"
-                });
-            }
-
-            if (input.UserProvidedData.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"User Provided Data:\n{string.Join("\n", input.UserProvidedData.Select(v => $"- {v}"))}"
-                });
-            }
-
-            if (input.UserPreferences.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"User Preferences:\n{string.Join("\n", input.UserPreferences.Select(p => $"- {p}"))}"
-                });
-            }
-
-            if (input.AgentMemories.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"Memories from AgentMemoryService:\n{string.Join("\n", input.AgentMemories.Select(m => $"- {m}"))}"
-                });
+                systemMessages.Add("IMPORTANT REQUIREMENT: In `businessRequirements`, you MUST EXPLICITLY instruct the Coder Agent to produce a program that ONLY RETURNS DATA and DOES NOT add comments, insights, explanations, or narrative text in its output.");
             }
 
             if (!string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
             {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"KnowledgeBaseDocumentsContent: {input.KnowledgeBaseDocumentsContent}" });
+                systemMessages.Add($"IMPORTANT REQUIREMENT: The following knowledge base documents content is provided to you for reference. You MUST use this information to inform your response and ensure that the generated business requirements are accurate and relevant to the provided knowledge base content.\n{input.KnowledgeBaseDocumentsContent}");
             }
 
-            if (input.DoNotComment)
+            var userPayload = new
             {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = "IMPORTANT REQUIREMENT: In `businessRequirements`, you MUST EXPLICITLY instruct the Coder Agent to produce a program that ONLY RETURNS DATA and DOES NOT add comments, insights, explanations, or narrative text in its output."
-                });
-            }
+                input.Intent,
+                input.ConversationTopic,
+                input.UserRequestedActions,
+                input.UserProvidedData,
+                input.UserPreferences,
+                input.AgentMemories
+            };
 
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.Intent });
+            var inputMessages = new List<AgentMessage>
+            {
+                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
+                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
+            };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 

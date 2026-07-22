@@ -7,6 +7,7 @@ using AgentMesh.Models.Coder;
 using AgentMesh.Models.KnowledgeBase;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services
@@ -21,6 +22,11 @@ namespace AgentMesh.Application.Services
 
         public async Task<CoderAgentOutput> ExecuteAsync(CoderAgentInput input, CancellationToken cancellationToken = default)
         {
+            var systemMessages = new List<string>
+            {
+                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}."
+            };
+
             // Filter documents based on selected APIs
             var filteredDocuments = input.SelectedAPIsFileLocations.Any()
                 ? input.KnowledgeBaseAPIDocumentsContent
@@ -28,30 +34,22 @@ namespace AgentMesh.Application.Services
                     .ToList()
                 : [];
 
-            var inputMessages = new List<AgentMessage>
+            if (filteredDocuments.Any())
             {
-                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new() { Role = AgentMessageRole.System, Content = $"Business Requirements:\n{input.BusinessRequirements}" }
+                systemMessages.Add($"Filtered knowledge base API documents:\n{FormatKnowledgeBaseDocumentsContent(filteredDocuments)}");
+            }
+
+            var userPayload = new
+            {
+                input.BusinessRequirements,
+                input.TechnicalSpecification,
             };
 
-            if (!string.IsNullOrWhiteSpace(input.TechnicalSpecification))
+            var inputMessages = new List<AgentMessage>
             {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"Technical Specification:\n{input.TechnicalSpecification}"
-                });
-            }
-
-            var knowledgeBaseDocumentsContent = FormatKnowledgeBaseDocumentsContent(filteredDocuments);
-            if (!string.IsNullOrWhiteSpace(knowledgeBaseDocumentsContent))
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"Knowledge Base API Documents:\n{knowledgeBaseDocumentsContent}"
-                });
-            }
+                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
+                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
+            };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 

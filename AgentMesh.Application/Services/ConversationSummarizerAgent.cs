@@ -4,6 +4,7 @@ using AgentMesh.Application.Utils;
 using AgentMesh.Models.ChatMessages;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace AgentMesh.Application.Services
 {
@@ -29,13 +30,26 @@ namespace AgentMesh.Application.Services
 
             var lastSummarizedMessageTimeStamp = messagesToSummarize.LastOrDefault()?.Date ?? DateTime.MinValue;
 
-            var serializedConversation = MessageSerializationUtils.SerializeConversationHistory(messagesToSummarize);
+            var userPayload = new
+            {
+                conversation = messagesToSummarize.Select(message => new
+                {
+                    role = message.Role == ContextMessageRole.User ? "User" : "Assistant",
+                    message.Date,
+                    message.Text
+                })
+            };
+
+            var systemMessages = new List<string>
+            {
+                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}.",
+                $"Summarize in {input.SummaryLanguage} language"
+            };
 
             var inputMessages = new List<AgentMessage>
             {
-                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new() { Role = AgentMessageRole.System, Content = $"Summarize in {input.SummaryLanguage} language" },
-                new() { Role = AgentMessageRole.User, Content = serializedConversation }
+                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
+                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
             };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);

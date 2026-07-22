@@ -33,7 +33,7 @@ namespace AgentMesh.Services
 
         public async Task NotifyWorkflowStepStart(string stepName, Dictionary<string, string> inputParameters)
         {
-            ConsoleHelper.WriteLineWithColor($"\nWorkflow step '{stepName}' has started.", ConsoleColor.Cyan);
+            ConsoleHelper.WriteLineWithColor($"\nWorkflow step '{stepName}' has started.", ConsoleColor.Green);
             foreach (var input in inputParameters)
             {
                 WriteParameter(input.Key, input.Value);

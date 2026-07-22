@@ -56,67 +56,44 @@ namespace AgentMesh.Application.Services
 
         public async Task<RequestCanonicalizationAgentOutput> ExecuteAsync(RequestCanonicalizationAgentInput input, CancellationToken cancellationToken = default)
         {
+            var systemMessages = new List<string>
+            {
+                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}.",
+                $"Knowledge base language is: {input.LanguageOfKnowledgeBase}.",
+            };
+
+            if (!string.IsNullOrWhiteSpace(input.DomainsKnowledgeBaseDocumentsContent))
+            {
+                systemMessages.Add($"Knowledge base documents content:\n{input.DomainsKnowledgeBaseDocumentsContent}");
+            }
+
+            systemMessages.Add($"This is the documentation queries generation reference:\n{input.DocumentationQueriesGenerationReference}");
+
+
             var req = input.StructuredUserRequest;
 
-            var userRequestedActionsText = req.UserRequestedActions.Any()
-                ? string.Join("\n", req.UserRequestedActions.Select(a => $"- {a}"))
-                : "(None)";
+            var userPayload = new
+            {
+                req.Intent,
+                req.ConversationTopic,
+                req.UserRequestedActions,
+                req.UserProvidedData,
+                req.UserPreferences,
+                req.MissingValues,
+                req.LanguageOfTheUser,
 
-            var userProvidedDataText = req.UserProvidedData.Any()
-                ? string.Join("\n", req.UserProvidedData.Select(d => $"- {d}"))
-                : "(None)";
-
-            var userPreferencesText = req.UserPreferences.Any()
-                ? string.Join("\n", req.UserPreferences.Select(p => $"- {p}"))
-                : "(None)";
-
-            var missingValuesText = req.MissingValues.Any()
-                ? string.Join("\n", req.MissingValues.Select(m => $"- {m}"))
-                : "(None)";
-
-            var queriesText = input.DomainsKnowledgeBaseQuery.Any()
-                ? string.Join("\n", input.DomainsKnowledgeBaseQuery.Select(q => $"- Type: {ToQueryType(q.SearchType)}, Query: {q.Query}"))
-                : "(None)";
-
-            var userMessage = $"""
-Structured user request:
-Intent: {req.Intent}
-ConversationTopic: {req.ConversationTopic ?? "(None)"}
-UserRequestedActions:
-{userRequestedActionsText}
-UserProvidedData:
-{userProvidedDataText}
-UserPreferences:
-{userPreferencesText}
-
-Non-canonicalized domain knowledge base queries:
-{queriesText}
-""";
-
-            var knowledgeBaseMessage = $"""
-Domains knowledge base documents:
-{(string.IsNullOrWhiteSpace(input.DomainsKnowledgeBaseDocumentsContent) ? "(No knowledge base results)" : input.DomainsKnowledgeBaseDocumentsContent)}
-
-Language of Knowledge Base:
-{(string.IsNullOrWhiteSpace(input.LanguageOfKnowledgeBase) ? "(Not provided)" : input.LanguageOfKnowledgeBase)}
-""";
+                domainsKnowledgeBaseQuery = input.DomainsKnowledgeBaseQuery.Select(q => new
+                {
+                    type = ToQueryType(q.SearchType),
+                    q.Query
+                })
+            };
 
             var inputMessages = new List<AgentMessage>
             {
-                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new() { Role = AgentMessageRole.System, Content = knowledgeBaseMessage }
+                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
+                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
             };
-
-            if (!string.IsNullOrWhiteSpace(input.DocumentationQueriesGenerationReference))
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"Documentation queries generation reference:\n{input.DocumentationQueriesGenerationReference}"
-                });
-            }
-
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = userMessage });
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 

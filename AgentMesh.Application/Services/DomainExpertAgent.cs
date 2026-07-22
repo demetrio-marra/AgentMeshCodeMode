@@ -21,76 +21,37 @@ namespace AgentMesh.Application.Services
             DomainExpertAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            var inputMessages = new List<AgentMessage>();
-
-            if (!string.IsNullOrWhiteSpace(input.Intent))
+            var systemMessages = new List<string>
             {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Intent: {input.Intent}" });
-            }
+                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}."
+            };
 
-            if (!string.IsNullOrWhiteSpace(input.ConversationTopic))
+            if (!string.IsNullOrWhiteSpace(input.LanguageOfTheUser))
             {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"Conversation Topic: {input.ConversationTopic}"
-                });
-            }
-
-            if (input.UserRequestedActions.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"User Requested Actions:\n{string.Join("\n", input.UserRequestedActions.Select(i => $"- {i}"))}"
-                });
-            }
-
-            if (input.UserProvidedData.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"User Provided Data:\n{string.Join("\n", input.UserProvidedData.Select(v => $"- {v}"))}"
-                });
-            }
-
-            if (input.UserPreferences.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"User Preferences:\n{string.Join("\n", input.UserPreferences.Select(p => $"- {p}"))}"
-                });
-            }
-
-            if (input.AgentMemories.Any())
-            {
-                inputMessages.Add(new AgentMessage
-                {
-                    Role = AgentMessageRole.System,
-                    Content = $"Memories from AgentMemoryService:\n{string.Join("\n", input.AgentMemories.Select(m => $"- {m}"))}"
-                });
+                systemMessages.Add($"User's Language: {input.LanguageOfTheUser}");
             }
 
             if (!string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
             {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"KnowledgeBaseDocumentsContent: {input.KnowledgeBaseDocumentsContent}" });
+                systemMessages.Add($"Knowledge Base Documents Content:\n{input.KnowledgeBaseDocumentsContent}");
             }
 
-            if (!string.IsNullOrWhiteSpace(input.DataToComment))
+            var userPayload = new
             {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"DataToComment: {input.DataToComment}" });
-            }
+                input.Intent,
+                input.ConversationTopic,
+                input.UserRequestedActions,
+                input.UserProvidedData,
+                input.UserPreferences,
+                input.AgentMemories,
+                input.DataToComment
+            };
 
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." });
-            
-            if (!string.IsNullOrWhiteSpace(input.LanguageOfTheUser))
+            var inputMessages = new List<AgentMessage>
             {
-                inputMessages.Add(new AgentMessage { Role = AgentMessageRole.System, Content = $"User's Language: {input.LanguageOfTheUser}" });
-            }
-            
-            inputMessages.Add(new AgentMessage { Role = AgentMessageRole.User, Content = input.DataToComment });
+                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
+                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
+            };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 

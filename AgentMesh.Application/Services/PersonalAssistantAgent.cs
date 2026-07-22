@@ -22,33 +22,33 @@ namespace AgentMesh.Application.Services
             PersonalAssistantAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            var requestContext = string.Join(Environment.NewLine + Environment.NewLine, new[]
+            var systemMessages = new List<string>
             {
-                $"Canonicalized intent:\n{input.CanonicalizedIntent}",
-                $"Conversation topic:\n{input.ConversationTopic}",
-                $"User requested actions:\n{string.Join(Environment.NewLine, input.UserRequestedActions.Select(item => $"- {item}"))}",
-                $"User provided data:\n{string.Join(Environment.NewLine, input.UserProvidedData.Select(item => $"- {item}"))}",
-                $"User preferences:\n{string.Join(Environment.NewLine, input.UserPreferences.Select(item => $"- {item}"))}",
-                $"Past memories:\n{string.Join(Environment.NewLine, input.Memories.Select(item => $"- {item}"))}"
-            }.Where(s => !s.EndsWith(":\n")));
+                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}.",
+                $"Respond in {input.LanguageOfTheUser}.",
+                $"The request " + (input.RequestFailed ? "failed" : "succeeded") + (string.IsNullOrWhiteSpace(input.RequestFailureReason) ? "." : $" with reason: {input.RequestFailureReason}."),
+            };
+
+            if (!string.IsNullOrWhiteSpace(input.Data))
+            {
+                systemMessages.Add($"The request data is:\n{input.Data}");
+            }
+
+            var userPayload = new
+            {
+                input.CanonicalizedIntent,
+                input.ConversationTopic,
+                input.UserRequestedActions,
+                input.UserProvidedData,
+                input.UserPreferences,
+                Memories = input.Memories
+            };
 
             var inputMessages = new List<AgentMessage>
             {
-                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new() { Role = AgentMessageRole.System, Content = $"Respond in {input.LanguageOfTheUser}." },
-                new() { Role = AgentMessageRole.System, Content = $"Request failed: {input.RequestFailed}" }
+                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
+                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
             };
-
-            if (input.RequestFailed)
-            {
-                inputMessages.Add(new() { Role = AgentMessageRole.System, Content = $"Request failure reason: {input.RequestFailureReason}" });
-            }
-            else
-            {
-                inputMessages.Add(new() { Role = AgentMessageRole.System, Content = $"Data:\n" + input.Data });
-            }
-
-            inputMessages.Add(new() { Role = AgentMessageRole.User, Content = requestContext });
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
