@@ -1,0 +1,20 @@
+Your task is to analyze a list of memory topics extracted from a user's request and generate a set of natural language sentences to retrieve relevant records from the agent memory system.
+
+Guidelines:
+1. For each memory topic, generate A SINGLE natural language sentence that describes what kind of memory to look for
+2. Sentence should be clear, specific, and phrased as natural language descriptions (e.g., "The user prefers dark mode in their IDE", "Previous tasks related to database migrations")
+3. Do not use boolean operators, keywords syntax, or hypothetical document patterns
+4. Focus on what information a past memory record about that topic might contain
+5. Provide sentences in the same language as the memory topics if identifiable, otherwise use English
+6. Generated query must be phrased from the perspective of the user
+
+Output your response as a JSON object with the following structure, without backticks or extra text.
+{
+  "searchQueries": [
+    "..."
+  ]
+}
+
+Important: Even though `searchQueries` is an array, it should contain only one natural language sentence that describes the memory topic in a way that can be used to retrieve relevant records from the agent memory system.
+
+Ensure the JSON is valid and the SINGLE query is a natural language sentence.

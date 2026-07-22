@@ -18,6 +18,7 @@ namespace AgentMesh.Application.Workflows
         PersonalAssistantAgent personalAssistantAgent,
         CodeModeWorkflowConfiguration workflowConfiguration,
         AgentMemoryServiceWorkflowStep agentMemoryServiceWorkflowStep,
+        AgentMemoryQueryExpanderWorkflowStep agentMemoryQueryExpanderWorkflowStep,
         DomainsKnowledgeBaseServiceSearchWorkflowStep domainsKnowledgeBaseServiceSearchWorkflowStep,
         DomainsKnowledgeBaseDocumentsExtractorWorkflowStep domainsKnowledgeBaseDocumentsExtractorWorkflowStep,
         DocumentationWorkflowStep documentationWorkflowStep,
@@ -41,6 +42,7 @@ namespace AgentMesh.Application.Workflows
         private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
 
         private readonly AgentMemoryServiceWorkflowStep _agentMemoryServiceWorkflowStep = agentMemoryServiceWorkflowStep;
+        private readonly AgentMemoryQueryExpanderWorkflowStep _agentMemoryQueryExpanderWorkflowStep = agentMemoryQueryExpanderWorkflowStep;
         private readonly DomainsKnowledgeBaseServiceSearchWorkflowStep _domainsKnowledgeBaseServiceSearchWorkflowStep = domainsKnowledgeBaseServiceSearchWorkflowStep;
         private readonly DomainsKnowledgeBaseDocumentsExtractorWorkflowStep _domainsKnowledgeBaseDocumentsExtractorWorkflowStep = domainsKnowledgeBaseDocumentsExtractorWorkflowStep;
         private readonly DocumentationWorkflowStep _documentationWorkflowStep = documentationWorkflowStep;
@@ -66,7 +68,15 @@ namespace AgentMesh.Application.Workflows
 
             await _requestAnalyzerWorkflowStep.ExecuteRequestAnalyzerAsync(state, chatHistory);
 
-            // TODO
+            if (state.UserRequest!.MissingValues.Any())
+            {
+                await _agentMemoryQueryExpanderWorkflowStep.ExecuteAgentMemoryQueryExpanderAsync(state);
+            }
+
+            if (state.PastMemoriesQuery.Any())
+            {
+                await _agentMemoryServiceWorkflowStep.ExecuteAgentMemoryServiceAsync(state);
+            }
 
             if (state.UserRequest!.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Other)
             {
@@ -75,15 +85,10 @@ namespace AgentMesh.Application.Workflows
 
             await _knowledgeBaseQueryExpanderWorkflowStep.ExecuteKnowledgeBaseQueryExpanderAsync(state);
 
-            var memoryTask = (_workflowConfiguration.EnableMemoryService && state.PastMemoriesQuery.Any())
-                ? _agentMemoryServiceWorkflowStep.ExecuteAgentMemoryServiceAsync(state)
-                : Task.CompletedTask;
-
-            var knowledgeBaseTask = state.DomainsKnowledgeBaseQuery.Any()
-                ? _domainsKnowledgeBaseServiceSearchWorkflowStep.ExecuteDomainsKnowledgeBaseServiceSearchAsync(state)
-                : Task.CompletedTask;
-
-            await Task.WhenAll(memoryTask, knowledgeBaseTask);
+            if (state.DomainsKnowledgeBaseQuery.Any())
+            {
+                await _domainsKnowledgeBaseServiceSearchWorkflowStep.ExecuteDomainsKnowledgeBaseServiceSearchAsync(state);
+            }
 
             if (state.DomainsKnowledgeBaseQueryResults.Results.Any())
             {
@@ -169,11 +174,9 @@ namespace AgentMesh.Application.Workflows
                     }
                     await CompleteWorkflowAsync(state);
                 }
-                goto WorkflowEnd;
             }
             else if (state.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Other)
             {
-                goto CompleteWorkflow;
             }
             else
             {
@@ -182,8 +185,6 @@ namespace AgentMesh.Application.Workflows
 
         CompleteWorkflow:
             await CompleteWorkflowAsync(state);
-
-        WorkflowEnd:
 
             await _workflowProgressNotifier.NotifyWorkflowEnd();
 

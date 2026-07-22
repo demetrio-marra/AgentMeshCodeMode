@@ -377,6 +377,29 @@ namespace AgentMesh
 
             services.AddSingleton<KnowledgeBaseQueryExpanderAgent>();
 
+            // AgentMemoryQueryExpander agent config and client
+            services
+                .AddOptions<AgentMemoryQueryExpanderAgentConfiguration>()
+                .Bind(configuration.GetSection(AgentMemoryQueryExpanderAgentConfiguration.SectionName))
+                .PostConfigure(options =>
+                {
+                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
+                })
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<AgentMemoryQueryExpanderAgentConfiguration>>().Value);
+
+            services.AddKeyedSingleton<IOpenAIClient>(AgentMemoryQueryExpanderAgentConfiguration.AgentName, (sp, _) =>
+            {
+                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
+                var config = sp.GetRequiredService<AgentMemoryQueryExpanderAgentConfiguration>();
+                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
+                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
+                var systemPrompt = config.SystemPrompt;
+                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
+            });
+
+            services.AddSingleton<AgentMemoryQueryExpanderAgent>();
+
             // Reranker agent config and client
             services
                 .AddOptions<RerankerAgentConfiguration>()
@@ -440,6 +463,7 @@ namespace AgentMesh
             services.AddSingleton<APIKnowledgeBaseDocumentsExtractorWorkflowStep>();
             services.AddSingleton<RequestCanonicalizationWorkflowStep>();
             services.AddSingleton<AgentMemoryServiceWorkflowStep>();
+            services.AddSingleton<AgentMemoryQueryExpanderWorkflowStep>();
             services.AddSingleton<KnowledgeBaseServiceSearchWorkflowStep>();
             services.AddSingleton<DomainsKnowledgeBaseServiceSearchWorkflowStep>();
             services.AddSingleton<APIsKnowledgeBaseServiceSearchWorkflowStep>();
