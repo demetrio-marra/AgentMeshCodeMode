@@ -1,4 +1,4 @@
-using AgentMesh.Models;
+using AgentMesh.Application.Models.ChatClient;
 
 namespace AgentMesh.Application.Models.CodeExecutionFailuresDetector
 {

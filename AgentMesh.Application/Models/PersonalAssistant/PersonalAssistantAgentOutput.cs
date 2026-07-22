@@ -1,3 +1,4 @@
+using AgentMesh.Application.Models.ChatClient;
 using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.PersonalAssistant

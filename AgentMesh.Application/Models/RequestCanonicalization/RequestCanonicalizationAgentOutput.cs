@@ -2,6 +2,7 @@ using AgentMesh.Models;
 using AgentMesh.Utils;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Application.Models.ChatClient;
 
 namespace AgentMesh.Application.Models.RequestCanonicalization
 {
