@@ -1,4 +1,3 @@
-
 # GitHub Copilot Instructions for AgentMesh
 
 This file provides guidance for GitHub Copilot when working in this repository. It is organized by topic and should be extended over time as new conventions and patterns are established.
@@ -7,13 +6,24 @@ This file provides guidance for GitHub Copilot when working in this repository. 
 
 ## Table of Contents
 
-1. [Creating New Agents](#1-creating-new-agents)
-2. [Updating existing Agents](#2-updating-existing-agents)
-3. [Removing legacy Agents](#3-deleting-legacy-agents)
+1. [Core Architectural Concepts](#1-core-architectural-concepts)
+2. [Creating New Agents](#2-creating-new-agents)
+3. [Updating existing Agents](#3-updating-existing-agents)
+4. [Removing legacy Agents](#4-deleting-legacy-agents)
 
 ---
 
-## 1. Creating New Agents
+## 1. Core Architectural Concepts
+
+### Workflow steps
+A workflow step is essentially a transfer function that maps values from workflow state variables to executor inputs/outputs and runs the underlying executor.
+It also logs executor input/output values.
+
+### Executors
+An executor can be either an AI Agent or an "Executor", meaning a platform service driven by traditional handwritten code.
+Its main responsibility is to invoke the AI agent (serializing the workflow step input for the LLM) or invoke an external service, then map results back to workflow step output values.
+
+## 2. Creating New Agents
 
 Every agent in AgentMesh follows a consistent, layered architecture spread across two projects:
 
@@ -22,7 +32,7 @@ Every agent in AgentMesh follows a consistent, layered architecture spread acros
 
 Registration of each agent is done manually in **`AgentMeshCLI/Program.cs`**.
 
-### 1.1 Layer Overview
+### 2.1 Layer Overview
 
 | Layer | Project | What to create |
 |---|---|---|
@@ -38,7 +48,7 @@ Registration of each agent is done manually in **`AgentMeshCLI/Program.cs`**.
 
 ---
 
-### 1.2 Step-by-Step Guide
+### 2.2 Step-by-Step Guide
 
 #### Step 1 � Define the Input DTO (`AgentMesh` project)
 
@@ -316,7 +326,7 @@ services.AddSingleton<I<AgentName>Agent, <AgentName>Agent>();
 
 ---
 
-### 1.3 Key Conventions
+### 2.3 Key Conventions
 
 - **Agent name constant** � `AgentName` in the configuration class is used as the DI key for the keyed `IOpenAIClient` and must be unique across all agents.
 - **Keyed `IOpenAIClient`** � Each agent gets its own `IOpenAIClient` instance registered as a keyed singleton, pre-configured with the agent's LLM, provider, temperature, and system prompt. Always resolve it with `[FromKeyedServices(...)]` in the constructor.
@@ -327,7 +337,7 @@ services.AddSingleton<I<AgentName>Agent, <AgentName>Agent>();
 - **Workflow wiring** � Adding a new agent to an existing or new `IWorkflow` implementation is a separate concern. Inject the agent's interface via the workflow constructor and call `ExecuteAsync` as needed within the workflow logic.
 
 
-## 2. Updating existing Agents
+## 3. Updating existing Agents
 This section details the workflows on updating existing agents capabilities
 
 ### Adding/Removing or Changing an agent's feature
@@ -349,7 +359,7 @@ When the user asks to refactor the name of the agent keeping features unchanged,
 - Update the agent's configuration printed at program startup
 
 
-## 3. Removing legacy Agents
+## 4. Removing legacy Agents
 
 When the user asks to remove a no more useful or superseed agent, follow this workflow:
 1. Remove it from `CodeModeWorkflow.cs` first
