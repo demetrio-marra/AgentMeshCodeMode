@@ -1,6 +1,6 @@
 using AgentMesh.Models.ChatMessages;
 
-namespace AgentMesh.Models.AgentMemory
+namespace AgentMesh.Application.Models.AgentMemory
 {
     /// <summary>
     /// Input model for saving conversation messages to the agent's memory.

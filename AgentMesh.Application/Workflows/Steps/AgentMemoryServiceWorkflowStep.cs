@@ -1,7 +1,7 @@
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Services;
-using AgentMesh.Models.AgentMemory;
+using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;

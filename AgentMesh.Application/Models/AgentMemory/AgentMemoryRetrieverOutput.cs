@@ -1,6 +1,7 @@
+using AgentMesh.Models.AgentMemory;
 using AgentMesh.Utils;
 
-namespace AgentMesh.Models.AgentMemory
+namespace AgentMesh.Application.Models.AgentMemory
 {
     /// <summary>
     /// Output of the agent memory retriever, containing the matching memory items.
