@@ -112,13 +112,8 @@ namespace AgentMesh.Services
                     Text = result.Response,
                 });
 
-                // Passiamo l'intera conversazione al workflow.
-                // Quindi i token totali, non devono essere sommati ogni volta,
-                // ma semplicemente aggiornati con i token dell'ultima interazione,
-                // ai quali aggiungeremo quello di output dell'ultima risposta.
-                // In questo modo avremo sempre il conteggio totale dei token in conversazione
-                // senza però il conteggio dei token dell'ultimo messaggio di input.
-                // Potremmo migliorarlo includendo anche l'ultimo messaggio nel context, prima di inviarlo
+                // L'agente iniziale riceve sempre l'intera conversazione, quindi il conteggio dei token di input è relativo all'intera conversazione.
+                // Aggiungiamo il conteggio dei token di output dell'ultima risposta, in modo da avere il conteggio totale dei token in conversazione.
                 conversationContext.TokensCount = inputMessageTokens + outputMessageTokens;
                 conversationContext.Conversation = currentConversation;
 
@@ -186,7 +181,9 @@ namespace AgentMesh.Services
                     var summarizerResult = await summarizerTask;
 
                     conversationContext.Conversation = summarizerResult.NewConversation;
-                    conversationContext.TokensCount = 0; // non fa niente se non è preciso, tanto lo ricalcoliamo al prossimo giro
+
+                    // Dopo la summarization il numero di token in conversazione, corrisponde esattamente al numero di token in output della summarization, perché la conversazione viene sostituita con la nuova conversazione sintetizzata.
+                    conversationContext.TokensCount = summarizerResult.Usage.TokensUsage!.OutputTokens;
 
                     result.UsageStatistics.AddRange(memorySaverUsageEntries);
                     result.UsageStatistics.Add(summarizerResult.Usage);
