@@ -1,9 +1,9 @@
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Utils;
 
-namespace AgentMesh.Models.QueryExpander
+namespace AgentMesh.Models.KnowledgeBaseQueryExpander
 {
-    public class QueryExpanderAgentOutput : IAgentOutput
+    public class KnowledgeBaseQueryExpanderAgentOutput : IAgentOutput
     {
         public IEnumerable<KnowledgeBaseQueryInputItem> SearchQueries { get; set; } = [];
 

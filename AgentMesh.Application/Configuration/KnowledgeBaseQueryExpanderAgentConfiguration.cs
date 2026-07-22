@@ -1,9 +1,9 @@
 namespace AgentMesh.Application.Configuration
 {
-    public class QueryExpanderAgentConfiguration
+    public class KnowledgeBaseQueryExpanderAgentConfiguration
     {
-        public const string SectionName = "Agents:QueryExpander";
-        public const string AgentName = "QueryExpander";
+        public const string SectionName = "Agents:KnowledgeBaseQueryExpander";
+        public const string AgentName = "KnowledgeBaseQueryExpander";
 
         public string LLM { get; set; } = string.Empty;
         public string ModelTemperature { get; set; } = string.Empty;

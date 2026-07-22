@@ -4,7 +4,7 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.KnowledgeBase;
-using AgentMesh.Models.QueryExpander;
+using AgentMesh.Models.KnowledgeBaseQueryExpander;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -12,12 +12,12 @@ using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class QueryExpanderAgent(
-        [FromKeyedServices(QueryExpanderAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+    public class KnowledgeBaseQueryExpanderAgent(
+        [FromKeyedServices(KnowledgeBaseQueryExpanderAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
         Resilience resilience,
-        ILogger<QueryExpanderAgent> logger) : AgentBase<QueryExpanderAgent.ParsedResponse>(logger, QueryExpanderAgentConfiguration.AgentName, openAIClient, resilience)
+        ILogger<KnowledgeBaseQueryExpanderAgent> logger) : AgentBase<KnowledgeBaseQueryExpanderAgent.ParsedResponse>(logger, KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, openAIClient, resilience)
     {
-        private readonly ILogger<QueryExpanderAgent> _logger = logger;
+        private readonly ILogger<KnowledgeBaseQueryExpanderAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];
 
         private static KnowledgeBaseQueryInputItem TranslateKnowledgeBaseQuery(QueryItem query)
@@ -44,8 +44,8 @@ namespace AgentMesh.Application.Services
             };
         }
 
-        public async Task<QueryExpanderAgentOutput> ExecuteAsync(
-            QueryExpanderAgentInput input,
+        public async Task<KnowledgeBaseQueryExpanderAgentOutput> ExecuteAsync(
+            KnowledgeBaseQueryExpanderAgentInput input,
             CancellationToken cancellationToken = default)
         {
             var userPayload = new
@@ -76,7 +76,7 @@ namespace AgentMesh.Application.Services
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            return new QueryExpanderAgentOutput
+            return new KnowledgeBaseQueryExpanderAgentOutput
             {
                 SearchQueries = result.Result.SearchQueries.Select(TranslateKnowledgeBaseQuery).ToList(),
                 InputTokenCount = result.InputTokenCount,

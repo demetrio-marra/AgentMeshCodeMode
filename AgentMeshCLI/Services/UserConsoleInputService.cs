@@ -33,7 +33,7 @@ namespace AgentMesh.Services
         EmbeddingServiceConfiguration embeddingServiceConfiguration,
         AgentMemoryExecutor agentMemorySaver,
         RequestCanonicalizationAgentConfiguration requestCanonicalizationAgentConfiguration,
-        QueryExpanderAgentConfiguration queryExpanderAgentConfiguration,
+        KnowledgeBaseQueryExpanderAgentConfiguration knowledgeBaseQueryExpanderAgentConfiguration,
         RerankerAgentConfiguration rerankerAgentConfiguration)
     {
         private readonly IWorkflow _workflow = workflow;
@@ -57,7 +57,7 @@ namespace AgentMesh.Services
         private readonly EmbeddingServiceConfiguration _embeddingServiceConfiguration = embeddingServiceConfiguration;
         private readonly AgentMemoryExecutor _agentMemorySaver = agentMemorySaver;
         private readonly RequestCanonicalizationAgentConfiguration _requestCanonicalizationAgentConfiguration = requestCanonicalizationAgentConfiguration;
-        private readonly QueryExpanderAgentConfiguration _queryExpanderAgentConfiguration = queryExpanderAgentConfiguration;
+        private readonly KnowledgeBaseQueryExpanderAgentConfiguration _knowledgeBaseQueryExpanderAgentConfiguration = knowledgeBaseQueryExpanderAgentConfiguration;
         private readonly RerankerAgentConfiguration _rerankerAgentConfiguration = rerankerAgentConfiguration;
 
         public async Task Run()
@@ -132,7 +132,7 @@ namespace AgentMesh.Services
                     { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens },
                     { RequestAnalyzerAgent.AgentName, _llmsConfiguration[_requestAnalyzerAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { RequestCanonicalizationAgentConfiguration.AgentName, _llmsConfiguration[_requestCanonicalizationAgentConfiguration.LLM].CostPerMillionInputTokens },
-                    { QueryExpanderAgentConfiguration.AgentName, _llmsConfiguration[_queryExpanderAgentConfiguration.LLM].CostPerMillionInputTokens },
+                    { KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, _llmsConfiguration[_knowledgeBaseQueryExpanderAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { RerankerAgentConfiguration.AgentName, _llmsConfiguration[_rerankerAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { "Embedding Service", _embeddingServiceConfiguration.CostPerMillionTokens }
                 };
@@ -154,7 +154,7 @@ namespace AgentMesh.Services
                     { RelevantFactsEvaluatorAgentConfiguration.AgentName, _llmsConfiguration[_relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens },
                     { RequestAnalyzerAgent.AgentName, _llmsConfiguration[_requestAnalyzerAgentConfiguration.LLM].CostPerMillionOutputTokens },
                     { RequestCanonicalizationAgentConfiguration.AgentName, _llmsConfiguration[_requestCanonicalizationAgentConfiguration.LLM].CostPerMillionOutputTokens },
-                    { QueryExpanderAgentConfiguration.AgentName, _llmsConfiguration[_queryExpanderAgentConfiguration.LLM].CostPerMillionOutputTokens },
+                    { KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, _llmsConfiguration[_knowledgeBaseQueryExpanderAgentConfiguration.LLM].CostPerMillionOutputTokens },
                     { RerankerAgentConfiguration.AgentName, _llmsConfiguration[_rerankerAgentConfiguration.LLM].CostPerMillionOutputTokens }
                 };
 
@@ -356,7 +356,7 @@ namespace AgentMesh.Services
             Console.WriteLine("Sandbox Url: " + _sesJsSandboxConfiguration.SandboxServiceURL + ", SandboxName: " + _sesJsSandboxConfiguration.SandboxName + ", AgentId: " + _userConfiguration.AgentId);
             Console.WriteLine("Agent configurations:");
             ConsoleHelper.PrintAgentConfiguration("Request Analyzer", RequestAnalyzerAgent.AgentName, _requestAnalyzerAgentConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Query Expander", QueryExpanderAgentConfiguration.AgentName, _queryExpanderAgentConfiguration);
+            ConsoleHelper.PrintAgentConfiguration("Knowledge Base Query Expander", KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, _knowledgeBaseQueryExpanderAgentConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Reranker", RerankerAgentConfiguration.AgentName, _rerankerAgentConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Functional Analyst", FunctionalAnalystAgentConfiguration.AgentName, _functionalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Technical Analyst", TechnicalAnalystAgentConfiguration.AgentName, _technicalAnalystConfiguration);

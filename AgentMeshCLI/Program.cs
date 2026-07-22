@@ -354,28 +354,28 @@ namespace AgentMesh
 
             services.AddSingleton<RequestAnalyzerAgent>();
 
-            // QueryExpander agent config and client
+            // KnowledgeBaseQueryExpander agent config and client
             services
-                .AddOptions<QueryExpanderAgentConfiguration>()
-                .Bind(configuration.GetSection(QueryExpanderAgentConfiguration.SectionName))
+                .AddOptions<KnowledgeBaseQueryExpanderAgentConfiguration>()
+                .Bind(configuration.GetSection(KnowledgeBaseQueryExpanderAgentConfiguration.SectionName))
                 .PostConfigure(options =>
                 {
                     options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
                 })
                 .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<QueryExpanderAgentConfiguration>>().Value);
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<KnowledgeBaseQueryExpanderAgentConfiguration>>().Value);
 
-            services.AddKeyedSingleton<IOpenAIClient>(QueryExpanderAgentConfiguration.AgentName, (sp, _) =>
+            services.AddKeyedSingleton<IOpenAIClient>(KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, (sp, _) =>
             {
                 var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<QueryExpanderAgentConfiguration>();
+                var config = sp.GetRequiredService<KnowledgeBaseQueryExpanderAgentConfiguration>();
                 var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
                 var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
                 var systemPrompt = config.SystemPrompt;
                 return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
             });
 
-            services.AddSingleton<QueryExpanderAgent>();
+            services.AddSingleton<KnowledgeBaseQueryExpanderAgent>();
 
             // Reranker agent config and client
             services
@@ -452,7 +452,7 @@ namespace AgentMesh
             services.AddSingleton<DocumentationWorkflowStep>();
             services.AddSingleton<DomainExpertWorkflowStep>();
             services.AddSingleton<RequestAnalyzerWorkflowStep>();
-            services.AddSingleton<QueryExpanderWorkflowStep>();
+            services.AddSingleton<KnowledgeBaseQueryExpanderWorkflowStep>();
             services.AddSingleton<RerankerWorkflowStep>();
 
             services.AddSingleton<IWorkflow, CodeModeWorkflow>();

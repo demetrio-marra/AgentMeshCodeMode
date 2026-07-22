@@ -1,8 +1,8 @@
 using AgentMesh.Models.RequestAnalysis;
 
-namespace AgentMesh.Models.QueryExpander
+namespace AgentMesh.Models.KnowledgeBaseQueryExpander
 {
-    public class QueryExpanderAgentInput
+    public class KnowledgeBaseQueryExpanderAgentInput
     {
         public StructuredUserRequest StructuredUserRequest { get; set; } = new();
 

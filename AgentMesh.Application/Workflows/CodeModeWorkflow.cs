@@ -31,7 +31,7 @@ namespace AgentMesh.Application.Workflows
         CodeFixerForRuntimeErrorsWorkflowStep codeFixerForRuntimeErrorsWorkflowStep,
         DomainExpertWorkflowStep domainExpertWorkflowStep,
         RequestAnalyzerWorkflowStep requestAnalyzerWorkflowStep,
-        QueryExpanderWorkflowStep queryExpanderWorkflowStep,
+        KnowledgeBaseQueryExpanderWorkflowStep knowledgeBaseQueryExpanderWorkflowStep,
         RequestCanonicalizationWorkflowStep requestCanonicalizationWorkflowStep,
         RerankerWorkflowStep rerankerWorkflowStep) : IWorkflow
     {
@@ -54,7 +54,7 @@ namespace AgentMesh.Application.Workflows
         private readonly CodeFixerForRuntimeErrorsWorkflowStep _codeFixerForRuntimeErrorsWorkflowStep = codeFixerForRuntimeErrorsWorkflowStep;
         private readonly DomainExpertWorkflowStep _domainExpertWorkflowStep = domainExpertWorkflowStep;
         private readonly RequestAnalyzerWorkflowStep _requestAnalyzerWorkflowStep = requestAnalyzerWorkflowStep;
-        private readonly QueryExpanderWorkflowStep _queryExpanderWorkflowStep = queryExpanderWorkflowStep;
+        private readonly KnowledgeBaseQueryExpanderWorkflowStep _knowledgeBaseQueryExpanderWorkflowStep = knowledgeBaseQueryExpanderWorkflowStep;
         private readonly RequestCanonicalizationWorkflowStep _requestCanonicalizationWorkflowStep = requestCanonicalizationWorkflowStep;
         private readonly RerankerWorkflowStep _rerankerWorkflowStep = rerankerWorkflowStep;
 
@@ -66,12 +66,14 @@ namespace AgentMesh.Application.Workflows
 
             await _requestAnalyzerWorkflowStep.ExecuteRequestAnalyzerAsync(state, chatHistory);
 
+            // TODO
+
             if (state.UserRequest!.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Other)
             {
                 goto CompleteWorkflow;
             }
 
-            await _queryExpanderWorkflowStep.ExecuteQueryExpanderAsync(state);
+            await _knowledgeBaseQueryExpanderWorkflowStep.ExecuteKnowledgeBaseQueryExpanderAsync(state);
 
             var memoryTask = (_workflowConfiguration.EnableMemoryService && state.PastMemoriesQuery.Any())
                 ? _agentMemoryServiceWorkflowStep.ExecuteAgentMemoryServiceAsync(state)

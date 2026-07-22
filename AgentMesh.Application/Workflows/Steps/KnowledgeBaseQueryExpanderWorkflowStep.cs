@@ -2,7 +2,7 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
-using AgentMesh.Models.QueryExpander;
+using AgentMesh.Models.KnowledgeBaseQueryExpander;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
@@ -10,37 +10,37 @@ using System.Diagnostics;
 
 namespace AgentMesh.Application.Workflows.Steps;
 
-public class QueryExpanderWorkflowStep(
-    ILogger<QueryExpanderWorkflowStep> logger,
+public class KnowledgeBaseQueryExpanderWorkflowStep(
+    ILogger<KnowledgeBaseQueryExpanderWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    QueryExpanderAgent queryExpanderAgent,
+    KnowledgeBaseQueryExpanderAgent knowledgeBaseQueryExpanderAgent,
     CodeModeWorkflowConfiguration workflowConfiguration) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
-    private const string WorkflowStepDisplayName = "Query Expander";
+    private const string WorkflowStepDisplayName = "Knowledge Base Query Expander";
 
-    private readonly ILogger<QueryExpanderWorkflowStep> _logger = logger;
+    private readonly ILogger<KnowledgeBaseQueryExpanderWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
-    private readonly QueryExpanderAgent _queryExpanderAgent = queryExpanderAgent;
+    private readonly KnowledgeBaseQueryExpanderAgent _knowledgeBaseQueryExpanderAgent = knowledgeBaseQueryExpanderAgent;
     private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
 
-    public async Task ExecuteQueryExpanderAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
+    public async Task ExecuteKnowledgeBaseQueryExpanderAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
         var sr = state.UserRequest!;
 
         var stopwatch = Stopwatch.StartNew();
-        _logger.LogDebug("Engaging Query Expander Agent...");
+        _logger.LogDebug("Engaging Knowledge Base Query Expander Agent...");
 
-        var agentInput = new QueryExpanderAgentInput
+        var agentInput = new KnowledgeBaseQueryExpanderAgentInput
         {
             StructuredUserRequest = sr,
             GenerateHydeQueries = sr.IntentCategory == AgentMesh.Models.RequestAnalysis.UserIntentCategory.Documentation,
             DocumentationQueriesGenerationReference = LoadDocumentationQueriesGenerationReference()
         };
 
-        await _workflowProgressNotifier.NotifyWorkflowStepStart("Query Expander Agent", agentInput.ToDictionary());
+        await _workflowProgressNotifier.NotifyWorkflowStepStart("Knowledge Base Query Expander Agent", agentInput.ToDictionary());
 
-        var queryExpanderOutput = await _queryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
+        var queryExpanderOutput = await _knowledgeBaseQueryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
 
         // filter also on return
         var searchQueries = queryExpanderOutput.SearchQueries.ToList();
@@ -50,17 +50,17 @@ public class QueryExpanderWorkflowStep(
         }
 
         state.DomainsKnowledgeBaseQuery = searchQueries;
-        state.AddTokenUsage(QueryExpanderAgentConfiguration.AgentName, queryExpanderOutput.InputTokenCount, queryExpanderOutput.OutputTokenCount, stopwatch.Elapsed, "Query Expander Agent");
+        state.AddTokenUsage(KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, queryExpanderOutput.InputTokenCount, queryExpanderOutput.OutputTokenCount, stopwatch.Elapsed, "Knowledge Base Query Expander Agent");
 
         var notifyDictionary = queryExpanderOutput.ToDictionary();
         notifyDictionary["ELAPSED_TIME"] = WorkflowExecutorFormatting.GetElapsedTime(stopwatch.Elapsed);
-        await _workflowProgressNotifier.NotifyWorkflowStepEnd("Query Expander Agent", notifyDictionary);
+        await _workflowProgressNotifier.NotifyWorkflowStepEnd("Knowledge Base Query Expander Agent", notifyDictionary);
     }
 
     public async Task<WorkflowStepUsageEntry> ExecuteAsync(CodeModeWorkflowState stateObject, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
-        await ExecuteQueryExpanderAsync(stateObject, cancellationToken);
+        await ExecuteKnowledgeBaseQueryExpanderAsync(stateObject, cancellationToken);
 
         return new WorkflowStepUsageEntry
         {
