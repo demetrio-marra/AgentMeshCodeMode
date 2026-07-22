@@ -1,37 +1,13 @@
 ﻿namespace AgentMesh.Models.AgentMemory
 {
     /// <summary>
-    /// A class representing an item in the agent's memory, which can store information, observations, or any relevant data that the agent has encountered during its interactions or operations. Each memory item consists of the content of the memory and an associated confidence score that indicates the reliability or relevance of the information stored in that memory item.
+    /// Represents a memory item that is returned as part of a query result, including its confidence score. 
     /// </summary>
-    public class AgentMemoryQueryResultItem : IEquatable<AgentMemoryQueryResultItem>
+    public class AgentMemoryQueryResultItem : AgentMemoryItem
     {
         /// <summary>
-        /// The content of the memory item, which can be a piece of information, an observation, or any relevant data that the agent has encountered during its interactions or operations.
-        /// </summary>
-        public string Memory { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Gets the confidence score associated with the result.
+        /// The confidence score of the memory item in relation to the query, typically ranging from 0.0 to 1.0.
         /// </summary>
         public double? Confidence { get; set; }
-
-        public bool Equals(AgentMemoryQueryResultItem? other)
-        {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            return string.Equals(Memory, other.Memory, StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        public override bool Equals(object? obj) => Equals(obj as AgentMemoryQueryResultItem);
-
-        public override int GetHashCode() => StringComparer.InvariantCultureIgnoreCase.GetHashCode(Memory);
     }
 }
