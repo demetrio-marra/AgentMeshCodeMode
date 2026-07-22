@@ -1,20 +1,5 @@
-﻿using AgentMesh.Utils;
-
-namespace AgentMesh.Models.KnowledgeBase
+﻿namespace AgentMesh.Models.KnowledgeBase
 {
-    public class KnowledgeBaseGetDocsOutput
-    {
-        public IEnumerable<KnowledgeBaseGetDocsOutputItem> Results { get; set; } = [];
-
-        public Dictionary<string, string> ToDictionary()
-        {
-            return new Dictionary<string, string>
-            {
-                { "Results", Results.Any() ? ListsFormatter.ToBulletList(Results.Select(r => r.File)) : "(No results found)" }
-            };
-        }
-    }
-
     public class KnowledgeBaseGetDocsOutputItem
     {
         /// <summary>

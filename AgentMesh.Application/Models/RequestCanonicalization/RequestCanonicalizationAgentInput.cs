@@ -1,8 +1,8 @@
-using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Utils;
+using AgentMesh.Models.KnowledgeBase;
 
-namespace AgentMesh.Application.Models.RequestCanonicalization
+namespace AgentMesh.Models.RequestCanonicalization
 {
     public class RequestCanonicalizationAgentInput
     {

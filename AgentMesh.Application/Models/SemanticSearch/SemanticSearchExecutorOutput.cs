@@ -1,4 +1,4 @@
-namespace AgentMesh.Models.SemanticSearch
+namespace AgentMesh.Application.Models.SemanticSearch
 {
     /// <summary>
     /// Output of the semantic search executor, containing the retrieved documentation

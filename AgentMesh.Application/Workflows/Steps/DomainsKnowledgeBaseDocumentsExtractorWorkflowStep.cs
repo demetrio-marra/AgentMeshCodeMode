@@ -1,6 +1,6 @@
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Workflows;
-using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using System.Diagnostics;

@@ -8,18 +8,17 @@
 
   <ItemGroup>
     <Compile Remove="Application\**" />
+    <Compile Remove="Models\QueryExpander\**" />
     <Compile Remove="Models\RequirementsCollector\**" />
     <Compile Remove="Models\Router\**" />
     <EmbeddedResource Remove="Application\**" />
+    <EmbeddedResource Remove="Models\QueryExpander\**" />
     <EmbeddedResource Remove="Models\RequirementsCollector\**" />
     <EmbeddedResource Remove="Models\Router\**" />
     <None Remove="Application\**" />
+    <None Remove="Models\QueryExpander\**" />
     <None Remove="Models\RequirementsCollector\**" />
     <None Remove="Models\Router\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Models\QueryExpander\" />
   </ItemGroup>
 
 </Project>

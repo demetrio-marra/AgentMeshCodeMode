@@ -1,6 +1,6 @@
 using AgentMesh.Utils;
 
-namespace AgentMesh.Models.SemanticSearch
+namespace AgentMesh.Application.Models.SemanticSearch
 {
     /// <summary>
     /// Input for the semantic search executor, containing the actionable requirements to search for

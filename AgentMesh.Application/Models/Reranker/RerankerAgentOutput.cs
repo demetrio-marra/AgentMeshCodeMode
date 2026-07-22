@@ -1,6 +1,6 @@
 using AgentMesh.Models;
-using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Utils;
+using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Models.Reranker
 {

@@ -2,11 +2,11 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
-using AgentMesh.Application.Models.RequestCanonicalization;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using AgentMesh.Models.RequestCanonicalization;
 
 namespace AgentMesh.Application.Workflows.Steps;
 

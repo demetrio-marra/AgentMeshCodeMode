@@ -3,12 +3,12 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.KnowledgeBaseQueryExpander;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Services
 {

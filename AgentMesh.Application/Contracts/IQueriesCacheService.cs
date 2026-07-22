@@ -1,4 +1,5 @@
-﻿using AgentMesh.Models.KnowledgeBase;
+﻿using AgentMesh.Application.Models.QueriesCache;
+using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.QueriesCache;
 
 namespace AgentMesh.Application.Contracts

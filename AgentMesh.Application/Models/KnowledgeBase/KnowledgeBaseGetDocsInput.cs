@@ -1,6 +1,6 @@
 ﻿using AgentMesh.Utils;
 
-namespace AgentMesh.Models.KnowledgeBase
+namespace AgentMesh.Application.Models.KnowledgeBase
 {
     public class KnowledgeBaseGetDocsInput
     {

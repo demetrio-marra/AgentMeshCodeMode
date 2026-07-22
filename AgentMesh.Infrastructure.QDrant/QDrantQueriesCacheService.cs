@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models.QueriesCache;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.QueriesCache;
 using Microsoft.Extensions.Logging;
@@ -294,8 +295,8 @@ namespace AgentMesh.Infrastructure.QDrant
             return new QDrantQueriesCacheItem
             {
                 Query = item.FoundQuery,
-                QueryKind = MapQueryTypeToKind(item.FoundQueryType),
-                QueryType = item.FoundQueryType,
+                QueryKind = item.SearchedQueryType,
+                QueryType = MapKindToQueryType(item.FoundQueryType),
                 DocumentId = item.DocumentId,
                 DocumentTitle = item.DocumentTitle,
                 DocumentSummary = item.DocumentSummary,
@@ -323,9 +324,9 @@ namespace AgentMesh.Infrastructure.QDrant
             return new KnowledgeBaseQueriesCacheItem
             {
                 FoundQuery = item.Query,
-                FoundQueryType = item.QueryType ?? MapKindToQueryType(item.QueryKind),
+                FoundQueryType = item.QueryKind,
                 SearchedQuery = searchedQuery,
-                SearchedQueryType = searchedQueryType,
+                SearchedQueryType = searchedQueryType.ToString(),
                 DocumentId = item.DocumentId,
                 DocumentTitle = item.DocumentTitle,
                 DocumentSummary = item.DocumentSummary,

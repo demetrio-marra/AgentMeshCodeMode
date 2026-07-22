@@ -1,7 +1,6 @@
 ﻿using AgentMesh.Models.ChatMessages;
-using AgentMesh.Utils;
 
-namespace AgentMesh.Models.RequestAnalysis
+namespace AgentMesh.Application.Models.RequestAnalysis
 {
     public class RequestAnalyzerAgentInput
     {

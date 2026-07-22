@@ -1,6 +1,7 @@
-﻿using AgentMesh.Utils;
+﻿using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Utils;
 
-namespace AgentMesh.Models.KnowledgeBase
+namespace AgentMesh.Application.Models.KnowledgeBase
 {
     public class KnowledgeBaseQueryInput
     {
@@ -17,24 +18,5 @@ namespace AgentMesh.Models.KnowledgeBase
                 { "User Intent", UserIntent ?? "(No user intent provided)" }
             };
         }
-    }
-
-    public class KnowledgeBaseQueryInputItem
-    {
-        public string Query { get; set; } = string.Empty;
-        public KnowledgeBaseQuerySearchType SearchType { get; set; }
-
-        public override string ToString()
-        {
-            return $"{Query} [{SearchType}]";
-        }
-    }
-
-    public enum KnowledgeBaseQuerySearchType
-    {
-        Keyword,
-        Semantic,
-        HypotheticalDocument
-
     }
 }

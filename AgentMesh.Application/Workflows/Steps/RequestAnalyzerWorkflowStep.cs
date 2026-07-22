@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Services;
 using AgentMesh.Models.ChatMessages;
+using AgentMesh.Application.Models.RequestAnalysis;
 
 namespace AgentMesh.Application.Workflows.Steps;
 
@@ -25,7 +26,7 @@ public class RequestAnalyzerWorkflowStep(
         var stopwatch = Stopwatch.StartNew();
         _logger.LogDebug("Engaging Request Analyzer Agent...");
 
-        var agentInput = new AgentMesh.Models.RequestAnalysis.RequestAnalyzerAgentInput
+        var agentInput = new RequestAnalyzerAgentInput
         {
             ContextMessages = [.. state.InitialContextMessages],
             UserLastRequest = state.UserLastRequest

@@ -1,17 +1,14 @@
-using AgentMesh.Models.KnowledgeBase;
-
 namespace AgentMesh.Models.QueriesCache
 {
     public class KnowledgeBaseQueriesCacheItem
     {
         public string FoundQuery { get; set; } = string.Empty;
 
-        public KnowledgeBaseQuerySearchType FoundQueryType { get; set; }
+        public string FoundQueryType { get; set; } = string.Empty;
 
         public string SearchedQuery { get; set; } = string.Empty;
 
-        public KnowledgeBaseQuerySearchType SearchedQueryType { get; set; }
-
+        public string SearchedQueryType { get; set; } = string.Empty;
         /// <summary>
         /// The unique identifier of the knowledge base entry.
         /// </summary>

@@ -1,7 +1,8 @@
-using AgentMesh.Models.KnowledgeBase;
-using AgentMesh.Models.QueriesCache;
+using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Models.QueriesCache;
 
 namespace AgentMesh.Application.Workflows.Steps;
 
@@ -36,7 +37,7 @@ public static class KnowledgeBaseCacheUsageBuilder
                 cacheItems.Add(new KnowledgeBaseQueriesCacheItem
                 {
                     FoundQuery = query.Query,
-                    FoundQueryType = query.SearchType,
+                    FoundQueryType = query.SearchType.ToString(),
                     DocumentId = result.Id,
                     DocumentFile = result.File,
                     DocumentTitle = result.Title,

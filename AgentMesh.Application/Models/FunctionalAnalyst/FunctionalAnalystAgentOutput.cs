@@ -1,5 +1,5 @@
 using AgentMesh.Models;
-using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Application.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Models.FunctionalAnalyst
 {

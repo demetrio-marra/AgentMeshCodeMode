@@ -1,13 +1,13 @@
 using AgentMesh.Models;
-using AgentMesh.Models.KnowledgeBase;
-using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Utils;
+using AgentMesh.Models.RequestAnalysis;
+using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Models.RequestCanonicalization
 {
     public class RequestCanonicalizationAgentOutput : IAgentOutput
     {
-        public AgentMesh.Models.RequestAnalysis.StructuredUserRequest CanonicalizedStructuredUserRequest { get; set; } = new();
+        public StructuredUserRequest CanonicalizedStructuredUserRequest { get; set; } = new();
         public UserIntentCategory CanonicalizedIntentCategory { get; set; }
         public IEnumerable<KnowledgeBaseQueryInputItem> CanonicalizedDomainsKnowledgeBaseQuery { get; set; } = [];
 

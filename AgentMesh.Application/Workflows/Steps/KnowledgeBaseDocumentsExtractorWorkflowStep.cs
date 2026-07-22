@@ -1,7 +1,7 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Services;
-using AgentMesh.Application.Workflows;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;

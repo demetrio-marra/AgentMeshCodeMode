@@ -4,11 +4,11 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Utils;
 using AgentMesh.Application.Models.Coder;
-using AgentMesh.Models.KnowledgeBase;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Services
 {

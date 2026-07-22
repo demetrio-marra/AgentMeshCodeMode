@@ -1,4 +1,6 @@
-namespace AgentMesh.Models.QueriesCache
+using AgentMesh.Models.QueriesCache;
+
+namespace AgentMesh.Application.Models.QueriesCache
 {
     public class KnowledgeBaseQueriesCacheResult
     {
