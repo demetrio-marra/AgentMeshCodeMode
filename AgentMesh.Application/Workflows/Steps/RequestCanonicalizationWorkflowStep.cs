@@ -2,7 +2,7 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
-using AgentMesh.Models.RequestCanonicalization;
+using AgentMesh.Application.Models.RequestCanonicalization;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;

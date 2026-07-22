@@ -1,6 +1,6 @@
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.CodeExecutionFailuresDetector;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;

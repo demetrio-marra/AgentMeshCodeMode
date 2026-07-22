@@ -1,4 +1,4 @@
-﻿using AgentMesh.Models.CodeSandbox;
+using AgentMesh.Application.Models.CodeSandbox;
 
 namespace AgentMesh.Application.Contracts
 {

@@ -5,7 +5,7 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Application.Models.AgentMemory;
-using AgentMesh.Models.RelevantFactsEvaluator;
+using AgentMesh.Application.Models.RelevantFactsEvaluator;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Models.ChatMessages;
 

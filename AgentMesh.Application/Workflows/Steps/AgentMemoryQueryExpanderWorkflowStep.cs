@@ -1,8 +1,8 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
+using AgentMesh.Application.Models.AgentMemoryQueryExpander;
 using AgentMesh.Application.Services;
-using AgentMesh.Models.AgentMemoryQueryExpander;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;

@@ -3,7 +3,7 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
-using AgentMesh.Models.CodeFixer;
+using AgentMesh.Application.Models.CodeFixer;
 using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;

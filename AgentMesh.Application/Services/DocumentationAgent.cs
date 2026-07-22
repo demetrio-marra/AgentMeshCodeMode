@@ -2,7 +2,7 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.Documentation;
+using AgentMesh.Application.Models.Documentation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;

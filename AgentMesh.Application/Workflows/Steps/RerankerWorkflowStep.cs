@@ -3,7 +3,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Models.KnowledgeBase;
-using AgentMesh.Models.Reranker;
+using AgentMesh.Application.Models.Reranker;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;

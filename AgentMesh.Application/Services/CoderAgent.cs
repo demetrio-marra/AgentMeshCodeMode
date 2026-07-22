@@ -3,7 +3,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.Coder;
+using AgentMesh.Application.Models.Coder;
 using AgentMesh.Models.KnowledgeBase;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

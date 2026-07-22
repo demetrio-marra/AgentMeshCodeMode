@@ -3,7 +3,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Workflows;
-using AgentMesh.Models.DomainExpert;
+using AgentMesh.Application.Models.DomainExpert;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;

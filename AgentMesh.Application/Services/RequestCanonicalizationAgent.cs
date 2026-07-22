@@ -5,7 +5,7 @@ using AgentMesh.Application.Models;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RequestAnalysis;
-using AgentMesh.Models.RequestCanonicalization;
+using AgentMesh.Application.Models.RequestCanonicalization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;

@@ -4,7 +4,7 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.KnowledgeBase;
-using AgentMesh.Models.Reranker;
+using AgentMesh.Application.Models.Reranker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
