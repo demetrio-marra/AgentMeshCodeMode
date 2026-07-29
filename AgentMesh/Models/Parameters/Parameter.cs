@@ -12,8 +12,6 @@ namespace AgentMesh.Models.Parameters
 
         public string? RawValue { get; set; }
 
-        public bool IsSystemProvided { get; set; }
-
         public Func<string?, string> GetDisplayValue { get; set; } = (rawValue) => rawValue ?? NoDisplayValue;
 
         public string ValueForLLM => string.IsNullOrWhiteSpace(RawValue) ? NoValueForLLM : RawValue;
