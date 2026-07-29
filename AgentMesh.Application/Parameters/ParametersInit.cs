@@ -6,14 +6,18 @@ namespace AgentMesh.Application.Parameters
 {
     public static class ParametersInit
     {
-        public static IEnumerable<Parameter> InitParameters()
+        private static Parameter InitUserIntentParameter()
         {
             var userIntentParameter = new Parameter
             {
                 Name = "User intent",
                 IsSystemProvided = false
             };
+            return userIntentParameter;
+        }
 
+        private static Parameter InitKnowledgeBaseQueryResultsParameter()
+        {
             var knowledgeBaseQueryResultsParameter = new Parameter
             {
                 Name = "Knowledge base query results",
@@ -39,11 +43,15 @@ namespace AgentMesh.Application.Parameters
                     }
                 }
             };
+            return knowledgeBaseQueryResultsParameter;
+        }
 
+        public static IEnumerable<Parameter> InitParameters()
+        {
             var parameters = new List<Parameter>
             {
-                userIntentParameter,
-                knowledgeBaseQueryResultsParameter
+                InitUserIntentParameter(),
+                InitKnowledgeBaseQueryResultsParameter()
             };
 
             return parameters;
