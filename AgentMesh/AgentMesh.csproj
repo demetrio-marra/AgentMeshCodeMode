@@ -21,8 +21,4 @@
     <None Remove="Models\Router\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\Parameters\" />
-  </ItemGroup>
-
 </Project>
