@@ -5,17 +5,59 @@ using AgentMesh.Models.ChatMessages;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Parameters;
 using AgentMesh.Models.RequestAnalysis;
+using AgentMesh.Services;
 using AgentMesh.Utils;
 
-namespace AgentMesh.Application.Parameters
+namespace AgentMesh.Application.Services
 {
-    public static class ParametersInit
+    public class CodeModeWorkflowParametersFactory : IEasyWorkflowParametersFactory
     {
+        public const string UserLastRequestParameterName = "User last request";
+        public const string InitialContextMessagesParameterName = "Initial context messages";
+        public const string UserIntentParameterName = "User intent";
+        public const string IntentCategoryParameterName = "Intent category";
+        public const string LanguageOfTheUserParameterName = "Language of the user";
+        public const string ConversationTopicParameterName = "Conversation topic";
+        public const string UserPreferencesParameterName = "User preferences";
+        public const string UserProvidedDataParameterName = "User provided data";
+        public const string UserRequestedActionsParameterName = "User requested actions";
+        public const string KnowledgeBaseAPIDocumentsContentParameterName = "API knowledge base documents";
+        public const string PastMemoriesQueryParameterName = "Past memories query";
+        public const string DomainsKnowledgeBaseQueryParameterName = "Domain knowledge base queries";
+        public const string PastMemoriesQueryResultsParameterName = "Past memories query results";
+        public const string KnowledgeBaseQueryResultsParameterName = "Knowledge base query results";
+        public const string DomainsKnowledgeBaseDocumentsContentParameterName = "Domain knowledge base documents";
+        public const string BusinessRequirementsParameterName = "Business requirements";
+        public const string FunctionalAnalystRejectedParameterName = "Functional analyst rejected";
+        public const string FunctionalAnalystRejectReasonsParameterName = "Functional analyst reject reasons";
+        public const string TechnicalSpecificationParameterName = "Technical specification";
+        public const string TechnicalAnalystRejectedParameterName = "Technical analyst rejected";
+        public const string TechnicalAnalystRejectReasonsParameterName = "Technical analyst reject reasons";
+        public const string ShouldEngageCoderParameterName = "Should engage coder";
+        public const string APISKnowledgeBaseQueryResultsParameterName = "API knowledge base query results";
+        public const string SelectedAPIsFileLocationsParameterName = "Selected API file locations";
+        public const string DocumentationContentParameterName = "Documentation content";
+        public const string GeneratedCodeParameterName = "Generated code";
+        public const string LastCodeWithLineNumbersParameterName = "Generated code with line numbers";
+        public const string CodeExecutionFailuresDetectorIterationCountParameterName = "Code execution failures detector iteration count";
+        public const string CodeExecutionAnalysisParameterName = "Code execution analysis";
+        public const string SandboxResultParameterName = "Sandbox result";
+        public const string SandboxExecutionIdParameterName = "Sandbox execution id";
+        public const string CodeExecutionResultTypeParameterName = "Code execution result type";
+        public const string ExecutionErrorParameterName = "Execution error";
+        public const string DomainExpertOutputParameterName = "Domain expert output";
+        public const string PersonalAssistantOpeningSentenceParameterName = "Personal assistant opening sentence";
+        public const string PersonalAssistantClosingSentenceParameterName = "Personal assistant closing sentence";
+        public const string PersonalAssistantConvenienceErrorSentenceParameterName = "Personal assistant convenience error sentence";
+        public const string FinalAnswerParameterName = "Final answer";
+
+
         private static Parameter InitUserLastRequestParameter()
         {
             var userLastRequestParameter = new Parameter
             {
-                Name = "User last request"                
+                Name = UserLastRequestParameterName,
+                IsUserCurrentRequestParameter = true
             };
             return userLastRequestParameter;
         }
@@ -24,8 +66,9 @@ namespace AgentMesh.Application.Parameters
         {
             var initialContextMessagesParameter = new Parameter
             {
-                Name = "Initial context messages",
-                GetDisplayValue = GetContextMessagesDisplayValue
+                Name = InitialContextMessagesParameterName,
+                GetDisplayValue = GetContextMessagesDisplayValue,
+                IsConversationHistoryParameter = true
             };
             return initialContextMessagesParameter;
         }
@@ -34,7 +77,7 @@ namespace AgentMesh.Application.Parameters
         {
             var userIntentParameter = new Parameter
             {
-                Name = "User intent"                
+                Name = UserIntentParameterName                
             };
             return userIntentParameter;
         }
@@ -43,7 +86,7 @@ namespace AgentMesh.Application.Parameters
         {
             var intentCategoryParameter = new Parameter
             {
-                Name = "Intent category",
+                Name = IntentCategoryParameterName,
                 GetDisplayValue = GetIntentCategoryDisplayValue
             };
             return intentCategoryParameter;
@@ -53,7 +96,7 @@ namespace AgentMesh.Application.Parameters
         {
             var languageOfTheUserParameter = new Parameter
             {
-                Name = "Language of the user"
+                Name = LanguageOfTheUserParameterName
             };
             return languageOfTheUserParameter;
         }
@@ -62,7 +105,7 @@ namespace AgentMesh.Application.Parameters
         {
             var conversationTopicParameter = new Parameter
             {
-                Name = "Conversation topic"
+                Name = ConversationTopicParameterName
             };
             return conversationTopicParameter;
         }
@@ -71,7 +114,7 @@ namespace AgentMesh.Application.Parameters
         {
             var userPreferencesParameter = new Parameter
             {
-                Name = "User preferences",
+                Name = UserPreferencesParameterName,
                 GetDisplayValue = GetStringEnumerableDisplayValue
             };
             return userPreferencesParameter;
@@ -81,7 +124,7 @@ namespace AgentMesh.Application.Parameters
         {
             var userProvidedDataParameter = new Parameter
             {
-                Name = "User provided data",
+                Name = UserProvidedDataParameterName,
                 GetDisplayValue = GetStringEnumerableDisplayValue
             };
             return userProvidedDataParameter;
@@ -91,7 +134,7 @@ namespace AgentMesh.Application.Parameters
         {
             var userRequestedActionsParameter = new Parameter
             {
-                Name = "User requested actions",
+                Name = UserRequestedActionsParameterName,
                 GetDisplayValue = GetStringEnumerableDisplayValue
             };
             return userRequestedActionsParameter;
@@ -101,7 +144,7 @@ namespace AgentMesh.Application.Parameters
         {
             var knowledgeBaseAPIDocumentsContentParameter = new Parameter
             {
-                Name = "API knowledge base documents",
+                Name = KnowledgeBaseAPIDocumentsContentParameterName,
                 GetDisplayValue = GetKnowledgeBaseDocumentsContentDisplayValue
             };
             return knowledgeBaseAPIDocumentsContentParameter;
@@ -111,7 +154,7 @@ namespace AgentMesh.Application.Parameters
         {
             var pastMemoriesQueryParameter = new Parameter
             {
-                Name = "Past memories query",
+                Name = PastMemoriesQueryParameterName,
                 GetDisplayValue = GetAgentMemoryItemsDisplayValue
             };
             return pastMemoriesQueryParameter;
@@ -121,7 +164,7 @@ namespace AgentMesh.Application.Parameters
         {
             var domainsKnowledgeBaseQueryParameter = new Parameter
             {
-                Name = "Domain knowledge base queries",
+                Name = DomainsKnowledgeBaseQueryParameterName,
                 GetDisplayValue = GetKnowledgeBaseQueryInputItemsDisplayValue
             };
             return domainsKnowledgeBaseQueryParameter;
@@ -131,7 +174,7 @@ namespace AgentMesh.Application.Parameters
         {
             var pastMemoriesQueryResultsParameter = new Parameter
             {
-                Name = "Past memories query results",
+                Name = PastMemoriesQueryResultsParameterName,
                 GetDisplayValue = GetAgentMemoryQueryResultsDisplayValue
             };
             return pastMemoriesQueryResultsParameter;
@@ -141,7 +184,7 @@ namespace AgentMesh.Application.Parameters
         {
             var knowledgeBaseQueryResultsParameter = new Parameter
             {
-                Name = "Knowledge base query results",
+                Name = KnowledgeBaseQueryResultsParameterName,
                 GetDisplayValue = GetKnowledgeBaseQueryResultsDisplayValue
             };
             return knowledgeBaseQueryResultsParameter;
@@ -151,7 +194,7 @@ namespace AgentMesh.Application.Parameters
         {
             var domainsKnowledgeBaseDocumentsContentParameter = new Parameter
             {
-                Name = "Domain knowledge base documents",
+                Name = DomainsKnowledgeBaseDocumentsContentParameterName,
                 GetDisplayValue = GetKnowledgeBaseDocumentsContentDisplayValue
             };
             return domainsKnowledgeBaseDocumentsContentParameter;
@@ -161,7 +204,7 @@ namespace AgentMesh.Application.Parameters
         {
             var businessRequirementsParameter = new Parameter
             {
-                Name = "Business requirements"
+                Name = BusinessRequirementsParameterName
             };
             return businessRequirementsParameter;
         }
@@ -170,7 +213,7 @@ namespace AgentMesh.Application.Parameters
         {
             var functionalAnalystRejectedParameter = new Parameter
             {
-                Name = "Functional analyst rejected",
+                Name = FunctionalAnalystRejectedParameterName,
                 GetDisplayValue = GetBooleanDisplayValue
             };
             return functionalAnalystRejectedParameter;
@@ -180,7 +223,7 @@ namespace AgentMesh.Application.Parameters
         {
             var functionalAnalystRejectReasonsParameter = new Parameter
             {
-                Name = "Functional analyst reject reasons"
+                Name = FunctionalAnalystRejectReasonsParameterName
             };
             return functionalAnalystRejectReasonsParameter;
         }
@@ -189,7 +232,7 @@ namespace AgentMesh.Application.Parameters
         {
             var technicalSpecificationParameter = new Parameter
             {
-                Name = "Technical specification"
+                Name = TechnicalSpecificationParameterName
             };
             return technicalSpecificationParameter;
         }
@@ -198,7 +241,7 @@ namespace AgentMesh.Application.Parameters
         {
             var technicalAnalystRejectedParameter = new Parameter
             {
-                Name = "Technical analyst rejected",
+                Name = TechnicalAnalystRejectedParameterName,
                 GetDisplayValue = GetBooleanDisplayValue
             };
             return technicalAnalystRejectedParameter;
@@ -208,7 +251,7 @@ namespace AgentMesh.Application.Parameters
         {
             var technicalAnalystRejectReasonsParameter = new Parameter
             {
-                Name = "Technical analyst reject reasons"
+                Name = TechnicalAnalystRejectReasonsParameterName
             };
             return technicalAnalystRejectReasonsParameter;
         }
@@ -217,7 +260,7 @@ namespace AgentMesh.Application.Parameters
         {
             var shouldEngageCoderParameter = new Parameter
             {
-                Name = "Should engage coder",
+                Name = ShouldEngageCoderParameterName,
                 GetDisplayValue = GetBooleanDisplayValue
             };
             return shouldEngageCoderParameter;
@@ -227,7 +270,7 @@ namespace AgentMesh.Application.Parameters
         {
             var apisKnowledgeBaseQueryResultsParameter = new Parameter
             {
-                Name = "API knowledge base query results",
+                Name = APISKnowledgeBaseQueryResultsParameterName,
                 GetDisplayValue = GetKnowledgeBaseQueryResultsDisplayValue
             };
             return apisKnowledgeBaseQueryResultsParameter;
@@ -237,7 +280,7 @@ namespace AgentMesh.Application.Parameters
         {
             var selectedAPIsFileLocationsParameter = new Parameter
             {
-                Name = "Selected API file locations",
+                Name = SelectedAPIsFileLocationsParameterName,
                 GetDisplayValue = GetStringEnumerableDisplayValue
             };
             return selectedAPIsFileLocationsParameter;
@@ -247,7 +290,7 @@ namespace AgentMesh.Application.Parameters
         {
             var documentationContentParameter = new Parameter
             {
-                Name = "Documentation content"
+                Name = DocumentationContentParameterName
             };
             return documentationContentParameter;
         }
@@ -256,7 +299,7 @@ namespace AgentMesh.Application.Parameters
         {
             var generatedCodeParameter = new Parameter
             {
-                Name = "Generated code"
+                Name = GeneratedCodeParameterName
             };
             return generatedCodeParameter;
         }
@@ -265,7 +308,7 @@ namespace AgentMesh.Application.Parameters
         {
             var lastCodeWithLineNumbersParameter = new Parameter
             {
-                Name = "Generated code with line numbers"
+                Name = LastCodeWithLineNumbersParameterName
             };
             return lastCodeWithLineNumbersParameter;
         }
@@ -274,7 +317,7 @@ namespace AgentMesh.Application.Parameters
         {
             var codeExecutionFailuresDetectorIterationCountParameter = new Parameter
             {
-                Name = "Code execution failures detector iteration count",
+                Name = CodeExecutionFailuresDetectorIterationCountParameterName,
                 GetDisplayValue = GetInt32DisplayValue
             };
             return codeExecutionFailuresDetectorIterationCountParameter;
@@ -284,7 +327,7 @@ namespace AgentMesh.Application.Parameters
         {
             var codeExecutionAnalysisParameter = new Parameter
             {
-                Name = "Code execution analysis"
+                Name = CodeExecutionAnalysisParameterName
             };
             return codeExecutionAnalysisParameter;
         }
@@ -293,7 +336,7 @@ namespace AgentMesh.Application.Parameters
         {
             var sandboxResultParameter = new Parameter
             {
-                Name = "Sandbox result"
+                Name = SandboxResultParameterName
             };
             return sandboxResultParameter;
         }
@@ -302,7 +345,7 @@ namespace AgentMesh.Application.Parameters
         {
             var sandboxExecutionIdParameter = new Parameter
             {
-                Name = "Sandbox execution id"
+                Name = SandboxExecutionIdParameterName
             };
             return sandboxExecutionIdParameter;
         }
@@ -311,7 +354,7 @@ namespace AgentMesh.Application.Parameters
         {
             var codeExecutionResultTypeParameter = new Parameter
             {
-                Name = "Code execution result type",
+                Name = CodeExecutionResultTypeParameterName,
                 GetDisplayValue = GetSandboxResultTypeDisplayValue
             };
             return codeExecutionResultTypeParameter;
@@ -321,7 +364,7 @@ namespace AgentMesh.Application.Parameters
         {
             var executionErrorParameter = new Parameter
             {
-                Name = "Execution error",
+                Name = ExecutionErrorParameterName,
                 GetDisplayValue = GetBooleanDisplayValue
             };
             return executionErrorParameter;
@@ -331,7 +374,7 @@ namespace AgentMesh.Application.Parameters
         {
             var domainExpertOutputParameter = new Parameter
             {
-                Name = "Domain expert output"
+                Name = DomainExpertOutputParameterName
             };
             return domainExpertOutputParameter;
         }
@@ -340,7 +383,7 @@ namespace AgentMesh.Application.Parameters
         {
             var personalAssistantOpeningSentenceParameter = new Parameter
             {
-                Name = "Personal assistant opening sentence"
+                Name = PersonalAssistantOpeningSentenceParameterName
             };
             return personalAssistantOpeningSentenceParameter;
         }
@@ -349,7 +392,7 @@ namespace AgentMesh.Application.Parameters
         {
             var personalAssistantClosingSentenceParameter = new Parameter
             {
-                Name = "Personal assistant closing sentence"
+                Name = PersonalAssistantClosingSentenceParameterName
             };
             return personalAssistantClosingSentenceParameter;
         }
@@ -358,7 +401,7 @@ namespace AgentMesh.Application.Parameters
         {
             var personalAssistantConvenienceErrorSentenceParameter = new Parameter
             {
-                Name = "Personal assistant convenience error sentence"
+                Name = PersonalAssistantConvenienceErrorSentenceParameterName
             };
             return personalAssistantConvenienceErrorSentenceParameter;
         }
@@ -367,12 +410,13 @@ namespace AgentMesh.Application.Parameters
         {
             var finalAnswerParameter = new Parameter
             {
-                Name = "Final answer"
+                Name = FinalAnswerParameterName,
+                IsResponseForUserParameter = true
             };
             return finalAnswerParameter;
         }
 
-        public static IEnumerable<Parameter> InitParameters()
+        private static IEnumerable<Parameter> InitParameters()
         {
             var parameters = new List<Parameter>
             {
@@ -585,6 +629,11 @@ namespace AgentMesh.Application.Parameters
             }
 
             return ListsFormatter.ToBulletList(files);
+        }
+
+        public IEnumerable<Parameter> CreateParameters()
+        {
+            return InitParameters();
         }
     }
 }
