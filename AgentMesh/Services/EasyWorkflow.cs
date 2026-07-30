@@ -68,7 +68,8 @@ namespace AgentMesh.Services
         private async Task<WorkflowStepStatisticsRecord> RunStep(IEasyWorkflowStep step)
         {
             // 2. estraggo i parametri di input che servono allo step
-            var stepInputParameters = _easyWorkflowParametersProvider.GetParameters(step.RequiredParameterNames);
+            var requiredParameterNames = step.RequiredParameterNames.Select(p => p.Name).ToList();
+            var stepInputParameters = _easyWorkflowParametersProvider.GetParameters(requiredParameterNames);
 
             // TODO: invia al progress i parametri di input per la visualizzazione
 

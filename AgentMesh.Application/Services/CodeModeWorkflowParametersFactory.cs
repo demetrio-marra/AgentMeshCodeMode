@@ -41,8 +41,8 @@ namespace AgentMesh.Application.Services
         public const string LastCodeWithLineNumbersParameterName = "Generated code with line numbers";
         public const string CodeExecutionFailuresDetectorIterationCountParameterName = "Code execution failures detector iteration count";
         public const string CodeExecutionAnalysisParameterName = "Code execution analysis";
-        public const string SandboxResultParameterName = "Sandbox result";
-        public const string SandboxExecutionIdParameterName = "Sandbox execution id";
+        public const string SandboxResultParameterName = "Code execution result";
+        public const string SandboxExecutionIdParameterName = "Code execution id";
         public const string CodeExecutionResultTypeParameterName = "Code execution result type";
         public const string ExecutionErrorParameterName = "Execution error";
         public const string DomainExpertOutputParameterName = "Domain expert output";

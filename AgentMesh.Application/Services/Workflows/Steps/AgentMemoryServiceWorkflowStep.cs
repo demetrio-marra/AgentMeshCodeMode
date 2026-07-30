@@ -12,7 +12,7 @@ namespace AgentMesh.Application.Services.Workflows.Steps;
 public partial class AgentMemoryServiceWorkflowStep(
     ILogger<AgentMemoryServiceWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    AgentMemoryExecutor agentMemoryRetriever) : IWorkflowStep<CodeModeWorkflowState>, IEasyWorkflowStep
+    AgentMemoryExecutor agentMemoryRetriever) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Agent Memory Service";
 
@@ -65,6 +65,7 @@ public partial class AgentMemoryServiceWorkflowStep : IEasyWorkflowStep
 {
     public string Name { get => WorkflowStepDisplayName; }
     public bool IsAgentic { get => false; }
+    public string? AgentName { get => null; }
     public bool IsInputStep { get => false; }
     public bool IsOutputStep { get => false; }
 
@@ -76,7 +77,7 @@ public partial class AgentMemoryServiceWorkflowStep : IEasyWorkflowStep
         {
             return await Task.FromResult(new WorkflowStepResultRecord
             {
-                OutputParameters = Array.Empty<ParameterRecord>()
+                OutputParameters = new Dictionary<string, string?>()
             });
         }
         var agentInput = new AgentMemoryRetrieverInput
@@ -90,19 +91,15 @@ public partial class AgentMemoryServiceWorkflowStep : IEasyWorkflowStep
         
         return new WorkflowStepResultRecord
         {
-            OutputParameters = new List<ParameterRecord>
+            OutputParameters = new Dictionary<string, string?>
             {
-                new ParameterRecord
-                {
-                    Name = CodeModeWorkflowParametersFactory.PastMemoriesQueryResultsParameterName,
-                    RawValue = string.Join(", ", retrievedMemories),
-                    ValueForLLM = string.Join(", ", retrievedMemories),
-                    DisplayValue = string.Join(", ", retrievedMemories)
-                }
+                { CodeModeWorkflowParametersFactory.PastMemoriesQueryResultsParameterName, string.Join(", ", retrievedMemories) }
             }
         };
     }
 
-    public IEnumerable<string> RequiredParameterNames { get => [CodeModeWorkflowParametersFactory.PastMemoriesQueryParameterName]; }
+    public IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames { get => [
+        new(CodeModeWorkflowParametersFactory.PastMemoriesQueryParameterName, false)
+        ]; }
 }
 
