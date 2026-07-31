@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Services
 {
@@ -67,5 +68,12 @@ namespace AgentMesh.Application.Services
         }
 
         protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
+
+        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
+        {
+            return [
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.DocumentationContentParameterName, ParseStructuredResponse(rawResponseText)),
+            ];
+        }
     }
 }

@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Services
 {
@@ -73,6 +74,13 @@ namespace AgentMesh.Application.Services
                 _logger.LogWarning(ex, "Failed to deserialize relevant facts evaluator response. Response text: {ResponseText}", rawResponseText);
                 throw new BadStructuredResponseException(rawResponseText, "Failed to parse the model's response as a JSON array of user messages.", ex);
             }
+        }
+
+        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
+        {
+            return [
+                CreateOutputParameter("Relevant user messages", ParseStructuredResponse(rawResponseText)),
+            ];
         }
     }
 }

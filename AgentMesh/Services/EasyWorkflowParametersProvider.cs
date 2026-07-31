@@ -57,11 +57,12 @@ namespace AgentMesh.Services
             }
         }
 
-        public void SetParameterValue<T>(string name, T value)
+        public void SetParameterValue<T>(string name, T? value)
         {
             if (value == null)
             {
-                throw new ArgumentNullException(nameof(value), "Value cannot be null.");
+                SetParameterValue(name, null);
+                return;
             }
 
             var stringifiedParameter = JsonSerializer.Serialize(value, SerializationUtils.DefaultSerializeOptions);

@@ -11,6 +11,7 @@ using AgentMesh.Models.RequestCanonicalization;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Services
 {
@@ -203,6 +204,21 @@ namespace AgentMesh.Application.Services
 
             [JsonPropertyName("query")]
             public string Query { get; set; } = string.Empty;
+        }
+
+        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
+        {
+            var parsedResponse = ParseStructuredResponse(rawResponseText);
+
+            return [
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.UserIntentParameterName, parsedResponse.Intent),
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.IntentCategoryParameterName, parsedResponse.CanonicalizedIntentCategory.ToString()),
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.ConversationTopicParameterName, parsedResponse.ConversationTopic),
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.UserRequestedActionsParameterName, parsedResponse.UserRequestedActions),
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.UserProvidedDataParameterName, parsedResponse.UserProvidedData),
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.UserPreferencesParameterName, parsedResponse.UserPreferences),
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.DomainsKnowledgeBaseQueryParameterName, parsedResponse.CanonicalizedQueries),
+            ];
         }
     }
 }

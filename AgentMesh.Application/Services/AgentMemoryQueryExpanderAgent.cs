@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Services
 {
@@ -71,6 +72,13 @@ namespace AgentMesh.Application.Services
         {
             [JsonPropertyName("searchQueries")]
             public IEnumerable<string> SearchQueries { get; set; } = [];
+        }
+
+        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
+        {
+            return [
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.PastMemoriesQueryParameterName, ParseStructuredResponse(rawResponseText).SearchQueries),
+            ];
         }
     }
 }

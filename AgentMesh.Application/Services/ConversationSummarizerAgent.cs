@@ -3,6 +3,8 @@ using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.ConversationSummarization;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.ChatMessages;
+using AgentMesh.Models.Parameters;
+using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -77,5 +79,12 @@ namespace AgentMesh.Application.Services
         }
 
         protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
+
+        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
+        {
+            return [
+                CreateOutputParameter("Summary", ParseStructuredResponse(rawResponseText)),
+            ];
+        }
     }
 }

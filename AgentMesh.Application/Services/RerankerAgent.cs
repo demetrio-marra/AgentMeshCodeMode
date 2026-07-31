@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Services
 {
@@ -152,6 +153,13 @@ namespace AgentMesh.Application.Services
         {
             public string RankId { get; set; } = string.Empty;
             public KnowledgeBaseQueryResultItem Item { get; set; } = new();
+        }
+
+        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
+        {
+            return [
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.KnowledgeBaseQueryResultsParameterName, ParseStructuredResponse(rawResponseText)),
+            ];
         }
     }
 }

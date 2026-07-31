@@ -41,11 +41,6 @@ namespace AgentMesh.Models.Parameters
             return JsonSerializer.Deserialize<T>(rawValue, SerializationUtils.DefaultDeserializeOptions);
         }
 
-        public void SetValue<T>(T value)
-        {
-            RawValue = JsonSerializer.Serialize(value, SerializationUtils.DefaultSerializeOptions);
-        }
-
         public ParameterRecord ToParameterRecord()     
         {
             return new ParameterRecord(Name, RawValue, ValueForLLM, GetDisplayValue(RawValue));

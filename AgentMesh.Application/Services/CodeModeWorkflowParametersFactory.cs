@@ -21,6 +21,7 @@ namespace AgentMesh.Application.Services
         public const string UserPreferencesParameterName = "User preferences";
         public const string UserProvidedDataParameterName = "User provided data";
         public const string UserRequestedActionsParameterName = "User requested actions";
+        public const string MissingValuesParameterName = "Missing values";
         public const string KnowledgeBaseAPIDocumentsContentParameterName = "API knowledge base documents";
         public const string PastMemoriesQueryParameterName = "Past memories query";
         public const string DomainsKnowledgeBaseQueryParameterName = "Domain knowledge base queries";
@@ -138,6 +139,16 @@ namespace AgentMesh.Application.Services
                 GetDisplayValue = GetStringEnumerableDisplayValue
             };
             return userRequestedActionsParameter;
+        }
+
+        private static Parameter InitMissingValuesParameter()
+        {
+            var parameter = new Parameter
+            {
+                Name = MissingValuesParameterName,
+                GetDisplayValue = GetStringEnumerableDisplayValue
+            };
+            return parameter;
         }
 
         private static Parameter InitKnowledgeBaseAPIDocumentsContentParameter()
@@ -429,6 +440,7 @@ namespace AgentMesh.Application.Services
                 InitUserPreferencesParameter(),
                 InitUserProvidedDataParameter(),
                 InitUserRequestedActionsParameter(),
+                InitMissingValuesParameter(),
                 InitKnowledgeBaseAPIDocumentsContentParameter(),
                 InitPastMemoriesQueryParameter(),
                 InitDomainsKnowledgeBaseQueryParameter(),

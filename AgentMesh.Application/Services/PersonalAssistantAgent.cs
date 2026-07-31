@@ -4,6 +4,8 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.PersonalAssistant;
 using AgentMesh.Application.Utils;
+using AgentMesh.Models.Parameters;
+using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -109,6 +111,17 @@ namespace AgentMesh.Application.Services
 
             [JsonPropertyName("convenienceErrorSentence")]
             public string? ConvenienceErrorSentence { get; set; }
+        }
+
+        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
+        {
+            var parsedResponse = ParseStructuredResponse(rawResponseText);
+
+            return [
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.PersonalAssistantOpeningSentenceParameterName, parsedResponse.OpeningSentence),
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.PersonalAssistantClosingSentenceParameterName, parsedResponse.ClosingSentence),
+                CreateOutputParameter(CodeModeWorkflowParametersFactory.PersonalAssistantConvenienceErrorSentenceParameterName, parsedResponse.ConvenienceErrorSentence),
+            ];
         }
     }
 }
