@@ -33,5 +33,10 @@ namespace AgentMesh.Models.Workflows
         /// By default, it serializes the object to JSON using the default serialization options.
         /// </summary>
         public Func<object?, string> SerializeForVisualization { get; init; } = (ob) => ob == null ? NoDataPlaceholder : JsonSerializer.Serialize(ob, SerializationUtils.DefaultSerializeOptions);
+
+        public EWDisplayParameterRecord ToDisplayParameterRecord()
+        {
+            return new EWDisplayParameterRecord(Name, SerializeForVisualization(ParameterValue));
+        }
     }
 }
