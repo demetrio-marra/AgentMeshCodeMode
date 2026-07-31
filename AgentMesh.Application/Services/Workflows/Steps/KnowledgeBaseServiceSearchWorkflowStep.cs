@@ -10,7 +10,7 @@ using System.Diagnostics;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public class KnowledgeBaseServiceSearchWorkflowStep(
+public partial class KnowledgeBaseServiceSearchWorkflowStep(
     ILogger<KnowledgeBaseServiceSearchWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     KnowledgeBaseExecutor knowledgeBaseSearchExecutor) : IWorkflowStep<CodeModeWorkflowState>
@@ -78,6 +78,47 @@ public class KnowledgeBaseServiceSearchWorkflowStep(
             StepName = WorkflowStepDisplayName,
             Elapsed = stopwatch.Elapsed,
             IsAgentic = false
+        };
+    }
+}
+
+public partial class KnowledgeBaseServiceSearchWorkflowStep : EasyWorkflowStepBase
+{
+    public override string Name => WorkflowStepDisplayName;
+
+    public override bool IsAgentic => false;
+
+    public override bool IsInputStep => false;
+
+    public override bool IsOutputStep => false;
+
+    public override string? AgentName => null;
+
+    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
+        new(CodeModeWorkflowParametersFactory.UserIntentParameterName, false),
+        new(CodeModeWorkflowParametersFactory.DomainsKnowledgeBaseQueryParameterName, false)
+    ];
+
+    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
+    {
+        var userIntent = inputParameters.FirstOrDefault(p => p.Name == CodeModeWorkflowParametersFactory.UserIntentParameterName).RawValue ?? string.Empty;
+        var queriesValue = inputParameters.FirstOrDefault(p => p.Name == CodeModeWorkflowParametersFactory.DomainsKnowledgeBaseQueryParameterName).RawValue ?? string.Empty;
+
+        KnowledgeBaseQueryInput queryInput = new()
+        {
+            Collections = ["domains"],
+            UserIntent = userIntent,
+            Queries = []
+        };
+
+        var brcOutput = await _knowledgeBaseSearchExecutor.QueryAsync(queryInput, cancellationToken);
+
+        return new WorkflowStepResultRecord
+        {
+            OutputParameters = new Dictionary<string, string?>
+            {
+                { CodeModeWorkflowParametersFactory.KnowledgeBaseQueryResultsParameterName, string.Join(", ", brcOutput.Results.Select(r => r.File)) }
+            }
         };
     }
 }

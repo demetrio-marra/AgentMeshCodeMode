@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public class DomainsKnowledgeBaseServiceSearchWorkflowStep(
+public partial class DomainsKnowledgeBaseServiceSearchWorkflowStep(
     KnowledgeBaseServiceSearchWorkflowStep knowledgeBaseServiceSearchWorkflowExecutor) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string DomainsDocumentationCollectionName = "domains";
@@ -35,6 +35,29 @@ public class DomainsKnowledgeBaseServiceSearchWorkflowStep(
             Elapsed = stopwatch.Elapsed,
             IsAgentic = false
         };
+    }
+}
+
+public partial class DomainsKnowledgeBaseServiceSearchWorkflowStep : EasyWorkflowStepBase
+{
+    public override string Name => WorkflowStepDisplayName;
+
+    public override bool IsAgentic => false;
+
+    public override bool IsInputStep => false;
+
+    public override bool IsOutputStep => false;
+
+    public override string? AgentName => null;
+
+    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
+        new(CodeModeWorkflowParametersFactory.UserIntentParameterName, false),
+        new(CodeModeWorkflowParametersFactory.DomainsKnowledgeBaseQueryParameterName, false)
+    ];
+
+    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
+    {
+        return await _knowledgeBaseServiceSearchWorkflowExecutor.ExecuteAsync(inputParameters, cancellationToken);
     }
 }
 

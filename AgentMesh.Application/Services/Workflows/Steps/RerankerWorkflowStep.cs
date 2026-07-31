@@ -11,16 +11,18 @@ using AgentMesh.Application.Models.Workflows;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public class RerankerWorkflowStep(
+public partial class RerankerWorkflowStep(
     ILogger<RerankerWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    RerankerAgent rerankerAgent) : IWorkflowStep<CodeModeWorkflowState>
+    RerankerAgent rerankerAgent,
+    IAgentSelector agentSelector) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Reranker";
 
     private readonly ILogger<RerankerWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly RerankerAgent _rerankerAgent = rerankerAgent;
+    private readonly IAgentSelector _agentSelector = agentSelector;
 
     public async Task ExecuteRerankerAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
@@ -65,6 +67,43 @@ public class RerankerWorkflowStep(
             StepName = WorkflowStepDisplayName,
             Elapsed = stopwatch.Elapsed,
             IsAgentic = false
+        };
+    }
+}
+
+public partial class RerankerWorkflowStep : EasyWorkflowStepBase
+{
+    public override string Name => WorkflowStepDisplayName;
+
+    public override bool IsAgentic => true;
+
+    public override bool IsInputStep => false;
+
+    public override bool IsOutputStep => false;
+
+    public override string? AgentName => RerankerAgentConfiguration.AgentName;
+
+    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
+        new(CodeModeWorkflowParametersFactory.UserIntentParameterName, false),
+        new(CodeModeWorkflowParametersFactory.KnowledgeBaseQueryResultsParameterName, false)
+    ];
+
+    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
+    {
+        var agentInput = ToAgentInputParameters(inputParameters);
+
+        var agent = _agentSelector.GetAgent(AgentName!);
+        var agentOutput = await agent.ExecuteAsync(agentInput, cancellationToken);
+
+        return new WorkflowStepResultRecord
+        {
+            OutputParameters = agentOutput.OutputParameters.ToDictionary(p => p.Name, p => p.Value),
+            AgentTokenUsageEntry = new AgentTokenUsageEntry
+            {
+                AgentName = RerankerAgentConfiguration.AgentName,
+                InputTokens = agentOutput.InputTokens,
+                OutputTokens = agentOutput.OutputTokens
+            }
         };
     }
 }

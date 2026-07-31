@@ -10,7 +10,7 @@ using AgentMesh.Application.Models.Workflows;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public class JSSandboxWorkflowStep(
+public partial class JSSandboxWorkflowStep(
     ILogger<JSSandboxWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     JSSandboxExecutor jsSandboxExecutor) : IWorkflowStep<CodeModeWorkflowState>
@@ -96,6 +96,69 @@ public class JSSandboxWorkflowStep(
             StepName = WorkflowStepDisplayName,
             Elapsed = stopwatch.Elapsed,
             IsAgentic = false
+        };
+    }
+}
+
+public partial class JSSandboxWorkflowStep : EasyWorkflowStepBase
+{
+    public override string Name => WorkflowStepDisplayName;
+
+    public override bool IsAgentic => false;
+
+    public override bool IsInputStep => false;
+
+    public override bool IsOutputStep => false;
+
+    public override string? AgentName => null;
+
+    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
+        new(CodeModeWorkflowParametersFactory.GeneratedCodeParameterName, false)
+    ];
+
+    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
+    {
+        var codeParameter = inputParameters.FirstOrDefault(p => p.Name == CodeModeWorkflowParametersFactory.GeneratedCodeParameterName);
+        var code = codeParameter.RawValue ?? string.Empty;
+
+        string? sandboxResult = null;
+        string? sandboxExecutionId = null;
+        string? codeExecutionResultType = null;
+
+        try
+        {
+            var executionOutput = await _jsSandboxExecutor.ExecuteAsync(new CodeSandboxInput
+            {
+                Code = code
+            });
+            sandboxResult = executionOutput.Result;
+            sandboxExecutionId = executionOutput.ExecutionId;
+            codeExecutionResultType = SandboxResultType.Success.ToString();
+        }
+        catch (CodeSandboxCallException ex)
+        {
+            sandboxResult = ex.Message;
+            codeExecutionResultType = ex.ErrorType switch
+            {
+                "CodeSyntaxError" => SandboxResultType.SyntaxError.ToString(),
+                "InvalidRequest" => SandboxResultType.CallError.ToString(),
+                _ => SandboxResultType.ApplicationError.ToString()
+            };
+        }
+        catch (Exception ex)
+        {
+            sandboxResult = ex.Message;
+            codeExecutionResultType = SandboxResultType.ApplicationError.ToString();
+        }
+
+        return new WorkflowStepResultRecord
+        {
+            OutputParameters = new Dictionary<string, string?>
+            {
+                { CodeModeWorkflowParametersFactory.SandboxResultParameterName, sandboxResult },
+                { CodeModeWorkflowParametersFactory.SandboxExecutionIdParameterName, sandboxExecutionId },
+                { CodeModeWorkflowParametersFactory.CodeExecutionResultTypeParameterName, codeExecutionResultType }
+            }
         };
     }
 }

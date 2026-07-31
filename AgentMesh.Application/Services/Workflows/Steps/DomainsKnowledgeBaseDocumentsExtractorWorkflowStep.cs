@@ -6,7 +6,7 @@ using System.Diagnostics;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public class DomainsKnowledgeBaseDocumentsExtractorWorkflowStep(
+public partial class DomainsKnowledgeBaseDocumentsExtractorWorkflowStep(
     KnowledgeBaseDocumentsExtractorWorkflowStep knowledgeBaseDocumentsExtractorWorkflowExecutor) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Domains Knowledge Base Documents Extractor";
@@ -47,6 +47,28 @@ public class DomainsKnowledgeBaseDocumentsExtractorWorkflowStep(
             Elapsed = stopwatch.Elapsed,
             IsAgentic = false
         };
+    }
+}
+
+public partial class DomainsKnowledgeBaseDocumentsExtractorWorkflowStep : EasyWorkflowStepBase
+{
+    public override string Name => WorkflowStepDisplayName;
+
+    public override bool IsAgentic => false;
+
+    public override bool IsInputStep => false;
+
+    public override bool IsOutputStep => false;
+
+    public override string? AgentName => null;
+
+    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
+        new(CodeModeWorkflowParametersFactory.KnowledgeBaseQueryResultsParameterName, false)
+    ];
+
+    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
+    {
+        return await _knowledgeBaseDocumentsExtractorWorkflowExecutor.ExecuteAsync(inputParameters, cancellationToken);
     }
 }
 

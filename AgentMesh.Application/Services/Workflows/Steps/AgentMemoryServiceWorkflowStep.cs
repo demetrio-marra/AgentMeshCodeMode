@@ -61,16 +61,16 @@ public partial class AgentMemoryServiceWorkflowStep(
 }
 
 
-public partial class AgentMemoryServiceWorkflowStep : IEasyWorkflowStep
+public partial class AgentMemoryServiceWorkflowStep : EasyWorkflowStepBase
 {
-    public string Name { get => WorkflowStepDisplayName; }
-    public bool IsAgentic { get => false; }
-    public string? AgentName { get => null; }
-    public bool IsInputStep { get => false; }
-    public bool IsOutputStep { get => false; }
+    public override string Name { get => WorkflowStepDisplayName; }
+    public override bool IsAgentic { get => false; }
+    public override string? AgentName { get => null; }
+    public override bool IsInputStep { get => false; }
+    public override bool IsOutputStep { get => false; }
 
 
-    public async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
+    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
     {
         var queriesList = inputParameters.FirstOrDefault(n => n.Name == CodeModeWorkflowParametersFactory.PastMemoriesQueryParameterName).RawValue;
         if (string.IsNullOrEmpty(queriesList))
@@ -98,7 +98,7 @@ public partial class AgentMemoryServiceWorkflowStep : IEasyWorkflowStep
         };
     }
 
-    public IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames { get => [
+    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames { get => [
         new(CodeModeWorkflowParametersFactory.PastMemoriesQueryParameterName, false)
         ]; }
 }

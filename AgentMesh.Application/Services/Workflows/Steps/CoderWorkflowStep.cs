@@ -11,16 +11,18 @@ using AgentMesh.Application.Models.Workflows;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public class CoderWorkflowStep(
+public partial class CoderWorkflowStep(
     ILogger<CoderWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    CoderAgent coderAgent) : IWorkflowStep<CodeModeWorkflowState>
+    CoderAgent coderAgent,
+    IAgentSelector agentSelector) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Coder";
 
     private readonly ILogger<CoderWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly CoderAgent _coderAgent = coderAgent;
+    private readonly IAgentSelector _agentSelector = agentSelector;
 
     public async Task ExecuteCoderAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
@@ -62,6 +64,45 @@ public class CoderWorkflowStep(
             StepName = WorkflowStepDisplayName,
             Elapsed = stopwatch.Elapsed,
             IsAgentic = false
+        };
+    }
+}
+
+public partial class CoderWorkflowStep : EasyWorkflowStepBase
+{
+    public override string Name => WorkflowStepDisplayName;
+
+    public override bool IsAgentic => true;
+
+    public override bool IsInputStep => false;
+
+    public override bool IsOutputStep => false;
+
+    public override string? AgentName => CoderAgentConfiguration.AgentName;
+
+    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
+        new(CodeModeWorkflowParametersFactory.BusinessRequirementsParameterName, false),
+        new(CodeModeWorkflowParametersFactory.TechnicalSpecificationParameterName, false),
+        new(CodeModeWorkflowParametersFactory.SelectedAPIsFileLocationsParameterName, false),
+        new(CodeModeWorkflowParametersFactory.KnowledgeBaseAPIDocumentsContentParameterName, true)
+    ];
+
+    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
+    {
+        var agentInput = ToAgentInputParameters(inputParameters);
+
+        var agent = _agentSelector.GetAgent(AgentName!);
+        var agentOutput = await agent.ExecuteAsync(agentInput, cancellationToken);
+
+        return new WorkflowStepResultRecord
+        {
+            OutputParameters = agentOutput.OutputParameters.ToDictionary(p => p.Name, p => p.Value),
+            AgentTokenUsageEntry = new AgentTokenUsageEntry
+            {
+                AgentName = CoderAgentConfiguration.AgentName,
+                InputTokens = agentOutput.InputTokens,
+                OutputTokens = agentOutput.OutputTokens
+            }
         };
     }
 }

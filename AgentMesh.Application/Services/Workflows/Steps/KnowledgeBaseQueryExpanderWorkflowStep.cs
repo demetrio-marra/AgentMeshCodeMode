@@ -10,11 +10,12 @@ using AgentMesh.Application.Models.Workflows;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public class KnowledgeBaseQueryExpanderWorkflowStep(
+public partial class KnowledgeBaseQueryExpanderWorkflowStep(
     ILogger<KnowledgeBaseQueryExpanderWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     KnowledgeBaseQueryExpanderAgent knowledgeBaseQueryExpanderAgent,
-    CodeModeWorkflowConfiguration workflowConfiguration) : IWorkflowStep<CodeModeWorkflowState>
+    CodeModeWorkflowConfiguration workflowConfiguration,
+    IAgentSelector agentSelector) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
     private const string WorkflowStepDisplayName = "Knowledge Base Query Expander";
@@ -23,6 +24,7 @@ public class KnowledgeBaseQueryExpanderWorkflowStep(
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly KnowledgeBaseQueryExpanderAgent _knowledgeBaseQueryExpanderAgent = knowledgeBaseQueryExpanderAgent;
     private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
+    private readonly IAgentSelector _agentSelector = agentSelector;
 
     public async Task ExecuteKnowledgeBaseQueryExpanderAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
@@ -91,5 +93,44 @@ public class KnowledgeBaseQueryExpanderWorkflowStep(
 
         _logger.LogWarning("Unable to locate QMD query types prompt file '{FileName}' in expected paths.", QmdQueryTypesFileName);
         return null;
+    }
+}
+
+public partial class KnowledgeBaseQueryExpanderWorkflowStep : EasyWorkflowStepBase
+{
+    public override string Name => WorkflowStepDisplayName;
+
+    public override bool IsAgentic => true;
+
+    public override bool IsInputStep => false;
+
+    public override bool IsOutputStep => false;
+
+    public override string? AgentName => KnowledgeBaseQueryExpanderAgentConfiguration.AgentName;
+
+    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
+        new(CodeModeWorkflowParametersFactory.UserIntentParameterName, false),
+        new(CodeModeWorkflowParametersFactory.IntentCategoryParameterName, false),
+        new(CodeModeWorkflowParametersFactory.UserRequestedActionsParameterName, false),
+        new(CodeModeWorkflowParametersFactory.UserProvidedDataParameterName, false)
+    ];
+
+    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
+    {
+        var agentInput = ToAgentInputParameters(inputParameters);
+
+        var agent = _agentSelector.GetAgent(AgentName!);
+        var agentOutput = await agent.ExecuteAsync(agentInput, cancellationToken);
+
+        return new WorkflowStepResultRecord
+        {
+            OutputParameters = agentOutput.OutputParameters.ToDictionary(p => p.Name, p => p.Value),
+            AgentTokenUsageEntry = new AgentTokenUsageEntry
+            {
+                AgentName = KnowledgeBaseQueryExpanderAgentConfiguration.AgentName,
+                InputTokens = agentOutput.InputTokens,
+                OutputTokens = agentOutput.OutputTokens
+            }
+        };
     }
 }

@@ -9,16 +9,18 @@ using AgentMesh.Application.Models.Workflows;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public class CodeExecutionFailuresDetectorWorkflowStep(
+public partial class CodeExecutionFailuresDetectorWorkflowStep(
     ILogger<CodeExecutionFailuresDetectorWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    JavascriptCodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent) : IWorkflowStep<CodeModeWorkflowState>
+    JavascriptCodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent,
+    IAgentSelector agentSelector) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Code Execution Failures Detector";
 
     private readonly ILogger<CodeExecutionFailuresDetectorWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly JavascriptCodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
+    private readonly IAgentSelector _agentSelector = agentSelector;
 
     public async Task ExecuteCodeExecutionFailuresDetectorAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
@@ -53,6 +55,43 @@ public class CodeExecutionFailuresDetectorWorkflowStep(
             StepName = WorkflowStepDisplayName,
             Elapsed = stopwatch.Elapsed,
             IsAgentic = false
+        };
+    }
+}
+
+public partial class CodeExecutionFailuresDetectorWorkflowStep : EasyWorkflowStepBase
+{
+    public override string Name => WorkflowStepDisplayName;
+
+    public override bool IsAgentic => true;
+
+    public override bool IsInputStep => false;
+
+    public override bool IsOutputStep => false;
+
+    public override string? AgentName => CodeExecutionFailuresDetectorAgentConfiguration.AgentName;
+
+    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
+        new(CodeModeWorkflowParametersFactory.LastCodeWithLineNumbersParameterName, false),
+        new(CodeModeWorkflowParametersFactory.SandboxResultParameterName, false)
+    ];
+
+    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
+    {
+        var agentInput = ToAgentInputParameters(inputParameters);
+
+        var agent = _agentSelector.GetAgent(AgentName!);
+        var agentOutput = await agent.ExecuteAsync(agentInput, cancellationToken);
+
+        return new WorkflowStepResultRecord
+        {
+            OutputParameters = agentOutput.OutputParameters.ToDictionary(p => p.Name, p => p.Value),
+            AgentTokenUsageEntry = new AgentTokenUsageEntry
+            {
+                AgentName = CodeExecutionFailuresDetectorAgentConfiguration.AgentName,
+                InputTokens = agentOutput.InputTokens,
+                OutputTokens = agentOutput.OutputTokens
+            }
         };
     }
 }

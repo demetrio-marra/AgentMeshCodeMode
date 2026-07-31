@@ -10,7 +10,7 @@ using System.Diagnostics;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public class KnowledgeBaseDocumentsExtractorWorkflowStep(
+public partial class KnowledgeBaseDocumentsExtractorWorkflowStep(
     ILogger<KnowledgeBaseDocumentsExtractorWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     KnowledgeBaseExecutor knowledgeBaseGetDocsExecutor) : IWorkflowStep<CodeModeWorkflowState>
@@ -94,6 +94,48 @@ public class KnowledgeBaseDocumentsExtractorWorkflowStep(
             StepName = WorkflowStepDisplayName,
             Elapsed = stopwatch.Elapsed,
             IsAgentic = false
+        };
+    }
+}
+
+public partial class KnowledgeBaseDocumentsExtractorWorkflowStep : EasyWorkflowStepBase
+{
+    public override string Name => WorkflowStepDisplayName;
+
+    public override bool IsAgentic => false;
+
+    public override bool IsInputStep => false;
+
+    public override bool IsOutputStep => false;
+
+    public override string? AgentName => null;
+
+    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
+        new(CodeModeWorkflowParametersFactory.KnowledgeBaseQueryResultsParameterName, false)
+    ];
+
+    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
+    {
+        var queryResultsValue = inputParameters.FirstOrDefault(p => p.Name == CodeModeWorkflowParametersFactory.KnowledgeBaseQueryResultsParameterName).RawValue ?? string.Empty;
+        var filePaths = queryResultsValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+        var fetchedFilesContent = await _knowledgeBaseGetDocsExecutor.GetDocsAsync(new KnowledgeBaseGetDocsInput
+        {
+            FilePaths = filePaths
+        }, cancellationToken);
+
+        var documents = fetchedFilesContent.Results
+            .Where(doc => !string.IsNullOrWhiteSpace(doc.File))
+            .GroupBy(doc => doc.File!)
+            .Select(g => new KnowledgeBaseDocumentContent { File = g.Key, Content = g.First().Content })
+            .ToList();
+
+        return new WorkflowStepResultRecord
+        {
+            OutputParameters = new Dictionary<string, string?>
+            {
+                { CodeModeWorkflowParametersFactory.DomainsKnowledgeBaseDocumentsContentParameterName, string.Join(", ", documents.Select(d => d.File)) }
+            }
         };
     }
 }
