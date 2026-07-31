@@ -69,7 +69,7 @@ namespace AgentMesh.Services
             SetParameterValue(name, stringifiedParameter);
         }
 
-        public void SetParameters(Dictionary<string, string> updatedParameters)
+        public void SetParameters(Dictionary<string, string?> updatedParameters)
         {
             foreach (var record in updatedParameters)
             {

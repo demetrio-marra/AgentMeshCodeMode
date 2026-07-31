@@ -80,11 +80,12 @@ namespace AgentMesh.Services
             var stepResult = await step.ExecuteAsync(stepInputParameters);
 
             var stepEndTime = DateTime.UtcNow;
-            var parametersAfterSnapshot = _easyWorkflowParametersProvider.GetParameters();
 
             // 4. aggiorno i parametri con il risultato dello step
             _easyWorkflowParametersProvider.SetParameters(stepResult.OutputParameters);
             // TODO: invia al progress i parametri aggiornati per la visualizzazione
+
+            var parametersAfterSnapshot = _easyWorkflowParametersProvider.GetParameters();
 
             // 5. compilo le statistiche di esecuzione dello step (token usage, ecc.) e le salvo in un registro di esecuzione
             var stepStatistics = new WorkflowStepStatisticsRecord
