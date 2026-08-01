@@ -1,4 +1,6 @@
-﻿namespace AgentMesh.Models.Workflows
+﻿using AgentMesh.Services;
+
+namespace AgentMesh.Models.Workflows
 {
     public interface IEWParameter
     {
@@ -10,8 +12,8 @@
 
         bool IsResponseForUserParameter { get; }
 
-        string DisplayValue { get; }
+        IEWParameterSerializer DisplayValueSerializer { get; }
 
-        string? RawSerializedValue { get; }
+        IEWParameterSerializer Serializer { get; }
     }
 }

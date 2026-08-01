@@ -1,11 +1,11 @@
 using AgentMesh.Application.Models.CodeSandbox;
 using AgentMesh.Application.Models.KnowledgeBase;
-using AgentMesh.Application.Utils;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.ChatMessages;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.Workflows;
+using AgentMesh.Services;
 
 namespace AgentMesh.Application.Models.Workflows.Parameters
 {
@@ -20,11 +20,11 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
 
     public sealed class InitialContextMessagesParameter : EWParameter<IEnumerable<ContextMessage>>
     {
-        public InitialContextMessagesParameter()
+        public InitialContextMessagesParameter(IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.InitialContextMessages;
-            SerializeForVisualization = EWParameterDisplayUtils.GetContextMessagesDisplayValue;
             IsConversationHistoryParameter = true;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
@@ -41,7 +41,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public IntentCategoryParameter()
         {
             Name = EWParameterNames.IntentCategory;
-            SerializeForVisualization = EWParameterDisplayUtils.GetIntentCategoryDisplayValue;
         }
     }
 
@@ -66,7 +65,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public UserPreferencesParameter()
         {
             Name = EWParameterNames.UserPreferences;
-            SerializeForVisualization = EWParameterDisplayUtils.GetStringEnumerableDisplayValue;
         }
     }
 
@@ -75,7 +73,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public UserProvidedDataParameter()
         {
             Name = EWParameterNames.UserProvidedData;
-            SerializeForVisualization = EWParameterDisplayUtils.GetStringEnumerableDisplayValue;
         }
     }
 
@@ -84,7 +81,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public UserRequestedActionsParameter()
         {
             Name = EWParameterNames.UserRequestedActions;
-            SerializeForVisualization = EWParameterDisplayUtils.GetStringEnumerableDisplayValue;
         }
     }
 
@@ -93,61 +89,60 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public MissingValuesParameter()
         {
             Name = EWParameterNames.MissingValues;
-            SerializeForVisualization = EWParameterDisplayUtils.GetStringEnumerableDisplayValue;
         }
     }
 
     public sealed class KnowledgeBaseAPIDocumentsContentParameter : EWParameter<IEnumerable<KnowledgeBaseDocumentContent>>
     {
-        public KnowledgeBaseAPIDocumentsContentParameter()
+        public KnowledgeBaseAPIDocumentsContentParameter(IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.KnowledgeBaseAPIDocumentsContent;
-            SerializeForVisualization = EWParameterDisplayUtils.GetKnowledgeBaseDocumentsContentDisplayValue;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
     public sealed class PastMemoriesQueryParameter : EWParameter<IEnumerable<AgentMemoryItem>>
     {
-        public PastMemoriesQueryParameter()
+        public PastMemoriesQueryParameter(IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.PastMemoriesQuery;
-            SerializeForVisualization = EWParameterDisplayUtils.GetAgentMemoryItemsDisplayValue;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
     public sealed class DomainsKnowledgeBaseQueryParameter : EWParameter<IEnumerable<KnowledgeBaseQueryInputItem>>
     {
-        public DomainsKnowledgeBaseQueryParameter()
+        public DomainsKnowledgeBaseQueryParameter(IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.DomainsKnowledgeBaseQuery;
-            SerializeForVisualization = EWParameterDisplayUtils.GetKnowledgeBaseQueryInputItemsDisplayValue;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
     public sealed class PastMemoriesQueryResultsParameter : EWParameter<IEnumerable<AgentMemoryQueryResultItem>>
     {
-        public PastMemoriesQueryResultsParameter()
+        public PastMemoriesQueryResultsParameter(IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.PastMemoriesQueryResults;
-            SerializeForVisualization = EWParameterDisplayUtils.GetAgentMemoryQueryResultsDisplayValue;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
     public sealed class KnowledgeBaseQueryResultsParameter : EWParameter<IEnumerable<KnowledgeBaseQueryResultItem>>
     {
-        public KnowledgeBaseQueryResultsParameter()
+        public KnowledgeBaseQueryResultsParameter(IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.KnowledgeBaseQueryResults;
-            SerializeForVisualization = EWParameterDisplayUtils.GetKnowledgeBaseQueryResultsDisplayValue;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
     public sealed class DomainsKnowledgeBaseDocumentsContentParameter : EWParameter<IEnumerable<KnowledgeBaseDocumentContent>>
     {
-        public DomainsKnowledgeBaseDocumentsContentParameter()
+        public DomainsKnowledgeBaseDocumentsContentParameter(IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.DomainsKnowledgeBaseDocumentsContent;
-            SerializeForVisualization = EWParameterDisplayUtils.GetKnowledgeBaseDocumentsContentDisplayValue;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
@@ -164,7 +159,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public FunctionalAnalystRejectedParameter()
         {
             Name = EWParameterNames.FunctionalAnalystRejected;
-            SerializeForVisualization = EWParameterDisplayUtils.GetBooleanDisplayValue;
         }
     }
 
@@ -184,12 +178,11 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         }
     }
 
-    public sealed class TechnicalAnalystRejectedParameter : EWParameter<bool?>
+    public sealed class TechnicalAnalystRejectedParameter : EWParameter<bool>
     {
         public TechnicalAnalystRejectedParameter()
         {
             Name = EWParameterNames.TechnicalAnalystRejected;
-            SerializeForVisualization = EWParameterDisplayUtils.GetBooleanDisplayValue;
         }
     }
 
@@ -201,21 +194,20 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         }
     }
 
-    public sealed class ShouldEngageCoderParameter : EWParameter<bool?>
+    public sealed class ShouldEngageCoderParameter : EWParameter<bool>
     {
         public ShouldEngageCoderParameter()
         {
             Name = EWParameterNames.ShouldEngageCoder;
-            SerializeForVisualization = EWParameterDisplayUtils.GetBooleanDisplayValue;
         }
     }
 
     public sealed class APISKnowledgeBaseQueryResultsParameter : EWParameter<IEnumerable<KnowledgeBaseQueryResultItem>>
     {
-        public APISKnowledgeBaseQueryResultsParameter()
+        public APISKnowledgeBaseQueryResultsParameter(IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.APISKnowledgeBaseQueryResults;
-            SerializeForVisualization = EWParameterDisplayUtils.GetKnowledgeBaseQueryResultsDisplayValue;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
@@ -224,7 +216,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public SelectedAPIsFileLocationsParameter()
         {
             Name = EWParameterNames.SelectedAPIsFileLocations;
-            SerializeForVisualization = EWParameterDisplayUtils.GetStringEnumerableDisplayValue;
         }
     }
 
@@ -257,7 +248,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public CodeExecutionFailuresDetectorIterationCountParameter()
         {
             Name = EWParameterNames.CodeExecutionFailuresDetectorIterationCount;
-            SerializeForVisualization = EWParameterDisplayUtils.GetInt32DisplayValue;
         }
     }
 
@@ -285,21 +275,19 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         }
     }
 
-    public sealed class CodeExecutionResultTypeParameter : EWParameter<SandboxResultType?>
+    public sealed class CodeExecutionResultTypeParameter : EWParameter<SandboxResultType>
     {
         public CodeExecutionResultTypeParameter()
         {
             Name = EWParameterNames.CodeExecutionResultType;
-            SerializeForVisualization = EWParameterDisplayUtils.GetSandboxResultTypeDisplayValue;
         }
     }
 
-    public sealed class ExecutionErrorParameter : EWParameter<bool?>
+    public sealed class ExecutionErrorParameter : EWParameter<bool>
     {
         public ExecutionErrorParameter()
         {
             Name = EWParameterNames.ExecutionError;
-            SerializeForVisualization = EWParameterDisplayUtils.GetBooleanDisplayValue;
         }
     }
 

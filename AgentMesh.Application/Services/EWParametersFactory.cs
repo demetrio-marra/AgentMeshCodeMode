@@ -1,17 +1,20 @@
 ﻿using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Services.Workflows.ParameterSerializers;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services
 {
-    public class EWParametersFactory : IEWParametersFactory
+    public class EWParametersFactory(DisplayValuesEWParameterSerializer displayValuesParameterSerializer) : IEWParametersFactory
     {
+        private readonly DisplayValuesEWParameterSerializer _displayValuesParameterSerializer = displayValuesParameterSerializer;
+
         public IEnumerable<IEWParameter> CreateParameters()
         {
             return new List<IEWParameter>
             {
                 new UserLastRequestParameter(),
-                new InitialContextMessagesParameter(),
+                new InitialContextMessagesParameter(_displayValuesParameterSerializer),
                 new UserIntentParameter(),
                 new IntentCategoryParameter(),
                 new LanguageOfTheUserParameter(),
@@ -20,12 +23,12 @@ namespace AgentMesh.Application.Services
                 new UserProvidedDataParameter(),
                 new UserRequestedActionsParameter(),
                 new MissingValuesParameter(),
-                new KnowledgeBaseAPIDocumentsContentParameter(),
-                new PastMemoriesQueryParameter(),
-                new DomainsKnowledgeBaseQueryParameter(),
-                new PastMemoriesQueryResultsParameter(),
-                new KnowledgeBaseQueryResultsParameter(),
-                new DomainsKnowledgeBaseDocumentsContentParameter(),
+                new KnowledgeBaseAPIDocumentsContentParameter(_displayValuesParameterSerializer),
+                new PastMemoriesQueryParameter(_displayValuesParameterSerializer),
+                new DomainsKnowledgeBaseQueryParameter(_displayValuesParameterSerializer),
+                new PastMemoriesQueryResultsParameter(_displayValuesParameterSerializer),
+                new KnowledgeBaseQueryResultsParameter(_displayValuesParameterSerializer),
+                new DomainsKnowledgeBaseDocumentsContentParameter(_displayValuesParameterSerializer),
                 new BusinessRequirementsParameter(),
                 new FunctionalAnalystRejectedParameter(),
                 new FunctionalAnalystRejectReasonsParameter(),
@@ -33,7 +36,7 @@ namespace AgentMesh.Application.Services
                 new TechnicalAnalystRejectedParameter(),
                 new TechnicalAnalystRejectReasonsParameter(),
                 new ShouldEngageCoderParameter(),
-                new APISKnowledgeBaseQueryResultsParameter(),
+                new APISKnowledgeBaseQueryResultsParameter(_displayValuesParameterSerializer),
                 new SelectedAPIsFileLocationsParameter(),
                 new DocumentationContentParameter(),
                 new GeneratedCodeParameter(),
