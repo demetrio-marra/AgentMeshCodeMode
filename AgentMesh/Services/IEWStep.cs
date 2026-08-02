@@ -15,6 +15,6 @@ namespace AgentMesh.Services
 
         IEnumerable<EWParameterFlags> ParametersConfiguration { get; }
 
-        Task<EWResultRecord> ExecuteAsync(CancellationToken cancellationToken = default);
+        Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default);
     }
 }

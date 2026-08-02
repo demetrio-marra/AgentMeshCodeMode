@@ -15,5 +15,9 @@ namespace AgentMesh.Models.Workflows
         IEWParameterSerializer DisplayValueSerializer { get; }
 
         IEWParameterSerializer Serializer { get; }
+
+        string GetDisplayValue();
+
+        string GetSerializedValue();
     }
 }
