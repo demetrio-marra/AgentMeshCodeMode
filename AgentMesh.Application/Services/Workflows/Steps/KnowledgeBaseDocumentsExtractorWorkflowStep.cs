@@ -1,7 +1,7 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Services;
+using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
@@ -111,12 +111,12 @@ public partial class KnowledgeBaseDocumentsExtractorWorkflowStep : EasyWorkflowS
     public override string? AgentName => null;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.KnowledgeBaseQueryResultsParameterName, false)
+        new(EWParameterNames.KnowledgeBaseQueryResults, false)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
     {
-        var queryResultsValue = inputParameters.FirstOrDefault(p => p.Name == CodeModeWorkflowParametersFactory.KnowledgeBaseQueryResultsParameterName).RawValue ?? string.Empty;
+        var queryResultsValue = inputParameters.FirstOrDefault(p => p.Name == EWParameterNames.KnowledgeBaseQueryResults).RawValue ?? string.Empty;
         var filePaths = queryResultsValue.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
 
         var fetchedFilesContent = await _knowledgeBaseGetDocsExecutor.GetDocsAsync(new KnowledgeBaseGetDocsInput
@@ -134,7 +134,7 @@ public partial class KnowledgeBaseDocumentsExtractorWorkflowStep : EasyWorkflowS
         {
             OutputParameters = new Dictionary<string, string?>
             {
-                { CodeModeWorkflowParametersFactory.DomainsKnowledgeBaseDocumentsContentParameterName, string.Join(", ", documents.Select(d => d.File)) }
+                { EWParameterNames.DomainsKnowledgeBaseDocumentsContent, string.Join(", ", documents.Select(d => d.File)) }
             }
         };
     }

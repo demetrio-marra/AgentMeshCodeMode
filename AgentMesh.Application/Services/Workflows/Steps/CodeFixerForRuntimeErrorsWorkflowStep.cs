@@ -1,12 +1,12 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Services;
 using AgentMesh.Application.Models.CodeFixer;
 using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Services;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
@@ -72,8 +72,8 @@ public partial class CodeFixerForRuntimeErrorsWorkflowStep : EasyWorkflowStepBas
     public override string? AgentName => CodeFixerAgentConfiguration.AgentName;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.LastCodeWithLineNumbersParameterName, false),
-        new(CodeModeWorkflowParametersFactory.CodeExecutionAnalysisParameterName, false)
+        new(EWParameterNames.LastCodeWithLineNumbers, false),
+        new(EWParameterNames.CodeExecutionAnalysis, false)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)

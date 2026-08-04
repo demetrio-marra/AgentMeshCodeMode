@@ -1,11 +1,11 @@
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Services;
 using AgentMesh.Application.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Services;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
@@ -72,8 +72,8 @@ public partial class CodeExecutionFailuresDetectorWorkflowStep : EasyWorkflowSte
     public override string? AgentName => CodeExecutionFailuresDetectorAgentConfiguration.AgentName;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.LastCodeWithLineNumbersParameterName, false),
-        new(CodeModeWorkflowParametersFactory.SandboxResultParameterName, false)
+        new(EWParameterNames.LastCodeWithLineNumbers, false),
+        new(EWParameterNames.SandboxResult, false)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)

@@ -1,6 +1,5 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Services;
 using AgentMesh.Application.Models.Coder;
 using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
@@ -8,6 +7,7 @@ using System.Diagnostics;
 using AgentMesh.Services;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
@@ -81,10 +81,10 @@ public partial class CoderWorkflowStep : EasyWorkflowStepBase
     public override string? AgentName => CoderAgentConfiguration.AgentName;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.BusinessRequirementsParameterName, false),
-        new(CodeModeWorkflowParametersFactory.TechnicalSpecificationParameterName, false),
-        new(CodeModeWorkflowParametersFactory.SelectedAPIsFileLocationsParameterName, false),
-        new(CodeModeWorkflowParametersFactory.KnowledgeBaseAPIDocumentsContentParameterName, true)
+        new(EWParameterNames.BusinessRequirements, false),
+        new(EWParameterNames.TechnicalSpecification, false),
+        new(EWParameterNames.SelectedAPIsFileLocations, false),
+        new(EWParameterNames.KnowledgeBaseAPIDocumentsContent, true)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)

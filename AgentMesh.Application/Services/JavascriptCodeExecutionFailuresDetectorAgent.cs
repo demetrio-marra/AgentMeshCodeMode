@@ -1,8 +1,6 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.CodeExecutionFailuresDetector;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.Parameters;
-using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -61,14 +59,6 @@ namespace AgentMesh.Application.Services
         }
 
         protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
-
-        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
-        {
-            return [
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.CodeExecutionAnalysisParameterName, ParseStructuredResponse(rawResponseText)),
-            ];
-        }
-
 
         [GeneratedRegex(@"(?i)stacktrace.*?(?:\r?\n\s*at\s+.+)+", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, "it-IT")]
         private static partial Regex StackTraceRegex2();

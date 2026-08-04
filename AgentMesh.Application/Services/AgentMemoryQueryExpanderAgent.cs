@@ -73,12 +73,5 @@ namespace AgentMesh.Application.Services
             [JsonPropertyName("searchQueries")]
             public IEnumerable<string> SearchQueries { get; set; } = [];
         }
-
-        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
-        {
-            return [
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.PastMemoriesQueryParameterName, ParseStructuredResponse(rawResponseText).SearchQueries),
-            ];
-        }
     }
 }

@@ -1,12 +1,12 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Services;
 using AgentMesh.Application.Models.TechnicalAnalyst;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
@@ -83,14 +83,14 @@ public partial class TechnicalAnalystWorkflowStep : EasyWorkflowStepBase
     public override string? AgentName => TechnicalAnalystAgentConfiguration.AgentName;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.UserIntentParameterName, false),
-        new(CodeModeWorkflowParametersFactory.ConversationTopicParameterName, false),
-        new(CodeModeWorkflowParametersFactory.BusinessRequirementsParameterName, false),
-        new(CodeModeWorkflowParametersFactory.UserRequestedActionsParameterName, false),
-        new(CodeModeWorkflowParametersFactory.UserProvidedDataParameterName, false),
-        new(CodeModeWorkflowParametersFactory.UserPreferencesParameterName, false),
-        new(CodeModeWorkflowParametersFactory.PastMemoriesQueryResultsParameterName, false),
-        new(CodeModeWorkflowParametersFactory.KnowledgeBaseAPIDocumentsContentParameterName, true)
+        new(EWParameterNames.UserIntent, false),
+        new(EWParameterNames.ConversationTopic, false),
+        new(EWParameterNames.BusinessRequirements, false),
+        new(EWParameterNames.UserRequestedActions, false),
+        new(EWParameterNames.UserProvidedData, false),
+        new(EWParameterNames.UserPreferences, false),
+        new(EWParameterNames.PastMemoriesQueryResults, false),
+        new(EWParameterNames.KnowledgeBaseAPIDocumentsContent, true)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)

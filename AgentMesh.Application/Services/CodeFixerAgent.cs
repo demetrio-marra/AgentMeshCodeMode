@@ -7,7 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 using AgentMesh.Application.Models.ChatMessages;
-using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Services
 {
@@ -54,13 +53,6 @@ namespace AgentMesh.Application.Services
             }
 
             return codeRegexMatch.Groups["code"].Value.Trim();
-        }
-
-        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
-        {
-            return [
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.GeneratedCodeParameterName, ParseStructuredResponse(rawResponseText)),
-            ];
         }
     }
 }

@@ -4,7 +4,6 @@ using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.RequestAnalysis;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.RequestAnalysis;
-using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -129,21 +128,6 @@ namespace AgentMesh.Application.Services
             }
 
             throw new BadStructuredResponseException(intentCategory, $"Unknown intent category: {intentCategory}");
-        }
-
-        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
-        {
-            var parsedResponse = ParseStructuredResponse(rawResponseText);
-            return [
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.UserIntentParameterName, parsedResponse.Intent),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.IntentCategoryParameterName, parsedResponse.IntentCategory.ToString()),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.ConversationTopicParameterName, parsedResponse.ConversationTopic),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.UserRequestedActionsParameterName, parsedResponse.UserRequestedActions),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.UserPreferencesParameterName, parsedResponse.UserPreferences),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.UserProvidedDataParameterName, parsedResponse.UserProvidedData),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.MissingValuesParameterName, parsedResponse.MissingValues),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.LanguageOfTheUserParameterName, parsedResponse.LanguageOfTheUser)
-                ];
         }
 
         public class ParsedResponse

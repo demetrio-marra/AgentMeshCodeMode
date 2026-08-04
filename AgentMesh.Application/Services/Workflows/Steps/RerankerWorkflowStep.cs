@@ -1,6 +1,5 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Services;
 using AgentMesh.Application.Models.Reranker;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
@@ -8,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
@@ -84,8 +84,8 @@ public partial class RerankerWorkflowStep : EasyWorkflowStepBase
     public override string? AgentName => RerankerAgentConfiguration.AgentName;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.UserIntentParameterName, false),
-        new(CodeModeWorkflowParametersFactory.KnowledgeBaseQueryResultsParameterName, false)
+        new(EWParameterNames.UserIntent, false),
+        new(EWParameterNames.KnowledgeBaseQueryResults, false)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)

@@ -1,11 +1,11 @@
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Services;
 using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Services;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
@@ -72,7 +72,7 @@ public partial class AgentMemoryServiceWorkflowStep : EasyWorkflowStepBase
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
     {
-        var queriesList = inputParameters.FirstOrDefault(n => n.Name == CodeModeWorkflowParametersFactory.PastMemoriesQueryParameterName).RawValue;
+        var queriesList = inputParameters.FirstOrDefault(n => n.Name == EWParameterNames.PastMemoriesQuery).RawValue;
         if (string.IsNullOrEmpty(queriesList))
         {
             return await Task.FromResult(new WorkflowStepResultRecord
@@ -93,13 +93,13 @@ public partial class AgentMemoryServiceWorkflowStep : EasyWorkflowStepBase
         {
             OutputParameters = new Dictionary<string, string?>
             {
-                { CodeModeWorkflowParametersFactory.PastMemoriesQueryResultsParameterName, string.Join(", ", retrievedMemories) }
+                { EWParameterNames.PastMemoriesQueryResults, string.Join(", ", retrievedMemories) }
             }
         };
     }
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames { get => [
-        new(CodeModeWorkflowParametersFactory.PastMemoriesQueryParameterName, false)
+        new(EWParameterNames.PastMemoriesQuery, false)
         ]; }
 }
 

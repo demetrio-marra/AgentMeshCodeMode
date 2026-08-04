@@ -2,7 +2,7 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.AgentMemoryQueryExpander;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Services;
+using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
@@ -74,7 +74,7 @@ public partial class AgentMemoryQueryExpanderWorkflowStep : EasyWorkflowStepBase
     public override string? AgentName => AgentMemoryQueryExpanderAgentConfiguration.AgentName;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.MissingValuesParameterName, false)
+        new(EWParameterNames.MissingValues, false)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)

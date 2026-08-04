@@ -9,7 +9,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatMessages;
-using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Services
 {
@@ -81,12 +80,5 @@ namespace AgentMesh.Application.Services
 
         [GeneratedRegex(@"```\s*javascript\s*(?<code>(?:(?!```)[\s\S])*)\s*", RegexOptions.IgnoreCase | RegexOptions.Multiline | RegexOptions.Compiled, "it-IT")]
         private static partial Regex JavascriptCodeRegexCompiled();
-
-        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
-        {
-            return [
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.GeneratedCodeParameterName, ParseStructuredResponse(rawResponseText)),
-                ];
-        }
     }
 }

@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgentMesh.Application.Models.ChatMessages;
-using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Services
 {
@@ -115,17 +114,6 @@ namespace AgentMesh.Application.Services
 
             [JsonPropertyName("reasonOfRejection")]
             public string? ReasonOfRejection { get; set; }
-        }
-
-        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
-        {
-            var parsedResponse = ParseStructuredResponse(rawResponseText);
-
-            return [
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.BusinessRequirementsParameterName, parsedResponse.BusinessRequirements),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.FunctionalAnalystRejectedParameterName, parsedResponse.RequestRejected),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.FunctionalAnalystRejectReasonsParameterName, parsedResponse.ReasonOfRejection),
-            ];
         }
     }
 }

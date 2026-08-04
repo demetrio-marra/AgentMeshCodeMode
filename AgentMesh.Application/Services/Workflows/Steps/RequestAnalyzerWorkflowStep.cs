@@ -1,5 +1,4 @@
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Services;
 using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -7,6 +6,7 @@ using AgentMesh.Services;
 using AgentMesh.Models.ChatMessages;
 using AgentMesh.Application.Models.RequestAnalysis;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
@@ -74,8 +74,8 @@ public partial class RequestAnalyzerWorkflowStep : EasyWorkflowStepBase
     public override string? AgentName => RequestAnalyzerAgentConfiguration.AgentName;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.UserLastRequestParameterName, false),
-        new(CodeModeWorkflowParametersFactory.InitialContextMessagesParameterName, false)
+        new(EWParameterNames.UserLastRequest, false),
+        new(EWParameterNames.InitialContextMessages, false)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)

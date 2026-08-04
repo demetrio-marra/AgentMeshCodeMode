@@ -9,7 +9,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatMessages;
-using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Services
 {
@@ -127,15 +126,6 @@ namespace AgentMesh.Application.Services
             {
                 return $"Type: {Type}, Query: {Query}";
             }
-        }
-
-        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
-        {
-            var parsedResponse = ParseStructuredResponse(rawResponseText);
-
-            return [
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.DomainsKnowledgeBaseQueryParameterName, parsedResponse.SearchQueries.Select(TranslateKnowledgeBaseQuery)),
-            ];
         }
     }
 }

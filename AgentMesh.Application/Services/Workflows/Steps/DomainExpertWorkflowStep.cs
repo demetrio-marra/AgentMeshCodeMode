@@ -2,6 +2,7 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.DomainExpert;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
@@ -79,15 +80,15 @@ public partial class DomainExpertWorkflowStep : EasyWorkflowStepBase
     public override string? AgentName => "DomainExpert";
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.UserIntentParameterName, false),
-        new(CodeModeWorkflowParametersFactory.ConversationTopicParameterName, false),
-        new(CodeModeWorkflowParametersFactory.UserRequestedActionsParameterName, false),
-        new(CodeModeWorkflowParametersFactory.UserProvidedDataParameterName, false),
-        new(CodeModeWorkflowParametersFactory.UserPreferencesParameterName, false),
-        new(CodeModeWorkflowParametersFactory.PastMemoriesQueryResultsParameterName, false),
-        new(CodeModeWorkflowParametersFactory.DomainsKnowledgeBaseDocumentsContentParameterName, true),
-        new(CodeModeWorkflowParametersFactory.SandboxResultParameterName, true),
-        new(CodeModeWorkflowParametersFactory.LanguageOfTheUserParameterName, false)
+        new(EWParameterNames.UserIntent, false),
+        new(EWParameterNames.ConversationTopic, false),
+        new(EWParameterNames.UserRequestedActions, false),
+        new(EWParameterNames.UserProvidedData, false),
+        new(EWParameterNames.UserPreferences, false),
+        new(EWParameterNames.PastMemoriesQueryResults, false),
+        new(EWParameterNames.DomainsKnowledgeBaseDocumentsContent, true),
+        new(EWParameterNames.SandboxResult, true),
+        new(EWParameterNames.LanguageOfTheUser, false)
         ];
 
 

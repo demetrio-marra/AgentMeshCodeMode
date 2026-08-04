@@ -1,7 +1,7 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Services;
+using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
@@ -95,14 +95,14 @@ public partial class KnowledgeBaseServiceSearchWorkflowStep : EasyWorkflowStepBa
     public override string? AgentName => null;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.UserIntentParameterName, false),
-        new(CodeModeWorkflowParametersFactory.DomainsKnowledgeBaseQueryParameterName, false)
+        new(EWParameterNames.UserIntent, false),
+        new(EWParameterNames.DomainsKnowledgeBaseQuery, false)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
     {
-        var userIntent = inputParameters.FirstOrDefault(p => p.Name == CodeModeWorkflowParametersFactory.UserIntentParameterName).RawValue ?? string.Empty;
-        var queriesValue = inputParameters.FirstOrDefault(p => p.Name == CodeModeWorkflowParametersFactory.DomainsKnowledgeBaseQueryParameterName).RawValue ?? string.Empty;
+        var userIntent = inputParameters.FirstOrDefault(p => p.Name == EWParameterNames.UserIntent).RawValue ?? string.Empty;
+        var queriesValue = inputParameters.FirstOrDefault(p => p.Name == EWParameterNames.DomainsKnowledgeBaseQuery).RawValue ?? string.Empty;
 
         KnowledgeBaseQueryInput queryInput = new()
         {
@@ -117,7 +117,7 @@ public partial class KnowledgeBaseServiceSearchWorkflowStep : EasyWorkflowStepBa
         {
             OutputParameters = new Dictionary<string, string?>
             {
-                { CodeModeWorkflowParametersFactory.KnowledgeBaseQueryResultsParameterName, string.Join(", ", brcOutput.Results.Select(r => r.File)) }
+                { EWParameterNames.KnowledgeBaseQueryResults, string.Join(", ", brcOutput.Results.Select(r => r.File)) }
             }
         };
     }

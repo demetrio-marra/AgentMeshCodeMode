@@ -4,7 +4,6 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.TechnicalAnalyst;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.Parameters;
 using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -113,18 +112,6 @@ namespace AgentMesh.Application.Services
 
             [JsonPropertyName("selectedAPIsFileLocations")]
             public IEnumerable<string> SelectedAPIsFileLocations { get; set; } = Array.Empty<string>();
-        }
-
-        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
-        {
-            var parsedResponse = ParseStructuredResponse(rawResponseText);
-
-            return [
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.TechnicalSpecificationParameterName, parsedResponse.TechnicalSpecification),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.TechnicalAnalystRejectedParameterName, parsedResponse.RequestRejected),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.TechnicalAnalystRejectReasonsParameterName, parsedResponse.ReasonOfRejection),
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.SelectedAPIsFileLocationsParameterName, parsedResponse.SelectedAPIsFileLocations),
-            ];
         }
     }
 }

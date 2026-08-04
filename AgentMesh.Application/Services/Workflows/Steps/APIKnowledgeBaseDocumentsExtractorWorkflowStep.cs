@@ -1,5 +1,6 @@
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using System.Diagnostics;
@@ -64,7 +65,7 @@ public partial class APIKnowledgeBaseDocumentsExtractorWorkflowStep : EasyWorkfl
     public override string? AgentName => null;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.APISKnowledgeBaseQueryResultsParameterName, false)
+        new(EWParameterNames.APISKnowledgeBaseQueryResults, false)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)

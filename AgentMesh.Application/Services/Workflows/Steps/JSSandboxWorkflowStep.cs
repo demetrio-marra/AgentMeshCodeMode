@@ -1,12 +1,12 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
-using AgentMesh.Application.Services;
 using AgentMesh.Application.Models.CodeSandbox;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
@@ -113,12 +113,12 @@ public partial class JSSandboxWorkflowStep : EasyWorkflowStepBase
     public override string? AgentName => null;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.GeneratedCodeParameterName, false)
+        new(EWParameterNames.GeneratedCode, false)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
     {
-        var codeParameter = inputParameters.FirstOrDefault(p => p.Name == CodeModeWorkflowParametersFactory.GeneratedCodeParameterName);
+        var codeParameter = inputParameters.FirstOrDefault(p => p.Name == EWParameterNames.GeneratedCode);
         var code = codeParameter.RawValue ?? string.Empty;
 
         string? sandboxResult = null;
@@ -155,9 +155,9 @@ public partial class JSSandboxWorkflowStep : EasyWorkflowStepBase
         {
             OutputParameters = new Dictionary<string, string?>
             {
-                { CodeModeWorkflowParametersFactory.SandboxResultParameterName, sandboxResult },
-                { CodeModeWorkflowParametersFactory.SandboxExecutionIdParameterName, sandboxExecutionId },
-                { CodeModeWorkflowParametersFactory.CodeExecutionResultTypeParameterName, codeExecutionResultType }
+                { EWParameterNames.SandboxResult, sandboxResult },
+                { EWParameterNames.SandboxExecutionId, sandboxExecutionId },
+                { EWParameterNames.CodeExecutionResultType, codeExecutionResultType }
             }
         };
     }

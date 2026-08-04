@@ -1,12 +1,12 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Services;
 using AgentMesh.Application.Models.KnowledgeBaseQueryExpander;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
@@ -109,10 +109,10 @@ public partial class KnowledgeBaseQueryExpanderWorkflowStep : EasyWorkflowStepBa
     public override string? AgentName => KnowledgeBaseQueryExpanderAgentConfiguration.AgentName;
 
     public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(CodeModeWorkflowParametersFactory.UserIntentParameterName, false),
-        new(CodeModeWorkflowParametersFactory.IntentCategoryParameterName, false),
-        new(CodeModeWorkflowParametersFactory.UserRequestedActionsParameterName, false),
-        new(CodeModeWorkflowParametersFactory.UserProvidedDataParameterName, false)
+        new(EWParameterNames.UserIntent, false),
+        new(EWParameterNames.IntentCategory, false),
+        new(EWParameterNames.UserRequestedActions, false),
+        new(EWParameterNames.UserProvidedData, false)
     ];
 
     public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)

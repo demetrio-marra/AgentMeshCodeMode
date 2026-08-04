@@ -154,12 +154,5 @@ namespace AgentMesh.Application.Services
             public string RankId { get; set; } = string.Empty;
             public KnowledgeBaseQueryResultItem Item { get; set; } = new();
         }
-
-        protected override IEnumerable<AgentOutputParameterRecord> ParseOutputParameters(string rawResponseText)
-        {
-            return [
-                CreateOutputParameter(CodeModeWorkflowParametersFactory.KnowledgeBaseQueryResultsParameterName, ParseStructuredResponse(rawResponseText)),
-            ];
-        }
     }
 }
