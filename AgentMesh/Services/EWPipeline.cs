@@ -7,13 +7,16 @@ namespace AgentMesh.Services
     {
         private readonly EWParametersProvider _ewParametersProvider;
         private readonly IEWStepSelector _ewStepSelector;
+        private readonly IWorkflowProgressNotifier _workflowProgressNotifier;
 
         public EWPipeline(
             EWParametersProvider ewParametersProvider,
-            IEWStepSelector ewStepSelector)
+            IEWStepSelector ewStepSelector,
+            IWorkflowProgressNotifier workflowProgressNotifier)
         {
             _ewParametersProvider = ewParametersProvider;
             _ewStepSelector = ewStepSelector;
+            _workflowProgressNotifier = workflowProgressNotifier;
         }
 
         public async Task<EWResultRecord> ExecuteAsync(
@@ -21,6 +24,8 @@ namespace AgentMesh.Services
             IEnumerable<ContextMessage> chatHistory,
             CancellationToken cancellationToken = default)
         {
+            await _workflowProgressNotifier.NotifyWorkflowStart();
+
             var userInputParameter = _ewParametersProvider.GetUserCurrentRequestParameter()
                 ?? throw new InvalidOperationException("User input parameter is not defined.");
             var conversationHistoryParameter = _ewParametersProvider.GetConversationHistoryParameter()
@@ -39,6 +44,11 @@ namespace AgentMesh.Services
 
                 stepRuns.AddRange(currentStepRuns);
 
+                foreach (var cs in currentStepRuns)
+                {
+                    await _workflowProgressNotifier.NotifyWorkflowStepCompleted(cs.Step.Name, cs.Statistics);
+                }
+
                 nextSteps = _ewStepSelector.NextStepsToRun();
             }
 
@@ -48,6 +58,8 @@ namespace AgentMesh.Services
             var inputTokens = stepRuns.Single(s => s.Step.IsPipelineFirst).Result.InputTokens;
             var outputTokens = stepRuns.Single(s => s.Step.IsPipelineLast).Result.OutputTokens;
             var contextSizeInTokens = inputTokens + outputTokens;
+
+            await _workflowProgressNotifier.NotifyWorkflowEnd();
 
             return new EWResultRecord(
                 ResponseForUser: responseForUserParameter.GetDisplayValue(),

@@ -1,10 +1,11 @@
-﻿namespace AgentMesh.Services
+﻿using AgentMesh.Models.Workflows;
+
+namespace AgentMesh.Services
 {
     public interface IWorkflowProgressNotifier
     {
         Task NotifyWorkflowStart();
         Task NotifyWorkflowEnd();
-        Task NotifyWorkflowStepStart(string stepName, Dictionary<string, string> inputParameters);
-        Task NotifyWorkflowStepEnd(string stepName, Dictionary<string, string> outputParameters);
+        Task NotifyWorkflowStepCompleted(string stepName, EWStepStatisticsRecord statistics);
     }
 }

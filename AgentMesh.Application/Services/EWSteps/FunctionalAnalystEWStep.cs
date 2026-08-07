@@ -3,7 +3,8 @@ using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using AgentMesh.Application.Configuration;
-using AgentMesh.Application.Services.Workflows.Steps;
+using AgentMesh.Utils;
+using System.Text.Json;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
@@ -47,7 +48,7 @@ namespace AgentMesh.Application.Services.EWSteps
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var docsContent = _domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? [];
-            var kbContent = WorkflowExecutorFormatting.SerializeDocumentation(docsContent);
+            var kbContent = JsonSerializer.Serialize(docsContent, SerializationUtils.DefaultSerializeOptions);
 
             var agentInput = new FunctionalAnalystAgentInput
             {

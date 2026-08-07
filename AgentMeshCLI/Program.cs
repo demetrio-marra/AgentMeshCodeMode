@@ -13,8 +13,6 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Utils;
 using AgentMesh.Infrastructure.Mem0;
 using AgentMesh.Infrastructure.QMD.Services;
-using AgentMesh.Application.Services.Workflows;
-using AgentMesh.Application.Services.Workflows.Steps;
 using AgentMesh.Models.Workflows;
 using System.Reflection;
 
@@ -472,29 +470,6 @@ namespace AgentMesh
             services.AddSingleton<IJSSandbox, SESJSSandboxClient>();
 
             services.AddSingleton<IWorkflowProgressNotifier, ConsoleWorkflowProgressNotifier>();
-
-            services.AddSingleton<KnowledgeBaseDocumentsExtractorWorkflowStep>();
-            services.AddSingleton<DomainsKnowledgeBaseDocumentsExtractorWorkflowStep>();
-            services.AddSingleton<APIKnowledgeBaseDocumentsExtractorWorkflowStep>();
-            services.AddSingleton<RequestCanonicalizationWorkflowStep>();
-            services.AddSingleton<AgentMemoryServiceWorkflowStep>();
-            services.AddSingleton<AgentMemoryQueryExpanderWorkflowStep>();
-            services.AddSingleton<KnowledgeBaseServiceSearchWorkflowStep>();
-            services.AddSingleton<DomainsKnowledgeBaseServiceSearchWorkflowStep>();
-            services.AddSingleton<APIsKnowledgeBaseServiceSearchWorkflowStep>();
-            services.AddSingleton<FunctionalAnalystWorkflowStep>();
-            services.AddSingleton<TechnicalAnalystWorkflowStep>();
-            services.AddSingleton<CoderWorkflowStep>();
-            services.AddSingleton<CodeFixerForRuntimeErrorsWorkflowStep>();
-            services.AddSingleton<JSSandboxWorkflowStep>();
-            services.AddSingleton<CodeExecutionFailuresDetectorWorkflowStep>();
-            services.AddSingleton<DocumentationWorkflowStep>();
-            services.AddSingleton<DomainExpertWorkflowStep>();
-            services.AddSingleton<RequestAnalyzerWorkflowStep>();
-            services.AddSingleton<KnowledgeBaseQueryExpanderWorkflowStep>();
-            services.AddSingleton<RerankerWorkflowStep>();
-
-            services.AddSingleton<IWorkflow, CodeModeWorkflow>();
 
             services
                .AddOptions<UserConfiguration>()

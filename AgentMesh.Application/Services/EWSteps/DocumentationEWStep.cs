@@ -2,10 +2,11 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.Documentation;
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Workflows.Parameters;
-using AgentMesh.Application.Services.Workflows.Steps;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
+using AgentMesh.Utils;
+using System.Text.Json;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
@@ -41,7 +42,7 @@ namespace AgentMesh.Application.Services.EWSteps
                 Intent = _userIntentParameter.ParameterValue ?? string.Empty
             };
 
-            var kbContent = WorkflowExecutorFormatting.SerializeDocumentation(_domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? []);
+            var kbContent = JsonSerializer.Serialize(_domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? [], SerializationUtils.DefaultSerializeOptions);
 
             var agentInput = new DocumentationAgentInput
             {

@@ -1,4 +1,3 @@
-using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Configuration;
 using AgentMesh.Helpers;
@@ -15,7 +14,6 @@ using Microsoft.Extensions.Hosting;
 namespace AgentMesh.Services
 {
     internal class UserConsoleInputService(
-        IWorkflow workflow,
         IWorkflowProgressNotifier workflowProgressNotifier,
         IServiceProvider serviceProvider,
         FunctionalAnalystAgentConfiguration functionalAnalystConfiguration,
@@ -40,7 +38,6 @@ namespace AgentMesh.Services
         KnowledgeBaseQueryExpanderAgentConfiguration knowledgeBaseQueryExpanderAgentConfiguration,
         RerankerAgentConfiguration rerankerAgentConfiguration) : BackgroundService
     {
-        private readonly IWorkflow _workflow = workflow;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
         private readonly IServiceProvider _serviceProvider = serviceProvider;
         private readonly FunctionalAnalystAgentConfiguration _functionalAnalystConfiguration = functionalAnalystConfiguration;
@@ -210,11 +207,6 @@ namespace AgentMesh.Services
                 return usageEntries;
             }
 
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Relevant Facts Evaluator Agent", new Dictionary<string, string>
-            {
-                { "Conversation", $"<omitted for brevity>. Total user messages: {userConversation.Count}" }
-            });
-
             var evaluatorStartTime = DateTime.UtcNow;
             var relevantMessagesResult = await _relevantFactsEvaluatorAgent.ExecuteAsync(new RelevantFactsEvaluatorAgentInput
             {
@@ -227,36 +219,35 @@ namespace AgentMesh.Services
                 message.Role == ContextMessageRole.User &&
                 !string.IsNullOrWhiteSpace(message.Text));
 
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Relevant Facts Evaluator Agent", new Dictionary<string, string>
-            {
-                { "RelevantUserMessagesCount", relevantUserMessagesCount.ToString() },
-                { "RelevantUserMessages", relevantUserMessagesCount > 0 ? "<omitted for brevity>" : "(No relevant user messages)" }
-            });
-
-            usageEntries.Add(new EWStepStatisticsRecord(
+            var relevantFactsEvaluatorUsageEntry = new EWStepStatisticsRecord(
                 StepName: "Relevant Facts Evaluator Agent",
                 StartedOnUtc: evaluatorStartTime,
                 CompletedOnUtc: evaluatorEndTime,
                 IsInputStep: false,
                 IsOutputStep: false,
-                ParametersBefore: [],
-                ParametersAfter: [],
+                ParametersBefore:
+                [
+                    new EWDisplayParameterRecord("UserMessagesCount", userConversation.Count.ToString()),
+                    new EWDisplayParameterRecord("RelevantUserMessages", "(Not evaluated yet)")
+                ],
+                ParametersAfter:
+                [
+                    new EWDisplayParameterRecord("UserMessagesCount", relevantUserMessagesCount.ToString()),
+                    new EWDisplayParameterRecord("RelevantUserMessages", relevantUserMessagesCount > 0 ? "<omitted for brevity>" : "(No relevant user messages)")
+                ],
                 IsAgentic: true,
                 AgentName: RelevantFactsEvaluatorAgentConfiguration.AgentName,
                 InputTokens: relevantMessagesResult.InputTokenCount,
                 OutputTokens: relevantMessagesResult.OutputTokenCount
-            ));
+            );
+
+            await _workflowProgressNotifier.NotifyWorkflowStepCompleted(relevantFactsEvaluatorUsageEntry.StepName, relevantFactsEvaluatorUsageEntry);
+            usageEntries.Add(relevantFactsEvaluatorUsageEntry);
 
             if (relevantUserMessagesCount == 0)
             {
                 return usageEntries;
             }
-
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Agent Memory Saver", new Dictionary<string, string>
-            {
-                { "Conversation", $"<omitted for brevity>. Total messages: {relevantConversation.Count}" },
-                { "RelevantUserMessagesCount", relevantUserMessagesCount.ToString() }
-            });
 
             var memorySaverStartTime = DateTime.UtcNow;
 
@@ -267,23 +258,27 @@ namespace AgentMesh.Services
 
             var memorySaverEndTime = DateTime.UtcNow;
 
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", new Dictionary<string, string>
-            {
-                { "SavedMessagesCount", relevantUserMessagesCount.ToString() }
-            });
-
-            usageEntries.Add(new EWStepStatisticsRecord(
+            var memorySaverUsageEntry = new EWStepStatisticsRecord(
                 StepName: "Agent Memory Saver",
                 StartedOnUtc: memorySaverStartTime,
                 CompletedOnUtc: memorySaverEndTime,
                 IsInputStep: false,
                 IsOutputStep: false,
-                ParametersBefore: [],
-                ParametersAfter: [],
+                ParametersBefore:
+                [
+                    new EWDisplayParameterRecord("SavedMessagesCount", "0")
+                ],
+                ParametersAfter:
+                [
+                    new EWDisplayParameterRecord("SavedMessagesCount", relevantUserMessagesCount.ToString())
+                ],
                 IsAgentic: false,
                 AgentName: null,
                 InputTokens: null,
-                OutputTokens: null));
+                OutputTokens: null);
+
+            await _workflowProgressNotifier.NotifyWorkflowStepCompleted(memorySaverUsageEntry.StepName, memorySaverUsageEntry);
+            usageEntries.Add(memorySaverUsageEntry);
 
             return usageEntries;
         }
@@ -297,22 +292,9 @@ namespace AgentMesh.Services
                 SummaryLanguage = _conversationSummarizerConfiguration.SummarizeLanguage
             };
 
-            await _workflowProgressNotifier.NotifyWorkflowStepStart("Conversation Summarizer Agent", new Dictionary<string, string>
-            {
-                { "Conversation", $"<omitted for brevity>. Total: {summarizerInput.Conversation.Count()}" },
-                { "CountOfMessagesToKeep", summarizerInput.CountOfMessagesToKeep.ToString() },
-                { "SummaryLanguage", summarizerInput.SummaryLanguage ?? string.Empty }
-            });
-
             var summarizationStartTime = DateTime.UtcNow;
             var summarizationResult = await _conversationSummarizerAgent.ExecuteAsync(summarizerInput);
             var summarizationEndTime = DateTime.UtcNow;
-
-            await _workflowProgressNotifier.NotifyWorkflowStepEnd("Conversation Summarizer Agent", new Dictionary<string, string>
-            {
-                { "Conversation", $"<omitted for brevity>. Total: {summarizationResult.NewConversation.Count()}" },
-                { "Summary", summarizationResult.Summary.ToString() }
-            });
 
             var summarizationTokenUsageEntry = new EWStepStatisticsRecord(
                 StepName: "Conversation Summarizer Agent",
@@ -320,13 +302,23 @@ namespace AgentMesh.Services
                 CompletedOnUtc: summarizationEndTime,
                 IsInputStep: false,
                 IsOutputStep: false,
-                ParametersBefore: [],
-                ParametersAfter: [],
+                ParametersBefore:
+                [
+                    new EWDisplayParameterRecord("ConversationMessagesCount", summarizerInput.Conversation.Count().ToString()),
+                    new EWDisplayParameterRecord("Summary", "(Not generated yet)")
+                ],
+                ParametersAfter:
+                [
+                    new EWDisplayParameterRecord("ConversationMessagesCount", summarizationResult.NewConversation.Count().ToString()),
+                    new EWDisplayParameterRecord("Summary", summarizationResult.Summary.ToString())
+                ],
                 IsAgentic: true,
                 AgentName: ConversationSummarizerAgent.AgentName,
                 InputTokens: summarizationResult.InputTokenCount,
                 OutputTokens: summarizationResult.OutputTokenCount
             );
+
+            await _workflowProgressNotifier.NotifyWorkflowStepCompleted(summarizationTokenUsageEntry.StepName, summarizationTokenUsageEntry);
 
             return (summarizationTokenUsageEntry, summarizationResult.NewConversation);
         }

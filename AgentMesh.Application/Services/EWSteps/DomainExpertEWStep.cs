@@ -1,9 +1,10 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.DomainExpert;
 using AgentMesh.Application.Models.Workflows.Parameters;
-using AgentMesh.Application.Services.Workflows.Steps;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
+using AgentMesh.Utils;
+using System.Text.Json;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
@@ -44,7 +45,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var kbContent = WorkflowExecutorFormatting.SerializeDocumentation(_domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? []);
+            var kbContent = JsonSerializer.Serialize(_domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? [], SerializationUtils.DefaultSerializeOptions);
 
             var agentInput = new DomainExpertAgentInput
             {

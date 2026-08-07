@@ -1,4 +1,5 @@
 ﻿using AgentMesh.Helpers;
+using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Services
 {
@@ -16,27 +17,21 @@ namespace AgentMesh.Services
             await Task.CompletedTask;
         }
 
-        public async Task NotifyWorkflowStepEnd(string stepName, Dictionary<string, string> outputParameters)
+        public async Task NotifyWorkflowStepCompleted(string stepName, EWStepStatisticsRecord statistics)
         {
             ConsoleHelper.WriteLineWithColor($"Workflow step '{stepName}' has completed.", ConsoleColor.Magenta);
+            WriteParameter("StepName", statistics.StepName);
+            WriteParameter("Elapsed", statistics.Elapsed.ToString());
 
-            foreach (var output in outputParameters)
-            {
-                WriteParameter(output.Key, output.Value);
-            }
+            var parametersDiff = statistics.ParametersDiff.ToList();
+            var diffValue = parametersDiff.Count == 0
+                ? "(No differences)"
+                : string.Join('\n', parametersDiff.Select(p => $"- {p.Name}: '{p.OldValue ?? string.Empty}' -> '{p.NewValue ?? string.Empty}'"));
+
+            WriteParameter("ParametersDiff", diffValue);
 
             ConsoleHelper.WriteLineWithColor("══════════════════════════════════════════════════════════════════════════", ConsoleColor.Gray);
 
-            await Task.CompletedTask;
-        }
-
-        public async Task NotifyWorkflowStepStart(string stepName, Dictionary<string, string> inputParameters)
-        {
-            ConsoleHelper.WriteLineWithColor($"\nWorkflow step '{stepName}' has started.", ConsoleColor.Green);
-            foreach (var input in inputParameters)
-            {
-                WriteParameter(input.Key, input.Value);
-            }
             await Task.CompletedTask;
         }
 

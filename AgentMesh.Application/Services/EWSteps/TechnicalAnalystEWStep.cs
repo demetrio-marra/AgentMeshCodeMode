@@ -1,9 +1,10 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.TechnicalAnalyst;
 using AgentMesh.Application.Models.Workflows.Parameters;
-using AgentMesh.Application.Services.Workflows.Steps;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
+using AgentMesh.Utils;
+using System.Text.Json;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
@@ -48,7 +49,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var kbApiContent = WorkflowExecutorFormatting.SerializeDocumentation(_knowledgeBaseAPIDocumentsContentParameter.ParameterValue ?? []);
+            var kbApiContent = JsonSerializer.Serialize(_knowledgeBaseAPIDocumentsContentParameter.ParameterValue ?? [], SerializationUtils.DefaultSerializeOptions);
 
             var agentInput = new TechnicalAnalystAgentInput
             {
