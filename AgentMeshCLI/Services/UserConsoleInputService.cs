@@ -10,6 +10,7 @@ using AgentMesh.Models.ChatMessages;
 using AgentMesh.Application.Models.CostsAnalysis;
 using AgentMesh.Application.Models.ConversationSummarization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace AgentMesh.Services
 {
@@ -37,7 +38,7 @@ namespace AgentMesh.Services
         AgentMemoryExecutor agentMemorySaver,
         RequestCanonicalizationAgentConfiguration requestCanonicalizationAgentConfiguration,
         KnowledgeBaseQueryExpanderAgentConfiguration knowledgeBaseQueryExpanderAgentConfiguration,
-        RerankerAgentConfiguration rerankerAgentConfiguration)
+        RerankerAgentConfiguration rerankerAgentConfiguration) : BackgroundService
     {
         private readonly IWorkflow _workflow = workflow;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
@@ -64,7 +65,7 @@ namespace AgentMesh.Services
         private readonly KnowledgeBaseQueryExpanderAgentConfiguration _knowledgeBaseQueryExpanderAgentConfiguration = knowledgeBaseQueryExpanderAgentConfiguration;
         private readonly RerankerAgentConfiguration _rerankerAgentConfiguration = rerankerAgentConfiguration;
 
-        public async Task Run()
+        public async Task Run(CancellationToken cancellationToken)
         {
             Console.WriteLine("Welcome to AgentMesh! This is a console application that allows you to interact with the AgentMesh system.\n");
 
@@ -377,6 +378,11 @@ namespace AgentMesh.Services
             ConsoleHelper.PrintAgentConfiguration("Documentation Manager", DocumentationAgent.AgentName, _documentationAgentConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Relevant Facts Evaluator", RelevantFactsEvaluatorAgentConfiguration.AgentName, _relevantFactsEvaluatorConfiguration);
             Console.WriteLine();
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            await Run(stoppingToken);
         }
     }
 }

@@ -6,6 +6,7 @@ using AgentMesh.Infrastructure.QMD;
 using AgentMesh.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AgentMesh.Application.Contracts;
@@ -21,30 +22,24 @@ namespace AgentMesh
 {
     internal class Program
     {
-        static async Task Main()
+        static async Task Main(string[] args)
         {
-            // Build configuration
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
-                              ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
-                              ?? "Production";
+            var builder = new HostApplicationBuilder(args);
 
-            var configuration = new ConfigurationBuilder()
+            builder.Configuration.Sources.Clear();
+            builder.Configuration
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables()
-                .Build();
+                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables();
 
-            // Setup Dependency Injection
-            var services = new ServiceCollection();
+            var configuration = builder.Configuration;
+            var services = builder.Services;
 
-            // Register configuration
-            services.AddSingleton<IConfiguration>(configuration);
-
-            services.AddLogging(builder =>
+            services.AddLogging(loggingBuilder =>
             {
-                builder.AddConfiguration(configuration.GetSection("Logging"));
-                builder.AddConsole();
+                loggingBuilder.AddConfiguration(configuration.GetSection("Logging"));
+                loggingBuilder.AddConsole();
             });
 
             services.AddSingleton<IEWParameterSerializer, DefaultEWParameterSerializer>();
@@ -55,7 +50,13 @@ namespace AgentMesh
                 services.AddSingleton(typeof(IEWParameter), sp => (IEWParameter)sp.GetRequiredService(ewParameterType));
             }
 
+            foreach (var ewStepType in DiscoverEWStepImplementations())
+            {
+                services.AddSingleton(ewStepType);
+            }
+
             services.AddSingleton<EWParametersProvider>();
+            // insert here
             services.AddSingleton<IEWStepSelector, EWStepSelector>();
             services.AddTransient<EWPipeline>();
 
@@ -494,7 +495,6 @@ namespace AgentMesh
             services.AddSingleton<RerankerWorkflowStep>();
 
             services.AddSingleton<IWorkflow, CodeModeWorkflow>();
-            services.AddSingleton<UserConsoleInputService>();
 
             services
                .AddOptions<UserConfiguration>()
@@ -502,19 +502,26 @@ namespace AgentMesh
                .Services
                .AddSingleton(sp => sp.GetRequiredService<IOptions<UserConfiguration>>().Value);
 
-            // Build service provider
-            var serviceProvider = services.BuildServiceProvider();
+            services.AddHostedService<UserConsoleInputService>();
 
-            // Create and run the service
-            var userConsoleInputService = serviceProvider.GetRequiredService<UserConsoleInputService>();
-            await userConsoleInputService.Run();
+            var host = builder.Build();
+            await host.RunAsync();
         }
 
+    
         private static IEnumerable<Type> DiscoverEWParameterImplementations()
         {
             return GetAllAssemblies()
                 .SelectMany(GetTypesSafely)
                 .Where(IsConcreteEWParameter)
+                .Distinct();
+        }
+
+        private static IEnumerable<Type> DiscoverEWStepImplementations()
+        {
+            return GetAllAssemblies()
+                .SelectMany(GetTypesSafely)
+                .Where(IsConcreteEWStep)
                 .Distinct();
         }
 
@@ -538,6 +545,14 @@ namespace AgentMesh
             }
 
             return false;
+        }
+
+        private static bool IsConcreteEWStep(Type type)
+        {
+            return type.IsClass
+                && !type.IsAbstract
+                && !type.ContainsGenericParameters
+                && typeof(IEWStep).IsAssignableFrom(type);
         }
 
         private static IEnumerable<Assembly> GetAllAssemblies()
