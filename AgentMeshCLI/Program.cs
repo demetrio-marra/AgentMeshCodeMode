@@ -14,6 +14,8 @@ using AgentMesh.Infrastructure.Mem0;
 using AgentMesh.Infrastructure.QMD.Services;
 using AgentMesh.Application.Services.Workflows;
 using AgentMesh.Application.Services.Workflows.Steps;
+using AgentMesh.Models.Workflows;
+using System.Reflection;
 
 namespace AgentMesh
 {
@@ -44,6 +46,13 @@ namespace AgentMesh
                 builder.AddConfiguration(configuration.GetSection("Logging"));
                 builder.AddConsole();
             });
+
+            services.AddSingleton<IEWParameterSerializer, DefaultEWParameterSerializer>();
+
+            foreach (var ewParameterType in DiscoverEWParameterImplementations())
+            {
+                services.AddSingleton(ewParameterType);
+            }
 
 
             // Embedding configuration and service registration
@@ -494,6 +503,92 @@ namespace AgentMesh
             // Create and run the service
             var userConsoleInputService = serviceProvider.GetRequiredService<UserConsoleInputService>();
             await userConsoleInputService.Run();
+        }
+
+        private static IEnumerable<Type> DiscoverEWParameterImplementations()
+        {
+            return GetAllAssemblies()
+                .SelectMany(GetTypesSafely)
+                .Where(IsConcreteEWParameter)
+                .Distinct();
+        }
+
+        private static bool IsConcreteEWParameter(Type type)
+        {
+            if (!type.IsClass || type.IsAbstract)
+            {
+                return false;
+            }
+
+            var currentBaseType = type.BaseType;
+            while (currentBaseType != null)
+            {
+                if (currentBaseType.IsGenericType
+                    && currentBaseType.GetGenericTypeDefinition() == typeof(EWParameter<>))
+                {
+                    return true;
+                }
+
+                currentBaseType = currentBaseType.BaseType;
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<Assembly> GetAllAssemblies()
+        {
+            var discoveredAssemblies = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
+            var queue = new Queue<Assembly>();
+
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (!discoveredAssemblies.ContainsKey(assembly.FullName ?? assembly.GetName().Name ?? string.Empty))
+                {
+                    discoveredAssemblies[assembly.FullName ?? assembly.GetName().Name ?? string.Empty] = assembly;
+                    queue.Enqueue(assembly);
+                }
+            }
+
+            while (queue.Count > 0)
+            {
+                var assembly = queue.Dequeue();
+                foreach (var reference in assembly.GetReferencedAssemblies())
+                {
+                    if (discoveredAssemblies.ContainsKey(reference.FullName))
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        var loadedAssembly = Assembly.Load(reference);
+                        discoveredAssemblies[reference.FullName] = loadedAssembly;
+                        queue.Enqueue(loadedAssembly);
+                    }
+                    catch
+                    {
+                        // Ignore assemblies that cannot be loaded.
+                    }
+                }
+            }
+
+            return discoveredAssemblies.Values;
+        }
+
+        private static IEnumerable<Type> GetTypesSafely(Assembly assembly)
+        {
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                return ex.Types.Where(t => t != null)!;
+            }
+            catch
+            {
+                return [];
+            }
         }
 
         private static string ResolveConfigText(string currentValue, string? filePath)

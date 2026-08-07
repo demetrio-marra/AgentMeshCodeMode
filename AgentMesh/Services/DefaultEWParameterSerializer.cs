@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace AgentMesh.Services
 {
-    internal class DefaultEWParameterSerializer : IEWParameterSerializer
+    public class DefaultEWParameterSerializer : IEWParameterSerializer
     {
         public string Serialize<T>(T? obj)
         {
