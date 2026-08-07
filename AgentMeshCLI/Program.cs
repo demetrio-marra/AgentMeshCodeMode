@@ -56,6 +56,7 @@ namespace AgentMesh
             }
 
             services.AddSingleton<EWParametersProvider>();
+            services.AddSingleton<IEWStepSelector, EWStepSelector>();
             services.AddTransient<EWPipeline>();
 
 

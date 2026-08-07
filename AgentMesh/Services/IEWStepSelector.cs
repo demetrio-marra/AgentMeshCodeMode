@@ -1,6 +1,4 @@
-﻿using AgentMesh.Models.Workflows;
-
-namespace AgentMesh.Services
+﻿namespace AgentMesh.Services
 {
     /// <summary>
     /// Selects the next steps to run in a workflow based on the provided parameters.
@@ -12,9 +10,8 @@ namespace AgentMesh.Services
         /// Returns the next steps to run in the workflow based on the provided parameters.
         /// If no more steps are available, it returns an empty collection.
         /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
+        /// <returns>The steps to run</returns>
         /// <remarks>If more than one step are returned, they could be run in parallel</remarks>
-        IEnumerable<IEWStep> NextStepsToRun(IEnumerable<IEWParameter> parameters);
+        IEnumerable<IEWStep> NextStepsToRun();
     }
 }
