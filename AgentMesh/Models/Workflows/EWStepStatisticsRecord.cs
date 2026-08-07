@@ -6,6 +6,7 @@
         bool IsInputStep,
         bool IsOutputStep,
         IEnumerable<EWDisplayParameterRecord> ParametersBefore,
+        IEnumerable<EWDisplayParameterRecord> StepInputParameters,
         IEnumerable<EWDisplayParameterRecord> ParametersAfter,
         bool IsAgentic,
         string? AgentName,

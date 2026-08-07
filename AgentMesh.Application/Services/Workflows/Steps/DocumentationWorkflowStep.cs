@@ -4,24 +4,21 @@ using AgentMesh.Application.Models.Documentation;
 using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using AgentMesh.Services;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public partial class DocumentationWorkflowStep(
+public class DocumentationWorkflowStep(
     ILogger<DocumentationWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    DocumentationAgent documentationAgent,
-    IAgentSelector agentSelector) : IWorkflowStep<CodeModeWorkflowState>
+    DocumentationAgent documentationAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Documentation";
 
     private readonly ILogger<DocumentationWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly DocumentationAgent _documentationAgent = documentationAgent;
-    private readonly IAgentSelector _agentSelector = agentSelector;
 
     public async Task ExecuteDocumentationAgentAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
@@ -58,45 +55,6 @@ public partial class DocumentationWorkflowStep(
             StepName = WorkflowStepDisplayName,
             Elapsed = stopwatch.Elapsed,
             IsAgentic = false
-        };
-    }
-}
-
-public partial class DocumentationWorkflowStep : EasyWorkflowStepBase
-{
-    public override string Name => WorkflowStepDisplayName;
-
-    public override bool IsAgentic => true;
-
-    public override bool IsInputStep => false;
-
-    public override bool IsOutputStep => false;
-
-    public override string? AgentName => DocumentationAgentConfiguration.AgentName;
-
-    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(EWParameterNames.UserIntent, false),
-        new(EWParameterNames.PastMemoriesQueryResults, false),
-        new(EWParameterNames.DomainsKnowledgeBaseDocumentsContent, true),
-        new(EWParameterNames.LanguageOfTheUser, false)
-    ];
-
-    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
-    {
-        var agentInput = ToAgentInputParameters(inputParameters);
-
-        var agent = _agentSelector.GetAgent(AgentName!);
-        var agentOutput = await agent.ExecuteAsync(agentInput, cancellationToken);
-
-        return new WorkflowStepResultRecord
-        {
-            OutputParameters = agentOutput.OutputParameters.ToDictionary(p => p.Name, p => p.Value),
-            AgentTokenUsageEntry = new AgentTokenUsageEntry
-            {
-                AgentName = DocumentationAgentConfiguration.AgentName,
-                InputTokens = agentOutput.InputTokens,
-                OutputTokens = agentOutput.OutputTokens
-            }
         };
     }
 }

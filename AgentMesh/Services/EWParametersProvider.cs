@@ -31,13 +31,7 @@ namespace AgentMesh.Services
                 .Select(kv => kv.Value);
         }
 
-        public IEWParameter? GetParameter(string name)
-        {
-            _parameters.TryGetValue(name, out var parameter);
-            return parameter;
-        }
-
-        public void SetParameterValue<T>(string name, T? value)
+        public void UpdateParameterValue<T>(string name, T? value)
         {
             if (_parameters.TryGetValue(name, out var parameter))
             {
@@ -54,14 +48,6 @@ namespace AgentMesh.Services
             else
             {
                 throw new ArgumentException($"Parameter with name '{name}' does not exist.");
-            }
-        }
-
-        public void SetParameters(Dictionary<string, object?> updatedParameters)
-        {
-            foreach (var record in updatedParameters)
-            {
-                SetParameterValue(record.Key, record.Value);
             }
         }
 

@@ -2,27 +2,24 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.Reranker;
 using AgentMesh.Models.Workflows;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public partial class RerankerWorkflowStep(
+public class RerankerWorkflowStep(
     ILogger<RerankerWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    RerankerAgent rerankerAgent,
-    IAgentSelector agentSelector) : IWorkflowStep<CodeModeWorkflowState>
+    RerankerAgent rerankerAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Reranker";
 
     private readonly ILogger<RerankerWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly RerankerAgent _rerankerAgent = rerankerAgent;
-    private readonly IAgentSelector _agentSelector = agentSelector;
 
     public async Task ExecuteRerankerAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
@@ -67,43 +64,6 @@ public partial class RerankerWorkflowStep(
             StepName = WorkflowStepDisplayName,
             Elapsed = stopwatch.Elapsed,
             IsAgentic = false
-        };
-    }
-}
-
-public partial class RerankerWorkflowStep : EasyWorkflowStepBase
-{
-    public override string Name => WorkflowStepDisplayName;
-
-    public override bool IsAgentic => true;
-
-    public override bool IsInputStep => false;
-
-    public override bool IsOutputStep => false;
-
-    public override string? AgentName => RerankerAgentConfiguration.AgentName;
-
-    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(EWParameterNames.UserIntent, false),
-        new(EWParameterNames.KnowledgeBaseQueryResults, false)
-    ];
-
-    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
-    {
-        var agentInput = ToAgentInputParameters(inputParameters);
-
-        var agent = _agentSelector.GetAgent(AgentName!);
-        var agentOutput = await agent.ExecuteAsync(agentInput, cancellationToken);
-
-        return new WorkflowStepResultRecord
-        {
-            OutputParameters = agentOutput.OutputParameters.ToDictionary(p => p.Name, p => p.Value),
-            AgentTokenUsageEntry = new AgentTokenUsageEntry
-            {
-                AgentName = RerankerAgentConfiguration.AgentName,
-                InputTokens = agentOutput.InputTokens,
-                OutputTokens = agentOutput.OutputTokens
-            }
         };
     }
 }

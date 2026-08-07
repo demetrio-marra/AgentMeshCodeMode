@@ -22,19 +22,14 @@ namespace AgentMesh.Models.Workflows
         public bool IsResponseForUserParameter { get; init; }
 
         public T? ParameterValue { get; set; }
-       
-        public IEWParameterSerializer DisplayValueSerializer { get; init; } = new DefaultEWParameterSerializer();
 
-        public IEWParameterSerializer Serializer { get; init; } = new DefaultEWParameterSerializer();
+        public Type ParameterType => typeof(T);
+
+        public IEWParameterSerializer DisplayValueSerializer { get; init; } = new DefaultEWParameterSerializer();
 
         public string GetDisplayValue()
         {
             return DisplayValueSerializer.Serialize(ParameterValue);
-        }
-
-        public string GetSerializedValue()
-        {
-            return Serializer.Serialize(ParameterValue);
         }
     }
 }

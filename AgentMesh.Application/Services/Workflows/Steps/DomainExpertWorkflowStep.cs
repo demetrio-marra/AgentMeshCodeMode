@@ -2,7 +2,6 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.DomainExpert;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
@@ -10,18 +9,16 @@ using System.Diagnostics;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public partial class DomainExpertWorkflowStep(
+public class DomainExpertWorkflowStep(
     ILogger<DomainExpertWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    DomainExpertAgent domainExpertAgent,
-    IAgentSelector agentSelector) : IWorkflowStep<CodeModeWorkflowState>
+    DomainExpertAgent domainExpertAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Domain Expert";
 
     private readonly ILogger<DomainExpertWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly DomainExpertAgent _domainExpertAgent = domainExpertAgent;
-    private readonly IAgentSelector _agentSelector = agentSelector;
 
     public async Task ExecuteDomainExpertAgentAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
@@ -65,50 +62,4 @@ public partial class DomainExpertWorkflowStep(
             IsAgentic = false
         };
     }
-}
-
-public partial class DomainExpertWorkflowStep : EasyWorkflowStepBase
-{
-    public override string Name => WorkflowStepDisplayName;
-
-    public override bool IsAgentic => true;
-
-    public override bool IsInputStep => false;
-
-    public override bool IsOutputStep => false;
-
-    public override string? AgentName => "DomainExpert";
-
-    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(EWParameterNames.UserIntent, false),
-        new(EWParameterNames.ConversationTopic, false),
-        new(EWParameterNames.UserRequestedActions, false),
-        new(EWParameterNames.UserProvidedData, false),
-        new(EWParameterNames.UserPreferences, false),
-        new(EWParameterNames.PastMemoriesQueryResults, false),
-        new(EWParameterNames.DomainsKnowledgeBaseDocumentsContent, true),
-        new(EWParameterNames.SandboxResult, true),
-        new(EWParameterNames.LanguageOfTheUser, false)
-        ];
-
-
-    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
-    {
-        var agentInput = ToAgentInputParameters(inputParameters);
-
-        var agent = _agentSelector.GetAgent(AgentName!);
-        var agentOutput = await agent.ExecuteAsync(agentInput, cancellationToken);
-
-        return new WorkflowStepResultRecord
-        {
-            OutputParameters = agentOutput.OutputParameters.ToDictionary(p => p.Name, p => p.Value),
-            AgentTokenUsageEntry = new AgentTokenUsageEntry
-            {
-                AgentName = DomainExpertAgentConfiguration.AgentName,
-                InputTokens = agentOutput.InputTokens,
-                OutputTokens = agentOutput.OutputTokens
-            }
-        };
-    }
-
 }

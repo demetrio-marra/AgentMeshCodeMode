@@ -2,26 +2,23 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.TechnicalAnalyst;
 using AgentMesh.Models.Workflows;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public partial class TechnicalAnalystWorkflowStep(
+public class TechnicalAnalystWorkflowStep(
     ILogger<TechnicalAnalystWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    TechnicalAnalystAgent technicalAnalystAgent,
-    IAgentSelector agentSelector) : IWorkflowStep<CodeModeWorkflowState>
+    TechnicalAnalystAgent technicalAnalystAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Technical Analyst";
 
     private readonly ILogger<TechnicalAnalystWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly TechnicalAnalystAgent _technicalAnalystAgent = technicalAnalystAgent;
-    private readonly IAgentSelector _agentSelector = agentSelector;
 
     public async Task ExecuteTechnicalAnalystAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
@@ -66,49 +63,6 @@ public partial class TechnicalAnalystWorkflowStep(
             StepName = WorkflowStepDisplayName,
             Elapsed = stopwatch.Elapsed,
             IsAgentic = false
-        };
-    }
-}
-
-public partial class TechnicalAnalystWorkflowStep : EasyWorkflowStepBase
-{
-    public override string Name => WorkflowStepDisplayName;
-
-    public override bool IsAgentic => true;
-
-    public override bool IsInputStep => false;
-
-    public override bool IsOutputStep => false;
-
-    public override string? AgentName => TechnicalAnalystAgentConfiguration.AgentName;
-
-    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(EWParameterNames.UserIntent, false),
-        new(EWParameterNames.ConversationTopic, false),
-        new(EWParameterNames.BusinessRequirements, false),
-        new(EWParameterNames.UserRequestedActions, false),
-        new(EWParameterNames.UserProvidedData, false),
-        new(EWParameterNames.UserPreferences, false),
-        new(EWParameterNames.PastMemoriesQueryResults, false),
-        new(EWParameterNames.KnowledgeBaseAPIDocumentsContent, true)
-    ];
-
-    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
-    {
-        var agentInput = ToAgentInputParameters(inputParameters);
-
-        var agent = _agentSelector.GetAgent(AgentName!);
-        var agentOutput = await agent.ExecuteAsync(agentInput, cancellationToken);
-
-        return new WorkflowStepResultRecord
-        {
-            OutputParameters = agentOutput.OutputParameters.ToDictionary(p => p.Name, p => p.Value),
-            AgentTokenUsageEntry = new AgentTokenUsageEntry
-            {
-                AgentName = TechnicalAnalystAgentConfiguration.AgentName,
-                InputTokens = agentOutput.InputTokens,
-                OutputTokens = agentOutput.OutputTokens
-            }
         };
     }
 }

@@ -7,14 +7,15 @@ namespace AgentMesh.Services
         string Name { get; }
 
         bool IsAgentic { get; }
+
         string? AgentName { get; }
 
-        bool IsInputStep { get; }
+        bool IsPipelineFirst { get; }
 
-        bool IsOutputStep { get; }
+        bool IsPipelineLast { get; }
 
-        IEnumerable<EWParameterFlags> ParametersConfiguration { get; }
+        IEnumerable<string> InputParameters { get; }
 
-        Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default);
+        Task<EWStepResultRecord> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default);
     }
 }

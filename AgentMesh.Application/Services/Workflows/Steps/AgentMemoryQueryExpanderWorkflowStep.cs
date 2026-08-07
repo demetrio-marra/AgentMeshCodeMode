@@ -2,7 +2,6 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.AgentMemoryQueryExpander;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
@@ -14,15 +13,13 @@ namespace AgentMesh.Application.Services.Workflows.Steps;
 public partial class AgentMemoryQueryExpanderWorkflowStep(
     ILogger<AgentMemoryQueryExpanderWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
-    AgentMemoryQueryExpanderAgent agentMemoryQueryExpanderAgent,
-    IAgentSelector agentSelector) : IWorkflowStep<CodeModeWorkflowState>
+    AgentMemoryQueryExpanderAgent agentMemoryQueryExpanderAgent) : IWorkflowStep<CodeModeWorkflowState>
 {
     private const string WorkflowStepDisplayName = "Agent Memory Query Expander";
 
     private readonly ILogger<AgentMemoryQueryExpanderWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly AgentMemoryQueryExpanderAgent _agentMemoryQueryExpanderAgent = agentMemoryQueryExpanderAgent;
-    private readonly IAgentSelector _agentSelector = agentSelector;
 
     public async Task ExecuteAgentMemoryQueryExpanderAsync(CodeModeWorkflowState state, CancellationToken cancellationToken = default)
     {
@@ -57,42 +54,6 @@ public partial class AgentMemoryQueryExpanderWorkflowStep(
             StepName = WorkflowStepDisplayName,
             Elapsed = stopwatch.Elapsed,
             IsAgentic = true
-        };
-    }
-}
-
-public partial class AgentMemoryQueryExpanderWorkflowStep : EasyWorkflowStepBase
-{
-    public override string Name => WorkflowStepDisplayName;
-
-    public override bool IsAgentic => true;
-
-    public override bool IsInputStep => false;
-
-    public override bool IsOutputStep => false;
-
-    public override string? AgentName => AgentMemoryQueryExpanderAgentConfiguration.AgentName;
-
-    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(EWParameterNames.MissingValues, false)
-    ];
-
-    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
-    {
-        var agentInput = ToAgentInputParameters(inputParameters);
-
-        var agent = _agentSelector.GetAgent(AgentName!);
-        var agentOutput = await agent.ExecuteAsync(agentInput, cancellationToken);
-
-        return new WorkflowStepResultRecord
-        {
-            OutputParameters = agentOutput.OutputParameters.ToDictionary(p => p.Name, p => p.Value),
-            AgentTokenUsageEntry = new AgentTokenUsageEntry
-            {
-                AgentName = AgentMemoryQueryExpanderAgentConfiguration.AgentName,
-                InputTokens = agentOutput.InputTokens,
-                OutputTokens = agentOutput.OutputTokens
-            }
         };
     }
 }

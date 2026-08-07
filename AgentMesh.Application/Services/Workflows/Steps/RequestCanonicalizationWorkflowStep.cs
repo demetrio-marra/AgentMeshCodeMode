@@ -1,27 +1,24 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Models.Workflows;
-using AgentMesh.Services;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using AgentMesh.Models.RequestCanonicalization;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.Workflows.Steps;
 
-public partial class RequestCanonicalizationWorkflowStep(
+public class RequestCanonicalizationWorkflowStep(
     ILogger<RequestCanonicalizationWorkflowStep> logger,
     IWorkflowProgressNotifier workflowProgressNotifier,
     RequestCanonicalizationAgent requestCanonicalizationAgent,
-    CodeModeWorkflowConfiguration workflowConfiguration,
-    IAgentSelector agentSelector) : IWorkflowStep<CodeModeWorkflowState>
+    CodeModeWorkflowConfiguration workflowConfiguration) : IWorkflowStep<CodeModeWorkflowState>
 {
     private readonly ILogger<RequestCanonicalizationWorkflowStep> _logger = logger;
     private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
     private readonly RequestCanonicalizationAgent _requestCanonicalizationAgent = requestCanonicalizationAgent;
     private readonly CodeModeWorkflowConfiguration _workflowConfiguration = workflowConfiguration;
-    private readonly IAgentSelector _agentSelector = agentSelector;
     private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
     private const string WorkflowStepDisplayName = "Request Canonicalization";
 
@@ -91,44 +88,5 @@ public partial class RequestCanonicalizationWorkflowStep(
 
         _logger.LogWarning("Unable to locate QMD query types prompt file '{FileName}' in expected paths.", QmdQueryTypesFileName);
         return null;
-    }
-}
-
-public partial class RequestCanonicalizationWorkflowStep : EasyWorkflowStepBase
-{
-    public override string Name => WorkflowStepDisplayName;
-
-    public override bool IsAgentic => true;
-
-    public override bool IsInputStep => false;
-
-    public override bool IsOutputStep => false;
-
-    public override string? AgentName => RequestCanonicalizationAgentConfiguration.AgentName;
-
-    public override IEnumerable<AgentInputParameterConfigurationRecord> RequiredParameterNames => [
-        new(EWParameterNames.UserIntent, false),
-        new(EWParameterNames.IntentCategory, false),
-        new(EWParameterNames.DomainsKnowledgeBaseQuery, false),
-        new(EWParameterNames.DomainsKnowledgeBaseDocumentsContent, true)
-    ];
-
-    public override async Task<WorkflowStepResultRecord> ExecuteAsync(IEnumerable<ParameterRecord> inputParameters, CancellationToken cancellationToken = default)
-    {
-        var agentInput = ToAgentInputParameters(inputParameters);
-
-        var agent = _agentSelector.GetAgent(AgentName!);
-        var agentOutput = await agent.ExecuteAsync(agentInput, cancellationToken);
-
-        return new WorkflowStepResultRecord
-        {
-            OutputParameters = agentOutput.OutputParameters.ToDictionary(p => p.Name, p => p.Value),
-            AgentTokenUsageEntry = new AgentTokenUsageEntry
-            {
-                AgentName = RequestCanonicalizationAgentConfiguration.AgentName,
-                InputTokens = agentOutput.InputTokens,
-                OutputTokens = agentOutput.OutputTokens
-            }
-        };
     }
 }
