@@ -9,6 +9,7 @@ using AgentMesh.Models.Workflows;
 using AgentMesh.Models.ChatMessages;
 using AgentMesh.Application.Models.CostsAnalysis;
 using AgentMesh.Application.Models.ConversationSummarization;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Services
 {
@@ -90,15 +91,10 @@ namespace AgentMesh.Services
 
                 var questionDateTime = DateTime.UtcNow;
                 var currentConversation = conversationContext.Conversation.ToList();
-                var result = await _workflow.ExecuteAsync(question!, [.. conversationContext.Conversation]);
 
-                var inputMessageTokens = result.UsageStatistics
-                    .Where(e => e.IsAgentic && e.TokensUsage?.AgentName == _workflow.GetIngressExecutorName())
-                    .Sum(e => e.TokensUsage?.InputTokens ?? 0);
-
-                var outputMessageTokens = result.UsageStatistics
-                    .Where(e => e.IsAgentic && e.TokensUsage?.AgentName == _workflow.GetEgressExecutorName())
-                    .Sum(e => e.TokensUsage?.OutputTokens ?? 0);
+                var pipeline = _serviceProvider.GetRequiredService<EWPipeline>();
+                var result = await pipeline.ExecuteAsync(question!, currentConversation);
+                var usageStatistics = result.Steps.ToList();
 
                 var answerDateTime = DateTime.UtcNow;
 
@@ -112,16 +108,14 @@ namespace AgentMesh.Services
                 {
                     Role = ContextMessageRole.Assistant,
                     Date = answerDateTime,
-                    Text = result.Response,
+                    Text = result.ResponseForUser,
                 });
 
-                // L'agente iniziale riceve sempre l'intera conversazione, quindi il conteggio dei token di input è relativo all'intera conversazione.
-                // Aggiungiamo il conteggio dei token di output dell'ultima risposta, in modo da avere il conteggio totale dei token in conversazione.
-                conversationContext.TokensCount = inputMessageTokens + outputMessageTokens;
+                conversationContext.TokensCount = result.ContextSizeInTokens;
                 conversationContext.Conversation = currentConversation;
 
                 ConsoleHelper.WriteLineWithColor("\nResponse for user:", ConsoleColor.Gray);
-                ConsoleHelper.WriteLineWithColor(result.Response, ConsoleColor.Cyan);
+                ConsoleHelper.WriteLineWithColor(result.ResponseForUser, ConsoleColor.Cyan);
 
                 var agentInputCosts = new Dictionary<string, decimal>
                 {
@@ -186,19 +180,19 @@ namespace AgentMesh.Services
                     conversationContext.Conversation = summarizerResult.NewConversation;
 
                     // Dopo la summarization il numero di token in conversazione, corrisponde esattamente al numero di token in output della summarization, perché la conversazione viene sostituita con la nuova conversazione sintetizzata.
-                    conversationContext.TokensCount = summarizerResult.Usage.TokensUsage!.OutputTokens;
+                    conversationContext.TokensCount = summarizerResult.Usage.OutputTokens ?? 0;
 
-                    result.UsageStatistics.AddRange(memorySaverUsageEntries);
-                    result.UsageStatistics.Add(summarizerResult.Usage);
+                    usageStatistics.AddRange(memorySaverUsageEntries);
+                    usageStatistics.Add(summarizerResult.Usage);
                 }
 
-                ConsoleHelper.PrintTokenUsageSummary(result.UsageStatistics, agentInputCosts, agentOutputCosts);
+                ConsoleHelper.PrintTokenUsageSummary(usageStatistics, agentInputCosts, agentOutputCosts);
             }
         }
 
-        private async Task<List<WorkflowStepUsageEntry>> SaveConversationToAgentMemory(List<ContextMessage> conversation)
+        private async Task<List<EWStepStatisticsRecord>> SaveConversationToAgentMemory(List<ContextMessage> conversation)
         {
-            var usageEntries = new List<WorkflowStepUsageEntry>();
+            var usageEntries = new List<EWStepStatisticsRecord>();
 
             if (!_workflowConfiguration.EnableMemoryService || !conversation.Any())
             {
@@ -220,12 +214,12 @@ namespace AgentMesh.Services
                 { "Conversation", $"<omitted for brevity>. Total user messages: {userConversation.Count}" }
             });
 
-            var evaluatorStopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var evaluatorStartTime = DateTime.UtcNow;
             var relevantMessagesResult = await _relevantFactsEvaluatorAgent.ExecuteAsync(new RelevantFactsEvaluatorAgentInput
             {
                 ConversationHistory = userConversation
             });
-            evaluatorStopwatch.Stop();
+            var evaluatorEndTime = DateTime.UtcNow;
 
             var relevantConversation = BuildRelevantConversationForMemory(conversation, relevantMessagesResult.RelevantUserMessages);
             var relevantUserMessagesCount = relevantConversation.Count(message =>
@@ -238,18 +232,19 @@ namespace AgentMesh.Services
                 { "RelevantUserMessages", relevantUserMessagesCount > 0 ? "<omitted for brevity>" : "(No relevant user messages)" }
             });
 
-            usageEntries.Add(new WorkflowStepUsageEntry
-            {
-                StepName = "Relevant Facts Evaluator Agent",
-                Elapsed = evaluatorStopwatch.Elapsed,
-                IsAgentic = true,
-                TokensUsage = new AgentTokenUsageEntry
-                {
-                    AgentName = RelevantFactsEvaluatorAgentConfiguration.AgentName,
-                    InputTokens = relevantMessagesResult.InputTokenCount,
-                    OutputTokens = relevantMessagesResult.OutputTokenCount
-                }
-            });
+            usageEntries.Add(new EWStepStatisticsRecord(
+                StepName: "Relevant Facts Evaluator Agent",
+                StartedOnUtc: evaluatorStartTime,
+                CompletedOnUtc: evaluatorEndTime,
+                IsInputStep: false,
+                IsOutputStep: false,
+                ParametersBefore: [],
+                ParametersAfter: [],
+                IsAgentic: true,
+                AgentName: RelevantFactsEvaluatorAgentConfiguration.AgentName,
+                InputTokens: relevantMessagesResult.InputTokenCount,
+                OutputTokens: relevantMessagesResult.OutputTokenCount
+            ));
 
             if (relevantUserMessagesCount == 0)
             {
@@ -262,35 +257,38 @@ namespace AgentMesh.Services
                 { "RelevantUserMessagesCount", relevantUserMessagesCount.ToString() }
             });
 
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var memorySaverStartTime = DateTime.UtcNow;
 
             await _agentMemorySaver.SaveAsync(new AgentMemorySaverConversationInput
             {
                 ConversationHistory = relevantConversation
             });
 
-            stopwatch.Stop();
+            var memorySaverEndTime = DateTime.UtcNow;
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Agent Memory Saver", new Dictionary<string, string>
             {
                 { "SavedMessagesCount", relevantUserMessagesCount.ToString() }
             });
 
-            usageEntries.Add(new WorkflowStepUsageEntry
-            {
-                StepName = "Agent Memory Saver",
-                Elapsed = stopwatch.Elapsed,
-                IsAgentic = false
-            });
+            usageEntries.Add(new EWStepStatisticsRecord(
+                StepName: "Agent Memory Saver",
+                StartedOnUtc: memorySaverStartTime,
+                CompletedOnUtc: memorySaverEndTime,
+                IsInputStep: false,
+                IsOutputStep: false,
+                ParametersBefore: [],
+                ParametersAfter: [],
+                IsAgentic: false,
+                AgentName: null,
+                InputTokens: null,
+                OutputTokens: null));
 
             return usageEntries;
         }
 
-        private async Task<(WorkflowStepUsageEntry Usage, IEnumerable<ContextMessage> NewConversation)> SummarizeChatContextTask(List<ContextMessage> conversation)
+        private async Task<(EWStepStatisticsRecord Usage, IEnumerable<ContextMessage> NewConversation)> SummarizeChatContextTask(List<ContextMessage> conversation)
         {
-            var currentCountOfMessages = conversation.Count;
-
-
             var summarizerInput = new ConversationSummarizerAgentInput
             {
                 Conversation = conversation,
@@ -305,9 +303,9 @@ namespace AgentMesh.Services
                 { "SummaryLanguage", summarizerInput.SummaryLanguage ?? string.Empty }
             });
 
-            var summarizationStopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var summarizationStartTime = DateTime.UtcNow;
             var summarizationResult = await _conversationSummarizerAgent.ExecuteAsync(summarizerInput);
-            summarizationStopwatch.Stop();
+            var summarizationEndTime = DateTime.UtcNow;
 
             await _workflowProgressNotifier.NotifyWorkflowStepEnd("Conversation Summarizer Agent", new Dictionary<string, string>
             {
@@ -315,20 +313,19 @@ namespace AgentMesh.Services
                 { "Summary", summarizationResult.Summary.ToString() }
             });
 
-            var afterCountOfMessages = summarizationResult.NewConversation.Count();
-
-            var summarizationTokenUsageEntry = new WorkflowStepUsageEntry
-            {
-                StepName = "Conversation Summarizer Agent",
-                Elapsed = summarizationStopwatch.Elapsed,
-                IsAgentic = true,
-                TokensUsage = new AgentTokenUsageEntry
-                {
-                    AgentName = ConversationSummarizerAgent.AgentName,
-                    InputTokens = summarizationResult.InputTokenCount,
-                    OutputTokens = summarizationResult.OutputTokenCount
-                }
-            };
+            var summarizationTokenUsageEntry = new EWStepStatisticsRecord(
+                StepName: "Conversation Summarizer Agent",
+                StartedOnUtc: summarizationStartTime,
+                CompletedOnUtc: summarizationEndTime,
+                IsInputStep: false,
+                IsOutputStep: false,
+                ParametersBefore: [],
+                ParametersAfter: [],
+                IsAgentic: true,
+                AgentName: ConversationSummarizerAgent.AgentName,
+                InputTokens: summarizationResult.InputTokenCount,
+                OutputTokens: summarizationResult.OutputTokenCount
+            );
 
             return (summarizationTokenUsageEntry, summarizationResult.NewConversation);
         }

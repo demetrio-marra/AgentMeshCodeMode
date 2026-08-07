@@ -60,21 +60,23 @@ namespace AgentMesh.Helpers
             return $"{hours}h{remainingMinutes}m{remainingSeconds}s";
         }
 
-        public static void PrintTokenUsageSummary(List<WorkflowStepUsageEntry> tokenUsageEntries, Dictionary<string, decimal> agentInputCosts, Dictionary<string, decimal> agentOutputCosts)
+        public static void PrintTokenUsageSummary(IEnumerable<EWStepStatisticsRecord> tokenUsageEntries, Dictionary<string, decimal> agentInputCosts, Dictionary<string, decimal> agentOutputCosts)
         {
-            if (tokenUsageEntries.Count == 0)
+            var entries = tokenUsageEntries.ToList();
+
+            if (entries.Count == 0)
             {
                 return;
             }
 
-            var totalElapsedWorkflow = TimeSpan.FromMilliseconds(tokenUsageEntries.Sum(e => e.Elapsed.TotalMilliseconds));
+            var totalElapsedWorkflow = TimeSpan.FromMilliseconds(entries.Sum(e => e.Elapsed.TotalMilliseconds));
 
-            var agenticEntries = tokenUsageEntries
-                .Where(e => e.IsAgentic && e.TokensUsage is not null)
+            var agenticEntries = entries
+                .Where(e => e.IsAgentic)
                 .ToList();
 
-            var totalInputTokens = agenticEntries.Sum(e => e.TokensUsage!.InputTokens);
-            var totalOutputTokens = agenticEntries.Sum(e => e.TokensUsage!.OutputTokens);
+            var totalInputTokens = agenticEntries.Sum(e => e.InputTokens ?? 0);
+            var totalOutputTokens = agenticEntries.Sum(e => e.OutputTokens ?? 0);
             var totalInputCost = 0m;
             var totalOutputCost = 0m;
 
@@ -87,7 +89,7 @@ namespace AgentMesh.Helpers
             WriteLineWithColor("║                                      ║           ║    Tokens     ║  Percentage   ║      Cost ($)     ║    Tokens     ║  Percentage   ║      Cost ($)     ║                ║", ConsoleColor.Gray);
             WriteLineWithColor("╠══════════════════════════════════════╬═══════════╬═══════════════╬═══════════════╬═══════════════════╬═══════════════╬═══════════════╬═══════════════════╬════════════════╣", ConsoleColor.Gray);
 
-            foreach (var entry in tokenUsageEntries)
+            foreach (var entry in entries)
             {
                 var inputTokensStr = "-".PadLeft(13, ' ');
                 var outputTokensStr = "-".PadLeft(13, ' ');
@@ -97,20 +99,23 @@ namespace AgentMesh.Helpers
                 var outputCostStr = "-".PadLeft(17, ' ');
                 var totalAgentCostStr = "-".PadLeft(14, ' ');
 
-                if (entry.IsAgentic && entry.TokensUsage is not null)
+                if (entry.IsAgentic)
                 {
-                    var tokensUsage = entry.TokensUsage;
-                    inputTokensStr = tokensUsage.InputTokens.ToString("N0").PadLeft(13);
-                    outputTokensStr = tokensUsage.OutputTokens.ToString("N0").PadLeft(13);
+                    var inputTokens = entry.InputTokens ?? 0;
+                    var outputTokens = entry.OutputTokens ?? 0;
+                    var agentName = entry.AgentName ?? string.Empty;
 
-                    inputPercentage = totalInputTokens > 0 ? (tokensUsage.InputTokens * 100.0 / totalInputTokens).ToString("F2").PadLeft(13) : "0.00".PadLeft(13);
-                    outputPercentage = totalOutputTokens > 0 ? (tokensUsage.OutputTokens * 100.0 / totalOutputTokens).ToString("F2").PadLeft(13) : "0.00".PadLeft(13);
+                    inputTokensStr = inputTokens.ToString("N0").PadLeft(13);
+                    outputTokensStr = outputTokens.ToString("N0").PadLeft(13);
 
-                    var inputCostPerMillion = agentInputCosts.ContainsKey(tokensUsage.AgentName) ? agentInputCosts[tokensUsage.AgentName] : 0m;
-                    var outputCostPerMillion = agentOutputCosts.ContainsKey(tokensUsage.AgentName) ? agentOutputCosts[tokensUsage.AgentName] : 0m;
+                    inputPercentage = totalInputTokens > 0 ? (inputTokens * 100.0 / totalInputTokens).ToString("F2").PadLeft(13) : "0.00".PadLeft(13);
+                    outputPercentage = totalOutputTokens > 0 ? (outputTokens * 100.0 / totalOutputTokens).ToString("F2").PadLeft(13) : "0.00".PadLeft(13);
 
-                    var inputCost = (tokensUsage.InputTokens / 1_000_000m) * inputCostPerMillion;
-                    var outputCost = (tokensUsage.OutputTokens / 1_000_000m) * outputCostPerMillion;
+                    var inputCostPerMillion = agentInputCosts.ContainsKey(agentName) ? agentInputCosts[agentName] : 0m;
+                    var outputCostPerMillion = agentOutputCosts.ContainsKey(agentName) ? agentOutputCosts[agentName] : 0m;
+
+                    var inputCost = (inputTokens / 1_000_000m) * inputCostPerMillion;
+                    var outputCost = (outputTokens / 1_000_000m) * outputCostPerMillion;
                     var totalAgentCost = inputCost + outputCost;
 
                     totalInputCost += inputCost;
