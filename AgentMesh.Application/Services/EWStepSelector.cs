@@ -1,49 +1,72 @@
-﻿using AgentMesh.Services;
+﻿using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Models.CodeSandbox;
 using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Services.EWSteps;
+using AgentMesh.Models.RequestAnalysis;
+using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services
 {
     public class EWStepSelector : IEWStepSelector
     {
+        private enum SelectorStage
+        {
+            Start,
+            AfterRequestAnalyzer,
+            AfterAgentMemoryQueryExpander,
+            AfterAgentMemoryService,
+            AfterKnowledgeBaseQueryExpander,
+            AfterDomainsKnowledgeBaseServiceSearch,
+            AfterReranker,
+            AfterDomainsKnowledgeBaseDocumentsExtractor,
+            AfterDocumentation,
+            AfterFunctionalAnalystAndApisKnowledgeBaseSearch,
+            AfterApiKnowledgeBaseDocumentsExtractor,
+            AfterTechnicalAnalyst,
+            AfterCoder,
+            AfterInitialSandbox,
+            CorrectionDetector,
+            CorrectionFixer,
+            CorrectionSandbox,
+            AfterDomainExpert,
+            Finalize,
+            Completed
+        }
+
         private readonly UserLastRequestParameter _userLastRequestParameter;
-        private readonly InitialContextMessagesParameter _initialContextMessagesParameter;
-        private readonly UserIntentParameter _userIntentParameter;
         private readonly IntentCategoryParameter _intentCategoryParameter;
-        private readonly LanguageOfTheUserParameter _languageOfTheUserParameter;
-        private readonly ConversationTopicParameter _conversationTopicParameter;
-        private readonly UserPreferencesParameter _userPreferencesParameter;
-        private readonly UserProvidedDataParameter _userProvidedDataParameter;
-        private readonly UserRequestedActionsParameter _userRequestedActionsParameter;
         private readonly MissingValuesParameter _missingValuesParameter;
-        private readonly KnowledgeBaseAPIDocumentsContentParameter _knowledgeBaseAPIDocumentsContentParameter;
         private readonly PastMemoriesQueryParameter _pastMemoriesQueryParameter;
         private readonly DomainsKnowledgeBaseQueryParameter _domainsKnowledgeBaseQueryParameter;
-        private readonly PastMemoriesQueryResultsParameter _pastMemoriesQueryResultsParameter;
         private readonly KnowledgeBaseQueryResultsParameter _knowledgeBaseQueryResultsParameter;
-        private readonly DomainsKnowledgeBaseDocumentsContentParameter _domainsKnowledgeBaseDocumentsContentParameter;
-        private readonly BusinessRequirementsParameter _businessRequirementsParameter;
         private readonly FunctionalAnalystRejectedParameter _functionalAnalystRejectedParameter;
-        private readonly FunctionalAnalystRejectReasonsParameter _functionalAnalystRejectReasonsParameter;
-        private readonly TechnicalSpecificationParameter _technicalSpecificationParameter;
         private readonly TechnicalAnalystRejectedParameter _technicalAnalystRejectedParameter;
-        private readonly TechnicalAnalystRejectReasonsParameter _technicalAnalystRejectReasonsParameter;
-        private readonly ShouldEngageCoderParameter _shouldEngageCoderParameter;
         private readonly APISKnowledgeBaseQueryResultsParameter _apisKnowledgeBaseQueryResultsParameter;
-        private readonly SelectedAPIsFileLocationsParameter _selectedAPIsFileLocationsParameter;
-        private readonly DocumentationContentParameter _documentationContentParameter;
-        private readonly GeneratedCodeParameter _generatedCodeParameter;
-        private readonly LastCodeWithLineNumbersParameter _lastCodeWithLineNumbersParameter;
         private readonly CodeExecutionFailuresDetectorIterationCountParameter _codeExecutionFailuresDetectorIterationCountParameter;
         private readonly CodeExecutionAnalysisParameter _codeExecutionAnalysisParameter;
-        private readonly SandboxResultParameter _sandboxResultParameter;
-        private readonly SandboxExecutionIdParameter _sandboxExecutionIdParameter;
         private readonly CodeExecutionResultTypeParameter _codeExecutionResultTypeParameter;
-        private readonly ExecutionErrorParameter _executionErrorParameter;
-        private readonly DomainExpertOutputParameter _domainExpertOutputParameter;
-        private readonly PersonalAssistantOpeningSentenceParameter _personalAssistantOpeningSentenceParameter;
-        private readonly PersonalAssistantClosingSentenceParameter _personalAssistantClosingSentenceParameter;
-        private readonly PersonalAssistantConvenienceErrorSentenceParameter _personalAssistantConvenienceErrorSentenceParameter;
-        private readonly FinalAnswerParameter _finalAnswerParameter;
+        private readonly CodeModeWorkflowConfiguration _workflowConfiguration;
+        private readonly RequestAnalyzerEWStep _requestAnalyzerEWStep;
+        private readonly AgentMemoryQueryExpanderEWStep _agentMemoryQueryExpanderEWStep;
+        private readonly AgentMemoryServiceEWStep _agentMemoryServiceEWStep;
+        private readonly KnowledgeBaseQueryExpanderEWStep _knowledgeBaseQueryExpanderEWStep;
+        private readonly DomainsKnowledgeBaseServiceSearchEWStep _domainsKnowledgeBaseServiceSearchEWStep;
+        private readonly RerankerEWStep _rerankerEWStep;
+        private readonly DomainsKnowledgeBaseDocumentsExtractorEWStep _domainsKnowledgeBaseDocumentsExtractorEWStep;
+        private readonly DocumentationEWStep _documentationEWStep;
+        private readonly FunctionalAnalystEWStep _functionalAnalystEWStep;
+        private readonly APIsKnowledgeBaseServiceSearchEWStep _apisKnowledgeBaseServiceSearchEWStep;
+        private readonly APIKnowledgeBaseDocumentsExtractorEWStep _apiKnowledgeBaseDocumentsExtractorEWStep;
+        private readonly TechnicalAnalystEWStep _technicalAnalystEWStep;
+        private readonly CoderEWStep _coderEWStep;
+        private readonly JSSandboxEWStep _jsSandboxEWStep;
+        private readonly CodeExecutionFailuresDetectorEWStep _codeExecutionFailuresDetectorEWStep;
+        private readonly CodeFixerForRuntimeErrorsEWStep _codeFixerForRuntimeErrorsEWStep;
+        private readonly DomainExpertEWStep _domainExpertEWStep;
+        private readonly PersonalAssistantEWStep _personalAssistantEWStep;
+
+        private SelectorStage _stage = SelectorStage.Start;
+        private string? _currentRequest;
 
         public EWStepSelector(
             UserLastRequestParameter userLastRequestParameter,
@@ -84,52 +107,255 @@ namespace AgentMesh.Application.Services
             PersonalAssistantOpeningSentenceParameter personalAssistantOpeningSentenceParameter,
             PersonalAssistantClosingSentenceParameter personalAssistantClosingSentenceParameter,
             PersonalAssistantConvenienceErrorSentenceParameter personalAssistantConvenienceErrorSentenceParameter,
-            FinalAnswerParameter finalAnswerParameter)
+            FinalAnswerParameter finalAnswerParameter,
+            CodeModeWorkflowConfiguration workflowConfiguration,
+            RequestAnalyzerEWStep requestAnalyzerEWStep,
+            AgentMemoryQueryExpanderEWStep agentMemoryQueryExpanderEWStep,
+            AgentMemoryServiceEWStep agentMemoryServiceEWStep,
+            KnowledgeBaseQueryExpanderEWStep knowledgeBaseQueryExpanderEWStep,
+            DomainsKnowledgeBaseServiceSearchEWStep domainsKnowledgeBaseServiceSearchEWStep,
+            RerankerEWStep rerankerEWStep,
+            DomainsKnowledgeBaseDocumentsExtractorEWStep domainsKnowledgeBaseDocumentsExtractorEWStep,
+            DocumentationEWStep documentationEWStep,
+            FunctionalAnalystEWStep functionalAnalystEWStep,
+            APIsKnowledgeBaseServiceSearchEWStep apisKnowledgeBaseServiceSearchEWStep,
+            APIKnowledgeBaseDocumentsExtractorEWStep apiKnowledgeBaseDocumentsExtractorEWStep,
+            TechnicalAnalystEWStep technicalAnalystEWStep,
+            CoderEWStep coderEWStep,
+            JSSandboxEWStep jsSandboxEWStep,
+            CodeExecutionFailuresDetectorEWStep codeExecutionFailuresDetectorEWStep,
+            CodeFixerForRuntimeErrorsEWStep codeFixerForRuntimeErrorsEWStep,
+            DomainExpertEWStep domainExpertEWStep,
+            PersonalAssistantEWStep personalAssistantEWStep)
         {
             _userLastRequestParameter = userLastRequestParameter;
-            _initialContextMessagesParameter = initialContextMessagesParameter;
-            _userIntentParameter = userIntentParameter;
             _intentCategoryParameter = intentCategoryParameter;
-            _languageOfTheUserParameter = languageOfTheUserParameter;
-            _conversationTopicParameter = conversationTopicParameter;
-            _userPreferencesParameter = userPreferencesParameter;
-            _userProvidedDataParameter = userProvidedDataParameter;
-            _userRequestedActionsParameter = userRequestedActionsParameter;
             _missingValuesParameter = missingValuesParameter;
-            _knowledgeBaseAPIDocumentsContentParameter = knowledgeBaseAPIDocumentsContentParameter;
             _pastMemoriesQueryParameter = pastMemoriesQueryParameter;
             _domainsKnowledgeBaseQueryParameter = domainsKnowledgeBaseQueryParameter;
-            _pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
             _knowledgeBaseQueryResultsParameter = knowledgeBaseQueryResultsParameter;
-            _domainsKnowledgeBaseDocumentsContentParameter = domainsKnowledgeBaseDocumentsContentParameter;
-            _businessRequirementsParameter = businessRequirementsParameter;
             _functionalAnalystRejectedParameter = functionalAnalystRejectedParameter;
-            _functionalAnalystRejectReasonsParameter = functionalAnalystRejectReasonsParameter;
-            _technicalSpecificationParameter = technicalSpecificationParameter;
             _technicalAnalystRejectedParameter = technicalAnalystRejectedParameter;
-            _technicalAnalystRejectReasonsParameter = technicalAnalystRejectReasonsParameter;
-            _shouldEngageCoderParameter = shouldEngageCoderParameter;
             _apisKnowledgeBaseQueryResultsParameter = apisKnowledgeBaseQueryResultsParameter;
-            _selectedAPIsFileLocationsParameter = selectedAPIsFileLocationsParameter;
-            _documentationContentParameter = documentationContentParameter;
-            _generatedCodeParameter = generatedCodeParameter;
-            _lastCodeWithLineNumbersParameter = lastCodeWithLineNumbersParameter;
             _codeExecutionFailuresDetectorIterationCountParameter = codeExecutionFailuresDetectorIterationCountParameter;
             _codeExecutionAnalysisParameter = codeExecutionAnalysisParameter;
-            _sandboxResultParameter = sandboxResultParameter;
-            _sandboxExecutionIdParameter = sandboxExecutionIdParameter;
             _codeExecutionResultTypeParameter = codeExecutionResultTypeParameter;
-            _executionErrorParameter = executionErrorParameter;
-            _domainExpertOutputParameter = domainExpertOutputParameter;
-            _personalAssistantOpeningSentenceParameter = personalAssistantOpeningSentenceParameter;
-            _personalAssistantClosingSentenceParameter = personalAssistantClosingSentenceParameter;
-            _personalAssistantConvenienceErrorSentenceParameter = personalAssistantConvenienceErrorSentenceParameter;
-            _finalAnswerParameter = finalAnswerParameter;
+            _workflowConfiguration = workflowConfiguration;
+            _requestAnalyzerEWStep = requestAnalyzerEWStep;
+            _agentMemoryQueryExpanderEWStep = agentMemoryQueryExpanderEWStep;
+            _agentMemoryServiceEWStep = agentMemoryServiceEWStep;
+            _knowledgeBaseQueryExpanderEWStep = knowledgeBaseQueryExpanderEWStep;
+            _domainsKnowledgeBaseServiceSearchEWStep = domainsKnowledgeBaseServiceSearchEWStep;
+            _rerankerEWStep = rerankerEWStep;
+            _domainsKnowledgeBaseDocumentsExtractorEWStep = domainsKnowledgeBaseDocumentsExtractorEWStep;
+            _documentationEWStep = documentationEWStep;
+            _functionalAnalystEWStep = functionalAnalystEWStep;
+            _apisKnowledgeBaseServiceSearchEWStep = apisKnowledgeBaseServiceSearchEWStep;
+            _apiKnowledgeBaseDocumentsExtractorEWStep = apiKnowledgeBaseDocumentsExtractorEWStep;
+            _technicalAnalystEWStep = technicalAnalystEWStep;
+            _coderEWStep = coderEWStep;
+            _jsSandboxEWStep = jsSandboxEWStep;
+            _codeExecutionFailuresDetectorEWStep = codeExecutionFailuresDetectorEWStep;
+            _codeFixerForRuntimeErrorsEWStep = codeFixerForRuntimeErrorsEWStep;
+            _domainExpertEWStep = domainExpertEWStep;
+            _personalAssistantEWStep = personalAssistantEWStep;
         }
 
         public IEnumerable<IEWStep> NextStepsToRun()
         {
-            throw new NotImplementedException();
+            if (_currentRequest != _userLastRequestParameter.ParameterValue)
+            {
+                _currentRequest = _userLastRequestParameter.ParameterValue;
+                _stage = SelectorStage.Start;
+            }
+
+            return _stage switch
+            {
+                SelectorStage.Start => MoveTo(SelectorStage.AfterRequestAnalyzer, _requestAnalyzerEWStep),
+                SelectorStage.AfterRequestAnalyzer => SelectAfterRequestAnalyzer(),
+                SelectorStage.AfterAgentMemoryQueryExpander => SelectAfterAgentMemoryQueryExpander(),
+                SelectorStage.AfterAgentMemoryService => SelectAfterAgentMemoryService(),
+                SelectorStage.AfterKnowledgeBaseQueryExpander => SelectAfterKnowledgeBaseQueryExpander(),
+                SelectorStage.AfterDomainsKnowledgeBaseServiceSearch => SelectAfterDomainsKnowledgeBaseServiceSearch(),
+                SelectorStage.AfterReranker => SelectAfterReranker(),
+                SelectorStage.AfterDomainsKnowledgeBaseDocumentsExtractor => SelectAfterDomainsKnowledgeBaseDocumentsExtractor(),
+                SelectorStage.AfterDocumentation => MoveTo(SelectorStage.Finalize),
+                SelectorStage.AfterFunctionalAnalystAndApisKnowledgeBaseSearch => SelectAfterFunctionalAnalystAndApisKnowledgeBaseSearch(),
+                SelectorStage.AfterApiKnowledgeBaseDocumentsExtractor => MoveTo(SelectorStage.AfterTechnicalAnalyst, _technicalAnalystEWStep),
+                SelectorStage.AfterTechnicalAnalyst => SelectAfterTechnicalAnalyst(),
+                SelectorStage.AfterCoder => MoveTo(SelectorStage.AfterInitialSandbox, _jsSandboxEWStep),
+                SelectorStage.AfterInitialSandbox => SelectAfterInitialSandbox(),
+                SelectorStage.CorrectionDetector => SelectCorrectionDetector(),
+                SelectorStage.CorrectionFixer => MoveTo(SelectorStage.CorrectionSandbox, _codeFixerForRuntimeErrorsEWStep),
+                SelectorStage.CorrectionSandbox => SelectCorrectionSandbox(),
+                SelectorStage.AfterDomainExpert => MoveTo(SelectorStage.Finalize),
+                SelectorStage.Finalize => MoveTo(SelectorStage.Completed, _personalAssistantEWStep),
+                _ => []
+            };
+        }
+
+        private IEnumerable<IEWStep> SelectAfterRequestAnalyzer()
+        {
+            if ((_missingValuesParameter.ParameterValue ?? []).Any())
+            {
+                return MoveTo(SelectorStage.AfterAgentMemoryQueryExpander, _agentMemoryQueryExpanderEWStep);
+            }
+
+            return SelectAfterOptionalMemoryFlow();
+        }
+
+        private IEnumerable<IEWStep> SelectAfterAgentMemoryQueryExpander()
+        {
+            if ((_pastMemoriesQueryParameter.ParameterValue ?? []).Any())
+            {
+                return MoveTo(SelectorStage.AfterAgentMemoryService, _agentMemoryServiceEWStep);
+            }
+
+            return SelectAfterOptionalMemoryFlow();
+        }
+
+        private IEnumerable<IEWStep> SelectAfterAgentMemoryService() => SelectAfterOptionalMemoryFlow();
+
+        private IEnumerable<IEWStep> SelectAfterOptionalMemoryFlow()
+        {
+            if ((_intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other) == UserIntentCategory.Other)
+            {
+                return MoveTo(SelectorStage.Finalize);
+            }
+
+            return MoveTo(SelectorStage.AfterKnowledgeBaseQueryExpander, _knowledgeBaseQueryExpanderEWStep);
+        }
+
+        private IEnumerable<IEWStep> SelectAfterKnowledgeBaseQueryExpander()
+        {
+            if ((_domainsKnowledgeBaseQueryParameter.ParameterValue ?? []).Any())
+            {
+                return MoveTo(SelectorStage.AfterDomainsKnowledgeBaseServiceSearch, _domainsKnowledgeBaseServiceSearchEWStep);
+            }
+
+            return SelectByIntentCategory();
+        }
+
+        private IEnumerable<IEWStep> SelectAfterDomainsKnowledgeBaseServiceSearch()
+        {
+            if ((_knowledgeBaseQueryResultsParameter.ParameterValue ?? []).Any())
+            {
+                return MoveTo(SelectorStage.AfterReranker, _rerankerEWStep);
+            }
+
+            return SelectByIntentCategory();
+        }
+
+        private IEnumerable<IEWStep> SelectAfterReranker()
+        {
+            if ((_knowledgeBaseQueryResultsParameter.ParameterValue ?? []).Any())
+            {
+                return MoveTo(SelectorStage.AfterDomainsKnowledgeBaseDocumentsExtractor, _domainsKnowledgeBaseDocumentsExtractorEWStep);
+            }
+
+            return SelectByIntentCategory();
+        }
+
+        private IEnumerable<IEWStep> SelectAfterDomainsKnowledgeBaseDocumentsExtractor() => SelectByIntentCategory();
+
+        private IEnumerable<IEWStep> SelectByIntentCategory()
+        {
+            var intentCategory = _intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other;
+
+            if (intentCategory == UserIntentCategory.Documentation)
+            {
+                return MoveTo(SelectorStage.AfterDocumentation, _documentationEWStep);
+            }
+
+            if (intentCategory == UserIntentCategory.TaskExecution)
+            {
+                _stage = SelectorStage.AfterFunctionalAnalystAndApisKnowledgeBaseSearch;
+                return [_functionalAnalystEWStep, _apisKnowledgeBaseServiceSearchEWStep];
+            }
+
+            return MoveTo(SelectorStage.Finalize);
+        }
+
+        private IEnumerable<IEWStep> SelectAfterFunctionalAnalystAndApisKnowledgeBaseSearch()
+        {
+            if (_functionalAnalystRejectedParameter.ParameterValue == true)
+            {
+                return MoveTo(SelectorStage.Finalize);
+            }
+
+            if ((_apisKnowledgeBaseQueryResultsParameter.ParameterValue ?? []).Any())
+            {
+                return MoveTo(SelectorStage.AfterApiKnowledgeBaseDocumentsExtractor, _apiKnowledgeBaseDocumentsExtractorEWStep);
+            }
+
+            return MoveTo(SelectorStage.AfterTechnicalAnalyst, _technicalAnalystEWStep);
+        }
+
+        private IEnumerable<IEWStep> SelectAfterTechnicalAnalyst()
+        {
+            if (_technicalAnalystRejectedParameter.ParameterValue)
+            {
+                return MoveTo(SelectorStage.Finalize);
+            }
+
+            return MoveTo(SelectorStage.AfterCoder, _coderEWStep);
+        }
+
+        private IEnumerable<IEWStep> SelectAfterInitialSandbox()
+        {
+            return _codeExecutionResultTypeParameter.ParameterValue switch
+            {
+                SandboxResultType.CallError => MoveTo(SelectorStage.Finalize),
+                SandboxResultType.ApplicationError or SandboxResultType.SyntaxError =>
+                    _workflowConfiguration.EnableCodeCorrection
+                        ? MoveTo(SelectorStage.CorrectionDetector, _codeExecutionFailuresDetectorEWStep)
+                        : MoveTo(SelectorStage.Finalize),
+                _ => _workflowConfiguration.EnableDomainExpert
+                        ? MoveTo(SelectorStage.AfterDomainExpert, _domainExpertEWStep)
+                        : MoveTo(SelectorStage.Finalize)
+            };
+        }
+
+        private IEnumerable<IEWStep> SelectCorrectionDetector()
+        {
+            if (string.Equals(_codeExecutionAnalysisParameter.ParameterValue,
+                    JavascriptCodeExecutionFailuresDetectorAgent.NO_ERROR,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return _workflowConfiguration.EnableDomainExpert
+                    ? MoveTo(SelectorStage.AfterDomainExpert, _domainExpertEWStep)
+                    : MoveTo(SelectorStage.Finalize);
+            }
+
+            return MoveTo(SelectorStage.CorrectionFixer, _codeFixerForRuntimeErrorsEWStep);
+        }
+
+        private IEnumerable<IEWStep> SelectCorrectionSandbox()
+        {
+            if (_codeExecutionResultTypeParameter.ParameterValue == SandboxResultType.CallError)
+            {
+                return _workflowConfiguration.EnableDomainExpert
+                    ? MoveTo(SelectorStage.AfterDomainExpert, _domainExpertEWStep)
+                    : MoveTo(SelectorStage.Finalize);
+            }
+
+            var detectorRuns = _codeExecutionFailuresDetectorIterationCountParameter.ParameterValue ?? 0;
+            if ((_codeExecutionResultTypeParameter.ParameterValue == SandboxResultType.ApplicationError
+                 || _codeExecutionResultTypeParameter.ParameterValue == SandboxResultType.SyntaxError)
+                && detectorRuns < 2)
+            {
+                return MoveTo(SelectorStage.CorrectionDetector, _codeExecutionFailuresDetectorEWStep);
+            }
+
+            return _workflowConfiguration.EnableDomainExpert
+                ? MoveTo(SelectorStage.AfterDomainExpert, _domainExpertEWStep)
+                : MoveTo(SelectorStage.Finalize);
+        }
+
+        private IEnumerable<IEWStep> MoveTo(SelectorStage nextStage, IEWStep? step = null)
+        {
+            _stage = nextStage;
+            return step != null ? [step] : [];
         }
     }
 }

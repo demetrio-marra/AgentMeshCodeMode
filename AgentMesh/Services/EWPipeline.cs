@@ -26,8 +26,11 @@ namespace AgentMesh.Services
             var conversationHistoryParameter = _ewParametersProvider.GetConversationHistoryParameter()
                 ?? throw new InvalidOperationException("Conversation history parameter is not defined.");
 
+            SetParameterValue(userInputParameter, userInput);
+            SetParameterValue(conversationHistoryParameter, chatHistory);
+
             var stepRuns = new List<(IEWStep Step, EWStepResultRecord Result, EWStepStatisticsRecord Statistics)>();
-            var nextSteps = _ewStepSelector.NextStepsToRun(_ewParametersProvider.GetParameters());
+            var nextSteps = _ewStepSelector.NextStepsToRun();
 
             while (nextSteps.Any())
             {
@@ -36,7 +39,7 @@ namespace AgentMesh.Services
 
                 stepRuns.AddRange(currentStepRuns);
 
-                nextSteps = _ewStepSelector.NextStepsToRun(_ewParametersProvider.GetParameters());
+                nextSteps = _ewStepSelector.NextStepsToRun();
             }
 
             var responseForUserParameter = _ewParametersProvider.GetResponseForUserParameter()
@@ -79,6 +82,17 @@ namespace AgentMesh.Services
             );
 
             return (step, stepResult, stepStatistics);
+        }
+
+        private static void SetParameterValue<T>(IEWParameter parameter, T value)
+        {
+            if (parameter is EWParameter<T> typedParameter)
+            {
+                typedParameter.ParameterValue = value;
+                return;
+            }
+
+            throw new InvalidOperationException($"Parameter '{parameter.Name}' is not of expected type '{typeof(T).Name}'.");
         }
 
         private static List<EWDisplayParameterRecord> CreateDisplaySnapshot(IEnumerable<IEWParameter> parameters)
