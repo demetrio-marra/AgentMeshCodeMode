@@ -56,6 +56,7 @@ namespace AgentMesh
             }
 
             services.AddSingleton<EWParametersProvider>();
+            services.AddTransient<EWPipeline>();
 
 
             // Embedding configuration and service registration

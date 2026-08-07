@@ -15,6 +15,7 @@ namespace AgentMesh.Services
     internal class UserConsoleInputService(
         IWorkflow workflow,
         IWorkflowProgressNotifier workflowProgressNotifier,
+        IServiceProvider serviceProvider,
         FunctionalAnalystAgentConfiguration functionalAnalystConfiguration,
         TechnicalAnalystAgentConfiguration technicalAnalystConfiguration,
         CoderAgentConfiguration coderConfiguration,
@@ -39,6 +40,7 @@ namespace AgentMesh.Services
     {
         private readonly IWorkflow _workflow = workflow;
         private readonly IWorkflowProgressNotifier _workflowProgressNotifier = workflowProgressNotifier;
+        private readonly IServiceProvider _serviceProvider = serviceProvider;
         private readonly FunctionalAnalystAgentConfiguration _functionalAnalystConfiguration = functionalAnalystConfiguration;
         private readonly TechnicalAnalystAgentConfiguration _technicalAnalystConfiguration = technicalAnalystConfiguration;
         private readonly CoderAgentConfiguration _coderConfiguration = coderConfiguration;
