@@ -9,7 +9,11 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class CoderEWStep(
         CoderAgent coderAgent,
-        EWParametersProvider ewParametersProvider) : IEWStep
+        BusinessRequirementsParameter businessRequirementsParameter,
+        TechnicalSpecificationParameter technicalSpecificationParameter,
+        SelectedAPIsFileLocationsParameter selectedAPIsFileLocationsParameter,
+        KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
+        GeneratedCodeParameter generatedCodeParameter) : IEWStep
     {
         public string Name => "Coder";
 
@@ -21,35 +25,16 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        public IEnumerable<string> InputParameters => [
-            EWParameterNames.BusinessRequirements,
-            EWParameterNames.TechnicalSpecification,
-            EWParameterNames.SelectedAPIsFileLocations,
-            EWParameterNames.KnowledgeBaseAPIDocumentsContent
-        ];
-
         private readonly CoderAgent _coderAgent = coderAgent;
-        private readonly EWParametersProvider _ewParametersProvider = ewParametersProvider;
+        private readonly BusinessRequirementsParameter _businessRequirementsParameter = businessRequirementsParameter;
+        private readonly TechnicalSpecificationParameter _technicalSpecificationParameter = technicalSpecificationParameter;
+        private readonly SelectedAPIsFileLocationsParameter _selectedAPIsFileLocationsParameter = selectedAPIsFileLocationsParameter;
+        private readonly KnowledgeBaseAPIDocumentsContentParameter _knowledgeBaseAPIDocumentsContentParameter = knowledgeBaseAPIDocumentsContentParameter;
+        private readonly GeneratedCodeParameter _generatedCodeParameter = generatedCodeParameter;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
+        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var requirementsParameter = inputParameters.Single(p => p.Name == EWParameterNames.BusinessRequirements);
-            if (requirementsParameter is not BusinessRequirementsParameter typedRequirements)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.BusinessRequirements} is not of type BusinessRequirementsParameter");
-
-            var specParameter = inputParameters.Single(p => p.Name == EWParameterNames.TechnicalSpecification);
-            if (specParameter is not TechnicalSpecificationParameter typedSpec)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.TechnicalSpecification} is not of type TechnicalSpecificationParameter");
-
-            var selectedApisParameter = inputParameters.Single(p => p.Name == EWParameterNames.SelectedAPIsFileLocations);
-            if (selectedApisParameter is not SelectedAPIsFileLocationsParameter typedSelectedApis)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.SelectedAPIsFileLocations} is not of type SelectedAPIsFileLocationsParameter");
-
-            var apiDocsParameter = inputParameters.Single(p => p.Name == EWParameterNames.KnowledgeBaseAPIDocumentsContent);
-            if (apiDocsParameter is not KnowledgeBaseAPIDocumentsContentParameter typedApiDocs)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.KnowledgeBaseAPIDocumentsContent} is not of type KnowledgeBaseAPIDocumentsContentParameter");
-
-            var docsToPass = (typedApiDocs.ParameterValue ?? []).Select(doc => new KnowledgeBaseGetDocsOutputItem
+            var docsToPass = (_knowledgeBaseAPIDocumentsContentParameter.ParameterValue ?? []).Select(doc => new KnowledgeBaseGetDocsOutputItem
             {
                 File = doc.File,
                 Content = doc.Content
@@ -57,15 +42,15 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var agentInput = new CoderAgentInput
             {
-                BusinessRequirements = typedRequirements.ParameterValue ?? "(No business requirements)",
-                TechnicalSpecification = typedSpec.ParameterValue ?? "(No technical specification)",
-                SelectedAPIsFileLocations = typedSelectedApis.ParameterValue ?? [],
+                BusinessRequirements = _businessRequirementsParameter.ParameterValue ?? "(No business requirements)",
+                TechnicalSpecification = _technicalSpecificationParameter.ParameterValue ?? "(No technical specification)",
+                SelectedAPIsFileLocations = _selectedAPIsFileLocationsParameter.ParameterValue ?? [],
                 KnowledgeBaseAPIDocumentsContent = docsToPass
             };
 
             var agentOutput = await _coderAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            _ewParametersProvider.UpdateParameterValue(EWParameterNames.GeneratedCode, agentOutput.CodeToRun);
+            _generatedCodeParameter.ParameterValue = agentOutput.CodeToRun;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

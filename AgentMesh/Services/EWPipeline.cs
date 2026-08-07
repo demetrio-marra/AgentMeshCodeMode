@@ -26,9 +26,6 @@ namespace AgentMesh.Services
             var conversationHistoryParameter = _ewParametersProvider.GetConversationHistoryParameter()
                 ?? throw new InvalidOperationException("Conversation history parameter is not defined.");
 
-            _ewParametersProvider.UpdateParameterValue(userInputParameter.Name, userInput);
-            _ewParametersProvider.UpdateParameterValue(conversationHistoryParameter.Name, chatHistory);
-
             var stepRuns = new List<(IEWStep Step, EWStepResultRecord Result, EWStepStatisticsRecord Statistics)>();
             var nextSteps = _ewStepSelector.NextStepsToRun(_ewParametersProvider.GetParameters());
 
@@ -60,13 +57,9 @@ namespace AgentMesh.Services
             CancellationToken cancellationToken)
         {
             var parametersBeforeSnapshot = CreateDisplaySnapshot(_ewParametersProvider.GetParameters());
-            var stepInputParameterNames = step.InputParameters.Select(paramConfig => paramConfig)
-                .ToList();
-            var stepInputParameters = _ewParametersProvider.GetParameters(stepInputParameterNames);
 
             var stepStartTime = DateTime.UtcNow;
-
-            var stepResult = await step.ExecuteAsync(stepInputParameters, cancellationToken);
+            var stepResult = await step.ExecuteAsync(cancellationToken);
             var stepEndTime = DateTime.UtcNow;
 
             var parametersAfterSnapshot = CreateDisplaySnapshot(_ewParametersProvider.GetParameters());
@@ -78,7 +71,6 @@ namespace AgentMesh.Services
                 IsInputStep: step.IsPipelineFirst,
                 IsOutputStep: step.IsPipelineLast,
                 ParametersBefore: parametersBeforeSnapshot,
-                StepInputParameters: CreateDisplaySnapshot(stepInputParameters),
                 ParametersAfter: parametersAfterSnapshot,
                 IsAgentic: step.IsAgentic,
                 AgentName: step.AgentName,

@@ -7,7 +7,10 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class CodeExecutionFailuresDetectorEWStep(
         JavascriptCodeExecutionFailuresDetectorAgent codeExecutionFailuresDetectorAgent,
-        EWParametersProvider ewParametersProvider) : IEWStep
+        LastCodeWithLineNumbersParameter lastCodeWithLineNumbersParameter,
+        SandboxResultParameter sandboxResultParameter,
+        CodeExecutionAnalysisParameter codeExecutionAnalysisParameter,
+        CodeExecutionFailuresDetectorIterationCountParameter codeExecutionFailuresDetectorIterationCountParameter) : IEWStep
     {
         public string Name => "Code Execution Failures Detector";
 
@@ -19,37 +22,26 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        public IEnumerable<string> InputParameters => [
-            EWParameterNames.LastCodeWithLineNumbers,
-            EWParameterNames.SandboxResult
-        ];
-
         private readonly JavascriptCodeExecutionFailuresDetectorAgent _codeExecutionFailuresDetectorAgent = codeExecutionFailuresDetectorAgent;
-        private readonly EWParametersProvider _ewParametersProvider = ewParametersProvider;
+        private readonly LastCodeWithLineNumbersParameter _lastCodeWithLineNumbersParameter = lastCodeWithLineNumbersParameter;
+        private readonly SandboxResultParameter _sandboxResultParameter = sandboxResultParameter;
+        private readonly CodeExecutionAnalysisParameter _codeExecutionAnalysisParameter = codeExecutionAnalysisParameter;
+        private readonly CodeExecutionFailuresDetectorIterationCountParameter _codeExecutionFailuresDetectorIterationCountParameter = codeExecutionFailuresDetectorIterationCountParameter;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
+        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var codeParameter = inputParameters.Single(p => p.Name == EWParameterNames.LastCodeWithLineNumbers);
-            if (codeParameter is not LastCodeWithLineNumbersParameter typedCode)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.LastCodeWithLineNumbers} is not of type LastCodeWithLineNumbersParameter");
-
-            var sandboxResultParameter = inputParameters.Single(p => p.Name == EWParameterNames.SandboxResult);
-            if (sandboxResultParameter is not SandboxResultParameter typedSandboxResult)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.SandboxResult} is not of type SandboxResultParameter");
-
             var agentInput = new CodeExecutionFailuresDetectorAgentInput
             {
-                CodeWithLineNumbers = typedCode.ParameterValue ?? string.Empty,
-                ExecutionResult = typedSandboxResult.ParameterValue ?? string.Empty
+                CodeWithLineNumbers = _lastCodeWithLineNumbersParameter.ParameterValue ?? string.Empty,
+                ExecutionResult = _sandboxResultParameter.ParameterValue ?? string.Empty
             };
 
             var agentOutput = await _codeExecutionFailuresDetectorAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            _ewParametersProvider.UpdateParameterValue(EWParameterNames.CodeExecutionAnalysis, agentOutput.Analysis);
+            _codeExecutionAnalysisParameter.ParameterValue = agentOutput.Analysis;
 
-            var currentIterationCount = (_ewParametersProvider.GetParameters([EWParameterNames.CodeExecutionFailuresDetectorIterationCount])
-                .FirstOrDefault() as CodeExecutionFailuresDetectorIterationCountParameter)?.ParameterValue ?? 0;
-            _ewParametersProvider.UpdateParameterValue<int?>(EWParameterNames.CodeExecutionFailuresDetectorIterationCount, currentIterationCount + 1);
+            var currentIterationCount = _codeExecutionFailuresDetectorIterationCountParameter.ParameterValue ?? 0;
+            _codeExecutionFailuresDetectorIterationCountParameter.ParameterValue = currentIterationCount + 1;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

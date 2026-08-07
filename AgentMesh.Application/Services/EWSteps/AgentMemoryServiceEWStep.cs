@@ -9,7 +9,8 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class AgentMemoryServiceEWStep(
         AgentMemoryExecutor agentMemoryExecutor,
-        EWParametersProvider ewParametersProvider) : IEWStep
+        PastMemoriesQueryParameter pastMemoriesQueryParameter,
+        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter) : IEWStep
     {
         public string Name => "Agent Memory Service";
 
@@ -21,20 +22,13 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        public IEnumerable<string> InputParameters => [
-            EWParameterNames.PastMemoriesQuery
-        ];
-
         private readonly AgentMemoryExecutor _agentMemoryExecutor = agentMemoryExecutor;
-        private readonly EWParametersProvider _ewParametersProvider = ewParametersProvider;
+        private readonly PastMemoriesQueryParameter _pastMemoriesQueryParameter = pastMemoriesQueryParameter;
+        private readonly PastMemoriesQueryResultsParameter _pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
+        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var pastMemoriesQueryParameter = inputParameters.Single(p => p.Name == EWParameterNames.PastMemoriesQuery);
-            if (pastMemoriesQueryParameter is not PastMemoriesQueryParameter typedPastMemoriesQuery)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.PastMemoriesQuery} is not of type PastMemoriesQueryParameter");
-
-            var queriesList = (typedPastMemoriesQuery.ParameterValue ?? []).Select(s => s.Memory).ToList();
+            var queriesList = (_pastMemoriesQueryParameter.ParameterValue ?? []).Select(s => s.Memory).ToList();
 
             var agentInput = new AgentMemoryRetrieverInput
             {
@@ -43,13 +37,12 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var executorOutput = await _agentMemoryExecutor.GetAsync(agentInput);
 
-            var currentMemories = (_ewParametersProvider.GetParameters([EWParameterNames.PastMemoriesQueryResults])
-                .FirstOrDefault() as PastMemoriesQueryResultsParameter)?.ParameterValue ?? [];
+            var currentMemories = _pastMemoriesQueryResultsParameter.ParameterValue ?? [];
 
             var retrievedMemories = executorOutput.Items.ToList();
             var allMemories = currentMemories.Concat(retrievedMemories).ToList();
 
-            _ewParametersProvider.UpdateParameterValue(EWParameterNames.PastMemoriesQueryResults, (IEnumerable<AgentMemoryQueryResultItem>)allMemories);
+            _pastMemoriesQueryResultsParameter.ParameterValue = allMemories;
 
             return new EWStepResultRecord(null, null);
         }

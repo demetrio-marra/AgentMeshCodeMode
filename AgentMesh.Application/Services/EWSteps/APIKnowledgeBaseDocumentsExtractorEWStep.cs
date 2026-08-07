@@ -8,7 +8,8 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class APIKnowledgeBaseDocumentsExtractorEWStep(
         KnowledgeBaseExecutor knowledgeBaseExecutor,
-        EWParametersProvider ewParametersProvider) : IEWStep
+        APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
+        KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter) : IEWStep
     {
         public string Name => "API Knowledge Base Documents Extractor";
 
@@ -20,20 +21,13 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        public IEnumerable<string> InputParameters => [
-            EWParameterNames.APISKnowledgeBaseQueryResults
-        ];
-
         private readonly KnowledgeBaseExecutor _knowledgeBaseExecutor = knowledgeBaseExecutor;
-        private readonly EWParametersProvider _ewParametersProvider = ewParametersProvider;
+        private readonly APISKnowledgeBaseQueryResultsParameter _apisKnowledgeBaseQueryResultsParameter = apisKnowledgeBaseQueryResultsParameter;
+        private readonly KnowledgeBaseAPIDocumentsContentParameter _knowledgeBaseAPIDocumentsContentParameter = knowledgeBaseAPIDocumentsContentParameter;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
+        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var queryResultsParameter = inputParameters.Single(p => p.Name == EWParameterNames.APISKnowledgeBaseQueryResults);
-            if (queryResultsParameter is not APISKnowledgeBaseQueryResultsParameter typedQueryResults)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.APISKnowledgeBaseQueryResults} is not of type APISKnowledgeBaseQueryResultsParameter");
-
-            var results = typedQueryResults.ParameterValue ?? [];
+            var results = _apisKnowledgeBaseQueryResultsParameter.ParameterValue ?? [];
             var filesToExtract = results
                 .Select(r => r.File?.Trim())
                 .Where(file => !string.IsNullOrWhiteSpace(file))
@@ -60,7 +54,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var documents = documentsByFile.Values.ToList();
 
-            _ewParametersProvider.UpdateParameterValue(EWParameterNames.KnowledgeBaseAPIDocumentsContent, (IEnumerable<KnowledgeBaseDocumentContent>)documents);
+            _knowledgeBaseAPIDocumentsContentParameter.ParameterValue = documents;
 
             return new EWStepResultRecord(null, null);
         }

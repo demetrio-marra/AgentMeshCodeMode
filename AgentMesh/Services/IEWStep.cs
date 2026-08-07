@@ -14,8 +14,6 @@ namespace AgentMesh.Services
 
         bool IsPipelineLast { get; }
 
-        IEnumerable<string> InputParameters { get; }
-
-        Task<EWStepResultRecord> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default);
+        Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default);
     }
 }

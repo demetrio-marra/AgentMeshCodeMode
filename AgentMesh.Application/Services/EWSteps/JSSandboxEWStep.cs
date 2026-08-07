@@ -8,7 +8,11 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class JSSandboxEWStep(
         JSSandboxExecutor jsSandboxExecutor,
-        EWParametersProvider ewParametersProvider) : IEWStep
+        GeneratedCodeParameter generatedCodeParameter,
+        SandboxResultParameter sandboxResultParameter,
+        SandboxExecutionIdParameter sandboxExecutionIdParameter,
+        CodeExecutionResultTypeParameter codeExecutionResultTypeParameter,
+        ExecutionErrorParameter executionErrorParameter) : IEWStep
     {
         public string Name => "JS Sandbox";
 
@@ -20,20 +24,16 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        public IEnumerable<string> InputParameters => [
-            EWParameterNames.GeneratedCode
-        ];
-
         private readonly JSSandboxExecutor _jsSandboxExecutor = jsSandboxExecutor;
-        private readonly EWParametersProvider _ewParametersProvider = ewParametersProvider;
+        private readonly GeneratedCodeParameter _generatedCodeParameter = generatedCodeParameter;
+        private readonly SandboxResultParameter _sandboxResultParameter = sandboxResultParameter;
+        private readonly SandboxExecutionIdParameter _sandboxExecutionIdParameter = sandboxExecutionIdParameter;
+        private readonly CodeExecutionResultTypeParameter _codeExecutionResultTypeParameter = codeExecutionResultTypeParameter;
+        private readonly ExecutionErrorParameter _executionErrorParameter = executionErrorParameter;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
+        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var generatedCodeParameter = inputParameters.Single(p => p.Name == EWParameterNames.GeneratedCode);
-            if (generatedCodeParameter is not GeneratedCodeParameter typedGeneratedCode)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.GeneratedCode} is not of type GeneratedCodeParameter");
-
-            var code = typedGeneratedCode.ParameterValue ?? string.Empty;
+            var code = _generatedCodeParameter.ParameterValue ?? string.Empty;
 
             try
             {
@@ -42,15 +42,15 @@ namespace AgentMesh.Application.Services.EWSteps
                     Code = code
                 });
 
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.SandboxResult, executionOutput.Result);
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.SandboxExecutionId, executionOutput.ExecutionId);
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.CodeExecutionResultType, SandboxResultType.Success);
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.ExecutionError, false);
+                _sandboxResultParameter.ParameterValue = executionOutput.Result;
+                _sandboxExecutionIdParameter.ParameterValue = executionOutput.ExecutionId;
+                _codeExecutionResultTypeParameter.ParameterValue = SandboxResultType.Success;
+                _executionErrorParameter.ParameterValue = false;
             }
             catch (CodeSandboxCallException ex)
             {
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.SandboxResult, ex.Message);
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.SandboxExecutionId, string.Empty);
+                _sandboxResultParameter.ParameterValue = ex.Message;
+                _sandboxExecutionIdParameter.ParameterValue = string.Empty;
 
                 var errorType = ex.ErrorType switch
                 {
@@ -59,15 +59,15 @@ namespace AgentMesh.Application.Services.EWSteps
                     _ => SandboxResultType.ApplicationError
                 };
 
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.CodeExecutionResultType, errorType);
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.ExecutionError, true);
+                _codeExecutionResultTypeParameter.ParameterValue = errorType;
+                _executionErrorParameter.ParameterValue = true;
             }
             catch (Exception ex)
             {
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.SandboxResult, ex.Message);
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.SandboxExecutionId, string.Empty);
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.CodeExecutionResultType, SandboxResultType.ApplicationError);
-                _ewParametersProvider.UpdateParameterValue(EWParameterNames.ExecutionError, true);
+                _sandboxResultParameter.ParameterValue = ex.Message;
+                _sandboxExecutionIdParameter.ParameterValue = string.Empty;
+                _codeExecutionResultTypeParameter.ParameterValue = SandboxResultType.ApplicationError;
+                _executionErrorParameter.ParameterValue = true;
             }
 
             return new EWStepResultRecord(null, null);

@@ -9,7 +9,8 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class RerankerEWStep(
         RerankerAgent rerankerAgent,
-        EWParametersProvider ewParametersProvider) : IEWStep
+        UserIntentParameter userIntentParameter,
+        KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter) : IEWStep
     {
         public string Name => "Reranker";
 
@@ -21,25 +22,13 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        public IEnumerable<string> InputParameters => [
-            EWParameterNames.UserIntent,
-            EWParameterNames.KnowledgeBaseQueryResults
-        ];
-
         private readonly RerankerAgent _rerankerAgent = rerankerAgent;
-        private readonly EWParametersProvider _ewParametersProvider = ewParametersProvider;
+        private readonly UserIntentParameter _userIntentParameter = userIntentParameter;
+        private readonly KnowledgeBaseQueryResultsParameter _knowledgeBaseQueryResultsParameter = knowledgeBaseQueryResultsParameter;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
+        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var intentParameter = inputParameters.Single(p => p.Name == EWParameterNames.UserIntent);
-            if (intentParameter is not UserIntentParameter typedIntent)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.UserIntent} is not of type UserIntentParameter");
-
-            var queryResultsParameter = inputParameters.Single(p => p.Name == EWParameterNames.KnowledgeBaseQueryResults);
-            if (queryResultsParameter is not KnowledgeBaseQueryResultsParameter typedQueryResults)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.KnowledgeBaseQueryResults} is not of type KnowledgeBaseQueryResultsParameter");
-
-            var candidates = (typedQueryResults.ParameterValue ?? []).ToList();
+            var candidates = (_knowledgeBaseQueryResultsParameter.ParameterValue ?? []).ToList();
             if (candidates.Count == 0)
             {
                 return new EWStepResultRecord(null, null);
@@ -47,7 +36,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var sr = new StructuredUserRequest
             {
-                Intent = typedIntent.ParameterValue ?? string.Empty
+                Intent = _userIntentParameter.ParameterValue ?? string.Empty
             };
 
             var agentInput = new RerankerAgentInput
@@ -58,7 +47,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var agentOutput = await _rerankerAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            _ewParametersProvider.UpdateParameterValue(EWParameterNames.KnowledgeBaseQueryResults, agentOutput.QueryResults);
+            _knowledgeBaseQueryResultsParameter.ParameterValue = agentOutput.QueryResults;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

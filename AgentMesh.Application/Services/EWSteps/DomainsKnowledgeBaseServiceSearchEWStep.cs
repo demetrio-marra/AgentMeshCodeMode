@@ -9,7 +9,8 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class DomainsKnowledgeBaseServiceSearchEWStep(
         KnowledgeBaseExecutor knowledgeBaseExecutor,
-        EWParametersProvider ewParametersProvider) : IEWStep
+        DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter,
+        KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter) : IEWStep
     {
         private const string DomainsDocumentationCollectionName = "domains";
 
@@ -23,20 +24,13 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        public IEnumerable<string> InputParameters => [
-            EWParameterNames.DomainsKnowledgeBaseQuery
-        ];
-
         private readonly KnowledgeBaseExecutor _knowledgeBaseExecutor = knowledgeBaseExecutor;
-        private readonly EWParametersProvider _ewParametersProvider = ewParametersProvider;
+        private readonly DomainsKnowledgeBaseQueryParameter _domainsKnowledgeBaseQueryParameter = domainsKnowledgeBaseQueryParameter;
+        private readonly KnowledgeBaseQueryResultsParameter _knowledgeBaseQueryResultsParameter = knowledgeBaseQueryResultsParameter;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
+        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var domainsQueryParameter = inputParameters.Single(p => p.Name == EWParameterNames.DomainsKnowledgeBaseQuery);
-            if (domainsQueryParameter is not DomainsKnowledgeBaseQueryParameter typedDomainsQuery)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.DomainsKnowledgeBaseQuery} is not of type DomainsKnowledgeBaseQueryParameter");
-
-            var searchQueries = typedDomainsQuery.ParameterValue ?? [];
+            var searchQueries = _domainsKnowledgeBaseQueryParameter.ParameterValue ?? [];
 
             var executorInput = new KnowledgeBaseQueryInput
             {
@@ -46,7 +40,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var executorOutput = await _knowledgeBaseExecutor.QueryAsync(executorInput, cancellationToken);
 
-            _ewParametersProvider.UpdateParameterValue(EWParameterNames.KnowledgeBaseQueryResults, executorOutput.Results);
+            _knowledgeBaseQueryResultsParameter.ParameterValue = executorOutput.Results;
 
             return new EWStepResultRecord(null, null);
         }

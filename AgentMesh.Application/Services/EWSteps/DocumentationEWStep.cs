@@ -11,7 +11,11 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class DocumentationEWStep(
         DocumentationAgent documentationAgent,
-        EWParametersProvider ewParametersProvider) : IEWStep
+        UserIntentParameter userIntentParameter,
+        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
+        DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
+        LanguageOfTheUserParameter languageOfTheUserParameter,
+        DocumentationContentParameter documentationContentParameter) : IEWStep
     {
         public string Name => "Documentation";
 
@@ -23,56 +27,35 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        public IEnumerable<string> InputParameters => [
-            EWParameterNames.UserIntent,
-            EWParameterNames.PastMemoriesQueryResults,
-            EWParameterNames.DomainsKnowledgeBaseDocumentsContent,
-            EWParameterNames.LanguageOfTheUser
-        ];
-
         private readonly DocumentationAgent _documentationAgent = documentationAgent;
-        private readonly EWParametersProvider _ewParametersProvider = ewParametersProvider;
+        private readonly UserIntentParameter _userIntentParameter = userIntentParameter;
+        private readonly PastMemoriesQueryResultsParameter _pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
+        private readonly DomainsKnowledgeBaseDocumentsContentParameter _domainsKnowledgeBaseDocumentsContentParameter = domainsKnowledgeBaseDocumentsContentParameter;
+        private readonly LanguageOfTheUserParameter _languageOfTheUserParameter = languageOfTheUserParameter;
+        private readonly DocumentationContentParameter _documentationContentParameter = documentationContentParameter;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
+        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var intentParameter = inputParameters.Single(p => p.Name == EWParameterNames.UserIntent);
-            if (intentParameter is not UserIntentParameter typedIntent)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.UserIntent} is not of type UserIntentParameter");
-
-            var memoriesParameter = inputParameters.Single(p => p.Name == EWParameterNames.PastMemoriesQueryResults);
-            if (memoriesParameter is not PastMemoriesQueryResultsParameter typedMemories)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.PastMemoriesQueryResults} is not of type PastMemoriesQueryResultsParameter");
-
-            var docsParameter = inputParameters.Single(p => p.Name == EWParameterNames.DomainsKnowledgeBaseDocumentsContent);
-            if (docsParameter is not DomainsKnowledgeBaseDocumentsContentParameter typedDocs)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.DomainsKnowledgeBaseDocumentsContent} is not of type DomainsKnowledgeBaseDocumentsContentParameter");
-
-            var languageParameter = inputParameters.Single(p => p.Name == EWParameterNames.LanguageOfTheUser);
-            if (languageParameter is not LanguageOfTheUserParameter typedLanguage)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.LanguageOfTheUser} is not of type LanguageOfTheUserParameter");
-
             var sr = new StructuredUserRequest
             {
-                Intent = typedIntent.ParameterValue ?? string.Empty
+                Intent = _userIntentParameter.ParameterValue ?? string.Empty
             };
 
-            var kbContent = WorkflowExecutorFormatting.SerializeDocumentation(typedDocs.ParameterValue ?? []);
+            var kbContent = WorkflowExecutorFormatting.SerializeDocumentation(_domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? []);
 
             var agentInput = new DocumentationAgentInput
             {
                 UserRequest = sr,
-                AgentMemories = (typedMemories.ParameterValue ?? []).Select(m => m.Memory),
+                AgentMemories = (_pastMemoriesQueryResultsParameter.ParameterValue ?? []).Select(m => m.Memory),
                 KnowledgeBaseDocumentsContent = kbContent,
-                LanguageOfTheUser = typedLanguage.ParameterValue ?? string.Empty
+                LanguageOfTheUser = _languageOfTheUserParameter.ParameterValue ?? string.Empty
             };
 
             var agentOutput = await _documentationAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            var documentationContent = agentOutput.Content != null
-                ? new[] { new KnowledgeBaseDocumentContent { Content = agentOutput.Content } }
-                : Enumerable.Empty<KnowledgeBaseDocumentContent>();
-
-            _ewParametersProvider.UpdateParameterValue(EWParameterNames.DocumentationContent, (IEnumerable<KnowledgeBaseDocumentContent>)documentationContent);
+            _documentationContentParameter.ParameterValue = agentOutput.Content != null
+                ? [new KnowledgeBaseDocumentContent { Content = agentOutput.Content }]
+                : [];
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

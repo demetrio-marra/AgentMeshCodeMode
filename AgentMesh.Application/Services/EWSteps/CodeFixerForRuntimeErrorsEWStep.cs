@@ -8,7 +8,9 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class CodeFixerForRuntimeErrorsEWStep(
         CodeFixerAgent codeFixerAgent,
-        EWParametersProvider ewParametersProvider) : IEWStep
+        LastCodeWithLineNumbersParameter lastCodeWithLineNumbersParameter,
+        CodeExecutionAnalysisParameter codeExecutionAnalysisParameter,
+        GeneratedCodeParameter generatedCodeParameter) : IEWStep
     {
         public string Name => "Code Fixer For Runtime Errors";
 
@@ -20,33 +22,22 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        public IEnumerable<string> InputParameters => [
-            EWParameterNames.LastCodeWithLineNumbers,
-            EWParameterNames.CodeExecutionAnalysis
-        ];
-
         private readonly CodeFixerAgent _codeFixerAgent = codeFixerAgent;
-        private readonly EWParametersProvider _ewParametersProvider = ewParametersProvider;
+        private readonly LastCodeWithLineNumbersParameter _lastCodeWithLineNumbersParameter = lastCodeWithLineNumbersParameter;
+        private readonly CodeExecutionAnalysisParameter _codeExecutionAnalysisParameter = codeExecutionAnalysisParameter;
+        private readonly GeneratedCodeParameter _generatedCodeParameter = generatedCodeParameter;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
+        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var codeParameter = inputParameters.Single(p => p.Name == EWParameterNames.LastCodeWithLineNumbers);
-            if (codeParameter is not LastCodeWithLineNumbersParameter typedCode)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.LastCodeWithLineNumbers} is not of type LastCodeWithLineNumbersParameter");
-
-            var analysisParameter = inputParameters.Single(p => p.Name == EWParameterNames.CodeExecutionAnalysis);
-            if (analysisParameter is not CodeExecutionAnalysisParameter typedAnalysis)
-                throw new InvalidOperationException($"Parameter {EWParameterNames.CodeExecutionAnalysis} is not of type CodeExecutionAnalysisParameter");
-
             var agentInput = new CodeFixerAgentInput
             {
-                CodeToFix = typedCode.ParameterValue ?? string.Empty,
-                Issues = [typedAnalysis.ParameterValue ?? string.Empty]
+                CodeToFix = _lastCodeWithLineNumbersParameter.ParameterValue ?? string.Empty,
+                Issues = [_codeExecutionAnalysisParameter.ParameterValue ?? string.Empty]
             };
 
             var agentOutput = await _codeFixerAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            _ewParametersProvider.UpdateParameterValue(EWParameterNames.GeneratedCode, agentOutput.FixedCode);
+            _generatedCodeParameter.ParameterValue = agentOutput.FixedCode;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }
