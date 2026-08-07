@@ -52,7 +52,10 @@ namespace AgentMesh
             foreach (var ewParameterType in DiscoverEWParameterImplementations())
             {
                 services.AddSingleton(ewParameterType);
+                services.AddSingleton(typeof(IEWParameter), sp => (IEWParameter)sp.GetRequiredService(ewParameterType));
             }
+
+            services.AddSingleton<EWParametersProvider>();
 
 
             // Embedding configuration and service registration
