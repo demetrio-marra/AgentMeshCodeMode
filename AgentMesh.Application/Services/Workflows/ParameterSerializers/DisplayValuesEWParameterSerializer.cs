@@ -15,6 +15,7 @@ namespace AgentMesh.Application.Services.Workflows.ParameterSerializers
             return obj switch
             {
                 null => EWParameterConstants.NoDataPlaceholder,
+                IEnumerable<string> missingValues => EWParameterDisplayUtils.GetListOfStringsDisplayValue(missingValues),
                 IEnumerable<ContextMessage> contextMessages => EWParameterDisplayUtils.GetContextMessagesDisplayValue(contextMessages),
                 IEnumerable<AgentMemoryQueryResultItem> queryResults => EWParameterDisplayUtils.GetAgentMemoryQueryResultsDisplayValue(queryResults),
                 IEnumerable<AgentMemoryItem> memoryItems => EWParameterDisplayUtils.GetAgentMemoryItemsDisplayValue(memoryItems),

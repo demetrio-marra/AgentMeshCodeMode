@@ -9,6 +9,15 @@ namespace AgentMesh.Application.Utils
 {
     public static class EWParameterDisplayUtils
     {
+        public static string GetListOfStringsDisplayValue(IEnumerable<string>? values)
+        {
+            if (values == null || !values.Any())
+            {
+                return EWParameterConstants.NoDataPlaceholder;
+            }
+            return ListsFormatter.ToBulletList(values.Select(value => $"{value}"));
+        }
+
         public static string GetContextMessagesDisplayValue(IEnumerable<ContextMessage>? messages)
         {
             if (messages == null)

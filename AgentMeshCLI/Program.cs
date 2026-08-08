@@ -15,6 +15,7 @@ using AgentMesh.Infrastructure.Mem0;
 using AgentMesh.Infrastructure.QMD.Services;
 using AgentMesh.Models.Workflows;
 using System.Reflection;
+using AgentMesh.Application.Models.CostsAnalysis;
 
 namespace AgentMesh
 {
@@ -44,21 +45,21 @@ namespace AgentMesh
 
             foreach (var ewParameterType in DiscoverEWParameterImplementations())
             {
-                services.AddSingleton(ewParameterType);
-                services.AddSingleton(typeof(IEWParameter), sp => (IEWParameter)sp.GetRequiredService(ewParameterType));
+                services.AddScoped(ewParameterType);
+                services.AddScoped(typeof(IEWParameter), sp => (IEWParameter)sp.GetRequiredService(ewParameterType));
             }
 
             foreach (var ewStepType in DiscoverEWStepImplementations())
             {
-                services.AddSingleton(ewStepType);
+                services.AddScoped(ewStepType);
             }
 
-            services.AddSingleton<EWParametersProvider>();
+            services.AddScoped<EWParametersProvider>();
             // insert here
-            services.AddSingleton<IEWStepSelector, EWStepSelector>();
-            services.AddTransient<EWPipeline>();
+            services.AddScoped<IEWStepSelector, EWStepSelector>();
+            services.AddScoped<EWPipeline>();
 
-
+            #region agents/executors region
             // Embedding configuration and service registration
             var embeddingConfiguration = new EmbeddingServiceConfiguration();
             configuration.GetSection("Embedding").Bind(embeddingConfiguration);
@@ -469,7 +470,10 @@ namespace AgentMesh
             services.AddSingleton<JSSandboxExecutor>();
             services.AddSingleton<IJSSandbox, SESJSSandboxClient>();
 
+            #endregion
+
             services.AddSingleton<IWorkflowProgressNotifier, ConsoleWorkflowProgressNotifier>();
+            services.AddSingleton<ConversationContext>();
 
             services
                .AddOptions<UserConfiguration>()

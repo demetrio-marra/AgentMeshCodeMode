@@ -29,6 +29,13 @@ namespace AgentMesh.Services
                 };
             }
 
+            // if is any kind of list, collection, array, enumerable and it is empty, return the placeholder
+            if (obj is System.Collections.IEnumerable enumerable
+                && !enumerable.GetEnumerator().MoveNext())
+            {
+                return EWParameterConstants.NoDataPlaceholder;
+            }
+
             // other structured types
             return JsonSerializer.Serialize(obj, SerializationUtils.DefaultSerializeOptions);
         }

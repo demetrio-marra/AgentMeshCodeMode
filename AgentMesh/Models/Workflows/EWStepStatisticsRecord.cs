@@ -15,6 +15,35 @@
         public readonly TimeSpan Elapsed { get => CompletedOnUtc - StartedOnUtc; }
         public readonly int? TotalTokens { get => !IsAgentic ? null : (InputTokens ?? 0) + (OutputTokens ?? 0); }
 
+        public readonly string HumanReadableElapsed
+        {
+            get
+            {
+                var elapsed = Elapsed;
+                var elapsedParts = new List<string>();
+
+                if (elapsed.Hours > 0)
+                {
+                    elapsedParts.Add($"{elapsed.Hours}h");
+                }
+                if (elapsed.Minutes > 0)
+                {
+                    elapsedParts.Add($"{elapsed.Minutes}m");
+                }
+                if (elapsed.Seconds > 0)
+                {
+                    elapsedParts.Add($"{elapsed.Seconds}s");
+                }
+                
+                if (elapsedParts.Count == 0)
+                {
+                    return "<1s";
+                }
+
+                return string.Join(" ", elapsedParts);
+            }
+        }
+
         public readonly IEnumerable<EWDisplayDiffParameterRecord> ParametersDiff
         {
             get

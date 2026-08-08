@@ -21,14 +21,14 @@ namespace AgentMesh.Services
         {
             ConsoleHelper.WriteLineWithColor($"Workflow step '{stepName}' has completed.", ConsoleColor.Magenta);
             WriteParameter("StepName", statistics.StepName);
-            WriteParameter("Elapsed", statistics.Elapsed.ToString());
+            WriteParameter("Elapsed", statistics.HumanReadableElapsed);
 
             var parametersDiff = statistics.ParametersDiff.ToList();
             var diffValue = parametersDiff.Count == 0
                 ? "(No differences)"
                 : string.Join('\n', parametersDiff.Select(p => $"- {p.Name}: '{p.OldValue ?? string.Empty}' -> '{p.NewValue ?? string.Empty}'"));
 
-            WriteParameter("ParametersDiff", diffValue);
+            WriteParameter("Parameters", diffValue);
 
             ConsoleHelper.WriteLineWithColor("══════════════════════════════════════════════════════════════════════════", ConsoleColor.Gray);
 
