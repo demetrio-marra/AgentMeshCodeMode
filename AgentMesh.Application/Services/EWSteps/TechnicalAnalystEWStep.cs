@@ -20,8 +20,7 @@ namespace AgentMesh.Application.Services.EWSteps
         KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
         TechnicalSpecificationParameter technicalSpecificationParameter,
         TechnicalAnalystRejectedParameter technicalAnalystRejectedParameter,
-        TechnicalAnalystRejectReasonsParameter technicalAnalystRejectReasonsParameter,
-        SelectedAPIsFileLocationsParameter selectedAPIsFileLocationsParameter) : IEWStep
+        TechnicalAnalystRejectReasonsParameter technicalAnalystRejectReasonsParameter) : IEWStep
     {
         public string Name => "Technical Analyst";
 
@@ -51,10 +50,14 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var agentOutput = await technicalAnalystAgent.ExecuteAsync(agentInput, cancellationToken);
 
+            var filteredKbDocuments = (knowledgeBaseAPIDocumentsContentParameter.ParameterValue ?? [])
+                .Where(doc => agentOutput.SelectedAPIsFileLocations.Contains(doc.File))
+                .ToList();
+
             technicalSpecificationParameter.ParameterValue = agentOutput.TechnicalSpecification;
             technicalAnalystRejectedParameter.ParameterValue = agentOutput.RequestRejected;
             technicalAnalystRejectReasonsParameter.ParameterValue = agentOutput.ReasonOfRejection;
-            selectedAPIsFileLocationsParameter.ParameterValue = agentOutput.SelectedAPIsFileLocations;
+            knowledgeBaseAPIDocumentsContentParameter.ParameterValue = filteredKbDocuments;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

@@ -203,14 +203,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         }
     }
 
-    public sealed class SelectedAPIsFileLocationsParameter : EWParameter<IEnumerable<string>>
-    {
-        public SelectedAPIsFileLocationsParameter()
-        {
-            Name = EWParameterNames.SelectedAPIsFileLocations;
-        }
-    }
-
     public sealed class DocumentationContentParameter : EWParameter<string>
     {
         public DocumentationContentParameter()
