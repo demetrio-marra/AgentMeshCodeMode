@@ -3,15 +3,14 @@ using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.ConversationSummarization;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.ChatMessages;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
 namespace AgentMesh.Application.Services
 {
-    public class ConversationSummarizerAgent([FromKeyedServices(ConversationSummarizerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+    public class ConversationSummarizerAgent(IOpenAIClientFactory openAIClientFactory,
                                       Resilience resilience,
-                                      ILogger<ConversationSummarizerAgent> logger) : AgentBase<string>(logger, ConversationSummarizerAgentConfiguration.AgentName, openAIClient, resilience)
+                                      ILogger<ConversationSummarizerAgent> logger) : AgentBase<string>(logger, ConversationSummarizerAgentConfiguration.AgentName, openAIClientFactory, resilience)
     {
         public const string SectionName = ConversationSummarizerAgentConfiguration.SectionName;
         public const string AgentName = ConversationSummarizerAgentConfiguration.AgentName;

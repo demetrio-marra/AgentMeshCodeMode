@@ -3,7 +3,6 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
 using AgentMesh.Application.Models.Coder;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -12,9 +11,9 @@ using AgentMesh.Application.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Services
 {
-    public partial class CoderAgent([FromKeyedServices(CoderAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+    public partial class CoderAgent(IOpenAIClientFactory openAIClientFactory,
                       Resilience resilience,
-                      ILogger<CoderAgent> logger) : AgentBase<string>(logger, CoderAgentConfiguration.AgentName, openAIClient, resilience)
+                      ILogger<CoderAgent> logger) : AgentBase<string>(logger, CoderAgentConfiguration.AgentName, openAIClientFactory, resilience)
     {
         private readonly Regex JavascriptCodeRegex = JavascriptCodeRegexCompiled();
 

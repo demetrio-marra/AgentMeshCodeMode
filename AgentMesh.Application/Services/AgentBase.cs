@@ -9,12 +9,12 @@ namespace AgentMesh.Application.Services
 {
     public abstract class AgentBase<T>(ILogger logger,
         string agentName,
-        IOpenAIClient openAIClient,
+        IOpenAIClientFactory openAIClientFactory,
         Resilience resilience)
     {
         private readonly ILogger _logger = logger;
         private readonly string _agentName = agentName;
-        private readonly IOpenAIClient _openAIClient = openAIClient;
+        private readonly IOpenAIClient _openAIClient = openAIClientFactory.CreateOpenAIClient(agentName);
         private readonly Resilience _resilience = resilience;
 
         /// <summary>

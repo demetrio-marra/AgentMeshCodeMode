@@ -10,9 +10,9 @@ using AgentMesh.Application.Models.ChatMessages;
 namespace AgentMesh.Application.Services
 {
     public class DocumentationAgent(
-        [FromKeyedServices(DocumentationAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<DocumentationAgent> logger) : AgentBase<string>(logger, DocumentationAgentConfiguration.AgentName, openAIClient, resilience)
+        ILogger<DocumentationAgent> logger) : AgentBase<string>(logger, DocumentationAgentConfiguration.AgentName, openAIClientFactory, resilience)
     {
         private readonly ILogger<DocumentationAgent> _logger = logger;
         public const string AgentName = "Documentation Agent";

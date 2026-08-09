@@ -4,7 +4,6 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.PersonalAssistant;
 using AgentMesh.Application.Utils;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,9 +11,9 @@ using System.Text.Json.Serialization;
 namespace AgentMesh.Application.Services
 {
     public class PersonalAssistantAgent(
-        [FromKeyedServices(PersonalAssistantAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<PersonalAssistantAgent> logger) : AgentBase<PersonalAssistantAgent.ParsedResponse>(logger, PersonalAssistantAgentConfiguration.AgentName, openAIClient, resilience)
+        ILogger<PersonalAssistantAgent> logger) : AgentBase<PersonalAssistantAgent.ParsedResponse>(logger, PersonalAssistantAgentConfiguration.AgentName, openAIClientFactory, resilience)
     {
         private readonly ILogger<PersonalAssistantAgent> _logger = logger;
 

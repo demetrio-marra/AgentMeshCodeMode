@@ -5,7 +5,6 @@ using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.TechnicalAnalyst;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.Workflows;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,9 +12,9 @@ using System.Text.Json.Serialization;
 namespace AgentMesh.Application.Services
 {
     public class TechnicalAnalystAgent(
-        [FromKeyedServices(TechnicalAnalystAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<TechnicalAnalystAgent> logger) : AgentBase<TechnicalAnalystAgent.ParsedResponse>(logger, TechnicalAnalystAgentConfiguration.AgentName, openAIClient, resilience)
+        ILogger<TechnicalAnalystAgent> logger) : AgentBase<TechnicalAnalystAgent.ParsedResponse>(logger, TechnicalAnalystAgentConfiguration.AgentName, openAIClientFactory, resilience)
     {
         private readonly ILogger<TechnicalAnalystAgent> _logger = logger;
 

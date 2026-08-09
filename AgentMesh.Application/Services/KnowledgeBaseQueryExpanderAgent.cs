@@ -3,7 +3,6 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
 using AgentMesh.Application.Models.KnowledgeBaseQueryExpander;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -14,9 +13,9 @@ using AgentMesh.Application.Models.KnowledgeBase;
 namespace AgentMesh.Application.Services
 {
     public class KnowledgeBaseQueryExpanderAgent(
-        [FromKeyedServices(KnowledgeBaseQueryExpanderAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<KnowledgeBaseQueryExpanderAgent> logger) : AgentBase<KnowledgeBaseQueryExpanderAgent.ParsedResponse>(logger, KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, openAIClient, resilience)
+        ILogger<KnowledgeBaseQueryExpanderAgent> logger) : AgentBase<KnowledgeBaseQueryExpanderAgent.ParsedResponse>(logger, KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, openAIClientFactory, resilience)
     {
         private readonly ILogger<KnowledgeBaseQueryExpanderAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];

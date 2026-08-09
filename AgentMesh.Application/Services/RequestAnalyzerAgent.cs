@@ -4,7 +4,6 @@ using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.RequestAnalysis;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.RequestAnalysis;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,9 +11,9 @@ using System.Text.Json.Serialization;
 namespace AgentMesh.Application.Services
 {
     public class RequestAnalyzerAgent(
-        [FromKeyedServices(RequestAnalyzerAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<RequestAnalyzerAgent> logger) : AgentBase<RequestAnalyzerAgent.ParsedResponse>(logger, RequestAnalyzerAgentConfiguration.AgentName, openAIClient, resilience)
+        ILogger<RequestAnalyzerAgent> logger) : AgentBase<RequestAnalyzerAgent.ParsedResponse>(logger, RequestAnalyzerAgentConfiguration.AgentName, openAIClientFactory, resilience)
     {
         public const string AgentName = RequestAnalyzerAgentConfiguration.AgentName;
         private readonly ILogger<RequestAnalyzerAgent> _logger = logger;

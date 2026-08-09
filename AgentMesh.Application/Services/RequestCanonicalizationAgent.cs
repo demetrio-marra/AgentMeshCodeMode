@@ -3,7 +3,6 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
 using AgentMesh.Application.Models.RequestCanonicalization;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -16,9 +15,9 @@ using AgentMesh.Application.Models.KnowledgeBase;
 namespace AgentMesh.Application.Services
 {
     public class RequestCanonicalizationAgent(
-        [FromKeyedServices(RequestCanonicalizationAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<RequestCanonicalizationAgent> logger) : AgentBase<RequestCanonicalizationAgent.ParsedResponse>(logger, RequestCanonicalizationAgentConfiguration.AgentName, openAIClient, resilience)
+        ILogger<RequestCanonicalizationAgent> logger) : AgentBase<RequestCanonicalizationAgent.ParsedResponse>(logger, RequestCanonicalizationAgentConfiguration.AgentName, openAIClientFactory, resilience)
     {
         private readonly ILogger<RequestCanonicalizationAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];

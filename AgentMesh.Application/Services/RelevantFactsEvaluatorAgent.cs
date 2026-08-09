@@ -4,7 +4,6 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.ChatMessages;
 using AgentMesh.Application.Models.RelevantFactsEvaluator;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using AgentMesh.Application.Models.ChatMessages;
@@ -12,9 +11,9 @@ using AgentMesh.Application.Models.ChatMessages;
 namespace AgentMesh.Application.Services
 {
     public class RelevantFactsEvaluatorAgent(
-        [FromKeyedServices(RelevantFactsEvaluatorAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<RelevantFactsEvaluatorAgent> logger) : AgentBase<List<string>>(logger, RelevantFactsEvaluatorAgentConfiguration.AgentName, openAIClient, resilience)
+        ILogger<RelevantFactsEvaluatorAgent> logger) : AgentBase<List<string>>(logger, RelevantFactsEvaluatorAgentConfiguration.AgentName, openAIClientFactory, resilience)
     {
         private readonly ILogger<RelevantFactsEvaluatorAgent> _logger = logger;
 

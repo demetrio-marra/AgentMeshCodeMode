@@ -3,7 +3,6 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
 using AgentMesh.Application.Models.AgentMemoryQueryExpander;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,9 +12,9 @@ using AgentMesh.Models.Workflows;
 namespace AgentMesh.Application.Services
 {
     public class AgentMemoryQueryExpanderAgent(
-        [FromKeyedServices(AgentMemoryQueryExpanderAgentConfiguration.AgentName)] IOpenAIClient openAIClient,
+        IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<AgentMemoryQueryExpanderAgent> logger) : AgentBase<AgentMemoryQueryExpanderAgent.ParsedResponse>(logger, AgentMemoryQueryExpanderAgentConfiguration.AgentName, openAIClient, resilience)
+        ILogger<AgentMemoryQueryExpanderAgent> logger) : AgentBase<AgentMemoryQueryExpanderAgent.ParsedResponse>(logger, AgentMemoryQueryExpanderAgentConfiguration.AgentName, openAIClientFactory, resilience)
     {
         private readonly ILogger<AgentMemoryQueryExpanderAgent> _logger = logger;
 
