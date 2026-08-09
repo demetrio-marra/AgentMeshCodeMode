@@ -1,5 +1,4 @@
 ﻿using AgentMesh.Application.Configuration;
-using AgentMesh.Application.Models.CodeSandbox;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.EWSteps;
 using AgentMesh.Models.RequestAnalysis;
@@ -9,15 +8,7 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Services
 {
     public class EWStepSelector(
-        UserLastRequestParameter userLastRequestParameter,
-        InitialContextMessagesParameter initialContextMessagesParameter,
-        UserIntentParameter userIntentParameter,
         IntentCategoryParameter intentCategoryParameter,
-        LanguageOfTheUserParameter languageOfTheUserParameter,
-        ConversationTopicParameter conversationTopicParameter,
-        UserPreferencesParameter userPreferencesParameter,
-        UserProvidedDataParameter userProvidedDataParameter,
-        UserRequestedActionsParameter userRequestedActionsParameter,
         MissingValuesParameter missingValuesParameter,
         KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
         PastMemoriesQueryParameter pastMemoriesQueryParameter,
@@ -26,27 +17,13 @@ namespace AgentMesh.Application.Services
         KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter,
         DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
         BusinessRequirementsParameter businessRequirementsParameter,
-        FunctionalAnalystRejectedParameter functionalAnalystRejectedParameter,
-        FunctionalAnalystRejectReasonsParameter functionalAnalystRejectReasonsParameter,
         TechnicalSpecificationParameter technicalSpecificationParameter,
         TechnicalAnalystRejectedParameter technicalAnalystRejectedParameter,
-        TechnicalAnalystRejectReasonsParameter technicalAnalystRejectReasonsParameter,
-        ShouldEngageCoderParameter shouldEngageCoderParameter,
         APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
-        SelectedAPIsFileLocationsParameter selectedAPIsFileLocationsParameter,
         DocumentationContentParameter documentationContentParameter,
         GeneratedCodeParameter generatedCodeParameter,
-        LastCodeWithLineNumbersParameter lastCodeWithLineNumbersParameter,
-        CodeExecutionFailuresDetectorIterationCountParameter codeExecutionFailuresDetectorIterationCountParameter,
-        CodeExecutionAnalysisParameter codeExecutionAnalysisParameter,
         SandboxResultParameter sandboxResultParameter,
-        SandboxExecutionIdParameter sandboxExecutionIdParameter,
-        CodeExecutionResultTypeParameter codeExecutionResultTypeParameter,
-        ExecutionErrorParameter executionErrorParameter,
         DomainExpertOutputParameter domainExpertOutputParameter,
-        PersonalAssistantOpeningSentenceParameter personalAssistantOpeningSentenceParameter,
-        PersonalAssistantClosingSentenceParameter personalAssistantClosingSentenceParameter,
-        PersonalAssistantConvenienceErrorSentenceParameter personalAssistantConvenienceErrorSentenceParameter,
         FinalAnswerParameter finalAnswerParameter,
 
         CodeModeWorkflowConfiguration workflowConfiguration,
@@ -65,8 +42,6 @@ namespace AgentMesh.Application.Services
         TechnicalAnalystEWStep technicalAnalystEWStep,
         CoderEWStep coderEWStep,
         JSSandboxEWStep jsSandboxEWStep,
-        CodeExecutionFailuresDetectorEWStep codeExecutionFailuresDetectorEWStep,
-        CodeFixerForRuntimeErrorsEWStep codeFixerForRuntimeErrorsEWStep,
         DomainExpertEWStep domainExpertEWStep,
         PersonalAssistantEWStep personalAssistantEWStep) : IEWStepSelector
     {
@@ -275,49 +250,6 @@ namespace AgentMesh.Application.Services
             OtherTopics,
             Documenting,
             TaskExecution
-        }
-
-        private enum OtherTopicsSteps
-        {
-            None,
-            RequestAnalyzer,
-            PersonalAssistantEWStep
-        }
-
-        private enum DocumentingSteps
-        {
-            None,
-            RequestAnalyzer,
-            AgentMemoryQueryExpander,
-            AgentMemoryService,
-            KnowledgeBaseQueryExpander,
-            DomainsKnowledgeBaseServiceSearch,
-            Reranker,
-            DomainsKnowledgeBaseDocumentsExtractor,
-            Documentation,
-            PersonalAssistantEWStep
-        }
-
-        private enum TaskExecutionSteps
-        {
-            None,
-            RequestAnalyzer,
-            AgentMemoryQueryExpander,
-            AgentMemoryService,
-            KnowledgeBaseQueryExpander,
-            DomainsKnowledgeBaseServiceSearch,
-            Reranker,
-            DomainsKnowledgeBaseDocumentsExtractor,
-            FunctionalAnalyst,
-            APIsKnowledgeBaseServiceSearch,
-            APIKnowledgeBaseDocumentsExtractor,
-            TechnicalAnalyst,
-            Coder,
-            JSSandbox,
-            CodeExecutionFailuresDetector,
-            CodeFixerForRuntimeErrors,
-            DomainExpert,
-            PersonalAssistantEWStep 
         }
     }
 }

@@ -20,7 +20,6 @@ namespace AgentMesh.Services
         FunctionalAnalystAgentConfiguration functionalAnalystConfiguration,
         TechnicalAnalystAgentConfiguration technicalAnalystConfiguration,
         CoderAgentConfiguration coderConfiguration,
-        CodeFixerAgentConfiguration codeFixerConfiguration,
         DomainExpertAgentConfiguration domainExpertConfiguration,
         PersonalAssistantAgentConfiguration personalAssistantConfiguration,
         LLMsConfiguration llmsConfiguration,
@@ -98,7 +97,6 @@ namespace AgentMesh.Services
                     { FunctionalAnalystAgentConfiguration.AgentName, llmsConfiguration[functionalAnalystConfiguration.LLM].CostPerMillionInputTokens },
                     { TechnicalAnalystAgentConfiguration.AgentName, llmsConfiguration[technicalAnalystConfiguration.LLM].CostPerMillionInputTokens },
                     { CoderAgentConfiguration.AgentName, llmsConfiguration[coderConfiguration.LLM].CostPerMillionInputTokens },
-                    { CodeFixerAgentConfiguration.AgentName,    llmsConfiguration[codeFixerConfiguration.LLM].CostPerMillionInputTokens },
                     { PersonalAssistantAgentConfiguration.AgentName, llmsConfiguration[personalAssistantConfiguration.LLM].CostPerMillionInputTokens },
                     { ConversationSummarizerAgent.AgentName, llmsConfiguration[conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens },
                     { DocumentationAgent.AgentName, llmsConfiguration[documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
@@ -120,7 +118,6 @@ namespace AgentMesh.Services
                     { FunctionalAnalystAgentConfiguration.AgentName, llmsConfiguration[functionalAnalystConfiguration.LLM].CostPerMillionOutputTokens },
                     { TechnicalAnalystAgentConfiguration.AgentName, llmsConfiguration[technicalAnalystConfiguration.LLM].CostPerMillionOutputTokens },
                     { CoderAgentConfiguration.AgentName, llmsConfiguration[coderConfiguration.LLM].CostPerMillionOutputTokens },
-                    { CodeFixerAgentConfiguration.AgentName, llmsConfiguration[codeFixerConfiguration.LLM].CostPerMillionOutputTokens },
                     { PersonalAssistantAgentConfiguration.AgentName, llmsConfiguration[personalAssistantConfiguration.LLM].CostPerMillionOutputTokens },
                     { ConversationSummarizerAgent.AgentName, llmsConfiguration[conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
                     { DocumentationAgent.AgentName, llmsConfiguration[documentationAgentConfiguration.LLM].CostPerMillionOutputTokens },
@@ -332,11 +329,6 @@ namespace AgentMesh.Services
             ConsoleHelper.PrintAgentConfiguration("Functional Analyst", FunctionalAnalystAgentConfiguration.AgentName, functionalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Technical Analyst", TechnicalAnalystAgentConfiguration.AgentName, technicalAnalystConfiguration);
             ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, coderConfiguration);
-
-            if (workflowConfiguration.EnableCodeCorrection)
-            {
-                ConsoleHelper.PrintAgentConfiguration("Code Fixer", CodeFixerAgentConfiguration.AgentName, codeFixerConfiguration);
-            }
 
             if (workflowConfiguration.EnableDomainExpert)
             {

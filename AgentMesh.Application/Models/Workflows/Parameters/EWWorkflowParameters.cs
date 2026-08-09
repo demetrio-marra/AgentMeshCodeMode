@@ -235,30 +235,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         }
     }
 
-    public sealed class LastCodeWithLineNumbersParameter : EWParameter<string>
-    {
-        public LastCodeWithLineNumbersParameter()
-        {
-            Name = EWParameterNames.LastCodeWithLineNumbers;
-        }
-    }
-
-    public sealed class CodeExecutionFailuresDetectorIterationCountParameter : EWParameter<int?>
-    {
-        public CodeExecutionFailuresDetectorIterationCountParameter()
-        {
-            Name = EWParameterNames.CodeExecutionFailuresDetectorIterationCount;
-        }
-    }
-
-    public sealed class CodeExecutionAnalysisParameter : EWParameter<string>
-    {
-        public CodeExecutionAnalysisParameter()
-        {
-            Name = EWParameterNames.CodeExecutionAnalysis;
-        }
-    }
-
     public sealed class SandboxResultParameter : EWParameter<string>
     {
         public SandboxResultParameter()
