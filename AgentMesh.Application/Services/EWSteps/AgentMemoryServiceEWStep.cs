@@ -20,27 +20,27 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly AgentMemoryExecutor _agentMemoryExecutor = agentMemoryExecutor;
-        private readonly PastMemoriesQueryParameter _pastMemoriesQueryParameter = pastMemoriesQueryParameter;
-        private readonly PastMemoriesQueryResultsParameter _pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
+        private readonly AgentMemoryExecutor agentMemoryExecutor = agentMemoryExecutor;
+        private readonly PastMemoriesQueryParameter pastMemoriesQueryParameter = pastMemoriesQueryParameter;
+        private readonly PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var queriesList = (_pastMemoriesQueryParameter.ParameterValue ?? []).Select(s => s.Memory).ToList();
+            var queriesList = (this.pastMemoriesQueryParameter.ParameterValue ?? []).Select(s => s.Memory).ToList();
 
             var agentInput = new AgentMemoryRetrieverInput
             {
                 Query = string.Join(", ", queriesList)
             };
 
-            var executorOutput = await _agentMemoryExecutor.GetAsync(agentInput);
+            var executorOutput = await this.agentMemoryExecutor.GetAsync(agentInput);
 
-            var currentMemories = _pastMemoriesQueryResultsParameter.ParameterValue ?? [];
+            var currentMemories = this.pastMemoriesQueryResultsParameter.ParameterValue ?? [];
 
             var retrievedMemories = executorOutput.Items.ToList();
             var allMemories = currentMemories.Concat(retrievedMemories).ToList();
 
-            _pastMemoriesQueryResultsParameter.ParameterValue = allMemories;
+            this.pastMemoriesQueryResultsParameter.ParameterValue = allMemories;
 
             return new EWStepResultRecord(null, null);
         }

@@ -28,33 +28,33 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly DocumentationAgent _documentationAgent = documentationAgent;
-        private readonly UserIntentParameter _userIntentParameter = userIntentParameter;
-        private readonly PastMemoriesQueryResultsParameter _pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
-        private readonly DomainsKnowledgeBaseDocumentsContentParameter _domainsKnowledgeBaseDocumentsContentParameter = domainsKnowledgeBaseDocumentsContentParameter;
-        private readonly LanguageOfTheUserParameter _languageOfTheUserParameter = languageOfTheUserParameter;
-        private readonly DocumentationContentParameter _documentationContentParameter = documentationContentParameter;
+        private readonly DocumentationAgent documentationAgent = documentationAgent;
+        private readonly UserIntentParameter userIntentParameter = userIntentParameter;
+        private readonly PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
+        private readonly DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter = domainsKnowledgeBaseDocumentsContentParameter;
+        private readonly LanguageOfTheUserParameter languageOfTheUserParameter = languageOfTheUserParameter;
+        private readonly DocumentationContentParameter documentationContentParameter = documentationContentParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var sr = new StructuredUserRequest
             {
-                Intent = _userIntentParameter.ParameterValue ?? string.Empty
+                Intent = this.userIntentParameter.ParameterValue ?? string.Empty
             };
 
-            var kbContent = JsonSerializer.Serialize(_domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? [], SerializationUtils.DefaultSerializeOptions);
+            var kbContent = JsonSerializer.Serialize(this.domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? [], SerializationUtils.DefaultSerializeOptions);
 
             var agentInput = new DocumentationAgentInput
             {
                 UserRequest = sr,
-                AgentMemories = (_pastMemoriesQueryResultsParameter.ParameterValue ?? []).Select(m => m.Memory),
+                AgentMemories = (this.pastMemoriesQueryResultsParameter.ParameterValue ?? []).Select(m => m.Memory),
                 KnowledgeBaseDocumentsContent = kbContent,
-                LanguageOfTheUser = _languageOfTheUserParameter.ParameterValue ?? string.Empty
+                LanguageOfTheUser = this.languageOfTheUserParameter.ParameterValue ?? string.Empty
             };
 
-            var agentOutput = await _documentationAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await this.documentationAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            _documentationContentParameter.ParameterValue = agentOutput.Content ?? string.Empty;
+            this.documentationContentParameter.ParameterValue = agentOutput.Content ?? string.Empty;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

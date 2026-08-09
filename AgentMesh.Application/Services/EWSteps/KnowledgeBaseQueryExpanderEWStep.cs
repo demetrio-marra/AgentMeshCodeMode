@@ -15,6 +15,8 @@ namespace AgentMesh.Application.Services.EWSteps
         UserProvidedDataParameter userProvidedDataParameter,
         DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter) : IEWStep
     {
+        private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
+
         public string Name => "Knowledge Base Query Expander";
 
         public bool IsAgentic => true;
@@ -25,25 +27,23 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly KnowledgeBaseQueryExpanderAgent _knowledgeBaseQueryExpanderAgent = knowledgeBaseQueryExpanderAgent;
-        private readonly UserIntentParameter _userIntentParameter = userIntentParameter;
-        private readonly IntentCategoryParameter _intentCategoryParameter = intentCategoryParameter;
-        private readonly UserRequestedActionsParameter _userRequestedActionsParameter = userRequestedActionsParameter;
-        private readonly UserProvidedDataParameter _userProvidedDataParameter = userProvidedDataParameter;
-        private readonly DomainsKnowledgeBaseQueryParameter _domainsKnowledgeBaseQueryParameter = domainsKnowledgeBaseQueryParameter;
-
-        private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
+        private readonly KnowledgeBaseQueryExpanderAgent knowledgeBaseQueryExpanderAgent = knowledgeBaseQueryExpanderAgent;
+        private readonly UserIntentParameter userIntentParameter = userIntentParameter;
+        private readonly IntentCategoryParameter intentCategoryParameter = intentCategoryParameter;
+        private readonly UserRequestedActionsParameter userRequestedActionsParameter = userRequestedActionsParameter;
+        private readonly UserProvidedDataParameter userProvidedDataParameter = userProvidedDataParameter;
+        private readonly DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter = domainsKnowledgeBaseQueryParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var intentCategory = _intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other;
+            var intentCategory = this.intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other;
 
             var sr = new StructuredUserRequest
             {
-                Intent = _userIntentParameter.ParameterValue ?? string.Empty,
+                Intent = this.userIntentParameter.ParameterValue ?? string.Empty,
                 IntentCategory = intentCategory,
-                UserRequestedActions = _userRequestedActionsParameter.ParameterValue ?? [],
-                UserProvidedData = _userProvidedDataParameter.ParameterValue ?? []
+                UserRequestedActions = this.userRequestedActionsParameter.ParameterValue ?? [],
+                UserProvidedData = this.userProvidedDataParameter.ParameterValue ?? []
             };
 
             var agentInput = new KnowledgeBaseQueryExpanderAgentInput
@@ -53,7 +53,7 @@ namespace AgentMesh.Application.Services.EWSteps
                 DocumentationQueriesGenerationReference = LoadDocumentationQueriesGenerationReference()
             };
 
-            var agentOutput = await _knowledgeBaseQueryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await this.knowledgeBaseQueryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
 
             var searchQueries = agentOutput.SearchQueries.ToList();
             if (intentCategory != UserIntentCategory.Documentation)
@@ -63,7 +63,7 @@ namespace AgentMesh.Application.Services.EWSteps
                     .ToList();
             }
 
-            _domainsKnowledgeBaseQueryParameter.ParameterValue = searchQueries;
+            this.domainsKnowledgeBaseQueryParameter.ParameterValue = searchQueries;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

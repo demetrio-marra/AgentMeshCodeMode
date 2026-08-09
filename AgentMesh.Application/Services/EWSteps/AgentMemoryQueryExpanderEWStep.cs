@@ -7,7 +7,8 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class AgentMemoryQueryExpanderEWStep(AgentMemoryQueryExpanderAgent agentMemoryQueryExpanderAgent,
+    public class AgentMemoryQueryExpanderEWStep(
+        AgentMemoryQueryExpanderAgent agentMemoryQueryExpanderAgent,
         MissingValuesParameter missingValuesParameter,
         PastMemoriesQueryParameter pastMemoriesQueryParameter) : IEWStep
     {
@@ -21,23 +22,22 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly MissingValuesParameter _missingValuesParameter = missingValuesParameter;
-        private readonly PastMemoriesQueryParameter _pastMemoriesQueryParameter = pastMemoriesQueryParameter;
-
-        private readonly AgentMemoryQueryExpanderAgent _agentMemoryQueryExpanderAgent = agentMemoryQueryExpanderAgent;
+        private readonly AgentMemoryQueryExpanderAgent agentMemoryQueryExpanderAgent = agentMemoryQueryExpanderAgent;
+        private readonly MissingValuesParameter missingValuesParameter = missingValuesParameter;
+        private readonly PastMemoriesQueryParameter pastMemoriesQueryParameter = pastMemoriesQueryParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var agentInput = new AgentMemoryQueryExpanderAgentInput
             {
-                MemoryTopics = [.. _missingValuesParameter.ParameterValue!.Select(mv => new AgentMemoryItem { Memory = mv })]
+                MemoryTopics = [.. this.missingValuesParameter.ParameterValue!.Select(mv => new AgentMemoryItem { Memory = mv })]
             };
 
-            var agentOutput = await _agentMemoryQueryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await this.agentMemoryQueryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
 
             var pastMemories = agentOutput.SearchQueries.Select(q => new AgentMemoryItem { Memory = q }).ToList();
 
-            _pastMemoriesQueryParameter.ParameterValue = pastMemories;
+            this.pastMemoriesQueryParameter.ParameterValue = pastMemories;
 
             var ret = new EWStepResultRecord
             {

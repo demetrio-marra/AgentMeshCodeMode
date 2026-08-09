@@ -24,13 +24,13 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly KnowledgeBaseExecutor _knowledgeBaseExecutor = knowledgeBaseExecutor;
-        private readonly DomainsKnowledgeBaseQueryParameter _domainsKnowledgeBaseQueryParameter = domainsKnowledgeBaseQueryParameter;
-        private readonly KnowledgeBaseQueryResultsParameter _knowledgeBaseQueryResultsParameter = knowledgeBaseQueryResultsParameter;
+        private readonly KnowledgeBaseExecutor knowledgeBaseExecutor = knowledgeBaseExecutor;
+        private readonly DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter = domainsKnowledgeBaseQueryParameter;
+        private readonly KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter = knowledgeBaseQueryResultsParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var searchQueries = _domainsKnowledgeBaseQueryParameter.ParameterValue ?? [];
+            var searchQueries = this.domainsKnowledgeBaseQueryParameter.ParameterValue ?? [];
 
             var executorInput = new KnowledgeBaseQueryInput
             {
@@ -38,9 +38,9 @@ namespace AgentMesh.Application.Services.EWSteps
                 Queries = searchQueries
             };
 
-            var executorOutput = await _knowledgeBaseExecutor.QueryAsync(executorInput, cancellationToken);
+            var executorOutput = await this.knowledgeBaseExecutor.QueryAsync(executorInput, cancellationToken);
 
-            _knowledgeBaseQueryResultsParameter.ParameterValue = executorOutput.Results;
+            this.knowledgeBaseQueryResultsParameter.ParameterValue = executorOutput.Results;
 
             return new EWStepResultRecord(null, null);
         }

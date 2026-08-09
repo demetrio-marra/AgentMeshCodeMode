@@ -21,13 +21,13 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly KnowledgeBaseExecutor _knowledgeBaseExecutor = knowledgeBaseExecutor;
-        private readonly APISKnowledgeBaseQueryResultsParameter _apisKnowledgeBaseQueryResultsParameter = apisKnowledgeBaseQueryResultsParameter;
-        private readonly KnowledgeBaseAPIDocumentsContentParameter _knowledgeBaseAPIDocumentsContentParameter = knowledgeBaseAPIDocumentsContentParameter;
+        private readonly KnowledgeBaseExecutor knowledgeBaseExecutor = knowledgeBaseExecutor;
+        private readonly APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter = apisKnowledgeBaseQueryResultsParameter;
+        private readonly KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter = knowledgeBaseAPIDocumentsContentParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var results = _apisKnowledgeBaseQueryResultsParameter.ParameterValue ?? [];
+            var results = this.apisKnowledgeBaseQueryResultsParameter.ParameterValue ?? [];
             var filesToExtract = results
                 .Select(r => r.File?.Trim())
                 .Where(file => !string.IsNullOrWhiteSpace(file))
@@ -35,7 +35,7 @@ namespace AgentMesh.Application.Services.EWSteps
                 .Cast<string>()
                 .ToList();
 
-            var fetchedFilesContent = await _knowledgeBaseExecutor.GetDocsAsync(new KnowledgeBaseGetDocsInput
+            var fetchedFilesContent = await this.knowledgeBaseExecutor.GetDocsAsync(new KnowledgeBaseGetDocsInput
             {
                 FilePaths = filesToExtract
             }, cancellationToken);
@@ -54,7 +54,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var documents = documentsByFile.Values.ToList();
 
-            _knowledgeBaseAPIDocumentsContentParameter.ParameterValue = documents;
+            this.knowledgeBaseAPIDocumentsContentParameter.ParameterValue = documents;
 
             return new EWStepResultRecord(null, null);
         }

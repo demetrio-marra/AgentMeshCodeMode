@@ -31,39 +31,39 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly FunctionalAnalystAgent _functionalAnalystAgent = functionalAnalystAgent;
-        private readonly UserIntentParameter _userIntentParameter = userIntentParameter;
-        private readonly ConversationTopicParameter _conversationTopicParameter = conversationTopicParameter;
-        private readonly UserRequestedActionsParameter _userRequestedActionsParameter = userRequestedActionsParameter;
-        private readonly UserProvidedDataParameter _userProvidedDataParameter = userProvidedDataParameter;
-        private readonly UserPreferencesParameter _userPreferencesParameter = userPreferencesParameter;
-        private readonly PastMemoriesQueryResultsParameter _pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
-        private readonly DomainsKnowledgeBaseDocumentsContentParameter _domainsKnowledgeBaseDocumentsContentParameter = domainsKnowledgeBaseDocumentsContentParameter;
-        private readonly BusinessRequirementsParameter _businessRequirementsParameter = businessRequirementsParameter;
-        private readonly FunctionalAnalystRejectedParameter _functionalAnalystRejectedParameter = functionalAnalystRejectedParameter;
-        private readonly FunctionalAnalystRejectReasonsParameter _functionalAnalystRejectReasonsParameter = functionalAnalystRejectReasonsParameter;
+        private readonly FunctionalAnalystAgent functionalAnalystAgent = functionalAnalystAgent;
+        private readonly UserIntentParameter userIntentParameter = userIntentParameter;
+        private readonly ConversationTopicParameter conversationTopicParameter = conversationTopicParameter;
+        private readonly UserRequestedActionsParameter userRequestedActionsParameter = userRequestedActionsParameter;
+        private readonly UserProvidedDataParameter userProvidedDataParameter = userProvidedDataParameter;
+        private readonly UserPreferencesParameter userPreferencesParameter = userPreferencesParameter;
+        private readonly PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
+        private readonly DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter = domainsKnowledgeBaseDocumentsContentParameter;
+        private readonly BusinessRequirementsParameter businessRequirementsParameter = businessRequirementsParameter;
+        private readonly FunctionalAnalystRejectedParameter functionalAnalystRejectedParameter = functionalAnalystRejectedParameter;
+        private readonly FunctionalAnalystRejectReasonsParameter functionalAnalystRejectReasonsParameter = functionalAnalystRejectReasonsParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var docsContent = _domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? [];
+            var docsContent = this.domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? [];
             var kbContent = JsonSerializer.Serialize(docsContent, SerializationUtils.DefaultSerializeOptions);
 
             var agentInput = new FunctionalAnalystAgentInput
             {
-                Intent = _userIntentParameter.ParameterValue ?? string.Empty,
-                ConversationTopic = _conversationTopicParameter.ParameterValue ?? string.Empty,
-                UserRequestedActions = _userRequestedActionsParameter.ParameterValue ?? [],
-                UserProvidedData = _userProvidedDataParameter.ParameterValue ?? [],
-                UserPreferences = _userPreferencesParameter.ParameterValue ?? [],
-                AgentMemories = (_pastMemoriesQueryResultsParameter.ParameterValue ?? []).Select(m => m.Memory),
+                Intent = this.userIntentParameter.ParameterValue ?? string.Empty,
+                ConversationTopic = this.conversationTopicParameter.ParameterValue ?? string.Empty,
+                UserRequestedActions = this.userRequestedActionsParameter.ParameterValue ?? [],
+                UserProvidedData = this.userProvidedDataParameter.ParameterValue ?? [],
+                UserPreferences = this.userPreferencesParameter.ParameterValue ?? [],
+                AgentMemories = (this.pastMemoriesQueryResultsParameter.ParameterValue ?? []).Select(m => m.Memory),
                 KnowledgeBaseDocumentsContent = kbContent
             };
 
-            var agentOutput = await _functionalAnalystAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await this.functionalAnalystAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            _businessRequirementsParameter.ParameterValue = agentOutput.BusinessRequirements;
-            _functionalAnalystRejectedParameter.ParameterValue = agentOutput.RequestRejected;
-            _functionalAnalystRejectReasonsParameter.ParameterValue = agentOutput.ReasonOfRejection;
+            this.businessRequirementsParameter.ParameterValue = agentOutput.BusinessRequirements;
+            this.functionalAnalystRejectedParameter.ParameterValue = agentOutput.RequestRejected;
+            this.functionalAnalystRejectReasonsParameter.ParameterValue = agentOutput.ReasonOfRejection;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

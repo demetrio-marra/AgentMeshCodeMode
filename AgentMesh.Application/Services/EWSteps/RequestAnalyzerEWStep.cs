@@ -28,36 +28,36 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly RequestAnalyzerAgent _requestAnalyzerAgent = requestAnalyzerAgent;
-        private readonly UserLastRequestParameter _userLastRequestParameter = userLastRequestParameter;
-        private readonly InitialContextMessagesParameter _initialContextMessagesParameter = initialContextMessagesParameter;
-        private readonly UserIntentParameter _userIntentParameter = userIntentParameter;
-        private readonly IntentCategoryParameter _intentCategoryParameter = intentCategoryParameter;
-        private readonly ConversationTopicParameter _conversationTopicParameter = conversationTopicParameter;
-        private readonly UserRequestedActionsParameter _userRequestedActionsParameter = userRequestedActionsParameter;
-        private readonly UserProvidedDataParameter _userProvidedDataParameter = userProvidedDataParameter;
-        private readonly UserPreferencesParameter _userPreferencesParameter = userPreferencesParameter;
-        private readonly MissingValuesParameter _missingValuesParameter = missingValuesParameter;
-        private readonly LanguageOfTheUserParameter _languageOfTheUserParameter = languageOfTheUserParameter;
+        private readonly RequestAnalyzerAgent requestAnalyzerAgent = requestAnalyzerAgent;
+        private readonly UserLastRequestParameter userLastRequestParameter = userLastRequestParameter;
+        private readonly InitialContextMessagesParameter initialContextMessagesParameter = initialContextMessagesParameter;
+        private readonly UserIntentParameter userIntentParameter = userIntentParameter;
+        private readonly IntentCategoryParameter intentCategoryParameter = intentCategoryParameter;
+        private readonly ConversationTopicParameter conversationTopicParameter = conversationTopicParameter;
+        private readonly UserRequestedActionsParameter userRequestedActionsParameter = userRequestedActionsParameter;
+        private readonly UserProvidedDataParameter userProvidedDataParameter = userProvidedDataParameter;
+        private readonly UserPreferencesParameter userPreferencesParameter = userPreferencesParameter;
+        private readonly MissingValuesParameter missingValuesParameter = missingValuesParameter;
+        private readonly LanguageOfTheUserParameter languageOfTheUserParameter = languageOfTheUserParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var agentInput = new RequestAnalyzerAgentInput
             {
-                UserLastRequest = _userLastRequestParameter.ParameterValue ?? string.Empty,
-                ContextMessages = [.. (_initialContextMessagesParameter.ParameterValue ?? [])]
+                UserLastRequest = this.userLastRequestParameter.ParameterValue ?? string.Empty,
+                ContextMessages = [.. (this.initialContextMessagesParameter.ParameterValue ?? [])]
             };
 
-            var agentOutput = await _requestAnalyzerAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await this.requestAnalyzerAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            _userIntentParameter.ParameterValue = agentOutput.Intent;
-            _intentCategoryParameter.ParameterValue = agentOutput.IntentCategory;
-            _conversationTopicParameter.ParameterValue = agentOutput.ConversationTopic;
-            _userRequestedActionsParameter.ParameterValue = agentOutput.UserRequestedActions;
-            _userProvidedDataParameter.ParameterValue = agentOutput.UserProvidedData;
-            _userPreferencesParameter.ParameterValue = agentOutput.UserPreferences;
-            _missingValuesParameter.ParameterValue = agentOutput.MissingValues;
-            _languageOfTheUserParameter.ParameterValue = agentOutput.LanguageOfTheUser;
+            this.userIntentParameter.ParameterValue = agentOutput.Intent;
+            this.intentCategoryParameter.ParameterValue = agentOutput.IntentCategory;
+            this.conversationTopicParameter.ParameterValue = agentOutput.ConversationTopic;
+            this.userRequestedActionsParameter.ParameterValue = agentOutput.UserRequestedActions;
+            this.userProvidedDataParameter.ParameterValue = agentOutput.UserProvidedData;
+            this.userPreferencesParameter.ParameterValue = agentOutput.UserPreferences;
+            this.missingValuesParameter.ParameterValue = agentOutput.MissingValues;
+            this.languageOfTheUserParameter.ParameterValue = agentOutput.LanguageOfTheUser;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

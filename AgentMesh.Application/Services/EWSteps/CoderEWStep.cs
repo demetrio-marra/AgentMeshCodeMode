@@ -25,16 +25,16 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly CoderAgent _coderAgent = coderAgent;
-        private readonly BusinessRequirementsParameter _businessRequirementsParameter = businessRequirementsParameter;
-        private readonly TechnicalSpecificationParameter _technicalSpecificationParameter = technicalSpecificationParameter;
-        private readonly SelectedAPIsFileLocationsParameter _selectedAPIsFileLocationsParameter = selectedAPIsFileLocationsParameter;
-        private readonly KnowledgeBaseAPIDocumentsContentParameter _knowledgeBaseAPIDocumentsContentParameter = knowledgeBaseAPIDocumentsContentParameter;
-        private readonly GeneratedCodeParameter _generatedCodeParameter = generatedCodeParameter;
+        private readonly CoderAgent coderAgent = coderAgent;
+        private readonly BusinessRequirementsParameter businessRequirementsParameter = businessRequirementsParameter;
+        private readonly TechnicalSpecificationParameter technicalSpecificationParameter = technicalSpecificationParameter;
+        private readonly SelectedAPIsFileLocationsParameter selectedAPIsFileLocationsParameter = selectedAPIsFileLocationsParameter;
+        private readonly KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter = knowledgeBaseAPIDocumentsContentParameter;
+        private readonly GeneratedCodeParameter generatedCodeParameter = generatedCodeParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var docsToPass = (_knowledgeBaseAPIDocumentsContentParameter.ParameterValue ?? []).Select(doc => new KnowledgeBaseGetDocsOutputItem
+            var docsToPass = (this.knowledgeBaseAPIDocumentsContentParameter.ParameterValue ?? []).Select(doc => new KnowledgeBaseGetDocsOutputItem
             {
                 File = doc.File,
                 Content = doc.Content
@@ -42,15 +42,15 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var agentInput = new CoderAgentInput
             {
-                BusinessRequirements = _businessRequirementsParameter.ParameterValue ?? "(No business requirements)",
-                TechnicalSpecification = _technicalSpecificationParameter.ParameterValue ?? "(No technical specification)",
-                SelectedAPIsFileLocations = _selectedAPIsFileLocationsParameter.ParameterValue ?? [],
+                BusinessRequirements = this.businessRequirementsParameter.ParameterValue ?? "(No business requirements)",
+                TechnicalSpecification = this.technicalSpecificationParameter.ParameterValue ?? "(No technical specification)",
+                SelectedAPIsFileLocations = this.selectedAPIsFileLocationsParameter.ParameterValue ?? [],
                 KnowledgeBaseAPIDocumentsContent = docsToPass
             };
 
-            var agentOutput = await _coderAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await this.coderAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            _generatedCodeParameter.ParameterValue = agentOutput.CodeToRun;
+            this.generatedCodeParameter.ParameterValue = agentOutput.CodeToRun;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

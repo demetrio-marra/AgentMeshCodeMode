@@ -31,38 +31,38 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly DomainExpertAgent _domainExpertAgent = domainExpertAgent;
-        private readonly UserIntentParameter _userIntentParameter = userIntentParameter;
-        private readonly ConversationTopicParameter _conversationTopicParameter = conversationTopicParameter;
-        private readonly UserRequestedActionsParameter _userRequestedActionsParameter = userRequestedActionsParameter;
-        private readonly UserProvidedDataParameter _userProvidedDataParameter = userProvidedDataParameter;
-        private readonly UserPreferencesParameter _userPreferencesParameter = userPreferencesParameter;
-        private readonly PastMemoriesQueryResultsParameter _pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
-        private readonly DomainsKnowledgeBaseDocumentsContentParameter _domainsKnowledgeBaseDocumentsContentParameter = domainsKnowledgeBaseDocumentsContentParameter;
-        private readonly SandboxResultParameter _sandboxResultParameter = sandboxResultParameter;
-        private readonly LanguageOfTheUserParameter _languageOfTheUserParameter = languageOfTheUserParameter;
-        private readonly DomainExpertOutputParameter _domainExpertOutputParameter = domainExpertOutputParameter;
+        private readonly DomainExpertAgent domainExpertAgent = domainExpertAgent;
+        private readonly UserIntentParameter userIntentParameter = userIntentParameter;
+        private readonly ConversationTopicParameter conversationTopicParameter = conversationTopicParameter;
+        private readonly UserRequestedActionsParameter userRequestedActionsParameter = userRequestedActionsParameter;
+        private readonly UserProvidedDataParameter userProvidedDataParameter = userProvidedDataParameter;
+        private readonly UserPreferencesParameter userPreferencesParameter = userPreferencesParameter;
+        private readonly PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
+        private readonly DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter = domainsKnowledgeBaseDocumentsContentParameter;
+        private readonly SandboxResultParameter sandboxResultParameter = sandboxResultParameter;
+        private readonly LanguageOfTheUserParameter languageOfTheUserParameter = languageOfTheUserParameter;
+        private readonly DomainExpertOutputParameter domainExpertOutputParameter = domainExpertOutputParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var kbContent = JsonSerializer.Serialize(_domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? [], SerializationUtils.DefaultSerializeOptions);
+            var kbContent = JsonSerializer.Serialize(this.domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? [], SerializationUtils.DefaultSerializeOptions);
 
             var agentInput = new DomainExpertAgentInput
             {
-                Intent = _userIntentParameter.ParameterValue ?? string.Empty,
-                ConversationTopic = _conversationTopicParameter.ParameterValue ?? string.Empty,
-                UserRequestedActions = _userRequestedActionsParameter.ParameterValue ?? [],
-                UserProvidedData = _userProvidedDataParameter.ParameterValue ?? [],
-                UserPreferences = _userPreferencesParameter.ParameterValue ?? [],
-                AgentMemories = (_pastMemoriesQueryResultsParameter.ParameterValue ?? []).Select(m => m.Memory),
+                Intent = this.userIntentParameter.ParameterValue ?? string.Empty,
+                ConversationTopic = this.conversationTopicParameter.ParameterValue ?? string.Empty,
+                UserRequestedActions = this.userRequestedActionsParameter.ParameterValue ?? [],
+                UserProvidedData = this.userProvidedDataParameter.ParameterValue ?? [],
+                UserPreferences = this.userPreferencesParameter.ParameterValue ?? [],
+                AgentMemories = (this.pastMemoriesQueryResultsParameter.ParameterValue ?? []).Select(m => m.Memory),
                 KnowledgeBaseDocumentsContent = kbContent,
-                DataToComment = _sandboxResultParameter.ParameterValue ?? string.Empty,
-                LanguageOfTheUser = _languageOfTheUserParameter.ParameterValue ?? string.Empty
+                DataToComment = this.sandboxResultParameter.ParameterValue ?? string.Empty,
+                LanguageOfTheUser = this.languageOfTheUserParameter.ParameterValue ?? string.Empty
             };
 
-            var agentOutput = await _domainExpertAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await this.domainExpertAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            _domainExpertOutputParameter.ParameterValue = agentOutput.DomainExpertComment;
+            this.domainExpertOutputParameter.ParameterValue = agentOutput.DomainExpertComment;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }
