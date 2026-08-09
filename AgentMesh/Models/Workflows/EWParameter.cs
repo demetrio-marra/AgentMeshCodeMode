@@ -23,8 +23,6 @@ namespace AgentMesh.Models.Workflows
 
         public T? ParameterValue { get; set; }
 
-        public Type ParameterType => typeof(T);
-
         public IEWParameterSerializer DisplayValueSerializer { get; init; } = new DefaultEWParameterSerializer();
 
         public string GetDisplayValue()

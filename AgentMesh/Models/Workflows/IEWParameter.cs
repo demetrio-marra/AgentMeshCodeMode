@@ -12,8 +12,6 @@ namespace AgentMesh.Models.Workflows
 
         bool IsResponseForUserParameter { get; }
 
-        Type ParameterType { get; }
-
         IEWParameterSerializer DisplayValueSerializer { get; }
 
         string GetDisplayValue();
