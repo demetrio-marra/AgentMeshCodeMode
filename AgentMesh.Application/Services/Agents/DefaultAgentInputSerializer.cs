@@ -20,7 +20,7 @@ namespace AgentMesh.Application.Services.Agents
                 var message = new AgentMessage
                 {
                     Role = isSystemParameter ? AgentMessageRole.System : AgentMessageRole.User,
-                    Content = parameter.GetDisplayValue()
+                    Content = parameter.Serialize()
                 };
                 ret.Add(message);
             }

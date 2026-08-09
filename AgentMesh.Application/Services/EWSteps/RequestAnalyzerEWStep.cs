@@ -37,16 +37,16 @@ namespace AgentMesh.Application.Services.EWSteps
                 ContextMessages = [.. (initialContextMessagesParameter.ParameterValue ?? [])]
             };
 
-            var agentOutput = await requestAnalyzerAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await requestAnalyzerAgent.ExecuteAsync([userLastRequestParameter, initialContextMessagesParameter], cancellationToken);
 
-            userIntentParameter.ParameterValue = agentOutput.Intent;
-            intentCategoryParameter.ParameterValue = agentOutput.IntentCategory;
-            conversationTopicParameter.ParameterValue = agentOutput.ConversationTopic;
-            userRequestedActionsParameter.ParameterValue = agentOutput.UserRequestedActions;
-            userProvidedDataParameter.ParameterValue = agentOutput.UserProvidedData;
-            userPreferencesParameter.ParameterValue = agentOutput.UserPreferences;
-            missingValuesParameter.ParameterValue = agentOutput.MissingValues;
-            languageOfTheUserParameter.ParameterValue = agentOutput.LanguageOfTheUser;
+            userIntentParameter.ParameterValue = agentOutput.Result.Intent;
+            intentCategoryParameter.ParameterValue = agentOutput.Result.IntentCategory;
+            conversationTopicParameter.ParameterValue = agentOutput.Result.ConversationTopic;
+            userRequestedActionsParameter.ParameterValue = agentOutput.Result.UserRequestedActions;
+            userProvidedDataParameter.ParameterValue = agentOutput.Result.UserProvidedData;
+            userPreferencesParameter.ParameterValue = agentOutput.Result.UserPreferences;
+            missingValuesParameter.ParameterValue = agentOutput.Result.MissingValues;
+            languageOfTheUserParameter.ParameterValue = agentOutput.Result.LanguageOfTheUser;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

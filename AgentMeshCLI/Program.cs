@@ -47,7 +47,8 @@ namespace AgentMesh
                 loggingBuilder.AddConsole();
             });
 
-            services.AddSingleton<IEWParameterSerializer, DisplayValuesEWParameterSerializer>();
+            services.AddKeyedSingleton<IEWParameterSerializer, DisplayValuesEWParameterSerializer>("DisplayParametersSerializer");
+            services.AddKeyedSingleton<IEWParameterSerializer, DefaultEWParameterSerializer>("DefaultParametersSerializer");
 
             foreach (var ewParameterType in DiscoverEWParameterImplementations())
             {
@@ -62,6 +63,7 @@ namespace AgentMesh
 
             services.AddScoped<EWParametersProvider>();
             services.AddSingleton<IEnumerable<AgentFlatConfigurationRecord>>(AgentConfigurationReadHelper.ReadAgentConfigurations(appSettings, AppContext.BaseDirectory).ToArray());
+            services.AddSingleton<IAgentInputSerializer, DefaultAgentInputSerializer>();
             // insert here
             services.AddScoped<IEWStepSelector, EWStepSelector>();
             services.AddScoped<EWPipeline>();

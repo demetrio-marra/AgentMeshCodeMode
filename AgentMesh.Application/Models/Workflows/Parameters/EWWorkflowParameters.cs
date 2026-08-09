@@ -5,6 +5,7 @@ using AgentMesh.Models.ChatMessages;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Models.Workflows.Parameters
 {
@@ -19,7 +20,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
 
     public sealed class InitialContextMessagesParameter : EWParameter<IEnumerable<ContextMessage>>
     {
-        public InitialContextMessagesParameter(IEWParameterSerializer displayValueSerializer)
+        public InitialContextMessagesParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.InitialContextMessages;
             IsConversationHistoryParameter = true;
@@ -93,7 +94,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
 
     public sealed class KnowledgeBaseAPIDocumentsContentParameter : EWParameter<IEnumerable<KnowledgeBaseDocumentContent>>
     {
-        public KnowledgeBaseAPIDocumentsContentParameter(IEWParameterSerializer displayValueSerializer)
+        public KnowledgeBaseAPIDocumentsContentParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.KnowledgeBaseAPIDocumentsContent;
             DisplayValueSerializer = displayValueSerializer;
@@ -102,7 +103,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
 
     public sealed class PastMemoriesQueryParameter : EWParameter<IEnumerable<AgentMemoryItem>>
     {
-        public PastMemoriesQueryParameter(IEWParameterSerializer displayValueSerializer)
+        public PastMemoriesQueryParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.PastMemoriesQuery;
             DisplayValueSerializer = displayValueSerializer;
@@ -111,7 +112,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
 
     public sealed class DomainsKnowledgeBaseQueryParameter : EWParameter<IEnumerable<KnowledgeBaseQueryInputItem>>
     {
-        public DomainsKnowledgeBaseQueryParameter(IEWParameterSerializer displayValueSerializer)
+        public DomainsKnowledgeBaseQueryParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.DomainsKnowledgeBaseQuery;
             DisplayValueSerializer = displayValueSerializer;
@@ -120,7 +121,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
 
     public sealed class PastMemoriesQueryResultsParameter : EWParameter<IEnumerable<AgentMemoryQueryResultItem>>
     {
-        public PastMemoriesQueryResultsParameter(IEWParameterSerializer displayValueSerializer)
+        public PastMemoriesQueryResultsParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.PastMemoriesQueryResults;
             DisplayValueSerializer = displayValueSerializer;
@@ -129,7 +130,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
 
     public sealed class KnowledgeBaseQueryResultsParameter : EWParameter<IEnumerable<KnowledgeBaseQueryResultItem>>
     {
-        public KnowledgeBaseQueryResultsParameter(IEWParameterSerializer displayValueSerializer)
+        public KnowledgeBaseQueryResultsParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.KnowledgeBaseQueryResults;
             DisplayValueSerializer = displayValueSerializer;
@@ -138,7 +139,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
 
     public sealed class DomainsKnowledgeBaseDocumentsContentParameter : EWParameter<IEnumerable<KnowledgeBaseDocumentContent>>
     {
-        public DomainsKnowledgeBaseDocumentsContentParameter(IEWParameterSerializer displayValueSerializer)
+        public DomainsKnowledgeBaseDocumentsContentParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.DomainsKnowledgeBaseDocumentsContent;
             DisplayValueSerializer = displayValueSerializer;
@@ -195,7 +196,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
 
     public sealed class APISKnowledgeBaseQueryResultsParameter : EWParameter<IEnumerable<KnowledgeBaseQueryResultItem>>
     {
-        public APISKnowledgeBaseQueryResultsParameter(IEWParameterSerializer displayValueSerializer)
+        public APISKnowledgeBaseQueryResultsParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.APISKnowledgeBaseQueryResults;
             DisplayValueSerializer = displayValueSerializer;

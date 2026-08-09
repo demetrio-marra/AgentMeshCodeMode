@@ -1,7 +1,8 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
-using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.RequestAnalysis;
+using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.RequestAnalysis;
 using Microsoft.Extensions.Logging;
@@ -13,47 +14,33 @@ namespace AgentMesh.Application.Services.Agents
     public sealed class RequestAnalyzerAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<RequestAnalyzerAgent> logger) : AgentBase<RequestAnalyzerAgent.ParsedResponse>(logger, 
+        IAgentInputSerializer agentInputSerializer,
+        ILogger<RequestAnalyzerAgent> logger) : AbstractAgent<RequestAnalyzerAgentOutput>(logger, 
             "RequestAnalyzer",
             openAIClientFactory, 
-            resilience)
+            resilience,
+            agentInputSerializer)
     {
         private readonly ILogger<RequestAnalyzerAgent> _logger = logger;
 
-        public async Task<RequestAnalyzerAgentOutput> ExecuteAsync(
-            RequestAnalyzerAgentInput input,
-            CancellationToken cancellationToken = default)
+        protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            var userMessage = MessageSerializationUtils.SerializeConversationHistory(input.ContextMessages, input.UserLastRequest);
-
-            var inputMessages = new List<AgentMessage>
+            return new List<AgentInputParameterConfiguration>
             {
-                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new() { Role = AgentMessageRole.User, Content = userMessage },
+                new AgentInputParameterConfiguration
+                {
+                    ParameterName = EWParameterNames.UserLastRequest,
+                    ParameterTags = []
+                },
+                new AgentInputParameterConfiguration
+                {
+                    ParameterName = EWParameterNames.InitialContextMessages,
+                     ParameterTags = []
+                }
             };
-
-            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
-
-            var ret = new RequestAnalyzerAgentOutput
-            {
-                Intent = result.Result.Intent,
-                IntentCategory = result.Result.IntentCategory,
-                ConversationTopic = result.Result.ConversationTopic,
-                UserRequestedActions = result.Result.UserRequestedActions,
-                UserPreferences = result.Result.UserPreferences,
-                UserProvidedData = result.Result.UserProvidedData,
-                MissingValues = result.Result.MissingValues,
-                LanguageOfTheUser = result.Result.LanguageOfTheUser,
-                InputTokenCount = result.InputTokenCount,
-                OutputTokenCount = result.OutputTokenCount,
-                TokenCount = result.TotalTokenCount
-            };
-
-            return ret;
         }
 
-
-        protected override ParsedResponse ParseStructuredResponse(string rawResponseText)
+        protected override RequestAnalyzerAgentOutput ParseStructuredResponse(string rawResponseText)
         {
             try
             {
@@ -112,7 +99,18 @@ namespace AgentMesh.Application.Services.Agents
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToArray();
 
-                return responseDTO;
+                var ret = new RequestAnalyzerAgentOutput
+                {
+                    Intent = responseDTO.Intent,
+                    IntentCategory = responseDTO.IntentCategory,
+                    ConversationTopic = responseDTO.ConversationTopic,
+                    UserRequestedActions = responseDTO.UserRequestedActions.ToArray(),
+                    UserPreferences = responseDTO.UserPreferences.ToArray(),
+                    UserProvidedData = responseDTO.UserProvidedData.ToArray(),
+                    MissingValues = responseDTO.MissingValues.ToArray(),
+                    LanguageOfTheUser = responseDTO.LanguageOfTheUser
+                };
+                return ret;
             }
             catch (JsonException ex)
             {
@@ -130,8 +128,8 @@ namespace AgentMesh.Application.Services.Agents
 
             throw new BadStructuredResponseException(intentCategory, $"Unknown intent category: {intentCategory}");
         }
-
-        public class ParsedResponse
+     
+        private class ParsedResponse
         {
             [JsonPropertyName("intent")]
             public string Intent { get; set; } = string.Empty;
