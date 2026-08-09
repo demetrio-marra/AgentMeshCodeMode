@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.KnowledgeBase;
+using AgentMesh.Application.Services.Agents;
 
 namespace AgentMesh.Application.Services
 {

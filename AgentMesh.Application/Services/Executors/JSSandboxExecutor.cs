@@ -3,7 +3,7 @@ using AgentMesh.Application.Models.CodeSandbox;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Executors
 {
     public class JSSandboxExecutor(IJSSandbox jSSandbox, UserConfiguration userConfiguration, ILogger<JSSandboxExecutor> logger)
     {

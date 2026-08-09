@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.KnowledgeBase;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Agents
 {
     public sealed class RerankerAgent(
         IOpenAIClientFactory openAIClientFactory,

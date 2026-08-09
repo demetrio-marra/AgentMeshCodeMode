@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgentMesh.Application.Models.ChatMessages;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Agents
 {
     public sealed class AgentMemoryQueryExpanderAgent(
         IOpenAIClientFactory openAIClientFactory,

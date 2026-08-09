@@ -9,7 +9,7 @@ using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.KnowledgeBase;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Agents
 {
     public sealed class KnowledgeBaseQueryExpanderAgent(
         IOpenAIClientFactory openAIClientFactory,

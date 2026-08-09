@@ -5,7 +5,7 @@ using AgentMesh.Application.Utils;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Agents
 {
     public abstract class AgentBase<T>(ILogger logger,
         string agentName,

@@ -4,7 +4,7 @@ using AgentMesh.Application.Models.Embedding;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Executors
 {
     public class EmbeddingService : IEmbeddingService
     {

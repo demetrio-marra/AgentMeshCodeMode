@@ -3,7 +3,7 @@ using AgentMesh.Application.Models.AgentMemory;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Executors
 {
     public class AgentMemoryExecutor(IAgentMemoryService agentMemoryService,
         ILogger<AgentMemoryExecutor> logger,

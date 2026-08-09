@@ -3,7 +3,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Models.KnowledgeBase;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Executors
 {
     public class KnowledgeBaseExecutor(
         IKnowledgeBaseService knowledgeBaseService,

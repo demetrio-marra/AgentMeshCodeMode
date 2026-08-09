@@ -1,43 +1,28 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
+using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.TechnicalAnalyst;
 using AgentMesh.Application.Utils;
-using AgentMesh.Application.Models.FunctionalAnalyst;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AgentMesh.Application.Models.ChatMessages;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Agents
 {
-    public sealed class FunctionalAnalystAgent(
+    public sealed class TechnicalAnalystAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<FunctionalAnalystAgent> logger) : AgentBase<FunctionalAnalystAgent.ParsedResponse>(logger, 
-            "FunctionalAnalyst", 
+        ILogger<TechnicalAnalystAgent> logger) : AgentBase<TechnicalAnalystAgent.ParsedResponse>(logger,
+            "TechnicalAnalyst", 
             openAIClientFactory, 
             resilience)
     {
-        private readonly ILogger<FunctionalAnalystAgent> _logger = logger;
+        private readonly ILogger<TechnicalAnalystAgent> _logger = logger;
 
-        public async Task<FunctionalAnalystAgentOutput> ExecuteAsync(
-            FunctionalAnalystAgentInput input,
+        public async Task<TechnicalAnalystAgentOutput> ExecuteAsync(
+            TechnicalAnalystAgentInput input,
             CancellationToken cancellationToken = default)
         {
-            var systemMessages = new List<string>
-            {
-                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}."
-            };
-
-            if (input.DoNotComment)
-            {
-                systemMessages.Add("IMPORTANT REQUIREMENT: In `businessRequirements`, you MUST EXPLICITLY instruct the Coder Agent to produce a program that ONLY RETURNS DATA and DOES NOT add comments, insights, explanations, or narrative text in its output.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
-            {
-                systemMessages.Add($"IMPORTANT REQUIREMENT: The following knowledge base documents content is provided to you for reference. You MUST use this information to inform your response and ensure that the generated business requirements are accurate and relevant to the provided knowledge base content.\n{input.KnowledgeBaseDocumentsContent}");
-            }
-
             var userPayload = new
             {
                 input.Intent,
@@ -45,22 +30,25 @@ namespace AgentMesh.Application.Services
                 input.UserRequestedActions,
                 input.UserProvidedData,
                 input.UserPreferences,
-                input.AgentMemories
+                input.AgentMemories,
+                input.BusinessRequirements,
+                input.KnowledgeBaseDocumentsContent
             };
 
             var inputMessages = new List<AgentMessage>
             {
-                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
+                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
                 new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
             };
 
             var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
 
-            return new FunctionalAnalystAgentOutput
+            return new TechnicalAnalystAgentOutput
             {
-                BusinessRequirements = result.Result.BusinessRequirements,
+                TechnicalSpecification = result.Result.TechnicalSpecification,
                 RequestRejected = result.Result.RequestRejected,
                 ReasonOfRejection = result.Result.ReasonOfRejection,
+                SelectedAPIsFileLocations = result.Result.SelectedAPIsFileLocations,
                 TokenCount = result.TotalTokenCount,
                 InputTokenCount = result.InputTokenCount,
                 OutputTokenCount = result.OutputTokenCount
@@ -79,10 +67,10 @@ namespace AgentMesh.Application.Services
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                if (!responseDTO.RequestRejected && string.IsNullOrWhiteSpace(responseDTO.BusinessRequirements))
+                if (!responseDTO.RequestRejected && string.IsNullOrWhiteSpace(responseDTO.TechnicalSpecification))
                 {
-                    _logger.LogWarning("The model's response contains empty business requirements for a non-rejected request. Response text: {ResponseText}", rawResponseText);
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty business requirements for a non-rejected request.");
+                    _logger.LogWarning("The model's response contains an empty technical specification for a non-rejected request. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains an empty technical specification for a non-rejected request.");
                 }
 
                 if (responseDTO.RequestRejected && string.IsNullOrWhiteSpace(responseDTO.ReasonOfRejection))
@@ -96,6 +84,11 @@ namespace AgentMesh.Application.Services
                     responseDTO.ReasonOfRejection = null;
                 }
 
+                if (responseDTO.SelectedAPIsFileLocations == null)
+                {
+                    responseDTO.SelectedAPIsFileLocations = Array.Empty<string>();
+                }
+
                 return responseDTO;
             }
             catch (JsonException ex)
@@ -107,8 +100,8 @@ namespace AgentMesh.Application.Services
 
         public class ParsedResponse
         {
-            [JsonPropertyName("businessRequirements")]
-            public string BusinessRequirements { get; set; } = string.Empty;
+            [JsonPropertyName("technicalSpecification")]
+            public string TechnicalSpecification { get; set; } = string.Empty;
 
             [JsonRequired]
             [JsonPropertyName("requestRejected")]
@@ -116,6 +109,9 @@ namespace AgentMesh.Application.Services
 
             [JsonPropertyName("reasonOfRejection")]
             public string? ReasonOfRejection { get; set; }
+
+            [JsonPropertyName("selectedAPIsFileLocations")]
+            public IEnumerable<string> SelectedAPIsFileLocations { get; set; } = Array.Empty<string>();
         }
     }
 }

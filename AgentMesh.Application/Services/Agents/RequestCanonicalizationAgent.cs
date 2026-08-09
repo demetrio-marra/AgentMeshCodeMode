@@ -11,7 +11,7 @@ using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.KnowledgeBase;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Agents
 {
     public sealed class RequestCanonicalizationAgent(
         IOpenAIClientFactory openAIClientFactory,
@@ -102,7 +102,7 @@ namespace AgentMesh.Application.Services
 
             return new RequestCanonicalizationAgentOutput
             {
-                CanonicalizedStructuredUserRequest = new AgentMesh.Models.RequestAnalysis.StructuredUserRequest
+                CanonicalizedStructuredUserRequest = new StructuredUserRequest
                 {
                     Intent = result.Result.Intent,
                     ConversationTopic = result.Result.ConversationTopic,

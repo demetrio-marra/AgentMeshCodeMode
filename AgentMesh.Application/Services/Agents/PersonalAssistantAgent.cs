@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Agents
 {
     public sealed class PersonalAssistantAgent(
         IOpenAIClientFactory openAIClientFactory,
@@ -42,7 +42,7 @@ namespace AgentMesh.Application.Services
                 input.UserRequestedActions,
                 input.UserProvidedData,
                 input.UserPreferences,
-                Memories = input.Memories
+                input.Memories
             };
 
             var inputMessages = new List<AgentMessage>

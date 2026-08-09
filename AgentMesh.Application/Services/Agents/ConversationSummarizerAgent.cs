@@ -6,7 +6,7 @@ using AgentMesh.Models.ChatMessages;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Agents
 {
     public sealed class ConversationSummarizerAgent(IOpenAIClientFactory openAIClientFactory,
                                       Resilience resilience,

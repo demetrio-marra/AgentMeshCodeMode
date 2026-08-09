@@ -5,7 +5,7 @@ using AgentMesh.Models.ChatMessages;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 
-namespace AgentMesh.Application.Services.Workflows.ParameterSerializers
+namespace AgentMesh.Application.Services
 {
     public class DisplayValuesEWParameterSerializer : IEWParameterSerializer
     {

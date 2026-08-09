@@ -1,6 +1,7 @@
 ﻿using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Application.Models.AgentMemoryQueryExpander;
 using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Services.Agents;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 

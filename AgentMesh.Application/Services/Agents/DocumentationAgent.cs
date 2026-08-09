@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using AgentMesh.Application.Models.ChatMessages;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Agents
 {
     public sealed class DocumentationAgent(
         IOpenAIClientFactory openAIClientFactory,
