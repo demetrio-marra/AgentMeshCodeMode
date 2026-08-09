@@ -1,22 +1,24 @@
 using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models.CostsAnalysis;
 using AgentMesh.Application.Services;
+using AgentMesh.Application.Services.Workflows.ParameterSerializers;
+using AgentMesh.Application.Utils;
+using AgentMesh.Configuration;
+using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.JSSandbox;
+using AgentMesh.Infrastructure.Mem0;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.QMD;
+using AgentMesh.Infrastructure.QMD.Services;
+using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Utils;
-using AgentMesh.Infrastructure.Mem0;
-using AgentMesh.Infrastructure.QMD.Services;
-using AgentMesh.Models.Workflows;
 using System.Reflection;
-using AgentMesh.Application.Models.CostsAnalysis;
-using AgentMesh.Application.Services.Workflows.ParameterSerializers;
 
 namespace AgentMesh
 {
@@ -35,6 +37,8 @@ namespace AgentMesh
 
             var configuration = builder.Configuration;
             var services = builder.Services;
+            var appSettings = new AppSettingsConfigurationDto();
+            configuration.Bind(appSettings);
 
             services.AddLogging(loggingBuilder =>
             {
@@ -56,6 +60,7 @@ namespace AgentMesh
             }
 
             services.AddScoped<EWParametersProvider>();
+            services.AddSingleton<IEnumerable<AgentFlatConfigurationRecord>>(AgentConfigurationReadHelper.ReadAgentConfigurations(appSettings, AppContext.BaseDirectory).ToArray());
             // insert here
             services.AddScoped<IEWStepSelector, EWStepSelector>();
             services.AddScoped<EWPipeline>();

@@ -106,5 +106,12 @@ namespace AgentMesh.Services
                 ConsoleHelper.WriteLineWithColor(paddedLine, ConsoleColor.White);
             }
         }
+
+
+        internal class TextOrConsoleColor
+        {
+            public string? Text { get; init; }
+            public ConsoleColor? Color { get; init; }
+        }
     }
 }
