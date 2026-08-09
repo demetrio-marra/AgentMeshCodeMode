@@ -40,6 +40,12 @@ namespace AgentMesh.Services
             while (nextSteps.Any())
             {
                 var stepTasks = nextSteps.Select(step => RunStep(step, cancellationToken)).ToList();
+
+                foreach (var step in nextSteps)
+                {
+                    await _workflowProgressNotifier.NotifyWorkflowStepStarted(step.Name);
+                }
+
                 var currentStepRuns = await Task.WhenAll(stepTasks);
 
                 stepRuns.AddRange(currentStepRuns);

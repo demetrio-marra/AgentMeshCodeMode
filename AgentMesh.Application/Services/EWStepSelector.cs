@@ -70,34 +70,172 @@ namespace AgentMesh.Application.Services
         DomainExpertEWStep domainExpertEWStep,
         PersonalAssistantEWStep personalAssistantEWStep) : IEWStepSelector
     {
+
+        private bool _rerankerHasRun = false;
+        private bool _pipelineDone = false;
+
         public IEnumerable<IEWStep> NextStepsToRun()
         {
-            if (userLastRequestParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder
-                && intentCategoryParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            if (_pipelineDone)
             {
-                return [requestAnalyzerEWStep];
+                if (finalAnswerParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+                {
+                    return [personalAssistantEWStep];
+                }
+                else
+                {
+                    return [];
+                }
             }
-            
-            if (missingValuesParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder
-                && pastMemoriesQueryParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+
+            var pipelineBranch = GuessPipelineBranch();
+            return pipelineBranch switch
+            {
+                PipelineBranchValue.OtherTopics => HandleOtherTopicsBranch(),
+                PipelineBranchValue.Documenting => HandleDocumentingBranch(),
+                PipelineBranchValue.TaskExecution => HandleTaskExecutionBranch(),
+                PipelineBranchValue.None => [requestAnalyzerEWStep],
+                _ => [requestAnalyzerEWStep],
+            };
+        }
+
+        private IEnumerable<IEWStep> HandleOtherTopicsBranch()
+        {
+            if (pastMemoriesQueryParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+               && missingValuesParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
             {
                 return [agentMemoryQueryExpanderEWStep];
             }
 
-            if (pastMemoriesQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder  
-                && pastMemoriesQueryResultsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            if (pastMemoriesQueryResultsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+                && pastMemoriesQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
             {
                 return [agentMemoryServiceEWStep];
             }
 
-            if (intentCategoryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder 
-                && intentCategoryParameter.GetDisplayValue() == UserIntentCategory.Other.ToString()
-                && finalAnswerParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            if (finalAnswerParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
             {
                 return [personalAssistantEWStep];
             }
+            else
+            {
+                return [];
+            }
+        }
 
+        private IEnumerable<IEWStep> HandleDocumentingBranch()
+        {
+            if (pastMemoriesQueryParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+                && missingValuesParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            {
+                return [agentMemoryQueryExpanderEWStep];
+            }
+            
+            if (pastMemoriesQueryResultsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+                && pastMemoriesQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            {
+                return [agentMemoryServiceEWStep];
+            }
+
+            if (domainsKnowledgeBaseQueryParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            {
+                return [knowledgeBaseQueryExpanderEWStep];
+            }
+
+            if (domainsKnowledgeBaseQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder
+                && knowledgeBaseQueryResultsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            {
+                return [domainsKnowledgeBaseServiceSearchEWStep];
+            }
+
+            if (_rerankerHasRun == false)
+            {
+                _rerankerHasRun = true;
+                return [rerankerEWStep];
+            }
+
+            if (domainsKnowledgeBaseDocumentsContentParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+                && domainsKnowledgeBaseQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            {
+                return [domainsKnowledgeBaseDocumentsExtractorEWStep];
+            }
+
+            _pipelineDone = true;
+            return [documentationEWStep];
+        }
+        
+        private IEnumerable<IEWStep> HandleTaskExecutionBranch()
+        {
             return [];
+        }
+
+        private PipelineBranchValue GuessPipelineBranch()
+        {
+            if (!intentCategoryParameter.ParameterValue.HasValue)
+            {
+                return PipelineBranchValue.None;
+            }
+            else
+            {
+                return intentCategoryParameter.ParameterValue.Value switch
+                {
+                    UserIntentCategory.Other => PipelineBranchValue.OtherTopics,
+                    UserIntentCategory.Documentation => PipelineBranchValue.Documenting,
+                    UserIntentCategory.TaskExecution => PipelineBranchValue.TaskExecution,
+                    _ => PipelineBranchValue.None
+                };
+            }
+        }
+
+        private enum PipelineBranchValue
+        {
+            None,
+            OtherTopics,
+            Documenting,
+            TaskExecution
+        }
+
+        private enum OtherTopicsSteps
+        {
+            None,
+            RequestAnalyzer,
+            PersonalAssistantEWStep
+        }
+
+        private enum DocumentingSteps
+        {
+            None,
+            RequestAnalyzer,
+            AgentMemoryQueryExpander,
+            AgentMemoryService,
+            KnowledgeBaseQueryExpander,
+            DomainsKnowledgeBaseServiceSearch,
+            Reranker,
+            DomainsKnowledgeBaseDocumentsExtractor,
+            Documentation,
+            PersonalAssistantEWStep
+        }
+
+        private enum TaskExecutionSteps
+        {
+            None,
+            RequestAnalyzer,
+            AgentMemoryQueryExpander,
+            AgentMemoryService,
+            KnowledgeBaseQueryExpander,
+            DomainsKnowledgeBaseServiceSearch,
+            Reranker,
+            DomainsKnowledgeBaseDocumentsExtractor,
+            FunctionalAnalyst,
+            APIsKnowledgeBaseServiceSearch,
+            APIKnowledgeBaseDocumentsExtractor,
+            TechnicalAnalyst,
+            Coder,
+            JSSandbox,
+            CodeExecutionFailuresDetector,
+            CodeFixerForRuntimeErrors,
+            DomainExpert,
+            PersonalAssistantEWStep 
         }
     }
 }

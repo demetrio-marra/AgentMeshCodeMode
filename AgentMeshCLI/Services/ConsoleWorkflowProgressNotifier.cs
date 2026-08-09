@@ -17,6 +17,12 @@ namespace AgentMesh.Services
             await Task.CompletedTask;
         }
 
+        public async Task NotifyWorkflowStepStarted(string stepName)
+        {
+            ConsoleHelper.WriteLineWithColor($"Workflow step '{stepName}' has started.", ConsoleColor.Yellow);
+            await Task.CompletedTask;
+        }
+
         public async Task NotifyWorkflowStepCompleted(string stepName, EWStepStatisticsRecord statistics)
         {
             ConsoleHelper.WriteLineWithColor($"Workflow step '{stepName}' has completed.", ConsoleColor.Magenta);
@@ -26,7 +32,7 @@ namespace AgentMesh.Services
             var parametersDiff = statistics.ParametersDiff.ToList();
             var diffValue = parametersDiff.Count == 0
                 ? "(No differences)"
-                : string.Join('\n', parametersDiff.Select(p => $"- {p.Name}: '{p.OldValue ?? string.Empty}' -> '{p.NewValue ?? string.Empty}'"));
+                : string.Join("\n---\n", parametersDiff.Select(p => $"{p.Name}\nOLD: '{p.OldValue ?? string.Empty}'\nNEW: '{p.NewValue ?? string.Empty}'"));
 
             WriteParameter("Parameters", diffValue);
 

@@ -6,6 +6,7 @@ namespace AgentMesh.Services
     {
         Task NotifyWorkflowStart();
         Task NotifyWorkflowEnd();
+        Task NotifyWorkflowStepStarted(string stepName);
         Task NotifyWorkflowStepCompleted(string stepName, EWStepStatisticsRecord statistics);
     }
 }

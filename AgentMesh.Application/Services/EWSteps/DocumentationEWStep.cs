@@ -54,9 +54,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var agentOutput = await _documentationAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            _documentationContentParameter.ParameterValue = agentOutput.Content != null
-                ? [new KnowledgeBaseDocumentContent { Content = agentOutput.Content }]
-                : [];
+            _documentationContentParameter.ParameterValue = agentOutput.Content ?? string.Empty;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

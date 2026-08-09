@@ -16,6 +16,7 @@ using AgentMesh.Infrastructure.QMD.Services;
 using AgentMesh.Models.Workflows;
 using System.Reflection;
 using AgentMesh.Application.Models.CostsAnalysis;
+using AgentMesh.Application.Services.Workflows.ParameterSerializers;
 
 namespace AgentMesh
 {
@@ -41,7 +42,7 @@ namespace AgentMesh
                 loggingBuilder.AddConsole();
             });
 
-            services.AddSingleton<IEWParameterSerializer, DefaultEWParameterSerializer>();
+            services.AddSingleton<IEWParameterSerializer, DisplayValuesEWParameterSerializer>();
 
             foreach (var ewParameterType in DiscoverEWParameterImplementations())
             {

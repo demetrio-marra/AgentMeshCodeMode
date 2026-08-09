@@ -76,8 +76,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             if (intentCategory == UserIntentCategory.Documentation)
             {
-                var docContent = (_documentationContentParameter.ParameterValue ?? []).FirstOrDefault();
-                data = docContent?.Content;
+                data = _documentationContentParameter.ParameterValue;
             }
             else if (intentCategory == UserIntentCategory.TaskExecution)
             {

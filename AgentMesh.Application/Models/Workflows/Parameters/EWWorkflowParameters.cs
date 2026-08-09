@@ -219,7 +219,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         }
     }
 
-    public sealed class DocumentationContentParameter : EWParameter<IEnumerable<KnowledgeBaseDocumentContent>>
+    public sealed class DocumentationContentParameter : EWParameter<string>
     {
         public DocumentationContentParameter()
         {
