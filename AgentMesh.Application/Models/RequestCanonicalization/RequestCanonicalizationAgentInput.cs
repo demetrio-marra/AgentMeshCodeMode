@@ -1,6 +1,6 @@
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Utils;
-using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Application.Models.KnowledgeBase;
 
 namespace AgentMesh.Models.RequestCanonicalization
 {

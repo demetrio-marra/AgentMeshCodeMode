@@ -1,5 +1,4 @@
 using AgentMesh.Application.Models.ChatClient;
-using AgentMesh.Models;
 using AgentMesh.Utils;
 
 namespace AgentMesh.Application.Models.AgentMemoryQueryExpander

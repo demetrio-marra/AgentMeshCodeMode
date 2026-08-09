@@ -1,7 +1,6 @@
-using AgentMesh.Models;
 using AgentMesh.Utils;
-using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatClient;
+using AgentMesh.Application.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Models.KnowledgeBaseQueryExpander
 {

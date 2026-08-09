@@ -1,5 +1,4 @@
 ﻿using AgentMesh.Application.Models.ChatClient;
-using AgentMesh.Models;
 using AgentMesh.Models.RequestAnalysis;
 
 namespace AgentMesh.Application.Models.RequestAnalysis

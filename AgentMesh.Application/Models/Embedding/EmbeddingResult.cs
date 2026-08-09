@@ -1,4 +1,4 @@
-namespace AgentMesh.Models.Embedding
+namespace AgentMesh.Application.Models.Embedding
 {
     public class EmbeddingResult
     {

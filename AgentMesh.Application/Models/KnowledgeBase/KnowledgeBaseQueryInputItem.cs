@@ -1,4 +1,6 @@
-﻿namespace AgentMesh.Models.KnowledgeBase
+﻿using AgentMesh.Models.KnowledgeBase;
+
+namespace AgentMesh.Application.Models.KnowledgeBase
 {
     public class KnowledgeBaseQueryInputItem
     {

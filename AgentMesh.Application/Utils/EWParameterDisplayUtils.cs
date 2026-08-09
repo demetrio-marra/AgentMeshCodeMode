@@ -1,7 +1,6 @@
+using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Application.Models.KnowledgeBase;
-using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.ChatMessages;
-using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Utils;
 

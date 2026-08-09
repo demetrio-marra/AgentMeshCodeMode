@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Models.AgentMemory
+﻿namespace AgentMesh.Application.Models.AgentMemory
 {
     /// <summary>
     /// A class representing an item in the agent's memory, which can store information, observations, or any relevant data that the agent has encountered during its interactions or operations. 

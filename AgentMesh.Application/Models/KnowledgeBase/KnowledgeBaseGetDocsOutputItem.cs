@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Models.KnowledgeBase
+﻿namespace AgentMesh.Application.Models.KnowledgeBase
 {
     public class KnowledgeBaseGetDocsOutputItem
     {

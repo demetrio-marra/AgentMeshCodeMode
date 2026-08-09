@@ -1,9 +1,9 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Application.Utils;
 using AgentMesh.Infrastructure.Mem0.Models;
-using AgentMesh.Models.AgentMemory;
 using AgentMesh.Models.ChatMessages;
 
 namespace AgentMesh.Infrastructure.Mem0

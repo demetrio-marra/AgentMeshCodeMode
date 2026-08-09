@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.QueriesCache;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Models.QueriesCache;

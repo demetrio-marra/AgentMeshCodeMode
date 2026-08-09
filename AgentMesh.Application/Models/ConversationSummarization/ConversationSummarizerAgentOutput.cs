@@ -1,7 +1,5 @@
 using AgentMesh.Application.Models.ChatClient;
-using AgentMesh.Models;
 using AgentMesh.Models.ChatMessages;
-using AgentMesh.Utils;
 
 namespace AgentMesh.Application.Models.ConversationSummarization
 {

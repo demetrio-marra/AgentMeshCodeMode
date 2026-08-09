@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Models.Workflows
+﻿namespace AgentMesh.Application.Exceptions
 {
     public class WorkflowExecutionException : Exception
     {

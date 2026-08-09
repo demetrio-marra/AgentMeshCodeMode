@@ -7,8 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Services
 {

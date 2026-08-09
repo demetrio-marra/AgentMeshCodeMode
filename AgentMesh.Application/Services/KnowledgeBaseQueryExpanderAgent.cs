@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Services
 {

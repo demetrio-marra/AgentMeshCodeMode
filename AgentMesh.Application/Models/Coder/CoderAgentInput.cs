@@ -1,3 +1,4 @@
+using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Utils;
 
 namespace AgentMesh.Application.Models.Coder
@@ -12,7 +13,7 @@ namespace AgentMesh.Application.Models.Coder
         /// Pre-fetched API documentation produced by the knowledge base service.
         /// Empty collection when no relevant documentation was found.
         /// </summary>
-        public IEnumerable<AgentMesh.Models.KnowledgeBase.KnowledgeBaseGetDocsOutputItem> KnowledgeBaseAPIDocumentsContent { get; set; } = [];
+        public IEnumerable<KnowledgeBaseGetDocsOutputItem> KnowledgeBaseAPIDocumentsContent { get; set; } = [];
 
         /// <summary>
         /// Selected API file locations from the Technical Analyst Agent.

@@ -1,4 +1,5 @@
-﻿using AgentMesh.Utils;
+﻿using AgentMesh.Application.Models.KnowledgeBase;
+using AgentMesh.Utils;
 
 namespace AgentMesh.Models.KnowledgeBase
 {

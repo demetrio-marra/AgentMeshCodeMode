@@ -1,6 +1,6 @@
 ﻿using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Models.Embedding;
+using AgentMesh.Application.Models.Embedding;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 

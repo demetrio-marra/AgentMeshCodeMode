@@ -11,6 +11,7 @@ using AgentMesh.Models.RequestCanonicalization;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Services
 {

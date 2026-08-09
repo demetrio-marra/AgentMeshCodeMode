@@ -1,4 +1,4 @@
-﻿using AgentMesh.Models.AgentMemory;
+﻿using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Models.ChatMessages;
 
 namespace AgentMesh.Application.Contracts

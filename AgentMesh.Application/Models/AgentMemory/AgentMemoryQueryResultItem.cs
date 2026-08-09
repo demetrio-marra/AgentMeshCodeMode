@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Models.AgentMemory
+﻿namespace AgentMesh.Application.Models.AgentMemory
 {
     /// <summary>
     /// Represents a memory item that is returned as part of a query result, including its confidence score. 

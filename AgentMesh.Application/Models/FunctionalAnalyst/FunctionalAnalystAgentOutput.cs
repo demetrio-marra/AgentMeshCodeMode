@@ -1,5 +1,3 @@
-using AgentMesh.Models;
-using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatClient;
 
 namespace AgentMesh.Application.Models.FunctionalAnalyst

@@ -1,4 +1,4 @@
-using AgentMesh.Models.KnowledgeBase;
+using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Utils;
 
