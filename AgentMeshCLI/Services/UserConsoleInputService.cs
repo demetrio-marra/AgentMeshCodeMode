@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using AgentMesh.Application.Models.CostsAnalysis;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Application.Services.Executors;
+using System.Globalization;
 
 namespace AgentMesh.Services
 {
@@ -287,7 +288,7 @@ namespace AgentMesh.Services
             Console.WriteLine("Agent configurations:");
             foreach(var agentConfig in agentsConfigurations)
             {
-                ConsoleHelper.PrintAgentConfiguration(agentConfig.AgentUniqueRole, agentConfig.ProviderModelName, Convert.ToDouble(agentConfig.Temperature));
+                ConsoleHelper.PrintAgentConfiguration(agentConfig.AgentUniqueRole, agentConfig.ProviderModelName, Convert.ToDouble(agentConfig.Temperature, CultureInfo.InvariantCulture));
             }
             Console.WriteLine();
         }
