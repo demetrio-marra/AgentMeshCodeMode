@@ -15,7 +15,7 @@ namespace AgentMesh.Application.Services.Agents
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
         IAgentInputSerializer agentInputSerializer,
-        ILogger<RequestAnalyzerAgent> logger) : AbstractAgent<RequestAnalyzerAgentOutput>(logger, 
+        ILogger<RequestAnalyzerAgent> logger) : AbstractAgent<StructuredUserRequest>(logger, 
             "RequestAnalyzer",
             openAIClientFactory, 
             resilience,
@@ -25,22 +25,20 @@ namespace AgentMesh.Application.Services.Agents
 
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            return new List<AgentInputParameterConfiguration>
-            {
-                new AgentInputParameterConfiguration
-                {
+            return
+            [
+                new() {
                     ParameterName = EWParameterNames.UserLastRequest,
                     ParameterTags = []
                 },
-                new AgentInputParameterConfiguration
-                {
+                new() {
                     ParameterName = EWParameterNames.InitialContextMessages,
-                     ParameterTags = []
+                    ParameterTags = []
                 }
-            };
+            ];
         }
 
-        protected override RequestAnalyzerAgentOutput ParseStructuredResponse(string rawResponseText)
+        protected override StructuredUserRequest ParseStructuredResponse(string rawResponseText)
         {
             try
             {
@@ -99,7 +97,7 @@ namespace AgentMesh.Application.Services.Agents
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToArray();
 
-                var ret = new RequestAnalyzerAgentOutput
+                var ret = new StructuredUserRequest
                 {
                     Intent = responseDTO.Intent,
                     IntentCategory = responseDTO.IntentCategory,
