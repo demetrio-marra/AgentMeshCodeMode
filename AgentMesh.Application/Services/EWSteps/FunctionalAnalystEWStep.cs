@@ -19,8 +19,7 @@ namespace AgentMesh.Application.Services.EWSteps
         DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
         BusinessRequirementsParameter businessRequirementsParameter,
         FunctionalAnalystRejectedParameter functionalAnalystRejectedParameter,
-        FunctionalAnalystRejectReasonsParameter functionalAnalystRejectReasonsParameter,
-        ShouldEngageCoderParameter shouldEngageCoderParameter) : IEWStep
+        FunctionalAnalystRejectReasonsParameter functionalAnalystRejectReasonsParameter) : IEWStep
     {
         public string Name => "Functional Analyst";
 
@@ -43,7 +42,6 @@ namespace AgentMesh.Application.Services.EWSteps
         private readonly BusinessRequirementsParameter _businessRequirementsParameter = businessRequirementsParameter;
         private readonly FunctionalAnalystRejectedParameter _functionalAnalystRejectedParameter = functionalAnalystRejectedParameter;
         private readonly FunctionalAnalystRejectReasonsParameter _functionalAnalystRejectReasonsParameter = functionalAnalystRejectReasonsParameter;
-        private readonly ShouldEngageCoderParameter _shouldEngageCoderParameter = shouldEngageCoderParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
@@ -66,7 +64,6 @@ namespace AgentMesh.Application.Services.EWSteps
             _businessRequirementsParameter.ParameterValue = agentOutput.BusinessRequirements;
             _functionalAnalystRejectedParameter.ParameterValue = agentOutput.RequestRejected;
             _functionalAnalystRejectReasonsParameter.ParameterValue = agentOutput.ReasonOfRejection;
-            _shouldEngageCoderParameter.ParameterValue = !agentOutput.RequestRejected;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

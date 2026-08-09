@@ -29,7 +29,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public const string SelectedAPIsFileLocations = "Selected API file locations";
         public const string DocumentationContent = "Documentation content";
         public const string GeneratedCode = "Generated code";
-        public const string LastCodeWithLineNumbers = "Generated code with line numbers";
         public const string CodeExecutionFailuresDetectorIterationCount = "Code execution failures detector iteration count";
         public const string CodeExecutionAnalysis = "Code execution analysis";
         public const string SandboxResult = "Code execution result";

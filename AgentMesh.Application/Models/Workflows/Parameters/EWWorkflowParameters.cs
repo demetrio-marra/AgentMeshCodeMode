@@ -193,14 +193,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         }
     }
 
-    public sealed class ShouldEngageCoderParameter : EWParameter<bool>
-    {
-        public ShouldEngageCoderParameter()
-        {
-            Name = EWParameterNames.ShouldEngageCoder;
-        }
-    }
-
     public sealed class APISKnowledgeBaseQueryResultsParameter : EWParameter<IEnumerable<KnowledgeBaseQueryResultItem>>
     {
         public APISKnowledgeBaseQueryResultsParameter(IEWParameterSerializer displayValueSerializer)
