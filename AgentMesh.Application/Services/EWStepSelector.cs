@@ -72,22 +72,9 @@ namespace AgentMesh.Application.Services
     {
 
         private bool _rerankerHasRun = false;
-        private bool _pipelineDone = false;
 
         public IEnumerable<IEWStep> NextStepsToRun()
         {
-            if (_pipelineDone)
-            {
-                if (finalAnswerParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
-                {
-                    return [personalAssistantEWStep];
-                }
-                else
-                {
-                    return [];
-                }
-            }
-
             var pipelineBranch = GuessPipelineBranch();
             return pipelineBranch switch
             {
@@ -160,13 +147,108 @@ namespace AgentMesh.Application.Services
                 return [domainsKnowledgeBaseDocumentsExtractorEWStep];
             }
 
-            _pipelineDone = true;
-            return [documentationEWStep];
+            if (documentationContentParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)                
+            {
+                return [documentationEWStep];
+            }
+
+            if (finalAnswerParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            {
+                return [personalAssistantEWStep];
+            }
+            else
+            {
+                return [];
+            }
         }
         
         private IEnumerable<IEWStep> HandleTaskExecutionBranch()
         {
-            return [];
+            if (pastMemoriesQueryParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+               && missingValuesParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            {
+                return [agentMemoryQueryExpanderEWStep];
+            }
+
+            if (pastMemoriesQueryResultsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+                && pastMemoriesQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            {
+                return [agentMemoryServiceEWStep];
+            }
+
+            if (domainsKnowledgeBaseQueryParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            {
+                return [knowledgeBaseQueryExpanderEWStep];
+            }
+
+            if (domainsKnowledgeBaseQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder
+                && knowledgeBaseQueryResultsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            {
+                return [domainsKnowledgeBaseServiceSearchEWStep];
+            }
+
+            if (_rerankerHasRun == false)
+            {
+                _rerankerHasRun = true;
+                return [rerankerEWStep];
+            }
+
+            if (domainsKnowledgeBaseDocumentsContentParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+                && domainsKnowledgeBaseQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            {
+                return [domainsKnowledgeBaseDocumentsExtractorEWStep];
+            }
+
+            if (businessRequirementsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            {
+                return [functionalAnalystEWStep, apisKnowledgeBaseServiceSearchEWStep];
+            }
+
+            if (apisKnowledgeBaseQueryResultsParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder
+                && knowledgeBaseAPIDocumentsContentParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            {
+                return [apiKnowledgeBaseDocumentsExtractorEWStep];
+            }
+
+            if (technicalSpecificationParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+                && businessRequirementsParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            {
+                return [technicalAnalystEWStep];
+            }
+
+            if (technicalAnalystRejectedParameter.ParameterValue == true
+                && finalAnswerParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            {
+                return [personalAssistantEWStep];
+            }
+
+            if (generatedCodeParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+                && technicalSpecificationParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            {
+                return [coderEWStep];
+            }
+
+            if (sandboxResultParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+                && generatedCodeParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            {
+                return [jsSandboxEWStep];
+            }
+
+            if (workflowConfiguration.EnableDomainExpert
+                && domainExpertOutputParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+                && sandboxResultParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            {
+                return [domainExpertEWStep];
+            }
+
+            if (finalAnswerParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            {
+                return [personalAssistantEWStep];
+            }
+            else
+            {
+                return [];
+            }
         }
 
         private PipelineBranchValue GuessPipelineBranch()
