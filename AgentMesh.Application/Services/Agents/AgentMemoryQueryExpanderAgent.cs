@@ -1,51 +1,38 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
-using AgentMesh.Application.Models.AgentMemoryQueryExpander;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.Agents;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Agents
 {
     public sealed class AgentMemoryQueryExpanderAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<AgentMemoryQueryExpanderAgent> logger) : AgentBase<AgentMemoryQueryExpanderAgent.ParsedResponse>(logger,
+        ILogger<AgentMemoryQueryExpanderAgent> logger,
+        IAgentInputSerializer agentInputSerializer) : AbstractAgent<IEnumerable<string>>(logger,
             "AgentMemoryQueryExpander", 
             openAIClientFactory, 
-            resilience)
+            resilience,
+            agentInputSerializer)
     {
         private readonly ILogger<AgentMemoryQueryExpanderAgent> _logger = logger;
 
-        public async Task<AgentMemoryQueryExpanderAgentOutput> ExecuteAsync(
-            AgentMemoryQueryExpanderAgentInput input,
-            CancellationToken cancellationToken = default)
+        protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            var userPayload = new
-            {
-                memoryTopics = input.MemoryTopics.Select(m => m.Memory)
-            };
-
-            var inputMessages = new List<AgentMessage>
-            {
-                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
-            };
-
-            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
-
-            return new AgentMemoryQueryExpanderAgentOutput
-            {
-                SearchQueries = result.Result.SearchQueries,
-                TokenCount = result.TotalTokenCount,
-                InputTokenCount = result.InputTokenCount,
-                OutputTokenCount = result.OutputTokenCount
-            };
+            return [
+                new AgentInputParameterConfiguration
+                {
+                    ParameterName = EWParameterNames.MissingValues,
+                    ParameterTags = []
+                }
+                ];
         }
 
-        protected override ParsedResponse ParseStructuredResponse(string rawResponseText)
+        protected override IEnumerable<string> ParseStructuredResponse(string rawResponseText)
         {
             try
             {
@@ -57,9 +44,7 @@ namespace AgentMesh.Application.Services.Agents
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                responseDTO.SearchQueries ??= [];
-
-                return responseDTO;
+                return responseDTO.SearchQueries;
             }
             catch (JsonException ex)
             {

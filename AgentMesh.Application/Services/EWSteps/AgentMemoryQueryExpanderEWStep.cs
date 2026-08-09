@@ -1,5 +1,4 @@
 ﻿using AgentMesh.Application.Models.AgentMemory;
-using AgentMesh.Application.Models.AgentMemoryQueryExpander;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Models.Workflows;
@@ -24,14 +23,9 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var agentInput = new AgentMemoryQueryExpanderAgentInput
-            {
-                MemoryTopics = [.. missingValuesParameter.ParameterValue!.Select(mv => new AgentMemoryItem { Memory = mv })]
-            };
+            var agentOutput = await agentMemoryQueryExpanderAgent.ExecuteAsync([missingValuesParameter], cancellationToken);
 
-            var agentOutput = await agentMemoryQueryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
-
-            var pastMemories = agentOutput.SearchQueries.Select(q => new AgentMemoryItem { Memory = q }).ToList();
+            var pastMemories = agentOutput.Result.Select(q => new AgentMemoryItem { Memory = q }).ToList();
 
             pastMemoriesQueryParameter.ParameterValue = pastMemories;
 
