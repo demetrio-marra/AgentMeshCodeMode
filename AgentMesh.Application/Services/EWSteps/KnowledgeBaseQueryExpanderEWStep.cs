@@ -27,23 +27,16 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly KnowledgeBaseQueryExpanderAgent knowledgeBaseQueryExpanderAgent = knowledgeBaseQueryExpanderAgent;
-        private readonly UserIntentParameter userIntentParameter = userIntentParameter;
-        private readonly IntentCategoryParameter intentCategoryParameter = intentCategoryParameter;
-        private readonly UserRequestedActionsParameter userRequestedActionsParameter = userRequestedActionsParameter;
-        private readonly UserProvidedDataParameter userProvidedDataParameter = userProvidedDataParameter;
-        private readonly DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter = domainsKnowledgeBaseQueryParameter;
-
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var intentCategory = this.intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other;
+            var intentCategory = intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other;
 
             var sr = new StructuredUserRequest
             {
-                Intent = this.userIntentParameter.ParameterValue ?? string.Empty,
+                Intent = userIntentParameter.ParameterValue ?? string.Empty,
                 IntentCategory = intentCategory,
-                UserRequestedActions = this.userRequestedActionsParameter.ParameterValue ?? [],
-                UserProvidedData = this.userProvidedDataParameter.ParameterValue ?? []
+                UserRequestedActions = userRequestedActionsParameter.ParameterValue ?? [],
+                UserProvidedData = userProvidedDataParameter.ParameterValue ?? []
             };
 
             var agentInput = new KnowledgeBaseQueryExpanderAgentInput
@@ -53,7 +46,7 @@ namespace AgentMesh.Application.Services.EWSteps
                 DocumentationQueriesGenerationReference = LoadDocumentationQueriesGenerationReference()
             };
 
-            var agentOutput = await this.knowledgeBaseQueryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await knowledgeBaseQueryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
 
             var searchQueries = agentOutput.SearchQueries.ToList();
             if (intentCategory != UserIntentCategory.Documentation)
@@ -63,7 +56,7 @@ namespace AgentMesh.Application.Services.EWSteps
                     .ToList();
             }
 
-            this.domainsKnowledgeBaseQueryParameter.ParameterValue = searchQueries;
+            domainsKnowledgeBaseQueryParameter.ParameterValue = searchQueries;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

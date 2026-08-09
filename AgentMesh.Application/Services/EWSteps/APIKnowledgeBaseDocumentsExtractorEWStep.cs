@@ -21,13 +21,9 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly KnowledgeBaseExecutor knowledgeBaseExecutor = knowledgeBaseExecutor;
-        private readonly APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter = apisKnowledgeBaseQueryResultsParameter;
-        private readonly KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter = knowledgeBaseAPIDocumentsContentParameter;
-
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var results = this.apisKnowledgeBaseQueryResultsParameter.ParameterValue ?? [];
+            var results = apisKnowledgeBaseQueryResultsParameter.ParameterValue ?? [];
             var filesToExtract = results
                 .Select(r => r.File?.Trim())
                 .Where(file => !string.IsNullOrWhiteSpace(file))
@@ -35,7 +31,7 @@ namespace AgentMesh.Application.Services.EWSteps
                 .Cast<string>()
                 .ToList();
 
-            var fetchedFilesContent = await this.knowledgeBaseExecutor.GetDocsAsync(new KnowledgeBaseGetDocsInput
+            var fetchedFilesContent = await knowledgeBaseExecutor.GetDocsAsync(new KnowledgeBaseGetDocsInput
             {
                 FilePaths = filesToExtract
             }, cancellationToken);
@@ -54,7 +50,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var documents = documentsByFile.Values.ToList();
 
-            this.knowledgeBaseAPIDocumentsContentParameter.ParameterValue = documents;
+            knowledgeBaseAPIDocumentsContentParameter.ParameterValue = documents;
 
             return new EWStepResultRecord(null, null);
         }

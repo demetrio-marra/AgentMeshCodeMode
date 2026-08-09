@@ -22,22 +22,18 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly AgentMemoryQueryExpanderAgent agentMemoryQueryExpanderAgent = agentMemoryQueryExpanderAgent;
-        private readonly MissingValuesParameter missingValuesParameter = missingValuesParameter;
-        private readonly PastMemoriesQueryParameter pastMemoriesQueryParameter = pastMemoriesQueryParameter;
-
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var agentInput = new AgentMemoryQueryExpanderAgentInput
             {
-                MemoryTopics = [.. this.missingValuesParameter.ParameterValue!.Select(mv => new AgentMemoryItem { Memory = mv })]
+                MemoryTopics = [.. missingValuesParameter.ParameterValue!.Select(mv => new AgentMemoryItem { Memory = mv })]
             };
 
-            var agentOutput = await this.agentMemoryQueryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await agentMemoryQueryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
 
             var pastMemories = agentOutput.SearchQueries.Select(q => new AgentMemoryItem { Memory = q }).ToList();
 
-            this.pastMemoriesQueryParameter.ParameterValue = pastMemories;
+            pastMemoriesQueryParameter.ParameterValue = pastMemories;
 
             var ret = new EWStepResultRecord
             {

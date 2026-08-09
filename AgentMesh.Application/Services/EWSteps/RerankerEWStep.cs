@@ -22,13 +22,9 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly RerankerAgent rerankerAgent = rerankerAgent;
-        private readonly UserIntentParameter userIntentParameter = userIntentParameter;
-        private readonly KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter = knowledgeBaseQueryResultsParameter;
-
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var candidates = (this.knowledgeBaseQueryResultsParameter.ParameterValue ?? []).ToList();
+            var candidates = (knowledgeBaseQueryResultsParameter.ParameterValue ?? []).ToList();
             if (candidates.Count == 0)
             {
                 return new EWStepResultRecord(null, null);
@@ -36,7 +32,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var sr = new StructuredUserRequest
             {
-                Intent = this.userIntentParameter.ParameterValue ?? string.Empty
+                Intent = userIntentParameter.ParameterValue ?? string.Empty
             };
 
             var agentInput = new RerankerAgentInput
@@ -45,9 +41,9 @@ namespace AgentMesh.Application.Services.EWSteps
                 QueryResults = candidates
             };
 
-            var agentOutput = await this.rerankerAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await rerankerAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            this.knowledgeBaseQueryResultsParameter.ParameterValue = agentOutput.QueryResults;
+            knowledgeBaseQueryResultsParameter.ParameterValue = agentOutput.QueryResults;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

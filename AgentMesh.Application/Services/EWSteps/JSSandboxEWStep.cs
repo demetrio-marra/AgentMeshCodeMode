@@ -24,33 +24,26 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly JSSandboxExecutor jsSandboxExecutor = jsSandboxExecutor;
-        private readonly GeneratedCodeParameter generatedCodeParameter = generatedCodeParameter;
-        private readonly SandboxResultParameter sandboxResultParameter = sandboxResultParameter;
-        private readonly SandboxExecutionIdParameter sandboxExecutionIdParameter = sandboxExecutionIdParameter;
-        private readonly CodeExecutionResultTypeParameter codeExecutionResultTypeParameter = codeExecutionResultTypeParameter;
-        private readonly ExecutionErrorParameter executionErrorParameter = executionErrorParameter;
-
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var code = this.generatedCodeParameter.ParameterValue ?? string.Empty;
+            var code = generatedCodeParameter.ParameterValue ?? string.Empty;
 
             try
             {
-                var executionOutput = await this.jsSandboxExecutor.ExecuteAsync(new CodeSandboxInput
+                var executionOutput = await jsSandboxExecutor.ExecuteAsync(new CodeSandboxInput
                 {
                     Code = code
                 });
 
-                this.sandboxResultParameter.ParameterValue = executionOutput.Result;
-                this.sandboxExecutionIdParameter.ParameterValue = executionOutput.ExecutionId;
-                this.codeExecutionResultTypeParameter.ParameterValue = SandboxResultType.Success;
-                this.executionErrorParameter.ParameterValue = false;
+                sandboxResultParameter.ParameterValue = executionOutput.Result;
+                sandboxExecutionIdParameter.ParameterValue = executionOutput.ExecutionId;
+                codeExecutionResultTypeParameter.ParameterValue = SandboxResultType.Success;
+                executionErrorParameter.ParameterValue = false;
             }
             catch (CodeSandboxCallException ex)
             {
-                this.sandboxResultParameter.ParameterValue = ex.Message;
-                this.sandboxExecutionIdParameter.ParameterValue = string.Empty;
+                sandboxResultParameter.ParameterValue = ex.Message;
+                sandboxExecutionIdParameter.ParameterValue = string.Empty;
 
                 var errorType = ex.ErrorType switch
                 {
@@ -59,15 +52,15 @@ namespace AgentMesh.Application.Services.EWSteps
                     _ => SandboxResultType.ApplicationError
                 };
 
-                this.codeExecutionResultTypeParameter.ParameterValue = errorType;
-                this.executionErrorParameter.ParameterValue = true;
+                codeExecutionResultTypeParameter.ParameterValue = errorType;
+                executionErrorParameter.ParameterValue = true;
             }
             catch (Exception ex)
             {
-                this.sandboxResultParameter.ParameterValue = ex.Message;
-                this.sandboxExecutionIdParameter.ParameterValue = string.Empty;
-                this.codeExecutionResultTypeParameter.ParameterValue = SandboxResultType.ApplicationError;
-                this.executionErrorParameter.ParameterValue = true;
+                sandboxResultParameter.ParameterValue = ex.Message;
+                sandboxExecutionIdParameter.ParameterValue = string.Empty;
+                codeExecutionResultTypeParameter.ParameterValue = SandboxResultType.ApplicationError;
+                executionErrorParameter.ParameterValue = true;
             }
 
             return new EWStepResultRecord(null, null);

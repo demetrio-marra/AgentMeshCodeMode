@@ -41,34 +41,12 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => true;
 
-        private readonly PersonalAssistantAgent personalAssistantAgent = personalAssistantAgent;
-        private readonly UserIntentParameter userIntentParameter = userIntentParameter;
-        private readonly IntentCategoryParameter intentCategoryParameter = intentCategoryParameter;
-        private readonly ConversationTopicParameter conversationTopicParameter = conversationTopicParameter;
-        private readonly UserPreferencesParameter userPreferencesParameter = userPreferencesParameter;
-        private readonly UserProvidedDataParameter userProvidedDataParameter = userProvidedDataParameter;
-        private readonly UserRequestedActionsParameter userRequestedActionsParameter = userRequestedActionsParameter;
-        private readonly LanguageOfTheUserParameter languageOfTheUserParameter = languageOfTheUserParameter;
-        private readonly PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter = pastMemoriesQueryResultsParameter;
-        private readonly FunctionalAnalystRejectedParameter functionalAnalystRejectedParameter = functionalAnalystRejectedParameter;
-        private readonly FunctionalAnalystRejectReasonsParameter functionalAnalystRejectReasonsParameter = functionalAnalystRejectReasonsParameter;
-        private readonly TechnicalAnalystRejectedParameter technicalAnalystRejectedParameter = technicalAnalystRejectedParameter;
-        private readonly TechnicalAnalystRejectReasonsParameter technicalAnalystRejectReasonsParameter = technicalAnalystRejectReasonsParameter;
-        private readonly CodeExecutionResultTypeParameter codeExecutionResultTypeParameter = codeExecutionResultTypeParameter;
-        private readonly SandboxResultParameter sandboxResultParameter = sandboxResultParameter;
-        private readonly DomainExpertOutputParameter domainExpertOutputParameter = domainExpertOutputParameter;
-        private readonly DocumentationContentParameter documentationContentParameter = documentationContentParameter;
-        private readonly PersonalAssistantOpeningSentenceParameter personalAssistantOpeningSentenceParameter = personalAssistantOpeningSentenceParameter;
-        private readonly PersonalAssistantClosingSentenceParameter personalAssistantClosingSentenceParameter = personalAssistantClosingSentenceParameter;
-        private readonly PersonalAssistantConvenienceErrorSentenceParameter personalAssistantConvenienceErrorSentenceParameter = personalAssistantConvenienceErrorSentenceParameter;
-        private readonly FinalAnswerParameter finalAnswerParameter = finalAnswerParameter;
-
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var intentCategory = this.intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other;
-            var faRejected = this.functionalAnalystRejectedParameter.ParameterValue ?? false;
-            var taRejected = this.technicalAnalystRejectedParameter.ParameterValue;
-            var codeExecResultType = this.codeExecutionResultTypeParameter.ParameterValue;
+            var intentCategory = intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other;
+            var faRejected = functionalAnalystRejectedParameter.ParameterValue ?? false;
+            var taRejected = technicalAnalystRejectedParameter.ParameterValue;
+            var codeExecResultType = codeExecutionResultTypeParameter.ParameterValue;
 
             string? data = null;
             var requestFailed = false;
@@ -76,7 +54,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             if (intentCategory == UserIntentCategory.Documentation)
             {
-                data = this.documentationContentParameter.ParameterValue;
+                data = documentationContentParameter.ParameterValue;
             }
             else if (intentCategory == UserIntentCategory.TaskExecution)
             {
@@ -85,7 +63,7 @@ namespace AgentMesh.Application.Services.EWSteps
                     requestFailed = true;
                     requestFailureReason = $"""
                         The request made by the user was rejected. The reason for rejection is as follows:
-                        {this.functionalAnalystRejectReasonsParameter.ParameterValue}
+                        {functionalAnalystRejectReasonsParameter.ParameterValue}
                         """;
                 }
                 else if (taRejected)
@@ -93,19 +71,19 @@ namespace AgentMesh.Application.Services.EWSteps
                     requestFailed = true;
                     requestFailureReason = $"""
                         The request made by the user was rejected. The reason for rejection is as follows:
-                        {this.technicalAnalystRejectReasonsParameter.ParameterValue}
+                        {technicalAnalystRejectReasonsParameter.ParameterValue}
                         """;
                 }
                 else if (codeExecResultType != SandboxResultType.Success)
                 {
                     requestFailed = true;
-                    requestFailureReason = this.sandboxResultParameter.ParameterValue;
+                    requestFailureReason = sandboxResultParameter.ParameterValue;
                 }
                 else
                 {
-                    data = this.sandboxResultParameter.ParameterValue;
+                    data = sandboxResultParameter.ParameterValue;
 
-                    var domainExpertOutput = this.domainExpertOutputParameter.ParameterValue;
+                    var domainExpertOutput = domainExpertOutputParameter.ParameterValue;
                     if (!string.IsNullOrEmpty(domainExpertOutput))
                     {
                         data += $"""
@@ -121,20 +99,20 @@ namespace AgentMesh.Application.Services.EWSteps
                 Data = data,
                 RequestFailed = requestFailed,
                 RequestFailureReason = requestFailureReason,
-                LanguageOfTheUser = this.languageOfTheUserParameter.ParameterValue,
-                CanonicalizedIntent = this.userIntentParameter.ParameterValue ?? string.Empty,
-                ConversationTopic = this.conversationTopicParameter.ParameterValue ?? string.Empty,
-                UserPreferences = this.userPreferencesParameter.ParameterValue ?? [],
-                UserProvidedData = this.userProvidedDataParameter.ParameterValue ?? [],
-                UserRequestedActions = this.userRequestedActionsParameter.ParameterValue ?? [],
-                Memories = (this.pastMemoriesQueryResultsParameter.ParameterValue ?? []).Select(m => m.Memory)
+                LanguageOfTheUser = languageOfTheUserParameter.ParameterValue,
+                CanonicalizedIntent = userIntentParameter.ParameterValue ?? string.Empty,
+                ConversationTopic = conversationTopicParameter.ParameterValue ?? string.Empty,
+                UserPreferences = userPreferencesParameter.ParameterValue ?? [],
+                UserProvidedData = userProvidedDataParameter.ParameterValue ?? [],
+                UserRequestedActions = userRequestedActionsParameter.ParameterValue ?? [],
+                Memories = (pastMemoriesQueryResultsParameter.ParameterValue ?? []).Select(m => m.Memory)
             };
 
-            var agentOutput = await this.personalAssistantAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await personalAssistantAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            this.personalAssistantOpeningSentenceParameter.ParameterValue = agentOutput.OpeningSentence;
-            this.personalAssistantClosingSentenceParameter.ParameterValue = agentOutput.ClosingSentence;
-            this.personalAssistantConvenienceErrorSentenceParameter.ParameterValue = agentOutput.ConvenienceErrorSentence;
+            personalAssistantOpeningSentenceParameter.ParameterValue = agentOutput.OpeningSentence;
+            personalAssistantClosingSentenceParameter.ParameterValue = agentOutput.ClosingSentence;
+            personalAssistantConvenienceErrorSentenceParameter.ParameterValue = agentOutput.ConvenienceErrorSentence;
 
             string? finalAnswer;
             if (requestFailed)
@@ -148,7 +126,7 @@ namespace AgentMesh.Application.Services.EWSteps
                     .Where(s => !string.IsNullOrWhiteSpace(s)));
             }
 
-            this.finalAnswerParameter.ParameterValue = finalAnswer;
+            finalAnswerParameter.ParameterValue = finalAnswer;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

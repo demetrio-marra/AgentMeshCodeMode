@@ -28,36 +28,24 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly RequestAnalyzerAgent requestAnalyzerAgent = requestAnalyzerAgent;
-        private readonly UserLastRequestParameter userLastRequestParameter = userLastRequestParameter;
-        private readonly InitialContextMessagesParameter initialContextMessagesParameter = initialContextMessagesParameter;
-        private readonly UserIntentParameter userIntentParameter = userIntentParameter;
-        private readonly IntentCategoryParameter intentCategoryParameter = intentCategoryParameter;
-        private readonly ConversationTopicParameter conversationTopicParameter = conversationTopicParameter;
-        private readonly UserRequestedActionsParameter userRequestedActionsParameter = userRequestedActionsParameter;
-        private readonly UserProvidedDataParameter userProvidedDataParameter = userProvidedDataParameter;
-        private readonly UserPreferencesParameter userPreferencesParameter = userPreferencesParameter;
-        private readonly MissingValuesParameter missingValuesParameter = missingValuesParameter;
-        private readonly LanguageOfTheUserParameter languageOfTheUserParameter = languageOfTheUserParameter;
-
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var agentInput = new RequestAnalyzerAgentInput
             {
-                UserLastRequest = this.userLastRequestParameter.ParameterValue ?? string.Empty,
-                ContextMessages = [.. (this.initialContextMessagesParameter.ParameterValue ?? [])]
+                UserLastRequest = userLastRequestParameter.ParameterValue ?? string.Empty,
+                ContextMessages = [.. (initialContextMessagesParameter.ParameterValue ?? [])]
             };
 
-            var agentOutput = await this.requestAnalyzerAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await requestAnalyzerAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            this.userIntentParameter.ParameterValue = agentOutput.Intent;
-            this.intentCategoryParameter.ParameterValue = agentOutput.IntentCategory;
-            this.conversationTopicParameter.ParameterValue = agentOutput.ConversationTopic;
-            this.userRequestedActionsParameter.ParameterValue = agentOutput.UserRequestedActions;
-            this.userProvidedDataParameter.ParameterValue = agentOutput.UserProvidedData;
-            this.userPreferencesParameter.ParameterValue = agentOutput.UserPreferences;
-            this.missingValuesParameter.ParameterValue = agentOutput.MissingValues;
-            this.languageOfTheUserParameter.ParameterValue = agentOutput.LanguageOfTheUser;
+            userIntentParameter.ParameterValue = agentOutput.Intent;
+            intentCategoryParameter.ParameterValue = agentOutput.IntentCategory;
+            conversationTopicParameter.ParameterValue = agentOutput.ConversationTopic;
+            userRequestedActionsParameter.ParameterValue = agentOutput.UserRequestedActions;
+            userProvidedDataParameter.ParameterValue = agentOutput.UserProvidedData;
+            userPreferencesParameter.ParameterValue = agentOutput.UserPreferences;
+            missingValuesParameter.ParameterValue = agentOutput.MissingValues;
+            languageOfTheUserParameter.ParameterValue = agentOutput.LanguageOfTheUser;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

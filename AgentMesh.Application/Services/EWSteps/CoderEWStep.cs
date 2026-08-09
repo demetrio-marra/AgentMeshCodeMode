@@ -25,16 +25,10 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsPipelineLast => false;
 
-        private readonly CoderAgent coderAgent = coderAgent;
-        private readonly BusinessRequirementsParameter businessRequirementsParameter = businessRequirementsParameter;
-        private readonly TechnicalSpecificationParameter technicalSpecificationParameter = technicalSpecificationParameter;
-        private readonly SelectedAPIsFileLocationsParameter selectedAPIsFileLocationsParameter = selectedAPIsFileLocationsParameter;
-        private readonly KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter = knowledgeBaseAPIDocumentsContentParameter;
-        private readonly GeneratedCodeParameter generatedCodeParameter = generatedCodeParameter;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var docsToPass = (this.knowledgeBaseAPIDocumentsContentParameter.ParameterValue ?? []).Select(doc => new KnowledgeBaseGetDocsOutputItem
+            var docsToPass = (knowledgeBaseAPIDocumentsContentParameter.ParameterValue ?? []).Select(doc => new KnowledgeBaseGetDocsOutputItem
             {
                 File = doc.File,
                 Content = doc.Content
@@ -42,15 +36,15 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var agentInput = new CoderAgentInput
             {
-                BusinessRequirements = this.businessRequirementsParameter.ParameterValue ?? "(No business requirements)",
-                TechnicalSpecification = this.technicalSpecificationParameter.ParameterValue ?? "(No technical specification)",
-                SelectedAPIsFileLocations = this.selectedAPIsFileLocationsParameter.ParameterValue ?? [],
+                BusinessRequirements = businessRequirementsParameter.ParameterValue ?? "(No business requirements)",
+                TechnicalSpecification = technicalSpecificationParameter.ParameterValue ?? "(No technical specification)",
+                SelectedAPIsFileLocations = selectedAPIsFileLocationsParameter.ParameterValue ?? [],
                 KnowledgeBaseAPIDocumentsContent = docsToPass
             };
 
-            var agentOutput = await this.coderAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await coderAgent.ExecuteAsync(agentInput, cancellationToken);
 
-            this.generatedCodeParameter.ParameterValue = agentOutput.CodeToRun;
+            generatedCodeParameter.ParameterValue = agentOutput.CodeToRun;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }
