@@ -10,6 +10,7 @@ using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.KnowledgeBase;
+using AgentMesh.Application.Models.RequestAnalysis;
 
 namespace AgentMesh.Application.Services.Agents
 {

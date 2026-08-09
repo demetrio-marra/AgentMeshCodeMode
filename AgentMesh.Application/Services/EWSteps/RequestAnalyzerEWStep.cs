@@ -1,4 +1,3 @@
-using AgentMesh.Application.Models.RequestAnalysis;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Models.Workflows;
@@ -31,12 +30,6 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var agentInput = new RequestAnalyzerAgentInput
-            {
-                UserLastRequest = userLastRequestParameter.ParameterValue ?? string.Empty,
-                ContextMessages = [.. (initialContextMessagesParameter.ParameterValue ?? [])]
-            };
-
             var agentOutput = await requestAnalyzerAgent.ExecuteAsync([userLastRequestParameter, initialContextMessagesParameter], cancellationToken);
 
             userIntentParameter.ParameterValue = agentOutput.Result.Intent;

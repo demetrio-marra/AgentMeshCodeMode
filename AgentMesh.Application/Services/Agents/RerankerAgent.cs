@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.KnowledgeBase;
+using AgentMesh.Application.Models.RequestAnalysis;
 
 namespace AgentMesh.Application.Services.Agents
 {
@@ -116,7 +117,7 @@ namespace AgentMesh.Application.Services.Agents
         private class UserPayload
         {
             [JsonPropertyName("structuredUserRequest")]
-            public required AgentMesh.Models.RequestAnalysis.StructuredUserRequest StructuredUserRequest { get; set; }
+            public required StructuredUserRequest StructuredUserRequest { get; set; }
 
             [JsonPropertyName("candidates")]
             public IEnumerable<CandidatePayload> Candidates { get; set; } = [];

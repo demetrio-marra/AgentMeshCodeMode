@@ -1,4 +1,5 @@
 using AgentMesh.Application.Models.KnowledgeBaseQueryExpander;
+using AgentMesh.Application.Models.RequestAnalysis;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Models.RequestAnalysis;

@@ -1,4 +1,4 @@
-using AgentMesh.Models.RequestAnalysis;
+using AgentMesh.Application.Models.RequestAnalysis;
 
 namespace AgentMesh.Application.Models.KnowledgeBaseQueryExpander
 {
@@ -15,14 +15,5 @@ namespace AgentMesh.Application.Models.KnowledgeBaseQueryExpander
         /// fixed md file documenting the query types and their expected structure, which can be used as a reference for generating queries in a consistent format.
         /// </summary>
         public string? DocumentationQueriesGenerationReference { get; set; }
-
-        public Dictionary<string, string> ToDictionary()
-        {
-            var dictionary = StructuredUserRequest.ToDictionary();
-            dictionary.Add("Generate hyde queries", GenerateHydeQueries.ToString());
-            dictionary.Add("Documentation queries generation reference", DocumentationQueriesGenerationReference ?? string.Empty);
-
-            return dictionary;
-        }
     }
 }

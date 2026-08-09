@@ -1,6 +1,6 @@
-using AgentMesh.Utils;
+using AgentMesh.Models.RequestAnalysis;
 
-namespace AgentMesh.Models.RequestAnalysis
+namespace AgentMesh.Application.Models.RequestAnalysis
 {
     public class StructuredUserRequest
     {
@@ -46,20 +46,5 @@ namespace AgentMesh.Models.RequestAnalysis
         /// The natural language or locale of the user, indicating the language in which the user communicated their request.
         /// </summary>
         public string LanguageOfTheUser { get; set; } = string.Empty;
-
-        public Dictionary<string, string> ToDictionary()
-        {
-            return new Dictionary<string, string>
-            {
-                { $"User request - Intent", Intent },
-                { $"User request - Intent category", IntentCategory.ToString() },
-                { $"User request - Conversation topic", ConversationTopic ?? string.Empty },
-                { $"User request - User requested actions", UserRequestedActions.Any() ? ListsFormatter.ToBulletList(UserRequestedActions) : "(No user requested actions)" },
-                { $"User request - User provided data", UserProvidedData.Any() ? ListsFormatter.ToBulletList(UserProvidedData) : "(No user provided data)" },
-                { $"User request - User preferences", UserPreferences.Any() ? ListsFormatter.ToBulletList(UserPreferences) : "(No user preferences)" },
-                { $"User request - Missing values", MissingValues.Any() ? ListsFormatter.ToBulletList(MissingValues) : "(No missing values)" },
-                { $"User request - Language of the user", LanguageOfTheUser }
-            };
-        }
     }
 }
