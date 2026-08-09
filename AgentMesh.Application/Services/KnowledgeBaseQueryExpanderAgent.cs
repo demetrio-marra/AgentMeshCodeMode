@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
@@ -12,10 +11,13 @@ using AgentMesh.Application.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Services
 {
-    public class KnowledgeBaseQueryExpanderAgent(
+    public sealed class KnowledgeBaseQueryExpanderAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<KnowledgeBaseQueryExpanderAgent> logger) : AgentBase<KnowledgeBaseQueryExpanderAgent.ParsedResponse>(logger, KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, openAIClientFactory, resilience)
+        ILogger<KnowledgeBaseQueryExpanderAgent> logger) : AgentBase<KnowledgeBaseQueryExpanderAgent.ParsedResponse>(logger, 
+            "KnowledgeBaseQueryExpander",
+            openAIClientFactory,
+            resilience)
     {
         private readonly ILogger<KnowledgeBaseQueryExpanderAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];

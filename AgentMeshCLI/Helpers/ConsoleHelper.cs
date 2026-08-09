@@ -12,9 +12,9 @@ namespace AgentMesh.Helpers
             return keyInfo.Key != ConsoleKey.A;
         }
 
-        public static void PrintAgentConfiguration(string friendlyName, string agentName, dynamic configuration)
+        public static void PrintAgentConfiguration(string agentName, string LLM, double temperature)
         {
-            Console.WriteLine($"{friendlyName.PadLeft(30, ' ')}     LLM: {configuration.LLM.PadLeft(10, ' ')}    Temperature: {configuration.ModelTemperature.ToString().PadLeft(5, ' ')}");
+            Console.WriteLine($"{agentName,30}     LLM: {LLM,10}    Temperature: {temperature,5}");
         }
 
         public static void WriteWithColor(string text, ConsoleColor color)

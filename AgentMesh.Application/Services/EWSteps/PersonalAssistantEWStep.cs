@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.CodeSandbox;
 using AgentMesh.Application.Models.PersonalAssistant;
 using AgentMesh.Application.Models.Workflows.Parameters;
@@ -35,7 +34,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsAgentic => true;
 
-        public string? AgentName => PersonalAssistantAgentConfiguration.AgentName;
+        public string? AgentName => "PersonalAssistant";
 
         public bool IsPipelineFirst => false;
 

@@ -2,7 +2,6 @@ using AgentMesh.Application.Models.FunctionalAnalyst;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
-using AgentMesh.Application.Configuration;
 using AgentMesh.Utils;
 using System.Text.Json;
 
@@ -25,7 +24,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsAgentic => true;
 
-        public string? AgentName => FunctionalAnalystAgentConfiguration.AgentName;
+        public string? AgentName => "FunctionalAnalyst";
 
         public bool IsPipelineFirst => false;
 

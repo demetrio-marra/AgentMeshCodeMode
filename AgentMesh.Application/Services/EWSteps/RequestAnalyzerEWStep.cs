@@ -22,7 +22,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsAgentic => true;
 
-        public string? AgentName => RequestAnalyzerAgentConfiguration.AgentName;
+        public string? AgentName => "RequestAnalyzer";
 
         public bool IsPipelineFirst => true;
 

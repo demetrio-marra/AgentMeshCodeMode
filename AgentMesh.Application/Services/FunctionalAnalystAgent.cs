@@ -9,10 +9,13 @@ using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Application.Services
 {
-    public class FunctionalAnalystAgent(
+    public sealed class FunctionalAnalystAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<FunctionalAnalystAgent> logger) : AgentBase<FunctionalAnalystAgent.ParsedResponse>(logger, AgentMesh.Application.Configuration.FunctionalAnalystAgentConfiguration.AgentName, openAIClientFactory, resilience)
+        ILogger<FunctionalAnalystAgent> logger) : AgentBase<FunctionalAnalystAgent.ParsedResponse>(logger, 
+            "FunctionalAnalyst", 
+            openAIClientFactory, 
+            resilience)
     {
         private readonly ILogger<FunctionalAnalystAgent> _logger = logger;
 

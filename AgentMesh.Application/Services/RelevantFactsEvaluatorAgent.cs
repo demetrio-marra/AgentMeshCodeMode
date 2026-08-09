@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
@@ -10,10 +9,13 @@ using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Application.Services
 {
-    public class RelevantFactsEvaluatorAgent(
+    public sealed class RelevantFactsEvaluatorAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<RelevantFactsEvaluatorAgent> logger) : AgentBase<List<string>>(logger, RelevantFactsEvaluatorAgentConfiguration.AgentName, openAIClientFactory, resilience)
+        ILogger<RelevantFactsEvaluatorAgent> logger) : AgentBase<List<string>>(logger, 
+            "RelevantFactsEvaluator",
+            openAIClientFactory, 
+            resilience)
     {
         private readonly ILogger<RelevantFactsEvaluatorAgent> _logger = logger;
 

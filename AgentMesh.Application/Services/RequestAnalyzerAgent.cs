@@ -10,12 +10,14 @@ using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class RequestAnalyzerAgent(
+    public sealed class RequestAnalyzerAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<RequestAnalyzerAgent> logger) : AgentBase<RequestAnalyzerAgent.ParsedResponse>(logger, RequestAnalyzerAgentConfiguration.AgentName, openAIClientFactory, resilience)
+        ILogger<RequestAnalyzerAgent> logger) : AgentBase<RequestAnalyzerAgent.ParsedResponse>(logger, 
+            "RequestAnalyzer",
+            openAIClientFactory, 
+            resilience)
     {
-        public const string AgentName = RequestAnalyzerAgentConfiguration.AgentName;
         private readonly ILogger<RequestAnalyzerAgent> _logger = logger;
 
         public async Task<RequestAnalyzerAgentOutput> ExecuteAsync(

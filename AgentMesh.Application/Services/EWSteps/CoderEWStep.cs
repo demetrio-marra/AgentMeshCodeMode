@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.Coder;
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Workflows.Parameters;
@@ -19,7 +18,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsAgentic => true;
 
-        public string? AgentName => CoderAgentConfiguration.AgentName;
+        public string? AgentName => "Coder";
 
         public bool IsPipelineFirst => false;
 

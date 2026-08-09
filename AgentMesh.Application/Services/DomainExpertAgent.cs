@@ -9,10 +9,13 @@ using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Application.Services
 {
-    public class DomainExpertAgent(
+    public sealed class DomainExpertAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<DomainExpertAgent> logger) : AgentBase<DomainExpertAgent.ParsedResponse>(logger, AgentMesh.Application.Configuration.DomainExpertAgentConfiguration.AgentName, openAIClientFactory, resilience)
+        ILogger<DomainExpertAgent> logger) : AgentBase<DomainExpertAgent.ParsedResponse>(logger,
+            "DomainExpert", 
+            openAIClientFactory, 
+            resilience)
     {
         private readonly ILogger<DomainExpertAgent> _logger = logger;
 

@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.TechnicalAnalyst;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.Workflows;
@@ -27,7 +26,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsAgentic => true;
 
-        public string? AgentName => TechnicalAnalystAgentConfiguration.AgentName;
+        public string? AgentName => "TechnicalAnalyst";
 
         public bool IsPipelineFirst => false;
 

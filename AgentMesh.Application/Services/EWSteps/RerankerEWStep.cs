@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.Reranker;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.RequestAnalysis;
@@ -16,7 +15,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsAgentic => true;
 
-        public string? AgentName => RerankerAgentConfiguration.AgentName;
+        public string? AgentName => "Reranker";
 
         public bool IsPipelineFirst => false;
 

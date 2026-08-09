@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
@@ -7,14 +6,16 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgentMesh.Application.Models.ChatMessages;
-using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Application.Services
 {
-    public class AgentMemoryQueryExpanderAgent(
+    public sealed class AgentMemoryQueryExpanderAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<AgentMemoryQueryExpanderAgent> logger) : AgentBase<AgentMemoryQueryExpanderAgent.ParsedResponse>(logger, AgentMemoryQueryExpanderAgentConfiguration.AgentName, openAIClientFactory, resilience)
+        ILogger<AgentMemoryQueryExpanderAgent> logger) : AgentBase<AgentMemoryQueryExpanderAgent.ParsedResponse>(logger,
+            "AgentMemoryQueryExpander", 
+            openAIClientFactory, 
+            resilience)
     {
         private readonly ILogger<AgentMemoryQueryExpanderAgent> _logger = logger;
 

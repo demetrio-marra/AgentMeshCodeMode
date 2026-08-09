@@ -1,5 +1,4 @@
-﻿using AgentMesh.Application.Configuration;
-using AgentMesh.Application.Models.AgentMemory;
+﻿using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Application.Models.AgentMemoryQueryExpander;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.Workflows;
@@ -16,7 +15,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsAgentic => true;
 
-        public string? AgentName => AgentMemoryQueryExpanderAgentConfiguration.AgentName;
+        public string? AgentName => "AgentMemoryQueryExpander";
 
         public bool IsPipelineFirst => false;
 

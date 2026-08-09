@@ -14,29 +14,17 @@ using AgentMesh.Application.Models.CostsAnalysis;
 namespace AgentMesh.Services
 {
     internal class UserConsoleInputService(
+        IServiceProvider serviceProvider,
+        IEnumerable<AgentFlatConfigurationRecord> agentsConfigurations,
         ConversationContext conversationContext,
         IWorkflowProgressNotifier workflowProgressNotifier,
-        IServiceProvider serviceProvider,
-        FunctionalAnalystAgentConfiguration functionalAnalystConfiguration,
-        TechnicalAnalystAgentConfiguration technicalAnalystConfiguration,
-        CoderAgentConfiguration coderConfiguration,
-        DomainExpertAgentConfiguration domainExpertConfiguration,
-        PersonalAssistantAgentConfiguration personalAssistantConfiguration,
-        LLMsConfiguration llmsConfiguration,
         ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration,
-        SESJSSandboxConfiguration sESJSSandboxConfiguration,
         UserConfiguration userConfiguration,
-        DocumentationAgentConfiguration documentationAgentConfiguration,
-        RelevantFactsEvaluatorAgentConfiguration relevantFactsEvaluatorConfiguration,
         ConversationSummarizerAgent conversationSummarizerAgent,
         RelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
-        RequestAnalyzerAgentConfiguration requestAnalyzerAgentConfiguration,
         CodeModeWorkflowConfiguration workflowConfiguration,
         EmbeddingServiceConfiguration embeddingServiceConfiguration,
         AgentMemoryExecutor agentMemorySaver,
-        RequestCanonicalizationAgentConfiguration requestCanonicalizationAgentConfiguration,
-        KnowledgeBaseQueryExpanderAgentConfiguration knowledgeBaseQueryExpanderAgentConfiguration,
-        RerankerAgentConfiguration rerankerAgentConfiguration,
         SESJSSandboxConfiguration sesJSSandboxConfiguration) : BackgroundService
     {
         public async Task Run(CancellationToken cancellationToken)
@@ -94,44 +82,16 @@ namespace AgentMesh.Services
 
                 var agentInputCosts = new Dictionary<string, decimal>
                 {
-                    { FunctionalAnalystAgentConfiguration.AgentName, llmsConfiguration[functionalAnalystConfiguration.LLM].CostPerMillionInputTokens },
-                    { TechnicalAnalystAgentConfiguration.AgentName, llmsConfiguration[technicalAnalystConfiguration.LLM].CostPerMillionInputTokens },
-                    { CoderAgentConfiguration.AgentName, llmsConfiguration[coderConfiguration.LLM].CostPerMillionInputTokens },
-                    { PersonalAssistantAgentConfiguration.AgentName, llmsConfiguration[personalAssistantConfiguration.LLM].CostPerMillionInputTokens },
-                    { ConversationSummarizerAgent.AgentName, llmsConfiguration[conversationSummarizerConfiguration.LLM].CostPerMillionInputTokens },
-                    { DocumentationAgent.AgentName, llmsConfiguration[documentationAgentConfiguration.LLM].CostPerMillionInputTokens },
-                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, llmsConfiguration[relevantFactsEvaluatorConfiguration.LLM].CostPerMillionInputTokens },
-                    { RequestAnalyzerAgent.AgentName, llmsConfiguration[requestAnalyzerAgentConfiguration.LLM].CostPerMillionInputTokens },
-                    { RequestCanonicalizationAgentConfiguration.AgentName, llmsConfiguration[requestCanonicalizationAgentConfiguration.LLM].CostPerMillionInputTokens },
-                    { KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, llmsConfiguration[knowledgeBaseQueryExpanderAgentConfiguration.LLM].CostPerMillionInputTokens },
-                    { RerankerAgentConfiguration.AgentName, llmsConfiguration[rerankerAgentConfiguration.LLM].CostPerMillionInputTokens },
                     { "Embedding Service", embeddingServiceConfiguration.CostPerMillionTokens }
                 };
+                
+                agentsConfigurations.Select(a => new { a.AgentUniqueRole, a.LLMClassCostPerMillionOutputTokens })
+                    .ToList()
+                    .ForEach(a => agentInputCosts.Add(a.AgentUniqueRole, a.LLMClassCostPerMillionOutputTokens));
 
-                if (workflowConfiguration.EnableDomainExpert)
-                {
-                    agentInputCosts.Add(DomainExpertAgentConfiguration.AgentName, llmsConfiguration[domainExpertConfiguration.LLM].CostPerMillionInputTokens);
-                }
-
-                var agentOutputCosts = new Dictionary<string, decimal>
-                {
-                    { FunctionalAnalystAgentConfiguration.AgentName, llmsConfiguration[functionalAnalystConfiguration.LLM].CostPerMillionOutputTokens },
-                    { TechnicalAnalystAgentConfiguration.AgentName, llmsConfiguration[technicalAnalystConfiguration.LLM].CostPerMillionOutputTokens },
-                    { CoderAgentConfiguration.AgentName, llmsConfiguration[coderConfiguration.LLM].CostPerMillionOutputTokens },
-                    { PersonalAssistantAgentConfiguration.AgentName, llmsConfiguration[personalAssistantConfiguration.LLM].CostPerMillionOutputTokens },
-                    { ConversationSummarizerAgent.AgentName, llmsConfiguration[conversationSummarizerConfiguration.LLM].CostPerMillionOutputTokens },
-                    { DocumentationAgent.AgentName, llmsConfiguration[documentationAgentConfiguration.LLM].CostPerMillionOutputTokens },
-                    { RelevantFactsEvaluatorAgentConfiguration.AgentName, llmsConfiguration[relevantFactsEvaluatorConfiguration.LLM].CostPerMillionOutputTokens },
-                    { RequestAnalyzerAgent.AgentName, llmsConfiguration[requestAnalyzerAgentConfiguration.LLM].CostPerMillionOutputTokens },
-                    { RequestCanonicalizationAgentConfiguration.AgentName, llmsConfiguration[requestCanonicalizationAgentConfiguration.LLM].CostPerMillionOutputTokens },
-                    { KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, llmsConfiguration[knowledgeBaseQueryExpanderAgentConfiguration.LLM].CostPerMillionOutputTokens },
-                    { RerankerAgentConfiguration.AgentName, llmsConfiguration[rerankerAgentConfiguration.LLM].CostPerMillionOutputTokens }
-                };
-
-                if (workflowConfiguration.EnableDomainExpert)
-                {
-                    agentOutputCosts.Add(DomainExpertAgentConfiguration.AgentName, llmsConfiguration[domainExpertConfiguration.LLM].CostPerMillionOutputTokens);
-                }
+                var agentOutputCosts = agentsConfigurations.Select(a => new { a.AgentUniqueRole, a.LLMClassCostPerMillionOutputTokens })
+                    .ToList()
+                    .ToDictionary(a => a.AgentUniqueRole, a => a.LLMClassCostPerMillionOutputTokens);
 
                 ConsoleHelper.WriteLineWithColor($"\n\nConversation status: Count of messages {conversationContext.Conversation.Count()}. Count of tokens: {conversationContext.TokensCount}\n", ConsoleColor.Gray);
 
@@ -211,7 +171,7 @@ namespace AgentMesh.Services
                     new EWDisplayParameterRecord("RelevantUserMessages", relevantUserMessagesCount > 0 ? "<omitted for brevity>" : "(No relevant user messages)")
                 ],
                 IsAgentic: true,
-                AgentName: RelevantFactsEvaluatorAgentConfiguration.AgentName,
+                AgentName: "RelevantFactsEvaluator",
                 InputTokens: relevantMessagesResult.InputTokenCount,
                 OutputTokens: relevantMessagesResult.OutputTokenCount
             );
@@ -323,22 +283,10 @@ namespace AgentMesh.Services
         {
             Console.WriteLine("Sandbox Url: " + sesJSSandboxConfiguration.SandboxServiceURL + ", SandboxName: " + sesJSSandboxConfiguration.SandboxName + ", AgentId: " + userConfiguration.AgentId);
             Console.WriteLine("Agent configurations:");
-            ConsoleHelper.PrintAgentConfiguration("Request Analyzer", RequestAnalyzerAgent.AgentName, requestAnalyzerAgentConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Knowledge Base Query Expander", KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, knowledgeBaseQueryExpanderAgentConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Reranker", RerankerAgentConfiguration.AgentName, rerankerAgentConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Functional Analyst", FunctionalAnalystAgentConfiguration.AgentName, functionalAnalystConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Technical Analyst", TechnicalAnalystAgentConfiguration.AgentName, technicalAnalystConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Coder", CoderAgentConfiguration.AgentName, coderConfiguration);
-
-            if (workflowConfiguration.EnableDomainExpert)
+            foreach(var agentConfig in agentsConfigurations)
             {
-                ConsoleHelper.PrintAgentConfiguration("Domain Expert", DomainExpertAgentConfiguration.AgentName, domainExpertConfiguration);
+                ConsoleHelper.PrintAgentConfiguration(agentConfig.AgentUniqueRole, agentConfig.ProviderModelName, Convert.ToDouble(agentConfig.Temperature));
             }
-
-            ConsoleHelper.PrintAgentConfiguration("Personal Assistant", PersonalAssistantAgentConfiguration.AgentName, personalAssistantConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Conversation Summarizer", ConversationSummarizerAgent.AgentName, conversationSummarizerConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Documentation Manager", DocumentationAgent.AgentName, documentationAgentConfiguration);
-            ConsoleHelper.PrintAgentConfiguration("Relevant Facts Evaluator", RelevantFactsEvaluatorAgentConfiguration.AgentName, relevantFactsEvaluatorConfiguration);
             Console.WriteLine();
         }
 

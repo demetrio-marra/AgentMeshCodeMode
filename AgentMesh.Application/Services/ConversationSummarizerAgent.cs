@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace AgentMesh.Application.Services
 {
-    public class ConversationSummarizerAgent(IOpenAIClientFactory openAIClientFactory,
+    public sealed class ConversationSummarizerAgent(IOpenAIClientFactory openAIClientFactory,
                                       Resilience resilience,
                                       ILogger<ConversationSummarizerAgent> logger) : AgentBase<string>(logger, ConversationSummarizerAgentConfiguration.AgentName, openAIClientFactory, resilience)
     {

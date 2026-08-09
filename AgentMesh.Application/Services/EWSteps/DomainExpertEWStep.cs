@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.DomainExpert;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.Workflows;
@@ -25,7 +24,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsAgentic => true;
 
-        public string? AgentName => DomainExpertAgentConfiguration.AgentName;
+        public string? AgentName => "DomainExpert";
 
         public bool IsPipelineFirst => false;
 

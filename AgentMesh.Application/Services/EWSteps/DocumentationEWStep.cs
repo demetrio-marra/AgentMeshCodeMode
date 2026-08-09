@@ -1,6 +1,4 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.Documentation;
-using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.Workflows;
@@ -22,7 +20,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsAgentic => true;
 
-        public string? AgentName => DocumentationAgentConfiguration.AgentName;
+        public string? AgentName => "Documentation";
 
         public bool IsPipelineFirst => false;
 

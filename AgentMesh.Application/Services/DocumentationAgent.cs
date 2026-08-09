@@ -1,18 +1,16 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Utils;
 using AgentMesh.Application.Models.Documentation;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Application.Services
 {
-    public class DocumentationAgent(
+    public sealed class DocumentationAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<DocumentationAgent> logger) : AgentBase<string>(logger, DocumentationAgentConfiguration.AgentName, openAIClientFactory, resilience)
+        ILogger<DocumentationAgent> logger) : AgentBase<string>(logger, "Documentation", openAIClientFactory, resilience)
     {
         private readonly ILogger<DocumentationAgent> _logger = logger;
         public const string AgentName = "Documentation Agent";

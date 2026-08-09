@@ -32,8 +32,8 @@ namespace AgentMesh.Helpers
                     ProviderApiKey = providerConfiguration.ApiKey,
                     ProviderModelName = llmConfiguration.Model,
                     LLMClass = agentConfiguration.LLM,
-                    LLMClassCostPerMillionInputTokens = (double)llmConfiguration.CostPerMillionInputTokens,
-                    LLMClassCostPerMillionOutputTokens = (double)llmConfiguration.CostPerMillionOutputTokens,
+                    LLMClassCostPerMillionInputTokens = llmConfiguration.CostPerMillionInputTokens,
+                    LLMClassCostPerMillionOutputTokens = llmConfiguration.CostPerMillionOutputTokens,
                     Temperature = agentConfiguration.ModelTemperature,
                     SystemPrompt = ResolveSystemPrompt(agentConfiguration, basePath)
                 };

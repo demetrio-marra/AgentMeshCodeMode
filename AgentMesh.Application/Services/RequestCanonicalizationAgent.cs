@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
@@ -14,10 +13,13 @@ using AgentMesh.Application.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Services
 {
-    public class RequestCanonicalizationAgent(
+    public sealed class RequestCanonicalizationAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<RequestCanonicalizationAgent> logger) : AgentBase<RequestCanonicalizationAgent.ParsedResponse>(logger, RequestCanonicalizationAgentConfiguration.AgentName, openAIClientFactory, resilience)
+        ILogger<RequestCanonicalizationAgent> logger) : AgentBase<RequestCanonicalizationAgent.ParsedResponse>(logger, 
+            "RequestCanonicalization",
+            openAIClientFactory, 
+            resilience)
     {
         private readonly ILogger<RequestCanonicalizationAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];

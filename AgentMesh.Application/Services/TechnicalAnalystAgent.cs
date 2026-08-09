@@ -1,20 +1,21 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.TechnicalAnalyst;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.Workflows;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace AgentMesh.Application.Services
 {
-    public class TechnicalAnalystAgent(
+    public sealed class TechnicalAnalystAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<TechnicalAnalystAgent> logger) : AgentBase<TechnicalAnalystAgent.ParsedResponse>(logger, TechnicalAnalystAgentConfiguration.AgentName, openAIClientFactory, resilience)
+        ILogger<TechnicalAnalystAgent> logger) : AgentBase<TechnicalAnalystAgent.ParsedResponse>(logger,
+            "TechnicalAnalyst", 
+            openAIClientFactory, 
+            resilience)
     {
         private readonly ILogger<TechnicalAnalystAgent> _logger = logger;
 

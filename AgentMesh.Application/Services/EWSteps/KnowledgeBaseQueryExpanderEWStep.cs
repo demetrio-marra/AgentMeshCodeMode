@@ -1,4 +1,3 @@
-using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.KnowledgeBaseQueryExpander;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Models.RequestAnalysis;
@@ -21,7 +20,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsAgentic => true;
 
-        public string? AgentName => KnowledgeBaseQueryExpanderAgentConfiguration.AgentName;
+        public string? AgentName => "KnowledgeBaseQueryExpander";
 
         public bool IsPipelineFirst => false;
 
