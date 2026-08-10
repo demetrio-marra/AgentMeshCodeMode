@@ -41,5 +41,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public const string PersonalAssistantClosingSentence = "Personal assistant closing sentence";
         public const string PersonalAssistantConvenienceErrorSentence = "Personal assistant convenience error sentence";
         public const string FinalAnswer = "Final answer";
+        public const string QMDQueryTypesDocumentation = "QMD query types documentation";
     }
 }
