@@ -164,19 +164,11 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         }
     }
 
-    public sealed class FunctionalAnalystRejectedParameter : EWParameter<bool?>
+    public sealed class RequestRejectedReasonParameter : EWParameter<string>
     {
-        public FunctionalAnalystRejectedParameter()
+        public RequestRejectedReasonParameter()
         {
-            Name = EWParameterNames.FunctionalAnalystRejected;
-        }
-    }
-
-    public sealed class FunctionalAnalystRejectReasonsParameter : EWParameter<string>
-    {
-        public FunctionalAnalystRejectReasonsParameter()
-        {
-            Name = EWParameterNames.FunctionalAnalystRejectReasons;
+            Name = EWParameterNames.RequestRejectedReason;
         }
     }
 
@@ -185,22 +177,6 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public TechnicalSpecificationParameter()
         {
             Name = EWParameterNames.TechnicalSpecification;
-        }
-    }
-
-    public sealed class TechnicalAnalystRejectedParameter : EWParameter<bool>
-    {
-        public TechnicalAnalystRejectedParameter()
-        {
-            Name = EWParameterNames.TechnicalAnalystRejected;
-        }
-    }
-
-    public sealed class TechnicalAnalystRejectReasonsParameter : EWParameter<string>
-    {
-        public TechnicalAnalystRejectReasonsParameter()
-        {
-            Name = EWParameterNames.TechnicalAnalystRejectReasons;
         }
     }
 

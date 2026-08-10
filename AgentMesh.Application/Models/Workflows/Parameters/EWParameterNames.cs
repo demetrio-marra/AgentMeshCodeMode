@@ -20,11 +20,8 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public const string KnowledgeBaseQueryResults = "Knowledge base query results";
         public const string DomainsKnowledgeBaseDocumentsContent = "Domain knowledge base documents";
         public const string BusinessRequirements = "Business requirements";
-        public const string FunctionalAnalystRejected = "Functional analyst rejected";
-        public const string FunctionalAnalystRejectReasons = "Functional analyst reject reasons";
         public const string TechnicalSpecification = "Technical specification";
-        public const string TechnicalAnalystRejected = "Technical analyst rejected";
-        public const string TechnicalAnalystRejectReasons = "Technical analyst reject reasons";
+        public const string RequestRejectedReason = "Request rejected reason";
         public const string ShouldEngageCoder = "Should engage coder";
         public const string APISKnowledgeBaseQueryResults = "API knowledge base query results";
         public const string SelectedAPIsFileLocations = "Selected API file locations";

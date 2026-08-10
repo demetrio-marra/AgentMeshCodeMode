@@ -18,10 +18,7 @@ namespace AgentMesh.Application.Services.EWSteps
         UserRequestedActionsParameter userRequestedActionsParameter,
         LanguageOfTheUserParameter languageOfTheUserParameter,
         PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
-        FunctionalAnalystRejectedParameter functionalAnalystRejectedParameter,
-        FunctionalAnalystRejectReasonsParameter functionalAnalystRejectReasonsParameter,
-        TechnicalAnalystRejectedParameter technicalAnalystRejectedParameter,
-        TechnicalAnalystRejectReasonsParameter technicalAnalystRejectReasonsParameter,
+        RequestRejectedReasonParameter requestRejectedReasonParameter,
         CodeExecutionResultTypeParameter codeExecutionResultTypeParameter,
         SandboxResultParameter sandboxResultParameter,
         DomainExpertOutputParameter domainExpertOutputParameter,
@@ -42,8 +39,6 @@ namespace AgentMesh.Application.Services.EWSteps
         public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var intentCategory = intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other;
-            var faRejected = functionalAnalystRejectedParameter.ParameterValue ?? false;
-            var taRejected = technicalAnalystRejectedParameter.ParameterValue;
             var codeExecResultType = codeExecutionResultTypeParameter.ParameterValue;
 
             string? data = null;
@@ -56,20 +51,12 @@ namespace AgentMesh.Application.Services.EWSteps
             }
             else if (intentCategory == UserIntentCategory.TaskExecution)
             {
-                if (faRejected)
+                if (!string.IsNullOrWhiteSpace(requestRejectedReasonParameter.ParameterValue))
                 {
                     requestFailed = true;
                     requestFailureReason = $"""
                         The request made by the user was rejected. The reason for rejection is as follows:
-                        {functionalAnalystRejectReasonsParameter.ParameterValue}
-                        """;
-                }
-                else if (taRejected)
-                {
-                    requestFailed = true;
-                    requestFailureReason = $"""
-                        The request made by the user was rejected. The reason for rejection is as follows:
-                        {technicalAnalystRejectReasonsParameter.ParameterValue}
+                        {requestRejectedReasonParameter.ParameterValue}
                         """;
                 }
                 else if (codeExecResultType != SandboxResultType.Success)

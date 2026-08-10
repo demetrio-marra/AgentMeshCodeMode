@@ -19,8 +19,7 @@ namespace AgentMesh.Application.Services.EWSteps
         PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
         KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
         TechnicalSpecificationParameter technicalSpecificationParameter,
-        TechnicalAnalystRejectedParameter technicalAnalystRejectedParameter,
-        TechnicalAnalystRejectReasonsParameter technicalAnalystRejectReasonsParameter) : IEWAgenticStep
+        RequestRejectedReasonParameter requestRejectedReasonParameter) : IEWAgenticStep
     {
         public string Name => "Technical Analyst";
 
@@ -53,8 +52,13 @@ namespace AgentMesh.Application.Services.EWSteps
                 .ToList();
 
             technicalSpecificationParameter.ParameterValue = agentOutput.TechnicalSpecification;
-            technicalAnalystRejectedParameter.ParameterValue = agentOutput.RequestRejected;
-            technicalAnalystRejectReasonsParameter.ParameterValue = agentOutput.ReasonOfRejection;
+
+            if (agentOutput.RequestRejected
+               && !string.IsNullOrWhiteSpace(agentOutput.ReasonOfRejection))
+            {
+                requestRejectedReasonParameter.ParameterValue = agentOutput.ReasonOfRejection;
+            }
+
             knowledgeBaseAPIDocumentsContentParameter.ParameterValue = filteredKbDocuments;
 
             return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);

@@ -16,8 +16,7 @@ namespace AgentMesh.Application.Services.EWSteps
         PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
         DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
         BusinessRequirementsParameter businessRequirementsParameter,
-        FunctionalAnalystRejectedParameter functionalAnalystRejectedParameter,
-        FunctionalAnalystRejectReasonsParameter functionalAnalystRejectReasonsParameter) : IEWAgenticStep
+        RequestRejectedReasonParameter requestRejectedReasonParameter) : IEWAgenticStep
     {
         public string Name => "Functional Analyst";
 
@@ -41,8 +40,11 @@ namespace AgentMesh.Application.Services.EWSteps
                 ], cancellationToken);
 
             businessRequirementsParameter.ParameterValue = agentOutput.Result.BusinessRequirements;
-            functionalAnalystRejectedParameter.ParameterValue = agentOutput.Result.RequestRejected;
-            functionalAnalystRejectReasonsParameter.ParameterValue = agentOutput.Result.ReasonOfRejection;
+            if (agentOutput.Result.RequestRejected
+                && !string.IsNullOrWhiteSpace(agentOutput.Result.ReasonOfRejection))
+            {
+                requestRejectedReasonParameter.ParameterValue = agentOutput.Result.ReasonOfRejection;
+            }
 
             return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

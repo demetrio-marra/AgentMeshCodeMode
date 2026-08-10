@@ -18,7 +18,7 @@ namespace AgentMesh.Application.Services
         DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
         BusinessRequirementsParameter businessRequirementsParameter,
         TechnicalSpecificationParameter technicalSpecificationParameter,
-        TechnicalAnalystRejectedParameter technicalAnalystRejectedParameter,
+        RequestRejectedReasonParameter requestRejectedReasonParameter,
         APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
         DocumentationContentParameter documentationContentParameter,
         GeneratedCodeParameter generatedCodeParameter,
@@ -191,7 +191,7 @@ namespace AgentMesh.Application.Services
                 return [technicalAnalystEWStep];
             }
 
-            if (technicalAnalystRejectedParameter.ParameterValue == true
+            if (requestRejectedReasonParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder
                 && finalAnswerParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
             {
                 return [personalAssistantEWStep];
