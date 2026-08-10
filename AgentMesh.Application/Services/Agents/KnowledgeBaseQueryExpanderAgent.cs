@@ -23,8 +23,6 @@ namespace AgentMesh.Application.Services.Agents
             agentInputSerializer)
     {
         private readonly ILogger<KnowledgeBaseQueryExpanderAgent> _logger = logger;
-        private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];
-
 
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
