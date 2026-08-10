@@ -1,5 +1,3 @@
-using AgentMesh.Application.Models.KnowledgeBaseQueryExpander;
-using AgentMesh.Application.Models.RequestAnalysis;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Models.RequestAnalysis;
@@ -28,23 +26,6 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var intentCategory = intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other;
-
-            var sr = new StructuredUserRequest
-            {
-                Intent = userIntentParameter.ParameterValue ?? string.Empty,
-                IntentCategory = intentCategory,
-                UserRequestedActions = userRequestedActionsParameter.ParameterValue ?? [],
-                UserProvidedData = userProvidedDataParameter.ParameterValue ?? []
-            };
-
-            var agentInput = new KnowledgeBaseQueryExpanderAgentInput
-            {
-                StructuredUserRequest = sr,
-                GenerateHydeQueries = intentCategory == UserIntentCategory.Documentation,
-                DocumentationQueriesGenerationReference = qmdQueryTypesDocumentationParameter.ParameterValue
-            };
-
             var agentOutput = await knowledgeBaseQueryExpanderAgent.ExecuteAsync([
                 requestDateTimeParameter,
                 qmdQueryTypesDocumentationParameter,
@@ -55,18 +36,16 @@ namespace AgentMesh.Application.Services.EWSteps
                 ], cancellationToken);
 
             var searchQueries = agentOutput.Result.ToList();
-            if (intentCategory != UserIntentCategory.Documentation) // safety net
+            if (intentCategoryParameter.ParameterValue!.Value != UserIntentCategory.Documentation) // safety net
             {
-                searchQueries = searchQueries
-                    .Where(q => q.SearchType != AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.HypotheticalDocument)
-                    .ToList();
+                searchQueries = [.. searchQueries.Where(q => q.SearchType != AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.HypotheticalDocument)];
             }
 
-            domainsKnowledgeBaseQueryParameter.ParameterValue = searchQueries.Select(s => new Models.KnowledgeBase.KnowledgeBaseQueryInputItem
+            domainsKnowledgeBaseQueryParameter.ParameterValue = [.. searchQueries.Select(s => new Models.KnowledgeBase.KnowledgeBaseQueryInputItem
             {
                 Query = s.Query,
                 SearchType = s.SearchType
-            }).ToList();
+            })];
 
             return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }
