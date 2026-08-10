@@ -121,7 +121,6 @@ namespace AgentMesh
             services.AddSingleton<TechnicalAnalystAgent>();
             services.AddSingleton<DocumentationAgent>();
             services.AddSingleton<CoderAgent>();
-            services.AddSingleton<RequestCanonicalizationAgent>();
             services.AddSingleton<PersonalAssistantAgent>();
             services.AddSingleton<RelevantFactsEvaluatorAgent>();
             services.AddSingleton<RequestAnalyzerAgent>();
