@@ -19,27 +19,15 @@ namespace AgentMesh.Application.Services.Agents
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
             return [
-                 new()
+                new()
                 {
                     ParameterName = EWParameterNames.RequestDateTime,
                     ParameterTags = [ApplicationConstants.AgentSystemParameterTag]
                 },
                 new() {
-                    ParameterName = EWParameterNames.UserIntent,
-                    ParameterTags = [] 
-                },
-                new() {
-                    ParameterName = EWParameterNames.PastMemoriesQueryResults,
-                    ParameterTags = [] 
-                },
-                new() {
                     ParameterName = EWParameterNames.DomainsKnowledgeBaseDocumentsContent,
                     ParameterTags = [ApplicationConstants.AgentSystemParameterTag] 
-                },
-                new() {
-                    ParameterName = EWParameterNames.LanguageOfTheUser,
-                    ParameterTags = [] 
-                },
+                }
             ];
         }
 

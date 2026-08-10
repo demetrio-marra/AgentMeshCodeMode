@@ -1,72 +1,35 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
+using AgentMesh.Application.Models.Agents;
+using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Utils;
-using AgentMesh.Application.Models.DomainExpert;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Application.Services.Agents
 {
     public sealed class DomainExpertAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<DomainExpertAgent> logger) : AgentBase<DomainExpertAgent.ParsedResponse>(logger,
+        ILogger<DomainExpertAgent> logger,
+        IAgentInputSerializer agentInputSerializer) : AbstractAgent<string>(logger,
             "DomainExpert", 
             openAIClientFactory, 
-            resilience)
+            resilience,
+            agentInputSerializer)
     {
         private readonly ILogger<DomainExpertAgent> _logger = logger;
 
-        public async Task<DomainExpertAgentOutput> ExecuteAsync(
-            DomainExpertAgentInput input,
-            CancellationToken cancellationToken = default)
+        protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            var systemMessages = new List<string>
-            {
-                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}."
-            };
-
-            if (!string.IsNullOrWhiteSpace(input.LanguageOfTheUser))
-            {
-                systemMessages.Add($"User's Language: {input.LanguageOfTheUser}");
-            }
-
-            if (!string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
-            {
-                systemMessages.Add($"Knowledge Base Documents Content:\n{input.KnowledgeBaseDocumentsContent}");
-            }
-
-            var userPayload = new
-            {
-                input.Intent,
-                input.ConversationTopic,
-                input.UserRequestedActions,
-                input.UserProvidedData,
-                input.UserPreferences,
-                input.AgentMemories,
-                input.DataToComment
-            };
-
-            var inputMessages = new List<AgentMessage>
-            {
-                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
-                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
-            };
-
-            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
-
-            return new DomainExpertAgentOutput
-            {
-                DomainExpertComment = result.Result.DomainExpertComment,
-                TokenCount = result.TotalTokenCount,
-                InputTokenCount = result.InputTokenCount,
-                OutputTokenCount = result.OutputTokenCount
-            };
+            return [
+                new () { ParameterName = EWParameterNames.RequestDateTime, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = EWParameterNames.DomainsKnowledgeBaseDocumentsContent, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] }
+                ];
         }
 
-        protected override ParsedResponse ParseStructuredResponse(string rawResponseText)
+        protected override string ParseStructuredResponse(string rawResponseText)
         {
             try
             {
@@ -84,7 +47,7 @@ namespace AgentMesh.Application.Services.Agents
                     throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty domain expert comment.");
                 }
 
-                return responseDTO;
+                return responseDTO.DomainExpertComment;
             }
             catch (JsonException ex)
             {

@@ -26,11 +26,6 @@ namespace AgentMesh.Application.Services.Agents
             return [
                 new()
                 {
-                    ParameterName = EWParameterNames.MissingValues,
-                    ParameterTags = []
-                },
-                new()
-                {
                     ParameterName = EWParameterNames.RequestDateTime,
                     ParameterTags = [ApplicationConstants.AgentSystemParameterTag]
                 }
