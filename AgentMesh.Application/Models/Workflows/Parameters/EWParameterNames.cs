@@ -8,6 +8,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public const string UserIntent = "User intent";
         public const string IntentCategory = "Intent category";
         public const string LanguageOfTheUser = "Language of the user";
+        public const string LanguageOfTheDocumentation = "Language the documentation is written in";
         public const string ConversationTopic = "Conversation topic";
         public const string UserPreferences = "User preferences";
         public const string UserProvidedData = "User provided data";

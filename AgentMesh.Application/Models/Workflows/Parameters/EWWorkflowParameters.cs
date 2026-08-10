@@ -1,3 +1,4 @@
+using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Application.Models.CodeSandbox;
 using AgentMesh.Application.Models.KnowledgeBase;
@@ -59,6 +60,15 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public LanguageOfTheUserParameter()
         {
             Name = EWParameterNames.LanguageOfTheUser;
+        }
+    }
+
+    public sealed class LanguageOfTheDocumentationParameter : EWParameter<string>
+    {
+        public LanguageOfTheDocumentationParameter(CodeModeWorkflowConfiguration codeModeWorkflowConfiguration)
+        {
+            Name = EWParameterNames.LanguageOfTheDocumentation;
+            ParameterValue = codeModeWorkflowConfiguration.LanguageOfKnowledgeBase;
         }
     }
 
