@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class FunctionalAnalystEWStep(
+    public class FunctionalAnalystEWAgenticStep(
         FunctionalAnalystAgent functionalAnalystAgent,
         UserIntentParameter userIntentParameter,
         ConversationTopicParameter conversationTopicParameter,
@@ -19,17 +19,15 @@ namespace AgentMesh.Application.Services.EWSteps
         DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
         BusinessRequirementsParameter businessRequirementsParameter,
         FunctionalAnalystRejectedParameter functionalAnalystRejectedParameter,
-        FunctionalAnalystRejectReasonsParameter functionalAnalystRejectReasonsParameter) : IEWStep
+        FunctionalAnalystRejectReasonsParameter functionalAnalystRejectReasonsParameter) : IEWAgenticStep
     {
         public string Name => "Functional Analyst";
 
-        public bool IsAgentic => true;
-
         public string? AgentName => "FunctionalAnalyst";
 
-        public bool IsPipelineFirst => false;
+        public bool IsInputTokensCountSource => false;
 
-        public bool IsPipelineLast => false;
+        public bool IsOutputTokensCountSource => false;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {

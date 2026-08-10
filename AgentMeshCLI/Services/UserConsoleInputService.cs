@@ -161,8 +161,8 @@ namespace AgentMesh.Services
                 StepName: "Relevant Facts Evaluator Agent",
                 StartedOnUtc: evaluatorStartTime,
                 CompletedOnUtc: evaluatorEndTime,
-                IsInputStep: false,
-                IsOutputStep: false,
+                IsFirstAgenticStep: false,
+                IsLastAgenticStep: false,
                 ParametersBefore:
                 [
                     new EWDisplayParameterRecord("UserMessagesCount", userConversation.Count.ToString()),
@@ -200,8 +200,8 @@ namespace AgentMesh.Services
                 StepName: "Agent Memory Saver",
                 StartedOnUtc: memorySaverStartTime,
                 CompletedOnUtc: memorySaverEndTime,
-                IsInputStep: false,
-                IsOutputStep: false,
+                IsFirstAgenticStep: false,
+                IsLastAgenticStep: false,
                 ParametersBefore:
                 [
                     new EWDisplayParameterRecord("SavedMessagesCount", "0")
@@ -238,8 +238,8 @@ namespace AgentMesh.Services
                 StepName: "Conversation Summarizer Agent",
                 StartedOnUtc: summarizationStartTime,
                 CompletedOnUtc: summarizationEndTime,
-                IsInputStep: false,
-                IsOutputStep: false,
+                IsFirstAgenticStep: false,
+                IsLastAgenticStep: false,
                 ParametersBefore:
                 [
                     new EWDisplayParameterRecord("ConversationMessagesCount", summarizerInput.Conversation.Count().ToString()),

@@ -8,7 +8,7 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class PersonalAssistantEWStep(
+    public class PersonalAssistantEWAgenticStep(
         PersonalAssistantAgent personalAssistantAgent,
         UserIntentParameter userIntentParameter,
         IntentCategoryParameter intentCategoryParameter,
@@ -29,17 +29,15 @@ namespace AgentMesh.Application.Services.EWSteps
         PersonalAssistantOpeningSentenceParameter personalAssistantOpeningSentenceParameter,
         PersonalAssistantClosingSentenceParameter personalAssistantClosingSentenceParameter,
         PersonalAssistantConvenienceErrorSentenceParameter personalAssistantConvenienceErrorSentenceParameter,
-        FinalAnswerParameter finalAnswerParameter) : IEWStep
+        FinalAnswerParameter finalAnswerParameter) : IEWAgenticStep
     {
         public string Name => "Personal Assistant";
 
-        public bool IsAgentic => true;
-
         public string? AgentName => "PersonalAssistant";
 
-        public bool IsPipelineFirst => false;
+        public bool IsInputTokensCountSource => false;
 
-        public bool IsPipelineLast => true;
+        public bool IsOutputTokensCountSource => true;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {

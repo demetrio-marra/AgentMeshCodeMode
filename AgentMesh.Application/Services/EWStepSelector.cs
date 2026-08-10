@@ -28,22 +28,22 @@ namespace AgentMesh.Application.Services
 
         CodeModeWorkflowConfiguration workflowConfiguration,
 
-        RequestAnalyzerEWStep requestAnalyzerEWStep,
-        AgentMemoryQueryExpanderEWStep agentMemoryQueryExpanderEWStep,
-        AgentMemoryServiceEWStep agentMemoryServiceEWStep,
-        KnowledgeBaseQueryExpanderEWStep knowledgeBaseQueryExpanderEWStep,
-        DomainsKnowledgeBaseServiceSearchEWStep domainsKnowledgeBaseServiceSearchEWStep,
-        RerankerEWStep rerankerEWStep,
-        DomainsKnowledgeBaseDocumentsExtractorEWStep domainsKnowledgeBaseDocumentsExtractorEWStep,
-        DocumentationEWStep documentationEWStep,
-        FunctionalAnalystEWStep functionalAnalystEWStep,
-        APIsKnowledgeBaseServiceSearchEWStep apisKnowledgeBaseServiceSearchEWStep,
-        APIKnowledgeBaseDocumentsExtractorEWStep apiKnowledgeBaseDocumentsExtractorEWStep,
-        TechnicalAnalystEWStep technicalAnalystEWStep,
-        CoderEWStep coderEWStep,
-        JSSandboxEWStep jsSandboxEWStep,
-        DomainExpertEWStep domainExpertEWStep,
-        PersonalAssistantEWStep personalAssistantEWStep) : IEWStepSelector
+        RequestAnalyzerEWAgenticStep requestAnalyzerEWStep,
+        AgentMemoryQueryExpanderEWAgenticStep agentMemoryQueryExpanderEWStep,
+        AgentMemoryServiceEWCodeStep agentMemoryServiceEWStep,
+        KnowledgeBaseQueryExpanderEWAgenticStep knowledgeBaseQueryExpanderEWStep,
+        DomainsKnowledgeBaseServiceSearchEWCodeStep domainsKnowledgeBaseServiceSearchEWStep,
+        RerankerEWAgenticStep rerankerEWStep,
+        DomainsKnowledgeBaseDocumentsExtractorEWCodeStep domainsKnowledgeBaseDocumentsExtractorEWStep,
+        DocumentationEWAgenticStep documentationEWStep,
+        FunctionalAnalystEWAgenticStep functionalAnalystEWStep,
+        APIsKnowledgeBaseServiceSearchEWCodeStep apisKnowledgeBaseServiceSearchEWStep,
+        APIKnowledgeBaseDocumentsExtractorEWCodeStep apiKnowledgeBaseDocumentsExtractorEWStep,
+        TechnicalAnalystEWAgenticStep technicalAnalystEWStep,
+        CoderEWAgenticStep coderEWStep,
+        JSSandboxEWCodeStep jsSandboxEWStep,
+        DomainExpertEWAgenticStep domainExpertEWStep,
+        PersonalAssistantEWAgenticStep personalAssistantEWStep) : IEWStepSelector
     {
 
         private bool _rerankerHasRun = false;

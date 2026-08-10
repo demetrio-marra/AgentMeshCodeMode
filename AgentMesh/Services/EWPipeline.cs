@@ -34,7 +34,7 @@ namespace AgentMesh.Services
             SetParameterValue(userInputParameter, userInput);
             SetParameterValue(conversationHistoryParameter, chatHistory);
 
-            var stepRuns = new List<(IEWStep Step, EWStepResultRecord Result, EWStepStatisticsRecord Statistics)>();
+            var stepRuns = new List<PlannedStepsRun>();
             var nextSteps = _ewStepSelector.NextStepsToRun();
 
             while (nextSteps.Any())
@@ -61,26 +61,53 @@ namespace AgentMesh.Services
             var responseForUserParameter = _ewParametersProvider.GetResponseForUserParameter()
                 ?? throw new InvalidOperationException("Response for user parameter is not defined.");
 
-            var inputTokens = stepRuns.Single(s => s.Step.IsPipelineFirst).Result.InputTokens;
-            var outputTokens = stepRuns.Single(s => s.Step.IsPipelineLast).Result.OutputTokens;
+            var fistAgenticStepStatistics = stepRuns.FirstOrDefault(s => s.Step is IEWAgenticStep agenticStep && agenticStep.IsInputTokensCountSource)?.Statistics;
+            var lastAgenticStepStatistics = stepRuns.LastOrDefault(s => s.Step is IEWAgenticStep agenticStep && agenticStep.IsOutputTokensCountSource)?.Statistics;
+
+            var inputTokens = fistAgenticStepStatistics?.InputTokens ?? 0;
+            var outputTokens = lastAgenticStepStatistics?.OutputTokens ?? 0;
             var contextSizeInTokens = inputTokens + outputTokens;
 
             await _workflowProgressNotifier.NotifyWorkflowEnd();
 
             return new EWResultRecord(
                 ResponseForUser: responseForUserParameter.GetDisplayValue(),
-                ContextSizeInTokens: contextSizeInTokens ?? 0,
+                ContextSizeInTokens: contextSizeInTokens,
                 Steps: [.. stepRuns.Select(s => s.Statistics)]);
         }
 
-        private async Task<(IEWStep Step, EWStepResultRecord Result, EWStepStatisticsRecord Statistics)> RunStep(
+        private async Task<PlannedStepsRun> RunStep(
             IEWStep step,
             CancellationToken cancellationToken)
         {
             var parametersBeforeSnapshot = CreateDisplaySnapshot(_ewParametersProvider.GetParameters());
 
+            EWStepResultRecord? stepResultRecord = null;
+            string? agentName = null;
+            int? inputTokens = null;
+            int? outputTokens = null;
+            bool isAgentic = step is IEWAgenticStep;
+            bool isLastAgenticStep = false;
+            bool isFirstAgenticStep = false;
             var stepStartTime = DateTime.UtcNow;
-            var stepResult = await step.ExecuteAsync(cancellationToken);
+            if (step is IEWAgenticStep agenticStep)
+            {
+                stepResultRecord = await agenticStep.ExecuteAsync(cancellationToken);
+                agentName = agenticStep.AgentName;
+                inputTokens = stepResultRecord?.InputTokens;
+                outputTokens = stepResultRecord?.OutputTokens;
+                isFirstAgenticStep = agenticStep.IsInputTokensCountSource;
+                isLastAgenticStep = agenticStep.IsOutputTokensCountSource;
+            }
+            else if (step is IEWCodeStep codeStep)
+            {
+                await codeStep.ExecuteAsync(cancellationToken);
+            }
+            else
+            {
+                throw new NotImplementedException($"Step type '{step.GetType().Name}' is not supported.");
+            }
+
             var stepEndTime = DateTime.UtcNow;
 
             var parametersAfterSnapshot = CreateDisplaySnapshot(_ewParametersProvider.GetParameters());
@@ -89,17 +116,22 @@ namespace AgentMesh.Services
                 StepName: step.Name,
                 StartedOnUtc: stepStartTime,
                 CompletedOnUtc: stepEndTime,
-                IsInputStep: step.IsPipelineFirst,
-                IsOutputStep: step.IsPipelineLast,
+                IsFirstAgenticStep: isFirstAgenticStep,
+                IsLastAgenticStep: isLastAgenticStep,
                 ParametersBefore: parametersBeforeSnapshot,
                 ParametersAfter: parametersAfterSnapshot,
-                IsAgentic: step.IsAgentic,
-                AgentName: step.AgentName,
-                InputTokens: stepResult.InputTokens,
-                OutputTokens: stepResult.OutputTokens
+                IsAgentic: isAgentic,
+                AgentName: agentName,
+                InputTokens: inputTokens,
+                OutputTokens: outputTokens
             );
 
-            return (step, stepResult, stepStatistics);
+            return new PlannedStepsRun
+            {
+                Step = step,
+                Result = stepResultRecord,
+                Statistics = stepStatistics
+            };
         }
 
         private static void SetParameterValue<T>(IEWParameter parameter, T value)
@@ -120,6 +152,13 @@ namespace AgentMesh.Services
                     var displayValue = parameter.GetDisplayValue();
                     return new EWDisplayParameterRecord(parameter.Name, displayValue);
                 })];
+        }
+
+        private class PlannedStepsRun
+        {
+            public required IEWStep Step { get; set; }
+            public EWStepResultRecord? Result { get; set; }
+            public EWStepStatisticsRecord Statistics { get; set; }
         }
     }
 }

@@ -2,30 +2,25 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.CodeSandbox;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.Executors;
-using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class JSSandboxEWStep(
+    public class JSSandboxEWCodeStep(
         JSSandboxExecutor jsSandboxExecutor,
         GeneratedCodeParameter generatedCodeParameter,
         SandboxResultParameter sandboxResultParameter,
         SandboxExecutionIdParameter sandboxExecutionIdParameter,
         CodeExecutionResultTypeParameter codeExecutionResultTypeParameter,
-        ExecutionErrorParameter executionErrorParameter) : IEWStep
+        ExecutionErrorParameter executionErrorParameter) : IEWCodeStep
     {
         public string Name => "JS Sandbox";
+        
+        public bool IsContextAnalyzerStep => false;
 
-        public bool IsAgentic => false;
+        public bool IsLastPipelineStep => false;
 
-        public string? AgentName => null;
-
-        public bool IsPipelineFirst => false;
-
-        public bool IsPipelineLast => false;
-
-        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var code = generatedCodeParameter.ParameterValue ?? string.Empty;
 
@@ -63,8 +58,6 @@ namespace AgentMesh.Application.Services.EWSteps
                 codeExecutionResultTypeParameter.ParameterValue = SandboxResultType.ApplicationError;
                 executionErrorParameter.ParameterValue = true;
             }
-
-            return new EWStepResultRecord(null, null);
         }
     }
 }

@@ -9,24 +9,22 @@ using System.Text.Json;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class DocumentationEWStep(
+    public class DocumentationEWAgenticStep(
         DocumentationAgent documentationAgent,
         UserIntentParameter userIntentParameter,
         PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
         DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
         LanguageOfTheUserParameter languageOfTheUserParameter,
         RequestDateTimeParameter requestDateTimeParameter,
-        DocumentationContentParameter documentationContentParameter) : IEWStep
+        DocumentationContentParameter documentationContentParameter) : IEWAgenticStep
     {
         public string Name => "Documentation";
 
-        public bool IsAgentic => true;
-
         public string? AgentName => "Documentation";
 
-        public bool IsPipelineFirst => false;
+        public bool IsInputTokensCountSource => false;
 
-        public bool IsPipelineLast => false;
+        public bool IsOutputTokensCountSource => false;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {

@@ -6,21 +6,19 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class AgentMemoryQueryExpanderEWStep(
+    public class AgentMemoryQueryExpanderEWAgenticStep(
         AgentMemoryQueryExpanderAgent agentMemoryQueryExpanderAgent,
         MissingValuesParameter missingValuesParameter,
         RequestDateTimeParameter requestDateTimeParameter,
-        PastMemoriesQueryParameter pastMemoriesQueryParameter) : IEWStep
+        PastMemoriesQueryParameter pastMemoriesQueryParameter) : IEWAgenticStep
     {
         public string Name => "Agent Memory Query Expander";
 
-        public bool IsAgentic => true;
-
         public string? AgentName => "AgentMemoryQueryExpander";
 
-        public bool IsPipelineFirst => false;
+        public bool IsInputTokensCountSource => false;
 
-        public bool IsPipelineLast => false;
+        public bool IsOutputTokensCountSource => false;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {

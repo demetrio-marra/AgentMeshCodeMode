@@ -5,23 +5,21 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class CoderEWStep(
+    public class CoderEWAgenticStep(
         CoderAgent coderAgent,
         BusinessRequirementsParameter businessRequirementsParameter,
         TechnicalSpecificationParameter technicalSpecificationParameter,
         KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
         RequestDateTimeParameter requestDateTimeParameter,
-        GeneratedCodeParameter generatedCodeParameter) : IEWStep
+        GeneratedCodeParameter generatedCodeParameter) : IEWAgenticStep
     {
         public string Name => "Coder";
 
-        public bool IsAgentic => true;
-
         public string? AgentName => "Coder";
 
-        public bool IsPipelineFirst => false;
+        public bool IsInputTokensCountSource => false;
 
-        public bool IsPipelineLast => false;
+        public bool IsOutputTokensCountSource => false;
 
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)

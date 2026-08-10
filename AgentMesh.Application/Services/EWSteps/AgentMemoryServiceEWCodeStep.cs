@@ -1,27 +1,22 @@
 using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.Executors;
-using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class AgentMemoryServiceEWStep(
+    public class AgentMemoryServiceEWCodeStep(
         AgentMemoryExecutor agentMemoryExecutor,
         PastMemoriesQueryParameter pastMemoriesQueryParameter,
-        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter) : IEWStep
+        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter) : IEWCodeStep
     {
         public string Name => "Agent Memory Service";
 
-        public bool IsAgentic => false;
+        public bool IsContextAnalyzerStep => false;
 
-        public string? AgentName => null;
+        public bool IsLastPipelineStep => false;
 
-        public bool IsPipelineFirst => false;
-
-        public bool IsPipelineLast => false;
-
-        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var queriesList = (pastMemoriesQueryParameter.ParameterValue ?? []).Select(s => s.Memory).ToList();
 
@@ -38,8 +33,6 @@ namespace AgentMesh.Application.Services.EWSteps
             var allMemories = currentMemories.Concat(retrievedMemories).ToList();
 
             pastMemoriesQueryResultsParameter.ParameterValue = allMemories;
-
-            return new EWStepResultRecord(null, null);
         }
     }
 }

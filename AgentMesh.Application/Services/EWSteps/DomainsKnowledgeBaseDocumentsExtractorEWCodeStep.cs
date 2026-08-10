@@ -1,33 +1,28 @@
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.Executors;
-using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class APIKnowledgeBaseDocumentsExtractorEWStep(
+    public class DomainsKnowledgeBaseDocumentsExtractorEWCodeStep(
         KnowledgeBaseExecutor knowledgeBaseExecutor,
-        APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
-        KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter) : IEWStep
+        KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter,
+        DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter) : IEWCodeStep
     {
-        public string Name => "API Knowledge Base Documents Extractor";
+        public string Name => "Domains Knowledge Base Documents Extractor";
+        
+        public bool IsContextAnalyzerStep => false;
 
-        public bool IsAgentic => false;
+        public bool IsLastPipelineStep => false;
 
-        public string? AgentName => null;
-
-        public bool IsPipelineFirst => false;
-
-        public bool IsPipelineLast => false;
-
-        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var results = apisKnowledgeBaseQueryResultsParameter.ParameterValue ?? [];
+            var results = knowledgeBaseQueryResultsParameter.ParameterValue ?? [];
             var filesToExtract = results
                 .Select(r => r.File?.Trim())
                 .Where(file => !string.IsNullOrWhiteSpace(file))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Distinct(StringComparer.Ordinal)
                 .Cast<string>()
                 .ToList();
 
@@ -38,21 +33,18 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var documentsByFile = fetchedFilesContent.Results
                 .Where(doc => !string.IsNullOrWhiteSpace(doc.File))
-                .GroupBy(doc => doc.File!, StringComparer.OrdinalIgnoreCase)
+                .GroupBy(doc => doc.File!)
                 .ToDictionary(
                     group => group.Key,
                     group => new KnowledgeBaseDocumentContent
                     {
                         File = group.Key,
                         Content = group.First().Content
-                    },
-                    StringComparer.OrdinalIgnoreCase);
+                    });
 
             var documents = documentsByFile.Values.ToList();
 
-            knowledgeBaseAPIDocumentsContentParameter.ParameterValue = documents;
-
-            return new EWStepResultRecord(null, null);
+            domainsKnowledgeBaseDocumentsContentParameter.ParameterValue = documents;
         }
     }
 }

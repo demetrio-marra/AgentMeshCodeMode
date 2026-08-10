@@ -7,20 +7,18 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class RerankerEWStep(
+    public class RerankerEWAgenticStep(
         RerankerAgent rerankerAgent,
         UserIntentParameter userIntentParameter,
-        KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter) : IEWStep
+        KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter) : IEWAgenticStep
     {
         public string Name => "Reranker";
 
-        public bool IsAgentic => true;
-
         public string? AgentName => "Reranker";
 
-        public bool IsPipelineFirst => false;
+        public bool IsInputTokensCountSource => false;
 
-        public bool IsPipelineLast => false;
+        public bool IsOutputTokensCountSource => false;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {

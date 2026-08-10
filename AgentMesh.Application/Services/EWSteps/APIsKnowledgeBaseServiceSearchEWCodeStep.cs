@@ -1,30 +1,24 @@
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.Executors;
-using AgentMesh.Models.KnowledgeBase;
-using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class APIsKnowledgeBaseServiceSearchEWStep(
+    public class APIsKnowledgeBaseServiceSearchEWCodeStep(
         KnowledgeBaseExecutor knowledgeBaseExecutor,
         DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter,
-        APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter) : IEWStep
+        APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter) : IEWCodeStep
     {
         private const string APIsDocumentationCollectionName = "apis";
 
         public string Name => "APIs Knowledge Base Service Search";
+        
+        public bool IsContextAnalyzerStep => false;
 
-        public bool IsAgentic => false;
+        public bool IsLastPipelineStep => false;
 
-        public string? AgentName => null;
-
-        public bool IsPipelineFirst => false;
-
-        public bool IsPipelineLast => false;
-
-        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var apiQueries = (domainsKnowledgeBaseQueryParameter.ParameterValue ?? []).ToList();
 
@@ -37,8 +31,6 @@ namespace AgentMesh.Application.Services.EWSteps
             var executorOutput = await knowledgeBaseExecutor.QueryAsync(executorInput, cancellationToken);
 
             apisKnowledgeBaseQueryResultsParameter.ParameterValue = executorOutput.Results;
-
-            return new EWStepResultRecord(null, null);
         }
     }
 }

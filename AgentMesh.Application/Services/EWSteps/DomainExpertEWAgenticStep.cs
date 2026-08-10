@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class DomainExpertEWStep(
+    public class DomainExpertEWAgenticStep(
         DomainExpertAgent domainExpertAgent,
         UserIntentParameter userIntentParameter,
         ConversationTopicParameter conversationTopicParameter,
@@ -19,17 +19,15 @@ namespace AgentMesh.Application.Services.EWSteps
         DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
         SandboxResultParameter sandboxResultParameter,
         LanguageOfTheUserParameter languageOfTheUserParameter,
-        DomainExpertOutputParameter domainExpertOutputParameter) : IEWStep
+        DomainExpertOutputParameter domainExpertOutputParameter) : IEWAgenticStep
     {
         public string Name => "Domain Expert";
 
-        public bool IsAgentic => true;
-
         public string? AgentName => "DomainExpert";
 
-        public bool IsPipelineFirst => false;
+        public bool IsInputTokensCountSource => false;
 
-        public bool IsPipelineLast => false;
+        public bool IsOutputTokensCountSource => false;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {

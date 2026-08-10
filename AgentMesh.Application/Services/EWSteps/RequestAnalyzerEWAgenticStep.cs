@@ -5,7 +5,7 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class RequestAnalyzerEWStep(
+    public class RequestAnalyzerEWAgenticStep(
         RequestAnalyzerAgent requestAnalyzerAgent,
         UserLastRequestParameter userLastRequestParameter,
         InitialContextMessagesParameter initialContextMessagesParameter,
@@ -17,17 +17,15 @@ namespace AgentMesh.Application.Services.EWSteps
         UserPreferencesParameter userPreferencesParameter,
         MissingValuesParameter missingValuesParameter,
         RequestDateTimeParameter requestDateTimeParameter,
-        LanguageOfTheUserParameter languageOfTheUserParameter) : IEWStep
+        LanguageOfTheUserParameter languageOfTheUserParameter) : IEWAgenticStep
     {
         public string Name => "Request Analyzer";
-
-        public bool IsAgentic => true;
-
+        
         public string? AgentName => "RequestAnalyzer";
 
-        public bool IsPipelineFirst => true;
+        public bool IsInputTokensCountSource => true;
 
-        public bool IsPipelineLast => false;
+        public bool IsOutputTokensCountSource => false;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {

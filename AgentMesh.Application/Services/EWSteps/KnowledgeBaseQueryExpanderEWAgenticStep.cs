@@ -8,25 +8,23 @@ using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
-    public class KnowledgeBaseQueryExpanderEWStep(
+    public class KnowledgeBaseQueryExpanderEWAgenticStep(
         KnowledgeBaseQueryExpanderAgent knowledgeBaseQueryExpanderAgent,
         UserIntentParameter userIntentParameter,
         IntentCategoryParameter intentCategoryParameter,
         UserRequestedActionsParameter userRequestedActionsParameter,
         UserProvidedDataParameter userProvidedDataParameter,
-        DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter) : IEWStep
+        DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter) : IEWAgenticStep
     {
         private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
 
         public string Name => "Knowledge Base Query Expander";
 
-        public bool IsAgentic => true;
-
         public string? AgentName => "KnowledgeBaseQueryExpander";
 
-        public bool IsPipelineFirst => false;
+        public bool IsInputTokensCountSource => false;
 
-        public bool IsPipelineLast => false;
+        public bool IsOutputTokensCountSource => false;
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
