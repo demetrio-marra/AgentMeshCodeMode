@@ -30,6 +30,7 @@ namespace AgentMesh.Application.Services.Agents
         {
             return [
                 new () { ParameterName = EWParameterNames.RequestDateTime, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = EWParameterNames.LanguageOfTheDocumentation, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
                 new () { ParameterName = EWParameterNames.QMDQueryTypesDocumentation, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] }
                 ];
         }

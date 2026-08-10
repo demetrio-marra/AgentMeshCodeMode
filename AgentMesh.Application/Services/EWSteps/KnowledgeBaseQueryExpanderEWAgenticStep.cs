@@ -9,6 +9,7 @@ namespace AgentMesh.Application.Services.EWSteps
     public class KnowledgeBaseQueryExpanderEWAgenticStep(
         KnowledgeBaseQueryExpanderAgent knowledgeBaseQueryExpanderAgent,
         RequestDateTimeParameter requestDateTimeParameter,
+        LanguageOfTheDocumentationParameter languageOfTheDocumentationParameter,
         QMDQueryTypesDocumentationParameter qmdQueryTypesDocumentationParameter,
         UserIntentParameter userIntentParameter,
         IntentCategoryParameter intentCategoryParameter,
@@ -28,6 +29,7 @@ namespace AgentMesh.Application.Services.EWSteps
         {
             var agentOutput = await knowledgeBaseQueryExpanderAgent.ExecuteAsync([
                 requestDateTimeParameter,
+                languageOfTheDocumentationParameter,
                 qmdQueryTypesDocumentationParameter,
                 userIntentParameter,
                 intentCategoryParameter,
