@@ -1,67 +1,46 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Utils;
-using AgentMesh.Application.Models.Documentation;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
-using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.Agents;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Agents
 {
     public sealed class DocumentationAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<DocumentationAgent> logger) : AgentBase<string>(logger, "Documentation", openAIClientFactory, resilience)
+        ILogger<DocumentationAgent> logger,
+        IAgentInputSerializer agentInputSerializer) : AbstractAgent<string>(logger,
+            "Documentation",
+            openAIClientFactory, 
+            resilience,
+            agentInputSerializer)
     {
-        private readonly ILogger<DocumentationAgent> _logger = logger;
-        public const string AgentName = "Documentation Agent";
-
-        public async Task<DocumentationAgentOutput> ExecuteAsync(
-            DocumentationAgentInput input,
-            CancellationToken cancellationToken = default)
+        protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            if (string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
-            {
-                _logger.LogInformation("No relevant API documentation found for the given actionable requirements.");
-            }
-
-            var systemMessages = new List<string>
-            {
-                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}."
-            };
-
-            if (!string.IsNullOrWhiteSpace(input.LanguageOfTheUser))
-            {
-                systemMessages.Add($"User's Language: {input.LanguageOfTheUser}");
-            }
-            if (!string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
-            {
-                systemMessages.Add($"Knowledge Base Documents Content:\n{input.KnowledgeBaseDocumentsContent}");
-            }
-
-            var userPayload = new
-            {
-                intent = input.UserRequest.Intent,
-                userPreferences = input.UserRequest.UserPreferences,
-                userProvidedData = input.UserRequest.UserProvidedData,
-                userRequestedActions = input.UserRequest.UserRequestedActions,
-                agentMemories = input.AgentMemories,
-            };
-
-            var inputMessages = new List<AgentMessage>
-            {
-                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
-                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
-            };
-
-            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
-
-            return new DocumentationAgentOutput
-            {
-                Content = result.Result,
-                TokenCount = result.TotalTokenCount,
-                InputTokenCount = result.InputTokenCount,
-                OutputTokenCount = result.OutputTokenCount
-            };
+            return [
+                 new()
+                {
+                    ParameterName = EWParameterNames.RequestDateTime,
+                    ParameterTags = [ApplicationConstants.AgentSystemParameterTag]
+                },
+                new() {
+                    ParameterName = EWParameterNames.UserIntent,
+                    ParameterTags = [] 
+                },
+                new() {
+                    ParameterName = EWParameterNames.PastMemoriesQueryResults,
+                    ParameterTags = [] 
+                },
+                new() {
+                    ParameterName = EWParameterNames.DomainsKnowledgeBaseDocumentsContent,
+                    ParameterTags = [ApplicationConstants.AgentSystemParameterTag] 
+                },
+                new() {
+                    ParameterName = EWParameterNames.LanguageOfTheUser,
+                    ParameterTags = [] 
+                },
+            ];
         }
 
         protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;

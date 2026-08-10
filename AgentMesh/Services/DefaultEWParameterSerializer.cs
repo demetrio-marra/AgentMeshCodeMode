@@ -24,6 +24,7 @@ namespace AgentMesh.Services
             {
                 return obj switch
                 {
+                    DateTime dateTime => dateTime.ToString("yyyy-MM-ddTHH:mm:ssZ"), // ISO 8601 format
                     IFormattable formattable => formattable.ToString(null, CultureInfo.InvariantCulture),
                     _ => obj.ToString()! // string, bool, char, Guid, Uri — no culture-sensitive formatting
                 };

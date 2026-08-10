@@ -9,6 +9,7 @@ namespace AgentMesh.Application.Services.EWSteps
     public class AgentMemoryQueryExpanderEWStep(
         AgentMemoryQueryExpanderAgent agentMemoryQueryExpanderAgent,
         MissingValuesParameter missingValuesParameter,
+        RequestDateTimeParameter requestDateTimeParameter,
         PastMemoriesQueryParameter pastMemoriesQueryParameter) : IEWStep
     {
         public string Name => "Agent Memory Query Expander";
@@ -23,7 +24,9 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var agentOutput = await agentMemoryQueryExpanderAgent.ExecuteAsync([missingValuesParameter], cancellationToken);
+            var agentOutput = await agentMemoryQueryExpanderAgent.ExecuteAsync([
+                requestDateTimeParameter,
+                missingValuesParameter], cancellationToken);
 
             var pastMemories = agentOutput.Result.Select(q => new AgentMemoryItem { Memory = q }).ToList();
 

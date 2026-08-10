@@ -27,6 +27,11 @@ namespace AgentMesh.Application.Services.Agents
         {
             return
             [
+                 new()
+                {
+                    ParameterName = EWParameterNames.RequestDateTime,
+                    ParameterTags = [ApplicationConstants.AgentSystemParameterTag]
+                },
                 new() {
                     ParameterName = EWParameterNames.UserLastRequest,
                     ParameterTags = []

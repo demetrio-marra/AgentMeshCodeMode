@@ -24,12 +24,17 @@ namespace AgentMesh.Application.Services.Agents
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
             return [
-                new AgentInputParameterConfiguration
+                new()
                 {
                     ParameterName = EWParameterNames.MissingValues,
                     ParameterTags = []
+                },
+                new()
+                {
+                    ParameterName = EWParameterNames.RequestDateTime,
+                    ParameterTags = [ApplicationConstants.AgentSystemParameterTag]
                 }
-                ];
+            ];
         }
 
         protected override IEnumerable<string> ParseStructuredResponse(string rawResponseText)

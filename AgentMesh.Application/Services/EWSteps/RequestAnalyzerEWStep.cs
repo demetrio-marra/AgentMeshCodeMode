@@ -16,6 +16,7 @@ namespace AgentMesh.Application.Services.EWSteps
         UserProvidedDataParameter userProvidedDataParameter,
         UserPreferencesParameter userPreferencesParameter,
         MissingValuesParameter missingValuesParameter,
+        RequestDateTimeParameter requestDateTimeParameter,
         LanguageOfTheUserParameter languageOfTheUserParameter) : IEWStep
     {
         public string Name => "Request Analyzer";
@@ -30,7 +31,9 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var agentOutput = await requestAnalyzerAgent.ExecuteAsync([userLastRequestParameter, initialContextMessagesParameter], cancellationToken);
+            var agentOutput = await requestAnalyzerAgent.ExecuteAsync([userLastRequestParameter, 
+                initialContextMessagesParameter, 
+                requestDateTimeParameter], cancellationToken);
 
             userIntentParameter.ParameterValue = agentOutput.Result.Intent;
             intentCategoryParameter.ParameterValue = agentOutput.Result.IntentCategory;

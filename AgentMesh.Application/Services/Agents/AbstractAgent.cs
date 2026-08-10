@@ -27,18 +27,14 @@ namespace AgentMesh.Application.Services.Agents
         /// <exception cref="EmptyAgentResponseException"></exception>
         public async Task<AgentResponse<T>> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
         {
-            logger.LogDebug("Executing {agentName} using Input: {Input}", agentName, System.Text.Json.JsonSerializer.Serialize(inputParameters, SerializationUtils.DefaultSerializeOptions));
+            logger.LogDebug("Executing {agentName}", agentName);
 
             var inputMessages = agentInputSerializer.SerializeInput(inputParameters, GetAgentInputParameterConfiguration())
                 .ToList();
 
-            inputMessages.Insert(0, new AgentMessage
-            {
-                Role = AgentMessageRole.System,
-                Content = $"Current datetime is {DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}."
-            });
-
-            logger.LogDebug("Serialized input messages for {agentName}: {InputMessages}", agentName, System.Text.Json.JsonSerializer.Serialize(inputMessages));
+            logger.LogDebug("Serialized input messages for {agentName}: {InputMessages}", 
+                agentName, 
+                System.Text.Json.JsonSerializer.Serialize(inputMessages, SerializationUtils.DefaultSerializeOptions));
 
             var stopwatch = Stopwatch.StartNew();
 

@@ -2,6 +2,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
 {
     public static class EWParameterNames
     {
+        public const string RequestDateTime = "Current datetime";
         public const string UserLastRequest = "User last request";
         public const string InitialContextMessages = "Initial context messages";
         public const string UserIntent = "User intent";

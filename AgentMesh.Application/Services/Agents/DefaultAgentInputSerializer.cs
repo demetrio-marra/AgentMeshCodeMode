@@ -1,6 +1,8 @@
 ﻿using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Utils;
 using AgentMesh.Models.Workflows;
+using System.Text.Json;
 
 namespace AgentMesh.Application.Services.Agents
 {
@@ -12,20 +14,31 @@ namespace AgentMesh.Application.Services.Agents
 
             var pmc = parametersConfiguration.ToDictionary(c => c.ParameterName, c => c.ParameterTags, StringComparer.InvariantCultureIgnoreCase);
 
+            var systemMessages = new List<string>();
+            var userPayload = new Dictionary<string, string>();
+
             foreach (var parameter in parameters)
             {
                 var config = pmc.GetValueOrDefault(parameter.Name);
                 bool isSystemParameter = config != null && config.Contains(ApplicationConstants.AgentSystemParameterTag, StringComparer.InvariantCultureIgnoreCase);
-              
-                var message = new AgentMessage
+
+                if (isSystemParameter)
                 {
-                    Role = isSystemParameter ? AgentMessageRole.System : AgentMessageRole.User,
-                    Content = parameter.Serialize()
-                };
-                ret.Add(message);
+                    systemMessages.Add($"{parameter.Name}: {parameter.Serialize()}");
+                }
+                else
+                {
+                    userPayload.Add(parameter.Name, parameter.Serialize());
+                }
             }
 
-            return ret;
+            var inputMessages = new List<AgentMessage>
+            {
+                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
+                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
+            };
+
+            return inputMessages;
         }
     }
 }

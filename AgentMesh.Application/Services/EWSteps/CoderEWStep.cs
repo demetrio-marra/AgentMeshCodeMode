@@ -10,6 +10,7 @@ namespace AgentMesh.Application.Services.EWSteps
         BusinessRequirementsParameter businessRequirementsParameter,
         TechnicalSpecificationParameter technicalSpecificationParameter,
         KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
+        RequestDateTimeParameter requestDateTimeParameter,
         GeneratedCodeParameter generatedCodeParameter) : IEWStep
     {
         public string Name => "Coder";
@@ -25,8 +26,10 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var agentOutput = await coderAgent.ExecuteAsync([businessRequirementsParameter, 
-                technicalSpecificationParameter, 
+            var agentOutput = await coderAgent.ExecuteAsync([
+                requestDateTimeParameter,
+                businessRequirementsParameter,
+                technicalSpecificationParameter,
                 knowledgeBaseAPIDocumentsContentParameter], cancellationToken);
 
             generatedCodeParameter.ParameterValue = agentOutput.Result;

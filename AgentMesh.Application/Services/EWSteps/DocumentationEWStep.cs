@@ -15,6 +15,7 @@ namespace AgentMesh.Application.Services.EWSteps
         PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
         DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
         LanguageOfTheUserParameter languageOfTheUserParameter,
+        RequestDateTimeParameter requestDateTimeParameter,
         DocumentationContentParameter documentationContentParameter) : IEWStep
     {
         public string Name => "Documentation";
@@ -44,9 +45,14 @@ namespace AgentMesh.Application.Services.EWSteps
                 LanguageOfTheUser = languageOfTheUserParameter.ParameterValue ?? string.Empty
             };
 
-            var agentOutput = await documentationAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await documentationAgent.ExecuteAsync([
+                requestDateTimeParameter,
+                userIntentParameter,
+                pastMemoriesQueryResultsParameter,
+                domainsKnowledgeBaseDocumentsContentParameter,
+                languageOfTheUserParameter], cancellationToken);
 
-            documentationContentParameter.ParameterValue = agentOutput.Content ?? string.Empty;
+            documentationContentParameter.ParameterValue = agentOutput.Result;
 
             return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

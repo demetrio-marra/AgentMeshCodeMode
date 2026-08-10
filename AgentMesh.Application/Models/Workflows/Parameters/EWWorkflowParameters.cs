@@ -9,6 +9,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Models.Workflows.Parameters
 {
+    public sealed class RequestDateTimeParameter: EWParameter<DateTime>
+    {
+        public RequestDateTimeParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
+        {
+            Name = EWParameterNames.RequestDateTime;
+            ParameterValue = DateTime.UtcNow;
+            DisplayValueSerializer = displayValueSerializer;
+        }
+    }
+
     public sealed class UserLastRequestParameter : EWParameter<string>
     {
         public UserLastRequestParameter()

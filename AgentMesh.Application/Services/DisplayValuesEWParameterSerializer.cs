@@ -14,6 +14,7 @@ namespace AgentMesh.Application.Services
             return obj switch
             {
                 null => EWParameterConstants.NoDataPlaceholder,
+                DateTime datetimeValue => datetimeValue.ToString("yyyy-MM-dd HH:mm:ss"),
                 IEnumerable<string> missingValues => EWParameterDisplayUtils.GetListOfStringsDisplayValue(missingValues),
                 IEnumerable<ContextMessage> contextMessages => EWParameterDisplayUtils.GetContextMessagesDisplayValue(contextMessages),
                 IEnumerable<AgentMemoryQueryResultItem> queryResults => EWParameterDisplayUtils.GetAgentMemoryQueryResultsDisplayValue(queryResults),
