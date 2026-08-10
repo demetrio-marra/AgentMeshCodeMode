@@ -4,6 +4,7 @@ using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.Workflows;
+using AgentMesh.Utils;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -26,7 +27,7 @@ namespace AgentMesh.Application.Services.Agents
         /// <exception cref="EmptyAgentResponseException"></exception>
         public async Task<AgentResponse<T>> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
         {
-            logger.LogDebug("Executing {agentName} using Input: {Input}", agentName, System.Text.Json.JsonSerializer.Serialize(inputParameters));
+            logger.LogDebug("Executing {agentName} using Input: {Input}", agentName, System.Text.Json.JsonSerializer.Serialize(inputParameters, SerializationUtils.DefaultSerializeOptions));
 
             var inputMessages = agentInputSerializer.SerializeInput(inputParameters, GetAgentInputParameterConfiguration())
                 .ToList();
@@ -36,6 +37,8 @@ namespace AgentMesh.Application.Services.Agents
                 Role = AgentMessageRole.System,
                 Content = $"Current datetime is {DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}."
             });
+
+            logger.LogDebug("Serialized input messages for {agentName}: {InputMessages}", agentName, System.Text.Json.JsonSerializer.Serialize(inputMessages));
 
             var stopwatch = Stopwatch.StartNew();
 

@@ -3,11 +3,10 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
-using AgentMesh.Application.Services.Agents;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.Workflows.Parameters;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Agents
 {
     public sealed partial class CoderAgent(IOpenAIClientFactory openAIClientFactory,
                       Resilience resilience,
