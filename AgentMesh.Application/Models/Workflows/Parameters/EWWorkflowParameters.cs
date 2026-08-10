@@ -239,6 +239,14 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         }
     }
 
+    public sealed class RequestRejectedFlagParameter : EWParameter<bool>
+    {
+        public RequestRejectedFlagParameter()
+        {
+            Name = EWParameterNames.RequestRejectedFlag;
+        }
+    }
+
     public sealed class ExecutionErrorParameter : EWParameter<bool>
     {
         public ExecutionErrorParameter()

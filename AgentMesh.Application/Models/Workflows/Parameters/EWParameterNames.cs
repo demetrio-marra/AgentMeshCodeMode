@@ -22,6 +22,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public const string DomainsKnowledgeBaseDocumentsContent = "Domain knowledge base documents";
         public const string BusinessRequirements = "Business requirements";
         public const string TechnicalSpecification = "Technical specification";
+        public const string RequestRejectedFlag = "Request rejected flag";
         public const string RequestRejectedReason = "Request rejected reason";
         public const string ShouldEngageCoder = "Should engage coder";
         public const string APISKnowledgeBaseQueryResults = "API knowledge base query results";
