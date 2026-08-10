@@ -15,10 +15,6 @@ namespace AgentMesh.Application.Services.EWSteps
         ExecutionErrorParameter executionErrorParameter) : IEWCodeStep
     {
         public string Name => "JS Sandbox";
-        
-        public bool IsContextAnalyzerStep => false;
-
-        public bool IsLastPipelineStep => false;
 
         public async Task ExecuteAsync(CancellationToken cancellationToken = default)
         {

@@ -14,10 +14,6 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public string Name => "Domains Knowledge Base Service Search";
 
-        public bool IsContextAnalyzerStep => false;
-
-        public bool IsLastPipelineStep => false;
-
         public async Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var searchQueries = domainsKnowledgeBaseQueryParameter.ParameterValue ?? [];

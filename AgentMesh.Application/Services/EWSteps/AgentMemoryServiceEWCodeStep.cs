@@ -12,10 +12,6 @@ namespace AgentMesh.Application.Services.EWSteps
     {
         public string Name => "Agent Memory Service";
 
-        public bool IsContextAnalyzerStep => false;
-
-        public bool IsLastPipelineStep => false;
-
         public async Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var queriesList = (pastMemoriesQueryParameter.ParameterValue ?? []).Select(s => s.Memory).ToList();

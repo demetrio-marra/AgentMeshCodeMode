@@ -12,10 +12,6 @@ namespace AgentMesh.Application.Services.EWSteps
     {
         public string Name => "Domains Knowledge Base Documents Extractor";
         
-        public bool IsContextAnalyzerStep => false;
-
-        public bool IsLastPipelineStep => false;
-
         public async Task ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var results = knowledgeBaseQueryResultsParameter.ParameterValue ?? [];
