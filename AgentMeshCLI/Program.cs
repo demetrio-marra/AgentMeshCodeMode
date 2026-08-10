@@ -49,6 +49,7 @@ namespace AgentMesh
 
             services.AddKeyedSingleton<IEWParameterSerializer, DisplayValuesEWParameterSerializer>("DisplayParametersSerializer");
             services.AddKeyedSingleton<IEWParameterSerializer, DefaultEWParameterSerializer>("DefaultParametersSerializer");
+            services.AddSingleton<IOpenAIClientFactory, OpenAIClientFactory>();
 
             foreach (var ewParameterType in DiscoverEWParameterImplementations())
             {
@@ -105,8 +106,6 @@ namespace AgentMesh
                 .Bind(configuration.GetSection("SESJSSandbox"))
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<SESJSSandboxConfiguration>>().Value);
-
-            services.AddInferenceProviders(configuration);
 
             // Resilience configuration
             services

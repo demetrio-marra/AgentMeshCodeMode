@@ -3,18 +3,9 @@ using AgentMesh.Application.Contracts;
 
 namespace AgentMesh.Infrastructure.OpenAIClient
 {
-    public class OpenAIClientFactory(IEnumerable<AgentFlatConfigurationRecord> agentFlatConfigurationRecords,
-        OpenAIClientFactoryConfiguration configuration) : 
+    public class OpenAIClientFactory(IEnumerable<AgentFlatConfigurationRecord> agentFlatConfigurationRecords) : 
         IOpenAIClientFactory
     {
-
-        public IOpenAIClient CreateOpenAIClient(string model, string provider, string temperature, string systemPrompt)
-        {
-            var apikey = configuration[provider].ApiKey;
-            var endpoint = configuration[provider].Endpoint;
-            return new OpenAIClient(model, apikey, endpoint, temperature, systemPrompt);
-        }
-
         public IOpenAIClient CreateOpenAIClient(string agentUniqueRole)
         {
             var cfg = GetAgentConfiguration(agentUniqueRole);
