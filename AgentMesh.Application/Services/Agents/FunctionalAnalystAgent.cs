@@ -5,69 +5,40 @@ using AgentMesh.Application.Models.FunctionalAnalyst;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.Agents;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Agents
 {
     public sealed class FunctionalAnalystAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<FunctionalAnalystAgent> logger) : AgentBase<FunctionalAnalystAgent.ParsedResponse>(logger, 
+        ILogger<FunctionalAnalystAgent> logger,
+        IAgentInputSerializer agentInputSerializer) : AbstractAgent<FunctionalAnalysisResult>(logger, 
             "FunctionalAnalyst", 
             openAIClientFactory, 
-            resilience)
+            resilience,
+            agentInputSerializer)
     {
         private readonly ILogger<FunctionalAnalystAgent> _logger = logger;
 
-        public async Task<FunctionalAnalystAgentOutput> ExecuteAsync(
-            FunctionalAnalystAgentInput input,
-            CancellationToken cancellationToken = default)
+        protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            var systemMessages = new List<string>
-            {
-                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}."
-            };
-
-            if (input.DoNotComment)
-            {
-                systemMessages.Add("IMPORTANT REQUIREMENT: In `businessRequirements`, you MUST EXPLICITLY instruct the Coder Agent to produce a program that ONLY RETURNS DATA and DOES NOT add comments, insights, explanations, or narrative text in its output.");
-            }
-
-            if (!string.IsNullOrWhiteSpace(input.KnowledgeBaseDocumentsContent))
-            {
-                systemMessages.Add($"IMPORTANT REQUIREMENT: The following knowledge base documents content is provided to you for reference. You MUST use this information to inform your response and ensure that the generated business requirements are accurate and relevant to the provided knowledge base content.\n{input.KnowledgeBaseDocumentsContent}");
-            }
-
-            var userPayload = new
-            {
-                input.Intent,
-                input.ConversationTopic,
-                input.UserRequestedActions,
-                input.UserProvidedData,
-                input.UserPreferences,
-                input.AgentMemories
-            };
-
-            var inputMessages = new List<AgentMessage>
-            {
-                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
-                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
-            };
-
-            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
-
-            return new FunctionalAnalystAgentOutput
-            {
-                BusinessRequirements = result.Result.BusinessRequirements,
-                RequestRejected = result.Result.RequestRejected,
-                ReasonOfRejection = result.Result.ReasonOfRejection,
-                TokenCount = result.TotalTokenCount,
-                InputTokenCount = result.InputTokenCount,
-                OutputTokenCount = result.OutputTokenCount
-            };
+            return [
+                new AgentInputParameterConfiguration
+                {
+                    ParameterName = EWParameterNames.RequestDateTime,
+                    ParameterTags = [ApplicationConstants.AgentSystemParameterTag]
+                },
+                new AgentInputParameterConfiguration
+                {
+                    ParameterName = EWParameterNames.DomainsKnowledgeBaseDocumentsContent,
+                    ParameterTags = [ApplicationConstants.AgentSystemParameterTag]
+                }
+            ];
         }
 
-        protected override ParsedResponse ParseStructuredResponse(string rawResponseText)
+        protected override FunctionalAnalysisResult ParseStructuredResponse(string rawResponseText)
         {
             try
             {
@@ -96,7 +67,12 @@ namespace AgentMesh.Application.Services.Agents
                     responseDTO.ReasonOfRejection = null;
                 }
 
-                return responseDTO;
+                return new FunctionalAnalysisResult
+                {
+                    BusinessRequirements = responseDTO.BusinessRequirements,
+                    RequestRejected = responseDTO.RequestRejected,
+                    ReasonOfRejection = responseDTO.ReasonOfRejection
+                };
             }
             catch (JsonException ex)
             {
