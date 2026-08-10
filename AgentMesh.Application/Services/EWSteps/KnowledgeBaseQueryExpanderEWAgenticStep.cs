@@ -26,7 +26,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsOutputTokensCountSource => false;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var intentCategory = intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other;
 
@@ -57,7 +57,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             domainsKnowledgeBaseQueryParameter.ParameterValue = searchQueries;
 
-            return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }
 
         private string? LoadDocumentationQueriesGenerationReference()

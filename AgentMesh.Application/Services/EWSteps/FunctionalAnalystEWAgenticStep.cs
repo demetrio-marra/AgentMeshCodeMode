@@ -29,7 +29,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsOutputTokensCountSource => false;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var docsContent = domainsKnowledgeBaseDocumentsContentParameter.ParameterValue ?? [];
             var kbContent = JsonSerializer.Serialize(docsContent, SerializationUtils.DefaultSerializeOptions);
@@ -51,7 +51,7 @@ namespace AgentMesh.Application.Services.EWSteps
             functionalAnalystRejectedParameter.ParameterValue = agentOutput.RequestRejected;
             functionalAnalystRejectReasonsParameter.ParameterValue = agentOutput.ReasonOfRejection;
 
-            return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }
     }
 }

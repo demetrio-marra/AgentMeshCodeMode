@@ -10,6 +10,6 @@ namespace AgentMesh.Services
 
         bool IsOutputTokensCountSource { get; }
 
-        Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default);
+        Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default);
     }
 }

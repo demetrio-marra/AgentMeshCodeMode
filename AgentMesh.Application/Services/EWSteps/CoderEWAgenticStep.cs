@@ -22,7 +22,7 @@ namespace AgentMesh.Application.Services.EWSteps
         public bool IsOutputTokensCountSource => false;
 
 
-        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var agentOutput = await coderAgent.ExecuteAsync([
                 requestDateTimeParameter,
@@ -32,7 +32,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             generatedCodeParameter.ParameterValue = agentOutput.Result;
 
-            return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }
     }
 }

@@ -20,7 +20,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsOutputTokensCountSource => false;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var agentOutput = await agentMemoryQueryExpanderAgent.ExecuteAsync([
                 requestDateTimeParameter,
@@ -30,7 +30,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             pastMemoriesQueryParameter.ParameterValue = pastMemories;
 
-            var ret = new EWStepResultRecord
+            var ret = new EWAgenticStepResultRecord
             {
                 InputTokens = agentOutput.InputTokenCount,
                 OutputTokens = agentOutput.OutputTokenCount

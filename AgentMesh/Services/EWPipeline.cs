@@ -82,7 +82,7 @@ namespace AgentMesh.Services
         {
             var parametersBeforeSnapshot = CreateDisplaySnapshot(_ewParametersProvider.GetParameters());
 
-            EWStepResultRecord? stepResultRecord = null;
+            EWAgenticStepResultRecord? stepResultRecord = null;
             string? agentName = null;
             int? inputTokens = null;
             int? outputTokens = null;
@@ -157,7 +157,7 @@ namespace AgentMesh.Services
         private class PlannedStepsRun
         {
             public required IEWStep Step { get; set; }
-            public EWStepResultRecord? Result { get; set; }
+            public EWAgenticStepResultRecord? Result { get; set; }
             public EWStepStatisticsRecord Statistics { get; set; }
         }
     }

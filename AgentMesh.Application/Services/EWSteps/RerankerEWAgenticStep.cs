@@ -20,12 +20,12 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsOutputTokensCountSource => false;
 
-        public async Task<EWStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             var candidates = (knowledgeBaseQueryResultsParameter.ParameterValue ?? []).ToList();
             if (candidates.Count == 0)
             {
-                return new EWStepResultRecord(null, null);
+                return new EWAgenticStepResultRecord(null, null);
             }
 
             var sr = new StructuredUserRequest
@@ -43,7 +43,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
             knowledgeBaseQueryResultsParameter.ParameterValue = agentOutput.QueryResults;
 
-            return new EWStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }
     }
 }
