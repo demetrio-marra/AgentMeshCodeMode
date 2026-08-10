@@ -1,8 +1,5 @@
-using AgentMesh.Application.Models.CodeSandbox;
-using AgentMesh.Application.Models.PersonalAssistant;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.Agents;
-using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Models.Workflows;
 using AgentMesh.Services;
 
@@ -10,8 +7,8 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class PersonalAssistantEWAgenticStep(
         PersonalAssistantAgent personalAssistantAgent,
+        RequestDateTimeParameter requestDateTimeParameter,
         UserIntentParameter userIntentParameter,
-        IntentCategoryParameter intentCategoryParameter,
         ConversationTopicParameter conversationTopicParameter,
         UserPreferencesParameter userPreferencesParameter,
         UserProvidedDataParameter userProvidedDataParameter,
@@ -19,10 +16,9 @@ namespace AgentMesh.Application.Services.EWSteps
         LanguageOfTheUserParameter languageOfTheUserParameter,
         PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
         RequestRejectedReasonParameter requestRejectedReasonParameter,
-        CodeExecutionResultTypeParameter codeExecutionResultTypeParameter,
-        SandboxResultParameter sandboxResultParameter,
-        DomainExpertOutputParameter domainExpertOutputParameter,
-        DocumentationContentParameter documentationContentParameter,
+        RequestRejectedFlagParameter requestRejectedFlagParameter,
+        PipelineResultDataParameter pipelineResultDataParameter,
+        ExecutionErrorParameter executionErrorParameter,
         PersonalAssistantOpeningSentenceParameter personalAssistantOpeningSentenceParameter,
         PersonalAssistantClosingSentenceParameter personalAssistantClosingSentenceParameter,
         PersonalAssistantConvenienceErrorSentenceParameter personalAssistantConvenienceErrorSentenceParameter,
@@ -36,78 +32,40 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool IsOutputTokensCountSource => true;
 
+       
         public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var intentCategory = intentCategoryParameter.ParameterValue ?? UserIntentCategory.Other;
-            var codeExecResultType = codeExecutionResultTypeParameter.ParameterValue;
+            var data = pipelineResultDataParameter.ParameterValue;
+            var requestFailed = requestRejectedFlagParameter.ParameterValue;
 
-            string? data = null;
-            var requestFailed = false;
-            string? requestFailureReason = null;
+            var agentOutput = await personalAssistantAgent.ExecuteAsync([
+                requestDateTimeParameter,
+                requestRejectedFlagParameter,
+                requestRejectedReasonParameter,
+                executionErrorParameter,
+                pipelineResultDataParameter,
+                languageOfTheUserParameter,
+                userIntentParameter,
+                conversationTopicParameter,
+                userPreferencesParameter,
+                userProvidedDataParameter,
+                userRequestedActionsParameter,
+                pastMemoriesQueryResultsParameter
+                ], cancellationToken);
 
-            if (intentCategory == UserIntentCategory.Documentation)
-            {
-                data = documentationContentParameter.ParameterValue;
-            }
-            else if (intentCategory == UserIntentCategory.TaskExecution)
-            {
-                if (!string.IsNullOrWhiteSpace(requestRejectedReasonParameter.ParameterValue))
-                {
-                    requestFailed = true;
-                    requestFailureReason = $"""
-                        The request made by the user was rejected. The reason for rejection is as follows:
-                        {requestRejectedReasonParameter.ParameterValue}
-                        """;
-                }
-                else if (codeExecResultType != SandboxResultType.Success)
-                {
-                    requestFailed = true;
-                    requestFailureReason = sandboxResultParameter.ParameterValue;
-                }
-                else
-                {
-                    data = sandboxResultParameter.ParameterValue;
-
-                    var domainExpertOutput = domainExpertOutputParameter.ParameterValue;
-                    if (!string.IsNullOrEmpty(domainExpertOutput))
-                    {
-                        data += $"""
-
-                            {domainExpertOutput}
-                            """;
-                    }
-                }
-            }
-
-            var agentInput = new PersonalAssistantAgentInput
-            {
-                Data = data,
-                RequestFailed = requestFailed,
-                RequestFailureReason = requestFailureReason,
-                LanguageOfTheUser = languageOfTheUserParameter.ParameterValue,
-                CanonicalizedIntent = userIntentParameter.ParameterValue ?? string.Empty,
-                ConversationTopic = conversationTopicParameter.ParameterValue ?? string.Empty,
-                UserPreferences = userPreferencesParameter.ParameterValue ?? [],
-                UserProvidedData = userProvidedDataParameter.ParameterValue ?? [],
-                UserRequestedActions = userRequestedActionsParameter.ParameterValue ?? [],
-                Memories = (pastMemoriesQueryResultsParameter.ParameterValue ?? []).Select(m => m.Memory)
-            };
-
-            var agentOutput = await personalAssistantAgent.ExecuteAsync(agentInput, cancellationToken);
-
-            personalAssistantOpeningSentenceParameter.ParameterValue = agentOutput.OpeningSentence;
-            personalAssistantClosingSentenceParameter.ParameterValue = agentOutput.ClosingSentence;
-            personalAssistantConvenienceErrorSentenceParameter.ParameterValue = agentOutput.ConvenienceErrorSentence;
+            personalAssistantOpeningSentenceParameter.ParameterValue = agentOutput.Result.OpeningSentence;
+            personalAssistantClosingSentenceParameter.ParameterValue = agentOutput.Result.ClosingSentence;
+            personalAssistantConvenienceErrorSentenceParameter.ParameterValue = agentOutput.Result.ConvenienceErrorSentence;
 
             string? finalAnswer;
             if (requestFailed)
             {
-                finalAnswer = agentOutput.ConvenienceErrorSentence;
+                finalAnswer = agentOutput.Result.ConvenienceErrorSentence;
             }
             else
             {
                 finalAnswer = string.Join(Environment.NewLine + Environment.NewLine,
-                    new[] { agentOutput.OpeningSentence, data, agentOutput.ClosingSentence }
+                    new[] { agentOutput.Result.OpeningSentence, data, agentOutput.Result.ClosingSentence }
                     .Where(s => !string.IsNullOrWhiteSpace(s)));
             }
 

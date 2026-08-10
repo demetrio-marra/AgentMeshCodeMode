@@ -1,7 +1,8 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
-using AgentMesh.Application.Models.ChatMessages;
-using AgentMesh.Application.Models.PersonalAssistant;
+using AgentMesh.Application.Models.Agents;
+using AgentMesh.Application.Models.Conversation;
+using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Utils;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -12,59 +13,29 @@ namespace AgentMesh.Application.Services.Agents
     public sealed class PersonalAssistantAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<PersonalAssistantAgent> logger) : AgentBase<PersonalAssistantAgent.ParsedResponse>(logger, 
+        ILogger<PersonalAssistantAgent> logger,
+        IAgentInputSerializer agentInputSerializer) : AbstractAgent<UserRequestResult>(logger, 
             "PersonalAssistant",
             openAIClientFactory,
-            resilience)
+            resilience,
+            agentInputSerializer)
     {
         private readonly ILogger<PersonalAssistantAgent> _logger = logger;
 
-        public async Task<PersonalAssistantAgentOutput> ExecuteAsync(
-            PersonalAssistantAgentInput input,
-            CancellationToken cancellationToken = default)
+
+        protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            var systemMessages = new List<string>
-            {
-                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}.",
-                $"Respond in {input.LanguageOfTheUser}.",
-                $"The request " + (input.RequestFailed ? "failed" : "succeeded") + (string.IsNullOrWhiteSpace(input.RequestFailureReason) ? "." : $" with reason: {input.RequestFailureReason}."),
-            };
-
-            if (!string.IsNullOrWhiteSpace(input.Data))
-            {
-                systemMessages.Add($"The request data is:\n{input.Data}");
-            }
-
-            var userPayload = new
-            {
-                input.CanonicalizedIntent,
-                input.ConversationTopic,
-                input.UserRequestedActions,
-                input.UserProvidedData,
-                input.UserPreferences,
-                input.Memories
-            };
-
-            var inputMessages = new List<AgentMessage>
-            {
-                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
-                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
-            };
-
-            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
-
-            return new PersonalAssistantAgentOutput
-            {
-                OpeningSentence = result.Result.OpeningSentence,
-                ClosingSentence = result.Result.ClosingSentence,
-                ConvenienceErrorSentence = result.Result.ConvenienceErrorSentence,
-                TokenCount = result.TotalTokenCount,
-                InputTokenCount = result.InputTokenCount,
-                OutputTokenCount = result.OutputTokenCount
-            };
+            return [
+                new () { ParameterName = EWParameterNames.RequestDateTime, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = EWParameterNames.LanguageOfTheUser, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = EWParameterNames.RequestRejectedFlag, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = EWParameterNames.RequestRejectedReason, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = EWParameterNames.ExecutionError, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = EWParameterNames.PipelineResultData, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] }
+            ];
         }
 
-        protected override ParsedResponse ParseStructuredResponse(string rawResponseText)
+        protected override UserRequestResult ParseStructuredResponse(string rawResponseText)
         {
             try
             {
@@ -90,7 +61,12 @@ namespace AgentMesh.Application.Services.Agents
                 //    throw new BadStructuredResponseException(rawResponseText, "The model's response is missing openingSentence or closingSentence.");
                 //}
 
-                return responseDTO;
+                return new UserRequestResult
+                {
+                    OpeningSentence = responseDTO.OpeningSentence,
+                    ClosingSentence = responseDTO.ClosingSentence,
+                    ConvenienceErrorSentence = responseDTO.ConvenienceErrorSentence
+                };
             }
             catch (JsonException ex)
             {

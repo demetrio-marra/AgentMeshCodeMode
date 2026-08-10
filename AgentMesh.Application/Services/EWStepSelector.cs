@@ -20,10 +20,9 @@ namespace AgentMesh.Application.Services
         TechnicalSpecificationParameter technicalSpecificationParameter,
         RequestRejectedReasonParameter requestRejectedReasonParameter,
         APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
-        DocumentationContentParameter documentationContentParameter,
         GeneratedCodeParameter generatedCodeParameter,
-        SandboxResultParameter sandboxResultParameter,
-        DomainExpertOutputParameter domainExpertOutputParameter,
+        PipelineResultDataParameter pipelineResultDataParameter,
+        ExecutionErrorParameter executionErrorParameter,
         FinalAnswerParameter finalAnswerParameter,
 
         CodeModeWorkflowConfiguration workflowConfiguration,
@@ -45,8 +44,9 @@ namespace AgentMesh.Application.Services
         DomainExpertEWAgenticStep domainExpertEWStep,
         PersonalAssistantEWAgenticStep personalAssistantEWStep) : IEWStepSelector
     {
-
+        // here list all variables needed to control the execution of steps that reads and writes the same parameters.
         private bool _rerankerHasRun = false;
+        private bool _domainExpertHasRun = false;
 
         public IEnumerable<IEWStep> NextStepsToRun()
         {
@@ -122,7 +122,7 @@ namespace AgentMesh.Application.Services
                 return [domainsKnowledgeBaseDocumentsExtractorEWStep];
             }
 
-            if (documentationContentParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)                
+            if (pipelineResultDataParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)                
             {
                 return [documentationEWStep];
             }
@@ -203,16 +203,18 @@ namespace AgentMesh.Application.Services
                 return [coderEWStep];
             }
 
-            if (sandboxResultParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
+            if (pipelineResultDataParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
                 && generatedCodeParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
             {
                 return [jsSandboxEWStep];
             }
 
             if (workflowConfiguration.EnableDomainExpert
-                && domainExpertOutputParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
-                && sandboxResultParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+                && !_domainExpertHasRun
+                && !executionErrorParameter.ParameterValue
+                && pipelineResultDataParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
             {
+                _domainExpertHasRun = true;
                 return [domainExpertEWStep];
             }
 

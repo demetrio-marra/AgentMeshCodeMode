@@ -12,7 +12,7 @@ namespace AgentMesh.Application.Services.EWSteps
         DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
         LanguageOfTheUserParameter languageOfTheUserParameter,
         RequestDateTimeParameter requestDateTimeParameter,
-        DocumentationContentParameter documentationContentParameter) : IEWAgenticStep
+        PipelineResultDataParameter pipelineResultDataParameter) : IEWAgenticStep
     {
         public string Name => "Documentation";
 
@@ -31,7 +31,7 @@ namespace AgentMesh.Application.Services.EWSteps
                 domainsKnowledgeBaseDocumentsContentParameter,
                 languageOfTheUserParameter], cancellationToken);
 
-            documentationContentParameter.ParameterValue = agentOutput.Result;
+            pipelineResultDataParameter.ParameterValue = agentOutput.Result;
 
             return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

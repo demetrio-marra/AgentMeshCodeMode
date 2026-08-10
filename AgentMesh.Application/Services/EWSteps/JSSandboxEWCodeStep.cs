@@ -9,7 +9,7 @@ namespace AgentMesh.Application.Services.EWSteps
     public class JSSandboxEWCodeStep(
         JSSandboxExecutor jsSandboxExecutor,
         GeneratedCodeParameter generatedCodeParameter,
-        SandboxResultParameter sandboxResultParameter,
+        PipelineResultDataParameter pipelineResultDataParameter,
         SandboxExecutionIdParameter sandboxExecutionIdParameter,
         CodeExecutionResultTypeParameter codeExecutionResultTypeParameter,
         ExecutionErrorParameter executionErrorParameter) : IEWCodeStep
@@ -27,14 +27,14 @@ namespace AgentMesh.Application.Services.EWSteps
                     Code = code
                 });
 
-                sandboxResultParameter.ParameterValue = executionOutput.Result;
+                pipelineResultDataParameter.ParameterValue = executionOutput.Result;
                 sandboxExecutionIdParameter.ParameterValue = executionOutput.ExecutionId;
                 codeExecutionResultTypeParameter.ParameterValue = SandboxResultType.Success;
                 executionErrorParameter.ParameterValue = false;
             }
             catch (CodeSandboxCallException ex)
             {
-                sandboxResultParameter.ParameterValue = ex.Message;
+                pipelineResultDataParameter.ParameterValue = ex.Message;
                 sandboxExecutionIdParameter.ParameterValue = string.Empty;
 
                 var errorType = ex.ErrorType switch
@@ -49,7 +49,7 @@ namespace AgentMesh.Application.Services.EWSteps
             }
             catch (Exception ex)
             {
-                sandboxResultParameter.ParameterValue = ex.Message;
+                pipelineResultDataParameter.ParameterValue = ex.Message;
                 sandboxExecutionIdParameter.ParameterValue = string.Empty;
                 codeExecutionResultTypeParameter.ParameterValue = SandboxResultType.ApplicationError;
                 executionErrorParameter.ParameterValue = true;

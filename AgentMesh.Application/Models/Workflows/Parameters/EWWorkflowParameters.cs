@@ -199,27 +199,11 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         }
     }
 
-    public sealed class DocumentationContentParameter : EWParameter<string>
-    {
-        public DocumentationContentParameter()
-        {
-            Name = EWParameterNames.DocumentationContent;
-        }
-    }
-
     public sealed class GeneratedCodeParameter : EWParameter<string>
     {
         public GeneratedCodeParameter()
         {
             Name = EWParameterNames.GeneratedCode;
-        }
-    }
-
-    public sealed class SandboxResultParameter : EWParameter<string>
-    {
-        public SandboxResultParameter()
-        {
-            Name = EWParameterNames.SandboxResult;
         }
     }
 
@@ -255,11 +239,11 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         }
     }
 
-    public sealed class DomainExpertOutputParameter : EWParameter<string>
+    public sealed class PipelineResultDataParameter : EWParameter<string>
     {
-        public DomainExpertOutputParameter()
+        public PipelineResultDataParameter()
         {
-            Name = EWParameterNames.DomainExpertOutput;
+            Name = EWParameterNames.PipelineResultData;
         }
     }
 

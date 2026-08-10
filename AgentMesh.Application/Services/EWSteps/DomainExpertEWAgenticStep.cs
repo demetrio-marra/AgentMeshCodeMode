@@ -15,9 +15,8 @@ namespace AgentMesh.Application.Services.EWSteps
         UserPreferencesParameter userPreferencesParameter,
         PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
         DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
-        SandboxResultParameter sandboxResultParameter,
         LanguageOfTheUserParameter languageOfTheUserParameter,
-        DomainExpertOutputParameter domainExpertOutputParameter) : IEWAgenticStep
+        PipelineResultDataParameter pipelineResultDataParameter) : IEWAgenticStep
     {
         public string Name => "Domain Expert";
 
@@ -38,11 +37,15 @@ namespace AgentMesh.Application.Services.EWSteps
                 userPreferencesParameter,
                 pastMemoriesQueryResultsParameter,
                 domainsKnowledgeBaseDocumentsContentParameter,
-                sandboxResultParameter,
+                pipelineResultDataParameter,
                 languageOfTheUserParameter
                 ], cancellationToken);
 
-            domainExpertOutputParameter.ParameterValue = agentOutput.Result;
+            pipelineResultDataParameter.ParameterValue = $"""
+                {pipelineResultDataParameter.ParameterValue}
+
+                {agentOutput.Result}
+                """;
 
             return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }

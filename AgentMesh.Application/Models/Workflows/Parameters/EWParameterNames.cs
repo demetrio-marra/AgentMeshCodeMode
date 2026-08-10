@@ -27,15 +27,11 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
         public const string ShouldEngageCoder = "Should engage coder";
         public const string APISKnowledgeBaseQueryResults = "API knowledge base query results";
         public const string SelectedAPIsFileLocations = "Selected API file locations";
-        public const string DocumentationContent = "Documentation content";
         public const string GeneratedCode = "Generated code";
-        public const string CodeExecutionFailuresDetectorIterationCount = "Code execution failures detector iteration count";
-        public const string CodeExecutionAnalysis = "Code execution analysis";
-        public const string SandboxResult = "Code execution result";
         public const string SandboxExecutionId = "Code execution id";
         public const string CodeExecutionResultType = "Code execution result type";
-        public const string ExecutionError = "Execution error";
-        public const string DomainExpertOutput = "Domain expert output";
+        public const string ExecutionError = "Code execution error occurred flag";
+        public const string PipelineResultData = "Pipeline result data";
         public const string PersonalAssistantOpeningSentence = "Personal assistant opening sentence";
         public const string PersonalAssistantClosingSentence = "Personal assistant closing sentence";
         public const string PersonalAssistantConvenienceErrorSentence = "Personal assistant convenience error sentence";
