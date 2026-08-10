@@ -19,6 +19,7 @@ namespace AgentMesh.Application.Services.EWSteps
         PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
         KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
         TechnicalSpecificationParameter technicalSpecificationParameter,
+        RequestRejectedFlagParameter requestRejectedFlagParameter,
         RequestRejectedReasonParameter requestRejectedReasonParameter) : IEWAgenticStep
     {
         public string Name => "Technical Analyst";
@@ -52,6 +53,7 @@ namespace AgentMesh.Application.Services.EWSteps
                 .ToList();
 
             technicalSpecificationParameter.ParameterValue = agentOutput.TechnicalSpecification;
+            requestRejectedFlagParameter.ParameterValue = agentOutput.RequestRejected;
 
             if (agentOutput.RequestRejected
                && !string.IsNullOrWhiteSpace(agentOutput.ReasonOfRejection))

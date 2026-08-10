@@ -16,6 +16,7 @@ namespace AgentMesh.Application.Services.EWSteps
         PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
         DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
         BusinessRequirementsParameter businessRequirementsParameter,
+        RequestRejectedFlagParameter requestRejectedFlagParameter,
         RequestRejectedReasonParameter requestRejectedReasonParameter) : IEWAgenticStep
     {
         public string Name => "Functional Analyst";
@@ -40,6 +41,7 @@ namespace AgentMesh.Application.Services.EWSteps
                 ], cancellationToken);
 
             businessRequirementsParameter.ParameterValue = agentOutput.Result.BusinessRequirements;
+            requestRejectedFlagParameter.ParameterValue = agentOutput.Result.RequestRejected;
             if (agentOutput.Result.RequestRejected
                 && !string.IsNullOrWhiteSpace(agentOutput.Result.ReasonOfRejection))
             {

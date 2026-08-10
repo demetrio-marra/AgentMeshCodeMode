@@ -62,11 +62,6 @@ namespace AgentMesh.Application.Services.Agents
                     throw new BadStructuredResponseException(rawResponseText, "The model's response rejected the request without providing reasonOfRejection.");
                 }
 
-                if (!responseDTO.RequestRejected)
-                {
-                    responseDTO.ReasonOfRejection = null;
-                }
-
                 return new FunctionalAnalysisResult
                 {
                     BusinessRequirements = responseDTO.BusinessRequirements,
