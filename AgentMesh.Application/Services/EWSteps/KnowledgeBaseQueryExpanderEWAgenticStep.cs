@@ -10,14 +10,14 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class KnowledgeBaseQueryExpanderEWAgenticStep(
         KnowledgeBaseQueryExpanderAgent knowledgeBaseQueryExpanderAgent,
+        RequestDateTimeParameter requestDateTimeParameter,
+        QMDQueryTypesDocumentationParameter qmdQueryTypesDocumentationParameter,
         UserIntentParameter userIntentParameter,
         IntentCategoryParameter intentCategoryParameter,
         UserRequestedActionsParameter userRequestedActionsParameter,
         UserProvidedDataParameter userProvidedDataParameter,
         DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter) : IEWAgenticStep
     {
-        private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
-
         public string Name => "Knowledge Base Query Expander";
 
         public string? AgentName => "KnowledgeBaseQueryExpander";
@@ -42,40 +42,33 @@ namespace AgentMesh.Application.Services.EWSteps
             {
                 StructuredUserRequest = sr,
                 GenerateHydeQueries = intentCategory == UserIntentCategory.Documentation,
-                DocumentationQueriesGenerationReference = LoadDocumentationQueriesGenerationReference()
+                DocumentationQueriesGenerationReference = qmdQueryTypesDocumentationParameter.ParameterValue
             };
 
-            var agentOutput = await knowledgeBaseQueryExpanderAgent.ExecuteAsync(agentInput, cancellationToken);
+            var agentOutput = await knowledgeBaseQueryExpanderAgent.ExecuteAsync([
+                requestDateTimeParameter,
+                qmdQueryTypesDocumentationParameter,
+                userIntentParameter,
+                intentCategoryParameter,
+                userRequestedActionsParameter,
+                userProvidedDataParameter,
+                ], cancellationToken);
 
-            var searchQueries = agentOutput.SearchQueries.ToList();
-            if (intentCategory != UserIntentCategory.Documentation)
+            var searchQueries = agentOutput.Result.ToList();
+            if (intentCategory != UserIntentCategory.Documentation) // safety net
             {
                 searchQueries = searchQueries
                     .Where(q => q.SearchType != AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.HypotheticalDocument)
                     .ToList();
             }
 
-            domainsKnowledgeBaseQueryParameter.ParameterValue = searchQueries;
+            domainsKnowledgeBaseQueryParameter.ParameterValue = searchQueries.Select(s => new Models.KnowledgeBase.KnowledgeBaseQueryInputItem
+            {
+                Query = s.Query,
+                SearchType = s.SearchType
+            }).ToList();
 
             return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
-        }
-
-        private string? LoadDocumentationQueriesGenerationReference()
-        {
-            var candidatePaths = new[]
-            {
-                Path.Combine(AppContext.BaseDirectory, "Prompts", QmdQueryTypesFileName),
-                Path.Combine(Directory.GetCurrentDirectory(), "Prompts", QmdQueryTypesFileName),
-                Path.Combine(Directory.GetCurrentDirectory(), "AgentMeshCLI", "Prompts", QmdQueryTypesFileName)
-            };
-
-            foreach (var candidatePath in candidatePaths)
-            {
-                if (File.Exists(candidatePath))
-                    return File.ReadAllText(candidatePath);
-            }
-
-            return null;
         }
     }
 }

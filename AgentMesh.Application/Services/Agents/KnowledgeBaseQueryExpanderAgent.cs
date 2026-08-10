@@ -6,92 +6,39 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using AgentMesh.Models.KnowledgeBase;
-using AgentMesh.Application.Models.ChatMessages;
-using AgentMesh.Application.Models.KnowledgeBase;
+using AgentMesh.Application.Models.Agents;
+using AgentMesh.Utils;
+using AgentMesh.Application.Models.Workflows.Parameters;
 
 namespace AgentMesh.Application.Services.Agents
 {
     public sealed class KnowledgeBaseQueryExpanderAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<KnowledgeBaseQueryExpanderAgent> logger) : AgentBase<KnowledgeBaseQueryExpanderAgent.ParsedResponse>(logger, 
+        ILogger<KnowledgeBaseQueryExpanderAgent> logger,
+        IAgentInputSerializer agentInputSerializer) : AbstractAgent<IEnumerable<KnowledgeBaseQueryExpanderOutputItem>>(logger, 
             "KnowledgeBaseQueryExpander",
             openAIClientFactory,
-            resilience)
+            resilience,
+            agentInputSerializer)
     {
         private readonly ILogger<KnowledgeBaseQueryExpanderAgent> _logger = logger;
         private static readonly string[] AllowedQueryTypes = ["lex", "vec", "hyde"];
 
-        private static KnowledgeBaseQueryInputItem TranslateKnowledgeBaseQuery(QueryItem query)
+
+        protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            var normalizedType = AllowedQueryTypes.FirstOrDefault(type => type.Equals(query.Type, StringComparison.OrdinalIgnoreCase));
-
-            if (normalizedType == null)
-            {
-                throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}");
-            }
-
-            var searchType = normalizedType switch
-            {
-                "lex" => KnowledgeBaseQuerySearchType.Keyword,
-                "vec" => KnowledgeBaseQuerySearchType.Semantic,
-                "hyde" => KnowledgeBaseQuerySearchType.HypotheticalDocument,
-                _ => throw new ArgumentOutOfRangeException(nameof(query.Type), query.Type, $"Unsupported query type. Allowed values: {string.Join(", ", AllowedQueryTypes)}")
-            };
-
-            return new KnowledgeBaseQueryInputItem
-            {
-                Query = query.Query,
-                SearchType = searchType
-            };
+            return [
+                new () { ParameterName = EWParameterNames.RequestDateTime, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = EWParameterNames.QMDQueryTypesDocumentation, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] }
+                ];
         }
 
-        public async Task<KnowledgeBaseQueryExpanderAgentOutput> ExecuteAsync(
-            KnowledgeBaseQueryExpanderAgentInput input,
-            CancellationToken cancellationToken = default)
-        {
-            var userPayload = new
-            {
-                intent = input.StructuredUserRequest.Intent,
-                conversationTopic = input.StructuredUserRequest.ConversationTopic,
-                userRequestedActions = input.StructuredUserRequest.UserRequestedActions,
-                userProvidedData = input.StructuredUserRequest.UserProvidedData,
-                userPreferences = input.StructuredUserRequest.UserPreferences,
-                missingValues = input.StructuredUserRequest.MissingValues,
-                languageOfTheUser = input.StructuredUserRequest.LanguageOfTheUser
-            };
-
-            var systemMessages = new List<string>
-            {
-                $"Today date is {DateTime.UtcNow:yyyy-MM-dd}.",
-                input.GenerateHydeQueries
-                    ? "You are allowed to generate hypothetical document (HyDE) queries. Use them only when necessary."
-                    : "You are NOT allowed to generate hypothetical document (HyDE) queries. Do not generate them under any circumstances.",
-                $"This is the documentation queries generation reference:\n{input.DocumentationQueriesGenerationReference}"
-            };
-
-            var inputMessages = new List<AgentMessage>
-            {
-                new() { Role = AgentMessageRole.System, Content = string.Join(Environment.NewLine + Environment.NewLine, systemMessages) },
-                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
-            };
-
-            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
-
-            return new KnowledgeBaseQueryExpanderAgentOutput
-            {
-                SearchQueries = result.Result.SearchQueries.Select(TranslateKnowledgeBaseQuery).ToList(),
-                InputTokenCount = result.InputTokenCount,
-                OutputTokenCount = result.OutputTokenCount,
-                TokenCount = result.TotalTokenCount
-            };
-        }
-
-        protected override ParsedResponse ParseStructuredResponse(string rawResponseText)
+        protected override IEnumerable<KnowledgeBaseQueryExpanderOutputItem> ParseStructuredResponse(string rawResponseText)
         {
             try
             {
-                var responseDTO = JsonSerializer.Deserialize<ParsedResponse>(rawResponseText);
+                var responseDTO = JsonSerializer.Deserialize<ParsedResponse>(rawResponseText, SerializationUtils.DefaultDeserializeOptions);
 
                 if (responseDTO == null)
                 {
@@ -99,9 +46,13 @@ namespace AgentMesh.Application.Services.Agents
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                responseDTO.SearchQueries ??= [];
+                var ret = responseDTO.SearchQueries.Select(query => new KnowledgeBaseQueryExpanderOutputItem
+                {
+                    Query = query.Query,
+                    SearchType = query.Type
+                }).ToList();
 
-                return responseDTO;
+                return ret;
             }
             catch (JsonException ex)
             {
@@ -119,15 +70,10 @@ namespace AgentMesh.Application.Services.Agents
         public class QueryItem
         {
             [JsonPropertyName("type")]
-            public string Type { get; set; } = string.Empty;
+            public KnowledgeBaseQuerySearchType Type { get; set; }
 
             [JsonPropertyName("query")]
             public string Query { get; set; } = string.Empty;
-
-            public override string ToString()
-            {
-                return $"Type: {Type}, Query: {Query}";
-            }
         }
     }
 }
