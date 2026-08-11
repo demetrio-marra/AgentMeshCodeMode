@@ -3,7 +3,7 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.Workflows;
+using AgentMesh.Models;
 using AgentMesh.Utils;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;

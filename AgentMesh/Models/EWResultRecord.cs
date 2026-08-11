@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Models.Workflows
+﻿namespace AgentMesh.Models
 {
     public record struct EWResultRecord(string ResponseForUser,
         int ContextSizeInTokens, 

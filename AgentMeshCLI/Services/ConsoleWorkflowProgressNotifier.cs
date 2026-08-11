@@ -1,5 +1,5 @@
 ﻿using AgentMesh.Helpers;
-using AgentMesh.Models.Workflows;
+using AgentMesh.Models;
 using System.ComponentModel;
 using System.Numerics;
 

@@ -1,6 +1,6 @@
 ﻿using AgentMesh.Services;
 
-namespace AgentMesh.Models.Workflows
+namespace AgentMesh.Models
 {
     public interface IEWParameter
     {

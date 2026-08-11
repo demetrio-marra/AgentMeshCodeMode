@@ -1,6 +1,6 @@
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.Agents;
-using AgentMesh.Models.Workflows;
+using AgentMesh.Models;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps

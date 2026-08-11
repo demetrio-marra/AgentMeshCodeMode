@@ -2,7 +2,7 @@
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.Workflows;
+using AgentMesh.Models;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services

@@ -12,7 +12,7 @@ using AgentMesh.Infrastructure.Mem0;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.QMD;
 using AgentMesh.Infrastructure.QMD.Services;
-using AgentMesh.Models.Workflows;
+using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
