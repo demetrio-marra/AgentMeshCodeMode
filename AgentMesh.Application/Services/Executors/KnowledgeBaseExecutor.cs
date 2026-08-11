@@ -1,7 +1,6 @@
 ﻿using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.KnowledgeBase;
-using AgentMesh.Models.KnowledgeBase;
 
 namespace AgentMesh.Application.Services.Executors
 {

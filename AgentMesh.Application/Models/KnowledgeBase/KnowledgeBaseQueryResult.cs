@@ -1,7 +1,6 @@
-﻿using AgentMesh.Application.Models.KnowledgeBase;
-using AgentMesh.Utils;
+﻿using AgentMesh.Utils;
 
-namespace AgentMesh.Models.KnowledgeBase
+namespace AgentMesh.Application.Models.KnowledgeBase
 {
     public class KnowledgeBaseQueryResult
     {

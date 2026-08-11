@@ -14,7 +14,7 @@ namespace AgentMesh.Application.Services.Agents
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
         ILogger<FunctionalAnalystAgent> logger,
-        IAgentInputSerializer agentInputSerializer) : AbstractAgent<FunctionalAnalysisResult>(logger, 
+        IAgentInputSerializer agentInputSerializer) : AbstractAgent<FunctionalAnalysis>(logger, 
             "FunctionalAnalyst", 
             openAIClientFactory, 
             resilience,
@@ -38,7 +38,7 @@ namespace AgentMesh.Application.Services.Agents
             ];
         }
 
-        protected override FunctionalAnalysisResult ParseStructuredResponse(string rawResponseText)
+        protected override FunctionalAnalysis ParseStructuredResponse(string rawResponseText)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace AgentMesh.Application.Services.Agents
                     throw new BadStructuredResponseException(rawResponseText, "The model's response rejected the request without providing reasonOfRejection.");
                 }
 
-                return new FunctionalAnalysisResult
+                return new FunctionalAnalysis
                 {
                     BusinessRequirements = responseDTO.BusinessRequirements,
                     RequestRejected = responseDTO.RequestRejected,
