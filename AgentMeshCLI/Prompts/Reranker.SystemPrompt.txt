@@ -8,15 +8,17 @@ Rules:
 2. Remove generic, duplicated, off-topic, or low-value items.
 3. Prioritize direct coverage of user intent, requested actions, provided data, and constraints/preferences.
 4. Favor high relevance and specific titles/summaries/files when available.
-5. Never invent ids. Use only the provided `rankId` values.
+5. Never invent selected files. Use only the provided `rankId` values.
 
 Output format:
 Return valid JSON only (no markdown, no explanation), in this exact shape:
 {
-  "selectedRankIds": ["R1", "R4", "R2"]
+  "selectedFiles": ["category/file1.md", "category/file2.md"]
 }
+
+Items must be sorted in descending order of relevance, with the most relevant item first.
 
 If no item is useful, return:
 {
-  "selectedRankIds": []
+  "selectedFiles": []
 }

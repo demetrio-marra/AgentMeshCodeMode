@@ -1,5 +1,3 @@
-using AgentMesh.Application.Models.RequestAnalysis;
-using AgentMesh.Application.Models.Reranker;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Models.Workflows;
@@ -9,7 +7,13 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class RerankerEWAgenticStep(
         RerankerAgent rerankerAgent,
+        RequestDateTimeParameter requestDateTimeParameter,
         UserIntentParameter userIntentParameter,
+        ConversationTopicParameter conversationTopicParameter,
+        UserRequestedActionsParameter userRequestedActionsParameter,
+        UserProvidedDataParameter userProvidedDataParameter,
+        UserPreferencesParameter userPreferencesParameter,
+        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
         KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter) : IEWAgenticStep
     {
         public string Name => "Reranker";
@@ -22,26 +26,22 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var candidates = (knowledgeBaseQueryResultsParameter.ParameterValue ?? []).ToList();
-            if (candidates.Count == 0)
-            {
-                return new EWAgenticStepResultRecord(null, null);
-            }
+            var agentOutput = await rerankerAgent.ExecuteAsync([
+                requestDateTimeParameter,
+                knowledgeBaseQueryResultsParameter,
+                userIntentParameter,
+                conversationTopicParameter,
+                userRequestedActionsParameter,
+                userProvidedDataParameter,
+                userPreferencesParameter,
+                pastMemoriesQueryResultsParameter,
+                ], cancellationToken);
 
-            var sr = new StructuredUserRequest
-            {
-                Intent = userIntentParameter.ParameterValue ?? string.Empty
-            };
+            // TODO: filter knowledgebase depending on agentOutput file names
+            var result = knowledgeBaseQueryResultsParameter.ParameterValue!.Where(p => agentOutput.Result.Contains(p.File, StringComparer.OrdinalIgnoreCase))
+                .ToList();
 
-            var agentInput = new RerankerAgentInput
-            {
-                StructuredUserRequest = sr,
-                QueryResults = candidates
-            };
-
-            var agentOutput = await rerankerAgent.ExecuteAsync(agentInput, cancellationToken);
-
-            knowledgeBaseQueryResultsParameter.ParameterValue = agentOutput.QueryResults;
+            knowledgeBaseQueryResultsParameter.ParameterValue = result;
 
             return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
         }
