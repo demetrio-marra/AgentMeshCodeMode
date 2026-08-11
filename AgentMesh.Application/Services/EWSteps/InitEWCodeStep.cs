@@ -1,5 +1,5 @@
 ﻿using AgentMesh.Application.Models.ChatMessages;
-using AgentMesh.Application.Models.CostsAnalysis;
+using AgentMesh.Application.Models.Conversation;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Services;
 

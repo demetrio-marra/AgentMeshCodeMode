@@ -1,6 +1,6 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Models.CostsAnalysis;
+using AgentMesh.Application.Models.Conversation;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Application.Services.Executors;
