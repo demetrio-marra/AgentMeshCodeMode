@@ -1,9 +1,8 @@
-using AgentMesh.Application.Models.ChatClient;
 using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Application.Models.ConversationSummarization
 {
-    public class ConversationSummarizerAgentOutput : IAgentOutput
+    public class ConversationSummarizerAgentOutput
     {
         public string Summary { get; set; } = string.Empty;
         public IEnumerable<ContextMessage> NewConversation { get; set; } = [];

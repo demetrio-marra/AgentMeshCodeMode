@@ -1,9 +1,8 @@
-using AgentMesh.Application.Models.ChatClient;
 using AgentMesh.Utils;
 
 namespace AgentMesh.Application.Models.RelevantFactsEvaluator
 {
-    public class RelevantFactsEvaluatorAgentOutput : IAgentOutput
+    public class RelevantFactsEvaluatorAgentOutput
     {
         public IEnumerable<string> RelevantUserMessages { get; set; } = [];
         public int TokenCount { get; set; }
