@@ -54,23 +54,23 @@ namespace AgentMesh.Services
                 }
 
                 var questionDateTime = DateTime.UtcNow;
-                var currentConversation = conversationContext.Conversation.ToList();
 
-                var executionScope = serviceProvider.CreateScope();
-                var pipeline = executionScope.ServiceProvider.GetRequiredService<EWPipeline>();
-
-                var result = await pipeline.ExecuteAsync(question!, currentConversation);
-                var usageStatistics = result.Steps.ToList();
-
-                var answerDateTime = DateTime.UtcNow;
-
-                currentConversation.Add(new ContextMessage
+                conversationContext.Conversation = conversationContext.Conversation.Append(new()
                 {
                     Role = ContextMessageRole.User,
                     Date = questionDateTime,
                     Text = question!,
                 });
-                currentConversation.Add(new ContextMessage
+
+                var executionScope = serviceProvider.CreateScope();
+                var pipeline = executionScope.ServiceProvider.GetRequiredService<EWPipeline>();
+
+                var result = await pipeline.ExecuteAsync(cancellationToken);
+                var usageStatistics = result.Steps.ToList();
+
+                var answerDateTime = DateTime.UtcNow;
+
+                conversationContext.Conversation = conversationContext.Conversation.Append(new()
                 {
                     Role = ContextMessageRole.Assistant,
                     Date = answerDateTime,
@@ -78,7 +78,6 @@ namespace AgentMesh.Services
                 });
 
                 conversationContext.TokensCount = result.ContextSizeInTokens;
-                conversationContext.Conversation = currentConversation;
 
                 ConsoleHelper.WriteLineWithColor("\nResponse for user:", ConsoleColor.Gray);
                 ConsoleHelper.WriteLineWithColor(result.ResponseForUser, ConsoleColor.Cyan);

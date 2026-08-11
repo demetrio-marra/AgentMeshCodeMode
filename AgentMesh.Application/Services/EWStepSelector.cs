@@ -8,6 +8,8 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Services
 {
     public class EWStepSelector(
+        InitEWCodeStep initEWCodeStep,
+
         IntentCategoryParameter intentCategoryParameter,
         MissingValuesParameter missingValuesParameter,
         KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
@@ -44,6 +46,9 @@ namespace AgentMesh.Application.Services
         DomainExpertEWAgenticStep domainExpertEWStep,
         PersonalAssistantEWAgenticStep personalAssistantEWStep) : IEWStepSelector
     {
+        public IEWCodeStep GetInitStep() => initEWCodeStep;
+
+
         // here list all variables needed to control the execution of steps that reads and writes the same parameters.
         private bool _rerankerHasRun = false;
         private bool _domainExpertHasRun = false;

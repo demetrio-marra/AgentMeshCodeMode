@@ -7,6 +7,12 @@
     public interface IEWStepSelector
     {
         /// <summary>
+        /// The step which initializes workflow parameters
+        /// </summary>
+        /// <returns></returns>
+        IEWCodeStep GetInitStep();
+
+        /// <summary>
         /// Returns the next steps to run in the workflow based on the provided parameters.
         /// If no more steps are available, it returns an empty collection.
         /// </summary>

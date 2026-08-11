@@ -1,4 +1,3 @@
-using AgentMesh.Models.ChatMessages;
 using AgentMesh.Models.Workflows;
 
 namespace AgentMesh.Services
@@ -19,20 +18,12 @@ namespace AgentMesh.Services
             _workflowProgressNotifier = workflowProgressNotifier;
         }
 
-        public async Task<EWResultRecord> ExecuteAsync(
-            string userInput,
-            IEnumerable<ContextMessage> chatHistory,
-            CancellationToken cancellationToken = default)
+        public async Task<EWResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             await _workflowProgressNotifier.NotifyWorkflowStart();
 
-            var userInputParameter = _ewParametersProvider.GetUserCurrentRequestParameter()
-                ?? throw new InvalidOperationException("User input parameter is not defined.");
-            var conversationHistoryParameter = _ewParametersProvider.GetConversationHistoryParameter()
-                ?? throw new InvalidOperationException("Conversation history parameter is not defined.");
-
-            SetParameterValue(userInputParameter, userInput);
-            SetParameterValue(conversationHistoryParameter, chatHistory);
+            var initStep = _ewStepSelector.GetInitStep();
+            await RunStep(initStep, cancellationToken);
 
             var stepRuns = new List<PlannedStepsRun>();
             var nextSteps = _ewStepSelector.NextStepsToRun();
@@ -132,17 +123,6 @@ namespace AgentMesh.Services
                 Result = stepResultRecord,
                 Statistics = stepStatistics
             };
-        }
-
-        private static void SetParameterValue<T>(IEWParameter parameter, T value)
-        {
-            if (parameter is EWParameter<T> typedParameter)
-            {
-                typedParameter.ParameterValue = value;
-                return;
-            }
-
-            throw new InvalidOperationException($"Parameter '{parameter.Name}' is not of expected type '{typeof(T).Name}'.");
         }
 
         private static List<EWDisplayParameterRecord> CreateDisplaySnapshot(IEnumerable<IEWParameter> parameters)
