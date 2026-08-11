@@ -5,7 +5,6 @@ using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Application.Models.RelevantFactsEvaluator;
 using AgentMesh.Models.Workflows;
-using AgentMesh.Models.ChatMessages;
 using AgentMesh.Application.Models.ConversationSummarization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -13,6 +12,7 @@ using AgentMesh.Application.Models.CostsAnalysis;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Application.Services.Executors;
 using System.Globalization;
+using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Services
 {

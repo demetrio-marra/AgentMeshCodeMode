@@ -1,7 +1,6 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.ChatMessages;
 using AgentMesh.Application.Models.RelevantFactsEvaluator;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;

@@ -1,5 +1,5 @@
 ﻿using AgentMesh.Application.Models.AgentMemory;
-using AgentMesh.Models.ChatMessages;
+using AgentMesh.Application.Models.ChatMessages;
 
 namespace AgentMesh.Application.Contracts
 {

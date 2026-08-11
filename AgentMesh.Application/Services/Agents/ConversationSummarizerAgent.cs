@@ -2,7 +2,6 @@
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.ConversationSummarization;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.ChatMessages;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 

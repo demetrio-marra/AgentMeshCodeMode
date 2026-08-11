@@ -1,6 +1,6 @@
-﻿using AgentMesh.Application.Models.CostsAnalysis;
+﻿using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.CostsAnalysis;
 using AgentMesh.Application.Models.Workflows.Parameters;
-using AgentMesh.Models.ChatMessages;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
