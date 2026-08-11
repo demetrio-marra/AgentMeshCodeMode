@@ -1,7 +1,8 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
-using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.TechnicalAnalyst;
+using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Utils;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -12,50 +13,25 @@ namespace AgentMesh.Application.Services.Agents
     public sealed class TechnicalAnalystAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<TechnicalAnalystAgent> logger) : AgentBase<TechnicalAnalystAgent.ParsedResponse>(logger,
+        ILogger<TechnicalAnalystAgent> logger,
+        IAgentInputSerializer agentInputSerializer) : AbstractAgent<TechnicalAnalysis>(logger,
             "TechnicalAnalyst", 
             openAIClientFactory, 
-            resilience)
+            resilience,
+            agentInputSerializer)
     {
         private readonly ILogger<TechnicalAnalystAgent> _logger = logger;
 
-        public async Task<TechnicalAnalystAgentOutput> ExecuteAsync(
-            TechnicalAnalystAgentInput input,
-            CancellationToken cancellationToken = default)
+
+        protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            var userPayload = new
-            {
-                input.Intent,
-                input.ConversationTopic,
-                input.UserRequestedActions,
-                input.UserProvidedData,
-                input.UserPreferences,
-                input.AgentMemories,
-                input.BusinessRequirements,
-                input.KnowledgeBaseDocumentsContent
-            };
-
-            var inputMessages = new List<AgentMessage>
-            {
-                new() { Role = AgentMessageRole.System, Content = $"Today date is {DateTime.UtcNow:yyyy-MM-dd}." },
-                new() { Role = AgentMessageRole.User, Content = JsonSerializer.Serialize(userPayload, AgentResponseJsonSerializationUtils.DefaultSerializeOptions) }
-            };
-
-            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
-
-            return new TechnicalAnalystAgentOutput
-            {
-                TechnicalSpecification = result.Result.TechnicalSpecification,
-                RequestRejected = result.Result.RequestRejected,
-                ReasonOfRejection = result.Result.ReasonOfRejection,
-                SelectedAPIsFileLocations = result.Result.SelectedAPIsFileLocations,
-                TokenCount = result.TotalTokenCount,
-                InputTokenCount = result.InputTokenCount,
-                OutputTokenCount = result.OutputTokenCount
-            };
+            return [
+                new() { ParameterName = EWParameterNames.RequestDateTime, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new() { ParameterName = EWParameterNames.KnowledgeBaseAPIDocumentsContent, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                ];
         }
 
-        protected override ParsedResponse ParseStructuredResponse(string rawResponseText)
+        protected override TechnicalAnalysis ParseStructuredResponse(string rawResponseText)
         {
             try
             {
@@ -89,7 +65,13 @@ namespace AgentMesh.Application.Services.Agents
                     responseDTO.SelectedAPIsFileLocations = Array.Empty<string>();
                 }
 
-                return responseDTO;
+                return new TechnicalAnalysis
+                {
+                    TechnicalSpecification = responseDTO.TechnicalSpecification,
+                    RequestRejected = responseDTO.RequestRejected,
+                    FilteredApisDocumentationFiles = responseDTO.SelectedAPIsFileLocations.ToList(),
+                    RequestRejectionReason = responseDTO.ReasonOfRejection
+                };
             }
             catch (JsonException ex)
             {
