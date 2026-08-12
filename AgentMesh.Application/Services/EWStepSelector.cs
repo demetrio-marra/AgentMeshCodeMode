@@ -1,7 +1,6 @@
 ﻿using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.Workflows.Parameters;
 using AgentMesh.Application.Services.EWSteps;
-using AgentMesh.Models;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Services;
 
@@ -58,6 +57,7 @@ namespace AgentMesh.Application.Services
         BusinessRequirementsParameter businessRequirementsParameter,
         TechnicalSpecificationParameter technicalSpecificationParameter,
         RequestRejectedReasonParameter requestRejectedReasonParameter,
+        RequestRejectedFlagParameter requestRejectedFlagParameter,
         APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
         GeneratedCodeParameter generatedCodeParameter,
         PipelineResultDataParameter pipelineResultDataParameter,
@@ -87,8 +87,6 @@ namespace AgentMesh.Application.Services
 
 
         // here list all variables needed to control the execution of steps that reads and writes the same parameters.
-        private bool _rerankerHasRun = false;
-        private bool _domainExpertHasRun = false;
 
 
         public IEnumerable<IEWStep> NextStepsToRun()
@@ -139,145 +137,142 @@ namespace AgentMesh.Application.Services
 
         private IEnumerable<IEWStep> HandleDocumentingBranch()
         {
-            if (pastMemoriesQueryParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
-                && missingValuesParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            var steps = Enumerable.Empty<IEWStep>();
+
+            if (RunOnce([agentMemoryQueryExpanderEWStep], out steps,
+                () => missingValuesParameter.ParameterValue?.Any() ?? false))
             {
-                return [agentMemoryQueryExpanderEWStep];
+                return steps;
             }
 
-            if (pastMemoriesQueryResultsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
-                && pastMemoriesQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([agentMemoryServiceEWStep], out steps,
+              () => pastMemoriesQueryParameter.ParameterValue?.Any() ?? false))
             {
-                return [agentMemoryServiceEWStep];
+                return steps;
             }
 
-            if (domainsKnowledgeBaseQueryParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
             {
-                return [knowledgeBaseQueryExpanderEWStep];
+                return steps;
             }
 
-            if (domainsKnowledgeBaseQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder
-                && knowledgeBaseQueryResultsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([domainsKnowledgeBaseServiceSearchEWStep], out steps,
+                () => domainsKnowledgeBaseQueryParameter.ParameterValue?.Any() ?? false))
             {
-                return [domainsKnowledgeBaseServiceSearchEWStep];
+                return steps;
             }
 
-            if (_rerankerHasRun == false)
+            if (RunOnce([rerankerEWStep], out steps))
             {
-                _rerankerHasRun = true;
-                return [rerankerEWStep];
+                return steps;
             }
 
-            if (domainsKnowledgeBaseDocumentsContentParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
-                && domainsKnowledgeBaseQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([domainsKnowledgeBaseDocumentsExtractorEWStep], out steps,
+                () => knowledgeBaseQueryResultsParameter.ParameterValue?.Any() ?? false))
             {
-                return [domainsKnowledgeBaseDocumentsExtractorEWStep];
+                return steps;
             }
 
-            if (pipelineResultDataParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([documentationEWStep], out steps))
             {
-                return [documentationEWStep];
+                return steps;
             }
 
-            if (finalAnswerParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([personalAssistantEWStep], out steps))
             {
-                return [personalAssistantEWStep];
+                return steps;
             }
-            else
-            {
-                return [];
-            }
+
+            return steps;
         }
 
         private IEnumerable<IEWStep> HandleTaskExecutionBranch()
         {
-            if (pastMemoriesQueryParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
-               && missingValuesParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            var steps = Enumerable.Empty<IEWStep>();
+
+            if (RunOnce([agentMemoryQueryExpanderEWStep], out steps,
+               () => missingValuesParameter.ParameterValue?.Any() ?? false))
             {
-                return [agentMemoryQueryExpanderEWStep];
+                return steps;
             }
 
-            if (pastMemoriesQueryResultsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
-                && pastMemoriesQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([agentMemoryServiceEWStep], out steps,
+              () => pastMemoriesQueryParameter.ParameterValue?.Any() ?? false))
             {
-                return [agentMemoryServiceEWStep];
+                return steps;
             }
 
-            if (domainsKnowledgeBaseQueryParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
             {
-                return [knowledgeBaseQueryExpanderEWStep];
+                return steps;
             }
 
-            if (domainsKnowledgeBaseQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder
-                && knowledgeBaseQueryResultsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([domainsKnowledgeBaseServiceSearchEWStep], out steps,
+                () => domainsKnowledgeBaseQueryParameter.ParameterValue?.Any() ?? false))
             {
-                return [domainsKnowledgeBaseServiceSearchEWStep];
+                return steps;
             }
 
-            if (_rerankerHasRun == false)
+            if (RunOnce([rerankerEWStep], out steps))
             {
-                _rerankerHasRun = true;
-                return [rerankerEWStep];
+                return steps;
             }
 
-            if (domainsKnowledgeBaseDocumentsContentParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
-                && domainsKnowledgeBaseQueryParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([domainsKnowledgeBaseDocumentsExtractorEWStep], out steps,
+                () => knowledgeBaseQueryResultsParameter.ParameterValue?.Any() ?? false))
             {
-                return [domainsKnowledgeBaseDocumentsExtractorEWStep];
+                return steps;
             }
 
-            if (businessRequirementsParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([functionalAnalystEWStep, apisKnowledgeBaseServiceSearchEWStep], out steps))
             {
-                return [functionalAnalystEWStep, apisKnowledgeBaseServiceSearchEWStep];
+                return steps;
             }
 
-            if (apisKnowledgeBaseQueryResultsParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder
-                && knowledgeBaseAPIDocumentsContentParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            var requestWasRejected = requestRejectedFlagParameter.ParameterValue;
+
+            if (RunOnce([apiKnowledgeBaseDocumentsExtractorEWStep], out steps,
+                    () => !requestWasRejected
+                        && (apisKnowledgeBaseQueryResultsParameter.ParameterValue?.Any() ?? false)))
             {
-                return [apiKnowledgeBaseDocumentsExtractorEWStep];
+                return steps;
             }
 
-            if (technicalSpecificationParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
-                && businessRequirementsParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([technicalAnalystEWStep], out steps,
+                () => !requestWasRejected))
             {
-                return [technicalAnalystEWStep];
+                return steps;
             }
 
-            if (requestRejectedReasonParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder
-                && finalAnswerParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([coderEWStep], out steps,
+                () => !requestWasRejected
+                    && technicalSpecificationParameter.ParameterValue != null))
             {
-                return [personalAssistantEWStep];
+                return steps;
             }
 
-            if (generatedCodeParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
-                && technicalSpecificationParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([jsSandboxEWStep], out steps,
+                () => !requestWasRejected
+                    && generatedCodeParameter.ParameterValue != null))
             {
-                return [coderEWStep];
+                return steps;
             }
 
-            if (pipelineResultDataParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder
-                && generatedCodeParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([domainExpertEWStep], out steps,
+                () => !requestWasRejected
+                    && workflowConfiguration.EnableDomainExpert
+                    && !executionErrorParameter.ParameterValue
+                    && pipelineResultDataParameter.ParameterValue != null))
             {
-                return [jsSandboxEWStep];
+                return steps;
             }
 
-            if (workflowConfiguration.EnableDomainExpert
-                && !_domainExpertHasRun
-                && !executionErrorParameter.ParameterValue
-                && pipelineResultDataParameter.GetDisplayValue() != EWParameterConstants.NoDataPlaceholder)
+            if (RunOnce([personalAssistantEWStep], out steps))
             {
-                _domainExpertHasRun = true;
-                return [domainExpertEWStep];
+                return steps;
             }
 
-            if (finalAnswerParameter.GetDisplayValue() == EWParameterConstants.NoDataPlaceholder)
-            {
-                return [personalAssistantEWStep];
-            }
-            else
-            {
-                return [];
-            }
+            return steps;
         }
 
         private PipelineBranchValue GuessPipelineBranch()
@@ -287,6 +282,7 @@ namespace AgentMesh.Application.Services
                 UserIntentCategory.Other => PipelineBranchValue.OtherTopics,
                 UserIntentCategory.Documentation => PipelineBranchValue.Documenting,
                 UserIntentCategory.TaskExecution => PipelineBranchValue.TaskExecution,
+                _ => throw new NotImplementedException(),
             };
         }
 
@@ -297,7 +293,7 @@ namespace AgentMesh.Application.Services
             TaskExecution
         }
 
-        private readonly Dictionary<string, bool> _runOnceDictionary = [];
+        private readonly Dictionary<string, int> _runCountDictionary = [];
         private bool RunOnce(IEnumerable<IEWStep> steps,
             out IEnumerable<IEWStep> stepsToRun,
             Func<bool>? runCondition = null)
@@ -313,15 +309,15 @@ namespace AgentMesh.Application.Services
             var ls = new List<IEWStep>();
             foreach (var step in steps)
             {
-                if (!_runOnceDictionary.TryGetValue(step.Name, out bool hasRun) || !hasRun)
+                if (!_runCountDictionary.TryGetValue(step.Name, out int runCount) || runCount <= 0)
                 {
                     ls.Add(step);
-                    _runOnceDictionary[step.Name] = true;
+                    _runCountDictionary[step.Name] = runCount + 1;
                 }
             }
             stepsToRun = ls;
 
-            return ls.Any();
+            return ls.Count != 0;
         }
     }
 }
