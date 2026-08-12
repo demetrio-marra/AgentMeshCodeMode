@@ -37,7 +37,7 @@ namespace AgentMesh.Application.Services.EWSteps
                 pastMemoriesQueryResultsParameter,
                 ], cancellationToken);
 
-            // TODO: filter knowledgebase depending on agentOutput file names
+            // filter knowledgebase depending on agentOutput file names
             var result = knowledgeBaseQueryResultsParameter.ParameterValue!.Where(p => agentOutput.Result.Contains(p.File, StringComparer.OrdinalIgnoreCase))
                 .ToList();
 
