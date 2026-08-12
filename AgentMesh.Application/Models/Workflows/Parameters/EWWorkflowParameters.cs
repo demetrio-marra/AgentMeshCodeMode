@@ -82,33 +82,37 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
 
     public sealed class UserPreferencesParameter : EWParameter<IEnumerable<string>>
     {
-        public UserPreferencesParameter()
+        public UserPreferencesParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.UserPreferences;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
     public sealed class UserProvidedDataParameter : EWParameter<IEnumerable<string>>
     {
-        public UserProvidedDataParameter()
+        public UserProvidedDataParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.UserProvidedData;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
     public sealed class UserRequestedActionsParameter : EWParameter<IEnumerable<string>>
     {
-        public UserRequestedActionsParameter()
+        public UserRequestedActionsParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.UserRequestedActions;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
     public sealed class MissingValuesParameter : EWParameter<IEnumerable<string>>
     {
-        public MissingValuesParameter()
+        public MissingValuesParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = EWParameterNames.MissingValues;
+            DisplayValueSerializer = displayValueSerializer;
         }
     }
 
@@ -290,7 +294,7 @@ namespace AgentMesh.Application.Models.Workflows.Parameters
             ParameterValue = LoadDocumentationQueriesGenerationReference();
         }
 
-        private string? LoadDocumentationQueriesGenerationReference()
+        private static string? LoadDocumentationQueriesGenerationReference()
         {
             var candidatePaths = new[]
             {
