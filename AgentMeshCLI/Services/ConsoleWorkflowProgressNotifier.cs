@@ -1,7 +1,5 @@
 ﻿using AgentMesh.Helpers;
 using AgentMesh.Models;
-using System.ComponentModel;
-using System.Numerics;
 
 namespace AgentMesh.Services
 {
@@ -21,14 +19,14 @@ namespace AgentMesh.Services
 
         public async Task NotifyWorkflowStepStarted(string stepName)
         {
-            ConsoleHelper.WriteLineWithColor($"Workflow step '{stepName}' has started.", ConsoleColor.DarkGray);
+            ConsoleHelper.WriteLineWithColor($"Workflow step '{stepName}' is running...", ConsoleColor.DarkGray);
             await Task.CompletedTask;
         }
 
         public async Task NotifyWorkflowStepCompleted(string stepName, EWStepStatisticsRecord statistics)
         {
             ConsoleHelper.WriteLineWithColor($"Workflow step '{stepName}' has completed.", ConsoleColor.Yellow);
-            WriteExecStatistic("StepName", statistics.StepName);
+            WriteExecStatistic("Step", statistics.StepName + " " + (statistics.IsAgentic ? "(Agentic)" : "(Code)"));
             WriteExecStatistic("Elapsed", statistics.HumanReadableElapsed);
 
             var parametersDiff = statistics.ParametersDiff.ToList();
