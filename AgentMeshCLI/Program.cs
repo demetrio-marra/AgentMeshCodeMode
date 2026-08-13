@@ -162,6 +162,8 @@ namespace AgentMesh
                .Services
                .AddSingleton(sp => sp.GetRequiredService<IOptions<UserConfiguration>>().Value);
 
+            services.AddSingleton<AppInstance>();
+
             services.AddHostedService<UserConsoleInputService>();
 
             var host = builder.Build();

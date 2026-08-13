@@ -1,4 +1,5 @@
-﻿using AgentMesh.Models;
+﻿using AgentMesh.Application.Models.Costs;
+using AgentMesh.Models;
 
 namespace AgentMesh.Helpers
 {
@@ -60,9 +61,12 @@ namespace AgentMesh.Helpers
             return $"{hours}h{remainingMinutes}m{remainingSeconds}s";
         }
 
-        public static void PrintTokenUsageSummary(IEnumerable<EWStepStatisticsRecord> tokenUsageEntries, Dictionary<string, decimal> agentInputCosts, Dictionary<string, decimal> agentOutputCosts)
+        public static void PrintTokenUsageSummary(IEnumerable<EWStepStatisticsRecord> tokenUsageEntries,
+            IEnumerable<AgentExecutionCost> costsData)
         {
             var entries = tokenUsageEntries.ToList();
+            var agentInputCosts = costsData.ToDictionary(c => c.AgentName, c => c.CostPerMillionInputTokens);
+            var agentOutputCosts = costsData.ToDictionary(c => c.AgentName, c => c.CostPerMillionOutputTokens);
 
             if (entries.Count == 0)
             {
