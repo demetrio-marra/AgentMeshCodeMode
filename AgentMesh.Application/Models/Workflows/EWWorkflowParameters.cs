@@ -42,6 +42,17 @@ namespace AgentMesh.Application.Models.Workflows
         }
     }
 
+    public sealed class RelevantConversationMessagesParameter : EWParameter<IEnumerable<ContextMessage>>
+    {
+        public const string ParamName = "Relevant context messages";
+        public RelevantConversationMessagesParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
+        {
+            Name = ParamName;
+            IsConversationHistoryParameter = false;
+            DisplayValueSerializer = displayValueSerializer;
+        }
+    }
+
     public sealed class UserIntentParameter : EWParameter<string>
     {
         public const string ParamName = "User intent";
