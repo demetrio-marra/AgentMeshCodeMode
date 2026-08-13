@@ -1,5 +1,5 @@
 ﻿using AgentMesh.Application.Configuration;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Services.EWSteps;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Services;

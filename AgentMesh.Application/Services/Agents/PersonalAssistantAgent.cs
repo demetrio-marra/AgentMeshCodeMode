@@ -2,7 +2,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.Conversation;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Utils;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -26,12 +26,12 @@ namespace AgentMesh.Application.Services.Agents
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
             return [
-                new () { ParameterName = EWParameterNames.RequestDateTime, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
-                new () { ParameterName = EWParameterNames.LanguageOfTheUser, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
-                new () { ParameterName = EWParameterNames.RequestRejectedFlag, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
-                new () { ParameterName = EWParameterNames.RequestRejectedReason, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
-                new () { ParameterName = EWParameterNames.ExecutionError, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
-                new () { ParameterName = EWParameterNames.PipelineResultData, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] }
+                new () { ParameterName = RequestDateTimeParameter.ParamName, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = LanguageOfTheUserParameter.ParamName, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = RequestRejectedFlagParameter.ParamName, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = RequestRejectedReasonParameter.ParamName, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = ExecutionErrorParameter.ParamName, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = PipelineResultDataParameter.ParamName, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] }
             ];
         }
 

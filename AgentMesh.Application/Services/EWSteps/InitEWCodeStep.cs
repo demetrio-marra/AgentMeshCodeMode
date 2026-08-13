@@ -1,6 +1,6 @@
 ﻿using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.Conversation;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps

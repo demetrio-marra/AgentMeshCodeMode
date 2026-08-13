@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Utils;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Models.Workflows;
 
 namespace AgentMesh.Application.Services.Agents
 {
@@ -27,9 +27,9 @@ namespace AgentMesh.Application.Services.Agents
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
             return [
-                new () { ParameterName = EWParameterNames.RequestDateTime, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
-                new () { ParameterName = EWParameterNames.LanguageOfTheDocumentation, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
-                new () { ParameterName = EWParameterNames.QMDQueryTypesDocumentation, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] }
+                new () { ParameterName = RequestDateTimeParameter.ParamName, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = LanguageOfTheDocumentationParameter.ParamName, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new () { ParameterName = QMDQueryTypesDocumentationParameter.ParamName, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] }
                 ];
         }
 

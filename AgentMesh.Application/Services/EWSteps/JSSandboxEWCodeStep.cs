@@ -1,6 +1,6 @@
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.CodeSandbox;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Services.Executors;
 using AgentMesh.Services;
 

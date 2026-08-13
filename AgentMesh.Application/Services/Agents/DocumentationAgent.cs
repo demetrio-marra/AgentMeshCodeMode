@@ -2,7 +2,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Utils;
 using Microsoft.Extensions.Logging;
 using AgentMesh.Application.Models.Agents;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Models.Workflows;
 
 namespace AgentMesh.Application.Services.Agents
 {
@@ -21,11 +21,11 @@ namespace AgentMesh.Application.Services.Agents
             return [
                 new()
                 {
-                    ParameterName = EWParameterNames.RequestDateTime,
+                    ParameterName = RequestDateTimeParameter.ParamName,
                     ParameterTags = [ApplicationConstants.AgentSystemParameterTag]
                 },
                 new() {
-                    ParameterName = EWParameterNames.DomainsKnowledgeBaseDocumentsContent,
+                    ParameterName = DomainsKnowledgeBaseDocumentsContentParameter.ParamName,
                     ParameterTags = [ApplicationConstants.AgentSystemParameterTag] 
                 }
             ];

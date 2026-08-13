@@ -2,7 +2,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.RequestAnalysis;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.RequestAnalysis;
 using Microsoft.Extensions.Logging;
@@ -25,19 +25,21 @@ namespace AgentMesh.Application.Services.Agents
 
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            return
+            return 
             [
-                 new()
+                new AgentInputParameterConfiguration
                 {
-                    ParameterName = EWParameterNames.RequestDateTime,
+                    ParameterName = RequestDateTimeParameter.ParamName,
                     ParameterTags = [ApplicationConstants.AgentSystemParameterTag]
                 },
-                new() {
-                    ParameterName = EWParameterNames.UserLastRequest,
+                new AgentInputParameterConfiguration
+                {
+                    ParameterName = UserLastRequestParameter.ParamName,
                     ParameterTags = []
                 },
-                new() {
-                    ParameterName = EWParameterNames.InitialContextMessages,
+                new AgentInputParameterConfiguration
+                {
+                    ParameterName = InitialContextMessagesParameter.ParamName,
                     ParameterTags = []
                 }
             ];

@@ -2,7 +2,7 @@ using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.TechnicalAnalyst;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Utils;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -26,8 +26,8 @@ namespace AgentMesh.Application.Services.Agents
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
             return [
-                new() { ParameterName = EWParameterNames.RequestDateTime, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
-                new() { ParameterName = EWParameterNames.KnowledgeBaseAPIDocumentsContent, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new() { ParameterName = RequestDateTimeParameter.ParamName, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
+                new() { ParameterName = KnowledgeBaseAPIDocumentsContentParameter.ParamName, ParameterTags = [ApplicationConstants.AgentSystemParameterTag] },
                 ];
         }
 

@@ -1,5 +1,5 @@
 ﻿using AgentMesh.Application.Models.AgentMemory;
-using AgentMesh.Application.Models.Workflows.Parameters;
+using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Models;
 using AgentMesh.Services;
