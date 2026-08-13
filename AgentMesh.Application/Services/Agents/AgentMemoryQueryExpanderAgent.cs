@@ -27,7 +27,7 @@ namespace AgentMesh.Application.Services.Agents
                 new()
                 {
                     ParameterName = RequestDateTimeParameter.ParamName,
-                    ParameterTags = [ApplicationConstants.AgentSystemParameterTag]
+                    ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 }
             ];
         }

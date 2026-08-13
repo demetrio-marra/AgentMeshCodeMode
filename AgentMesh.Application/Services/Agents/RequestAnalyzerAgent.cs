@@ -30,7 +30,7 @@ namespace AgentMesh.Application.Services.Agents
                 new AgentInputParameterConfiguration
                 {
                     ParameterName = RequestDateTimeParameter.ParamName,
-                    ParameterTags = [ApplicationConstants.AgentSystemParameterTag]
+                    ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 },
                 new AgentInputParameterConfiguration
                 {

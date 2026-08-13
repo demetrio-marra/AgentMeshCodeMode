@@ -1,5 +1,6 @@
 ﻿using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models;
 using System.Text.Json;
@@ -20,7 +21,7 @@ namespace AgentMesh.Application.Services.Agents
             foreach (var parameter in parameters)
             {
                 var config = pmc.GetValueOrDefault(parameter.Name);
-                bool isSystemParameter = config != null && config.Contains(ApplicationConstants.AgentSystemParameterTag, StringComparer.InvariantCultureIgnoreCase);
+                bool isSystemParameter = config != null && config.Contains(ParameterTags.AgentSystemParameterTag, StringComparer.InvariantCultureIgnoreCase);
 
                 if (isSystemParameter)
                 {

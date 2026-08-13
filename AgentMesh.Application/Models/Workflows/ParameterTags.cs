@@ -1,6 +1,6 @@
-﻿namespace AgentMesh.Application
+﻿namespace AgentMesh.Application.Models.Workflows
 {
-    public class ApplicationConstants
+    public class ParameterTags
     {
         public const string AgentSystemParameterTag = "AgentSystemParameter";
     }
