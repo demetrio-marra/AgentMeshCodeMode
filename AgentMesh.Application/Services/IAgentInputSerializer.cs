@@ -2,7 +2,7 @@
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Models;
 
-namespace AgentMesh.Application.Services.Agents
+namespace AgentMesh.Application.Services
 {
     public interface IAgentInputSerializer
     {
