@@ -202,10 +202,7 @@ namespace AgentMesh.Application.Services
 
             var memorySaverStartTime = DateTime.UtcNow;
 
-            await agentMemorySaverExecutor.SaveAsync(new AgentMemorySaverConversationInput
-            {
-                ConversationHistory = relevantConversation
-            });
+            await agentMemorySaverExecutor.SaveAsync(relevantConversation);
 
             var memorySaverEndTime = DateTime.UtcNow;
 

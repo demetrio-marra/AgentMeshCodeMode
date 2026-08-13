@@ -1,5 +1,6 @@
 ﻿using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.AgentMemory;
+using AgentMesh.Application.Models.ChatMessages;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -13,14 +14,14 @@ namespace AgentMesh.Application.Services.Executors
         private readonly IAgentMemoryService _agentMemoryService = agentMemoryService;
         private readonly UserConfiguration _userConfiguration = userConfiguration;
 
-        public async Task SaveAsync(AgentMemorySaverConversationInput input)
+        public async Task SaveAsync(IEnumerable<ContextMessage> input)
         {
             _logger.LogDebug("Executing AgentMemorySaver - SaveConversationHistoryAsync.");
             _logger.LogDebug("AgentMemorySaver - SaveConversationHistoryAsync Input: {Input}", System.Text.Json.JsonSerializer.Serialize(input));
 
             var stopwatch = Stopwatch.StartNew();
 
-            await _agentMemoryService.AddConversationHistory(_userConfiguration.AgentId, input.ConversationHistory);
+            await _agentMemoryService.AddConversationHistory(_userConfiguration.AgentId, input);
 
             stopwatch.Stop();
 
