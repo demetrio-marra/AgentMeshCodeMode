@@ -48,8 +48,26 @@ namespace AgentMesh.Application.Models.Workflows
         public RelevantConversationMessagesParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = ParamName;
-            IsConversationHistoryParameter = false;
             DisplayValueSerializer = displayValueSerializer;
+        }
+    }
+
+    public sealed class MessagesToSummarizeParameter : EWParameter<IEnumerable<ContextMessage>>
+    {
+        public const string ParamName = "Messages to summarize";
+        public MessagesToSummarizeParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
+        {
+            Name = ParamName;
+            DisplayValueSerializer = displayValueSerializer;
+        }
+    }
+
+    public sealed class SummarizedMessagesParameter : EWParameter<string>
+    {
+        public const string ParamName = "Summarized messages";
+        public SummarizedMessagesParameter()
+        {
+            Name = ParamName;
         }
     }
 
