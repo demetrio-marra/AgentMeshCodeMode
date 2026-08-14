@@ -42,16 +42,6 @@ namespace AgentMesh.Application.Models.Workflows
         }
     }
 
-    public sealed class RelevantConversationMessagesParameter : EWParameter<IEnumerable<ContextMessage>>
-    {
-        public const string ParamName = "Relevant context messages";
-        public RelevantConversationMessagesParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
-        {
-            Name = ParamName;
-            DisplayValueSerializer = displayValueSerializer;
-        }
-    }
-
     public sealed class MessagesToSummarizeParameter : EWParameter<IEnumerable<ContextMessage>>
     {
         public const string ParamName = "Messages to summarize";
@@ -62,10 +52,20 @@ namespace AgentMesh.Application.Models.Workflows
         }
     }
 
-    public sealed class SummarizedMessagesParameter : EWParameter<string>
+    public sealed class RelevantMessagesToSaveInAgentMemoryParameter : EWParameter<IEnumerable<ContextMessage>>
     {
-        public const string ParamName = "Summarized messages";
-        public SummarizedMessagesParameter()
+        public const string ParamName = "Relevant messages to save in agent memory";
+        public RelevantMessagesToSaveInAgentMemoryParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
+        {
+            Name = ParamName;
+            DisplayValueSerializer = displayValueSerializer;
+        }
+    }
+
+    public sealed class SummarizeLanguageParameter : EWParameter<string>
+    {
+        public const string ParamName = "Summarize in language";
+        public SummarizeLanguageParameter()
         {
             Name = ParamName;
         }

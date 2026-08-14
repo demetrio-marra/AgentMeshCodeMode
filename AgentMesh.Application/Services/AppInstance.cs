@@ -1,13 +1,9 @@
 ﻿using AgentMesh.Application.Configuration;
-using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.Conversation;
-using AgentMesh.Application.Models.ConversationSummarization;
 using AgentMesh.Application.Models.Costs;
-using AgentMesh.Application.Models.RelevantFactsEvaluator;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Services.Agents;
-using AgentMesh.Application.Services.Executors;
+using AgentMesh.Application.Services.EWSteps;
 using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,11 +18,7 @@ namespace AgentMesh.Application.Services
     public class AppInstance(IServiceProvider serviceProvider,
         ConversationContext conversationContext,
         IEnumerable<AgentFlatConfigurationRecord> agentsConfigurations,
-        ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration,
-        CodeModeWorkflowConfiguration workflowConfiguration,
-        ConversationSummarizerAgent conversationSummarizerAgent,
-        RelevantFactsEvaluatorAgent relevantFactsEvaluatorAgent,
-        AgentMemoryExecutor agentMemorySaverExecutor)
+        ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration)
     {
         public int CountOfMessages { get => conversationContext.Conversation.Count(); }
         public int CountOfTokensInContext { get => conversationContext.TokensCount; }
@@ -80,21 +72,22 @@ namespace AgentMesh.Application.Services
                 var memoryConversation = conversationContext.Conversation.ToList();
                 var summarizerConversation = conversationContext.Conversation.ToList();
 
-                var memorySaverTask = SaveConversationToAgentMemory(memoryConversation);
-                var summarizerTask = SummarizeChatContextTask(summarizerConversation);
+                var initSummarizationStep = serviceProvider.GetRequiredService<InitSummarizationEWCodeStep>();
+                await initSummarizationStep.ExecuteAsync(cancellationToken);
 
-                await Task.WhenAll(memorySaverTask, summarizerTask);
+                var summarizationStep = serviceProvider.GetRequiredService<ConversationSummarizerEWAgenticStep>();
+                var relevantFactsEvaluatorStep = serviceProvider.GetRequiredService<RelevantFactsEvaluatorEWAgenticStep>();
 
-                var memorySaverUsageEntries = await memorySaverTask;
-                var summarizerResult = await summarizerTask;
+                var summarizerTask = summarizationStep.ExecuteAsync(cancellationToken);
+                var relevantFactsEvaluatorTask = relevantFactsEvaluatorStep.ExecuteAsync(cancellationToken);
 
-                conversationContext.Conversation = summarizerResult.NewConversation;
+                await Task.WhenAll(relevantFactsEvaluatorTask, summarizerTask);
 
-                // Dopo la summarization il numero di token in conversazione, corrisponde esattamente al numero di token in output della summarization, perché la conversazione viene sostituita con la nuova conversazione sintetizzata.
-                conversationContext.TokensCount = summarizerResult.Usage.OutputTokens ?? 0;
+                var saveToMemoryStep = serviceProvider.GetRequiredService<AgentMemorySaverServiceEWCodeStep>();
+                await saveToMemoryStep.ExecuteAsync(cancellationToken);
 
-                usageStatistics.AddRange(memorySaverUsageEntries);
-                usageStatistics.Add(summarizerResult.Usage);
+                // TODO: wrap tasks in a pipeline to get the usage statistics for the summarization steps and add them to the main usage statistics list
+
                 summarizerHasRun = true;
             }
 
@@ -138,161 +131,6 @@ namespace AgentMesh.Application.Services
             }
             return costs;
         }
-
-        private async Task<List<EWStepStatisticsRecord>> SaveConversationToAgentMemory(List<ContextMessage> conversation)
-        {
-            var usageEntries = new List<EWStepStatisticsRecord>();
-
-            if (!workflowConfiguration.EnableMemoryService || !conversation.Any())
-            {
-                return usageEntries;
-            }
-
-            var userConversation = conversation
-                .Where(message => message.Role == ContextMessageRole.User)
-                .Where(message => !string.IsNullOrWhiteSpace(message.Text))
-                .ToList();
-
-            if (!userConversation.Any())
-            {
-                return usageEntries;
-            }
-
-            var evaluatorStartTime = DateTime.UtcNow;
-            var relevantMessagesResult = await relevantFactsEvaluatorAgent.ExecuteAsync(new RelevantFactsEvaluatorAgentInput
-            {
-                ConversationHistory = userConversation
-            });
-            var evaluatorEndTime = DateTime.UtcNow;
-
-            var relevantConversation = BuildRelevantConversationForMemory(conversation, relevantMessagesResult.RelevantUserMessages);
-            var relevantUserMessagesCount = relevantConversation.Count(message =>
-                message.Role == ContextMessageRole.User &&
-                !string.IsNullOrWhiteSpace(message.Text));
-
-            var relevantFactsEvaluatorUsageEntry = new EWStepStatisticsRecord(
-                StepName: "Relevant Facts Evaluator Agent",
-                StartedOnUtc: evaluatorStartTime,
-                CompletedOnUtc: evaluatorEndTime,
-                IsFirstAgenticStep: false,
-                IsLastAgenticStep: false,
-                ParametersBefore:
-                [
-                    new EWDisplayParameterRecord("UserMessagesCount", userConversation.Count.ToString()),
-                    new EWDisplayParameterRecord("RelevantUserMessages", "(Not evaluated yet)")
-                ],
-                ParametersAfter:
-                [
-                    new EWDisplayParameterRecord("UserMessagesCount", relevantUserMessagesCount.ToString()),
-                    new EWDisplayParameterRecord("RelevantUserMessages", relevantUserMessagesCount > 0 ? "<omitted for brevity>" : "(No relevant user messages)")
-                ],
-                IsAgentic: true,
-                AgentName: "RelevantFactsEvaluator",
-                InputTokens: relevantMessagesResult.InputTokenCount,
-                OutputTokens: relevantMessagesResult.OutputTokenCount
-            );
-
-            //await workflowProgressNotifier.NotifyWorkflowStepCompleted(relevantFactsEvaluatorUsageEntry.StepName, relevantFactsEvaluatorUsageEntry);
-            usageEntries.Add(relevantFactsEvaluatorUsageEntry);
-
-            if (relevantUserMessagesCount == 0)
-            {
-                return usageEntries;
-            }
-
-            var memorySaverStartTime = DateTime.UtcNow;
-
-            await agentMemorySaverExecutor.SaveAsync(relevantConversation);
-
-            var memorySaverEndTime = DateTime.UtcNow;
-
-            var memorySaverUsageEntry = new EWStepStatisticsRecord(
-                StepName: "Agent Memory Saver",
-                StartedOnUtc: memorySaverStartTime,
-                CompletedOnUtc: memorySaverEndTime,
-                IsFirstAgenticStep: false,
-                IsLastAgenticStep: false,
-                ParametersBefore:
-                [
-                    new EWDisplayParameterRecord("SavedMessagesCount", "0")
-                ],
-                ParametersAfter:
-                [
-                    new EWDisplayParameterRecord("SavedMessagesCount", relevantUserMessagesCount.ToString())
-                ],
-                IsAgentic: false,
-                AgentName: null,
-                InputTokens: null,
-                OutputTokens: null);
-
-            //await workflowProgressNotifier.NotifyWorkflowStepCompleted(memorySaverUsageEntry.StepName, memorySaverUsageEntry);
-            usageEntries.Add(memorySaverUsageEntry);
-
-            return usageEntries;
-        }
-
-        private async Task<(EWStepStatisticsRecord Usage, IEnumerable<ContextMessage> NewConversation)> SummarizeChatContextTask(List<ContextMessage> conversation)
-        {
-            var summarizerInput = new ConversationSummarizerAgentInput
-            {
-                Conversation = conversation,
-                CountOfMessagesToKeep = conversationSummarizerConfiguration.NumMessageToPreseve,
-                SummaryLanguage = conversationSummarizerConfiguration.SummarizeLanguage
-            };
-
-            var summarizationStartTime = DateTime.UtcNow;
-            var summarizationResult = await conversationSummarizerAgent.ExecuteAsync(summarizerInput);
-            var summarizationEndTime = DateTime.UtcNow;
-
-            var summarizationTokenUsageEntry = new EWStepStatisticsRecord(
-                StepName: "Conversation Summarizer Agent",
-                StartedOnUtc: summarizationStartTime,
-                CompletedOnUtc: summarizationEndTime,
-                IsFirstAgenticStep: false,
-                IsLastAgenticStep: false,
-                ParametersBefore:
-                [
-                    new EWDisplayParameterRecord("ConversationMessagesCount", summarizerInput.Conversation.Count().ToString()),
-                    new EWDisplayParameterRecord("Summary", "(Not generated yet)")
-                ],
-                ParametersAfter:
-                [
-                    new EWDisplayParameterRecord("ConversationMessagesCount", summarizationResult.NewConversation.Count().ToString()),
-                    new EWDisplayParameterRecord("Summary", summarizationResult.Summary.ToString())
-                ],
-                IsAgentic: true,
-                AgentName: ConversationSummarizerAgent.AgentName,
-                InputTokens: summarizationResult.InputTokenCount,
-                OutputTokens: summarizationResult.OutputTokenCount
-            );
-
-            //await workflowProgressNotifier.NotifyWorkflowStepCompleted(summarizationTokenUsageEntry.StepName, summarizationTokenUsageEntry);
-
-            return (summarizationTokenUsageEntry, summarizationResult.NewConversation);
-        }
-
-
-        private static List<ContextMessage> BuildRelevantConversationForMemory(IEnumerable<ContextMessage> conversation, IEnumerable<string> relevantUserMessages)
-        {
-            var normalizedRelevantMessages = relevantUserMessages
-                .Where(message => !string.IsNullOrWhiteSpace(message))
-                .Select(NormalizeMessageText)
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            return [.. conversation.Select(message => new ContextMessage
-            {
-                Role = message.Role,
-                Date = message.Date,
-                Text = message.Role == ContextMessageRole.User && normalizedRelevantMessages.Contains(NormalizeMessageText(message.Text))
-                    ? message.Text
-                    : string.Empty
-            })];
-        }
-
-        private static string NormalizeMessageText(string? value)
-            => string.Join(' ', (value ?? string.Empty)
-                .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-
 
 
         public Task GetLastExecutionDetails()

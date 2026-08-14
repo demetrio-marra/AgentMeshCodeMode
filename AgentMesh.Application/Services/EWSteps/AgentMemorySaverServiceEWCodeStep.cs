@@ -6,7 +6,7 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class AgentMemorySaverServiceEWCodeStep(
         AgentMemoryExecutor agentMemoryExecutor,
-        RelevantConversationMessagesParameter relevantConversationMessagesParameter) : IEWCodeStep
+        RelevantMessagesToSaveInAgentMemoryParameter relevantConversationMessagesParameter) : IEWCodeStep
     {
         public string Name => "Agent Memory Saver Service";
 

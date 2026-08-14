@@ -1,72 +1,49 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
-using AgentMesh.Application.Models.RelevantFactsEvaluator;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Models.Agents;
+using AgentMesh.Application.Models.Workflows;
 
 namespace AgentMesh.Application.Services.Agents
 {
     public sealed class RelevantFactsEvaluatorAgent(
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        ILogger<RelevantFactsEvaluatorAgent> logger) : AgentBase<List<string>>(logger, 
+        ILogger<RelevantFactsEvaluatorAgent> logger,
+        IAgentInputSerializer agentInputSerializer) : AbstractAgent<List<ContextMessage>>(logger, 
             "RelevantFactsEvaluator",
             openAIClientFactory, 
-            resilience)
+            resilience,
+            agentInputSerializer)
     {
         private readonly ILogger<RelevantFactsEvaluatorAgent> _logger = logger;
 
-        public async Task<RelevantFactsEvaluatorAgentOutput> ExecuteAsync(
-            RelevantFactsEvaluatorAgentInput input,
-            CancellationToken cancellationToken = default)
+
+        protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            var userMessages = input.ConversationHistory
-                .Where(message => message.Role == ContextMessageRole.User)
-                .Where(message => !string.IsNullOrWhiteSpace(message.Text))
-                .ToList();
-
-            if (userMessages.Count == 0)
-            {
-                return new RelevantFactsEvaluatorAgentOutput
+            return [
+                new AgentInputParameterConfiguration
                 {
-                    RelevantUserMessages = []
-                };
-            }
-
-            var serializedConversation = MessageSerializationUtils.SerializeConversationHistory(userMessages);
-
-            var inputMessages = new List<AgentMessage>
-            {
-                new() { Role = AgentMessageRole.User, Content = serializedConversation }
-            };
-
-            var result = await ExecuteWithRetryAsync(inputMessages, cancellationToken);
-
-            return new RelevantFactsEvaluatorAgentOutput
-            {
-                RelevantUserMessages = result.Result,
-                TokenCount = result.TotalTokenCount,
-                InputTokenCount = result.InputTokenCount,
-                OutputTokenCount = result.OutputTokenCount
-            };
+                    ParameterName = RequestDateTimeParameter.ParamName,
+                    ParameterTags = [ParameterTags.AgentSystemParameterTag]
+                }
+                ];
         }
 
-        protected override List<string> ParseStructuredResponse(string rawResponseText)
+        protected override List<ContextMessage> ParseStructuredResponse(string rawResponseText)
         {
             try
             {
-                var parsed = JsonSerializer.Deserialize<List<string>>(rawResponseText);
+                var parsed = JsonSerializer.Deserialize<IEnumerable<ContextMessage>>(rawResponseText);
                 if (parsed == null)
                 {
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into a list of user messages.");
                 }
 
-                return [.. parsed
-                    .Where(message => !string.IsNullOrWhiteSpace(message))
-                    .Select(message => message.Trim())
-                    .Distinct(StringComparer.OrdinalIgnoreCase)];
+                return [.. parsed];
             }
             catch (JsonException ex)
             {
