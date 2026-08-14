@@ -46,19 +46,30 @@ namespace AgentMesh.Application.Services
             var executionScope = serviceProvider.CreateScope();
             var pipeline = executionScope.ServiceProvider.GetRequiredService<EWPipeline>();
 
-            var result = await pipeline.ExecuteAsync(cancellationToken);
-            var usageStatistics = result.Steps.ToList();
+            var stepsStats = await pipeline.ExecuteAsync(cancellationToken);
+            var usageStatistics = stepsStats.ToList();
+
+            var parameters = executionScope.ServiceProvider.GetRequiredService<IEnumerable<IEWParameter>>();
 
             var answerDateTime = DateTime.UtcNow;
+            var answerText = parameters.First(p => p.IsResponseForUserParameter)?.GetDisplayValue() ?? string.Empty;
 
             conversationContext.Conversation = conversationContext.Conversation.Append(new()
             {
                 Role = ContextMessageRole.Assistant,
                 Date = answerDateTime,
-                Text = result.ResponseForUser,
+                Text = answerText,
             });
 
-            conversationContext.TokensCount = result.ContextSizeInTokens;
+            var fistAgenticStepStatistics = stepsStats.FirstOrDefault(s => s.IsFirstAgenticStep);
+            var lastAgenticStepStatistics = stepsStats.LastOrDefault(s => s.IsLastAgenticStep);
+            
+
+            var inputTokens = fistAgenticStepStatistics.InputTokens ?? 0;
+            var outputTokens = lastAgenticStepStatistics.OutputTokens ?? 0;
+
+            conversationContext.TokensCount = inputTokens + outputTokens;
+
             bool summarizerHasRun = false;
 
             int? countOfMessagesBeforeSummarization = null;
@@ -72,18 +83,18 @@ namespace AgentMesh.Application.Services
                 var memoryConversation = conversationContext.Conversation.ToList();
                 var summarizerConversation = conversationContext.Conversation.ToList();
 
-                var initSummarizationStep = serviceProvider.GetRequiredService<InitSummarizationEWCodeStep>();
+                var initSummarizationStep = executionScope.ServiceProvider.GetRequiredService<InitSummarizationEWCodeStep>();
                 await initSummarizationStep.ExecuteAsync(cancellationToken);
 
-                var summarizationStep = serviceProvider.GetRequiredService<ConversationSummarizerEWAgenticStep>();
-                var relevantFactsEvaluatorStep = serviceProvider.GetRequiredService<RelevantFactsEvaluatorEWAgenticStep>();
+                var summarizationStep = executionScope.ServiceProvider.GetRequiredService<ConversationSummarizerEWAgenticStep>();
+                var relevantFactsEvaluatorStep = executionScope.ServiceProvider.GetRequiredService<RelevantFactsEvaluatorEWAgenticStep>();
 
                 var summarizerTask = summarizationStep.ExecuteAsync(cancellationToken);
                 var relevantFactsEvaluatorTask = relevantFactsEvaluatorStep.ExecuteAsync(cancellationToken);
 
                 await Task.WhenAll(relevantFactsEvaluatorTask, summarizerTask);
 
-                var saveToMemoryStep = serviceProvider.GetRequiredService<AgentMemorySaverServiceEWCodeStep>();
+                var saveToMemoryStep = executionScope.ServiceProvider.GetRequiredService<AgentMemorySaverServiceEWCodeStep>();
                 await saveToMemoryStep.ExecuteAsync(cancellationToken);
 
                 // TODO: wrap tasks in a pipeline to get the usage statistics for the summarization steps and add them to the main usage statistics list
@@ -95,7 +106,7 @@ namespace AgentMesh.Application.Services
 
             return new WorkflowResult
             {
-                Message = result.ResponseForUser,
+                Message = answerText,
                 MainPipelineStepsData = usageStatistics,
                 ContextSummarizerHasRun = summarizerHasRun,
                 AgentsCostData = agentsCosts,

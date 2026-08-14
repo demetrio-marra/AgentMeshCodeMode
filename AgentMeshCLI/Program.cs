@@ -62,7 +62,6 @@ namespace AgentMesh
                 services.AddScoped(ewStepType);
             }
 
-            services.AddScoped<EWParametersProvider>();
             services.AddSingleton<IEnumerable<AgentFlatConfigurationRecord>>(AgentConfigurationReadHelper.ReadAgentConfigurations(appSettings, AppContext.BaseDirectory).ToArray());
             services.AddSingleton<IAgentInputSerializer, DefaultAgentInputSerializer>();
             // insert here

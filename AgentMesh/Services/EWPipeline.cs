@@ -2,31 +2,19 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Services
 {
-    public class EWPipeline
+    public class EWPipeline(IEWStepSelector ewStepSelector,
+        IWorkflowProgressNotifier workflowProgressNotifier,
+        IEnumerable<IEWParameter> parameters)
     {
-        private readonly EWParametersProvider _ewParametersProvider;
-        private readonly IEWStepSelector _ewStepSelector;
-        private readonly IWorkflowProgressNotifier _workflowProgressNotifier;
-
-        public EWPipeline(
-            EWParametersProvider ewParametersProvider,
-            IEWStepSelector ewStepSelector,
-            IWorkflowProgressNotifier workflowProgressNotifier)
+        public async Task<IEnumerable<EWStepStatisticsRecord>> ExecuteAsync(CancellationToken cancellationToken = default)
         {
-            _ewParametersProvider = ewParametersProvider;
-            _ewStepSelector = ewStepSelector;
-            _workflowProgressNotifier = workflowProgressNotifier;
-        }
+            await workflowProgressNotifier.NotifyWorkflowStart();
 
-        public async Task<EWResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
-        {
-            await _workflowProgressNotifier.NotifyWorkflowStart();
-
-            var initStep = _ewStepSelector.GetInitStep();
+            var initStep = ewStepSelector.GetInitStep();
             await RunStep(initStep, cancellationToken);
 
             var stepRuns = new List<PlannedStepsRun>();
-            var nextSteps = _ewStepSelector.NextStepsToRun();
+            var nextSteps = ewStepSelector.NextStepsToRun();
 
             while (nextSteps.Any())
             {
@@ -34,7 +22,7 @@ namespace AgentMesh.Services
 
                 foreach (var step in nextSteps)
                 {
-                    await _workflowProgressNotifier.NotifyWorkflowStepStarted(step.Name);
+                    await workflowProgressNotifier.NotifyWorkflowStepStarted(step.Name);
                 }
 
                 var currentStepRuns = await Task.WhenAll(stepTasks);
@@ -43,35 +31,22 @@ namespace AgentMesh.Services
 
                 foreach (var cs in currentStepRuns)
                 {
-                    await _workflowProgressNotifier.NotifyWorkflowStepCompleted(cs.Step.Name, cs.Statistics);
+                    await workflowProgressNotifier.NotifyWorkflowStepCompleted(cs.Step.Name, cs.Statistics);
                 }
 
-                nextSteps = _ewStepSelector.NextStepsToRun();
+                nextSteps = ewStepSelector.NextStepsToRun();
             }
 
-            var responseForUserParameter = _ewParametersProvider.GetResponseForUserParameter()
-                ?? throw new InvalidOperationException("Response for user parameter is not defined.");
+            await workflowProgressNotifier.NotifyWorkflowEnd();
 
-            var fistAgenticStepStatistics = stepRuns.FirstOrDefault(s => s.Step is IEWAgenticStep agenticStep && agenticStep.IsInputTokensCountSource)?.Statistics;
-            var lastAgenticStepStatistics = stepRuns.LastOrDefault(s => s.Step is IEWAgenticStep agenticStep && agenticStep.IsOutputTokensCountSource)?.Statistics;
-
-            var inputTokens = fistAgenticStepStatistics?.InputTokens ?? 0;
-            var outputTokens = lastAgenticStepStatistics?.OutputTokens ?? 0;
-            var contextSizeInTokens = inputTokens + outputTokens;
-
-            await _workflowProgressNotifier.NotifyWorkflowEnd();
-
-            return new EWResultRecord(
-                ResponseForUser: responseForUserParameter.GetDisplayValue(),
-                ContextSizeInTokens: contextSizeInTokens,
-                Steps: [.. stepRuns.Select(s => s.Statistics)]);
+            return stepRuns.Select(s => s.Statistics).ToList();
         }
 
         private async Task<PlannedStepsRun> RunStep(
             IEWStep step,
             CancellationToken cancellationToken)
         {
-            var parametersBeforeSnapshot = CreateDisplaySnapshot(_ewParametersProvider.GetParameters());
+            var parametersBeforeSnapshot = CreateDisplaySnapshot(parameters);
 
             EWAgenticStepResultRecord? stepResultRecord = null;
             string? agentName = null;
@@ -101,7 +76,7 @@ namespace AgentMesh.Services
 
             var stepEndTime = DateTime.UtcNow;
 
-            var parametersAfterSnapshot = CreateDisplaySnapshot(_ewParametersProvider.GetParameters());
+            var parametersAfterSnapshot = CreateDisplaySnapshot(parameters);
 
             var stepStatistics = new EWStepStatisticsRecord(
                 StepName: step.Name,
