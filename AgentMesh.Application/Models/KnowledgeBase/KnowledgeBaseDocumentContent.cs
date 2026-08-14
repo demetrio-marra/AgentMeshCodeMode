@@ -14,11 +14,5 @@
         /// The full content of the knowledge base entry, which may include the extracted relevant sections from the original documentation file.
         /// </summary>
         public string Content { get; set; } = string.Empty;
-
-
-        public string Print()
-        {
-            return $"File: {File}\nContent: {Content}";
-        }
     }
 }
