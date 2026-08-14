@@ -31,16 +31,6 @@ namespace AgentMesh.Application.Services.Agents
                 {
                     ParameterName = RequestDateTimeParameter.ParamName,
                     ParameterTags = [ParameterTags.AgentSystemParameterTag]
-                },
-                new AgentInputParameterConfiguration
-                {
-                    ParameterName = UserLastRequestParameter.ParamName,
-                    ParameterTags = []
-                },
-                new AgentInputParameterConfiguration
-                {
-                    ParameterName = InitialContextMessagesParameter.ParamName,
-                    ParameterTags = []
                 }
             ];
         }
