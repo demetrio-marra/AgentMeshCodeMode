@@ -4,6 +4,7 @@ using AgentMesh.Application.Models.Conversation;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Application.Services.Executors;
+using AgentMesh.Application.Services.Pipelines;
 using AgentMesh.Application.Utils;
 using AgentMesh.Configuration;
 using AgentMesh.Helpers;
@@ -65,8 +66,10 @@ namespace AgentMesh
             services.AddSingleton<IEnumerable<AgentFlatConfigurationRecord>>(AgentConfigurationReadHelper.ReadAgentConfigurations(appSettings, AppContext.BaseDirectory).ToArray());
             services.AddSingleton<IAgentInputSerializer, DefaultAgentInputSerializer>();
             // insert here
-            services.AddScoped<IEWStepSelector, EWStepSelector>();
-            services.AddScoped<EWPipeline>();
+            services.AddScoped<MainPipelineStepSelector>();
+            services.AddScoped<SummarizationPipelineStepSelector>();
+            services.AddScoped<MainPipeline>();
+            services.AddScoped<SummarizationPipeline>();
 
             #region agents/executors region
             // Embedding configuration and service registration

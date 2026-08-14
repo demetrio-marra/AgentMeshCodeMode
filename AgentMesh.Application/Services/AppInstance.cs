@@ -3,9 +3,8 @@ using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.Conversation;
 using AgentMesh.Application.Models.Costs;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Services.EWSteps;
+using AgentMesh.Application.Services.Pipelines;
 using AgentMesh.Models;
-using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Services
@@ -44,7 +43,7 @@ namespace AgentMesh.Application.Services
             });
 
             var executionScope = serviceProvider.CreateScope();
-            var pipeline = executionScope.ServiceProvider.GetRequiredService<EWPipeline>();
+            var pipeline = executionScope.ServiceProvider.GetRequiredService<MainPipeline>();
 
             var stepsStats = await pipeline.ExecuteAsync(cancellationToken);
             var usageStatistics = stepsStats.ToList();
@@ -80,24 +79,12 @@ namespace AgentMesh.Application.Services
                 countOfMessagesBeforeSummarization = conversationContext.Conversation.Count();
                 countOfTokensBeforeSummarization = conversationContext.TokensCount;
 
-                var memoryConversation = conversationContext.Conversation.ToList();
-                var summarizerConversation = conversationContext.Conversation.ToList();
+                var summarizationPipeline = executionScope.ServiceProvider.GetRequiredService<SummarizationPipeline>();
 
-                var initSummarizationStep = executionScope.ServiceProvider.GetRequiredService<InitSummarizationEWCodeStep>();
-                await initSummarizationStep.ExecuteAsync(cancellationToken);
-
-                var summarizationStep = executionScope.ServiceProvider.GetRequiredService<ConversationSummarizerEWAgenticStep>();
-                var relevantFactsEvaluatorStep = executionScope.ServiceProvider.GetRequiredService<RelevantFactsEvaluatorEWAgenticStep>();
-
-                var summarizerTask = summarizationStep.ExecuteAsync(cancellationToken);
-                var relevantFactsEvaluatorTask = relevantFactsEvaluatorStep.ExecuteAsync(cancellationToken);
-
-                await Task.WhenAll(relevantFactsEvaluatorTask, summarizerTask);
-
-                var saveToMemoryStep = executionScope.ServiceProvider.GetRequiredService<AgentMemorySaverServiceEWCodeStep>();
-                await saveToMemoryStep.ExecuteAsync(cancellationToken);
-
-                // TODO: wrap tasks in a pipeline to get the usage statistics for the summarization steps and add them to the main usage statistics list
+                var summarizationStepStats = await summarizationPipeline.ExecuteAsync(cancellationToken);
+                var summarizationUsageStatistics = summarizationStepStats.ToList();
+                
+                usageStatistics.AddRange(summarizationUsageStatistics);
 
                 summarizerHasRun = true;
             }

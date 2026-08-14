@@ -2,7 +2,7 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Services
 {
-    public class EWPipeline(IEWStepSelector ewStepSelector,
+    public abstract class EWPipeline(IEWStepSelector ewStepSelector,
         IWorkflowProgressNotifier workflowProgressNotifier,
         IEnumerable<IEWParameter> parameters)
     {

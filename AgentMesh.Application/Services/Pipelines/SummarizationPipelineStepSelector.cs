@@ -2,7 +2,7 @@
 using AgentMesh.Application.Services.EWSteps;
 using AgentMesh.Services;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Pipelines
 {
    /// <summary>
    /// Summarization selector
@@ -11,7 +11,7 @@ namespace AgentMesh.Application.Services
    /// <param name="relevantMessagesToSaveInAgentMemoryParameter"></param>
    /// <param name="conversationSummarizer"></param>
    /// <param name="relevantFactsEvaluator"></param>
-    public class EWSummarizingStepSelector(
+    public class SummarizationPipelineStepSelector(
         InitSummarizationEWCodeStep initStep,
 
         RelevantMessagesToSaveInAgentMemoryParameter relevantMessagesToSaveInAgentMemoryParameter,

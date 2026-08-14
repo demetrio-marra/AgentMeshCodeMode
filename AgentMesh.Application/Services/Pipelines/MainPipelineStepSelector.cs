@@ -4,7 +4,7 @@ using AgentMesh.Application.Services.EWSteps;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Services;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Pipelines
 {
     /// <summary>
     /// To work this instance must be scoped
@@ -12,20 +12,14 @@ namespace AgentMesh.Application.Services
     /// <param name="initEWCodeStep"></param>
     /// <param name="intentCategoryParameter"></param>
     /// <param name="missingValuesParameter"></param>
-    /// <param name="knowledgeBaseAPIDocumentsContentParameter"></param>
     /// <param name="pastMemoriesQueryParameter"></param>
     /// <param name="domainsKnowledgeBaseQueryParameter"></param>
-    /// <param name="pastMemoriesQueryResultsParameter"></param>
     /// <param name="knowledgeBaseQueryResultsParameter"></param>
-    /// <param name="domainsKnowledgeBaseDocumentsContentParameter"></param>
-    /// <param name="businessRequirementsParameter"></param>
     /// <param name="technicalSpecificationParameter"></param>
-    /// <param name="requestRejectedReasonParameter"></param>
     /// <param name="apisKnowledgeBaseQueryResultsParameter"></param>
     /// <param name="generatedCodeParameter"></param>
     /// <param name="pipelineResultDataParameter"></param>
     /// <param name="executionErrorParameter"></param>
-    /// <param name="finalAnswerParameter"></param>
     /// <param name="workflowConfiguration"></param>
     /// <param name="requestAnalyzerEWStep"></param>
     /// <param name="agentMemoryQueryExpanderEWStep"></param>
@@ -43,26 +37,20 @@ namespace AgentMesh.Application.Services
     /// <param name="jsSandboxEWStep"></param>
     /// <param name="domainExpertEWStep"></param>
     /// <param name="personalAssistantEWStep"></param>
-    public class EWStepSelector(
+    public class MainPipelineStepSelector(
         InitEWCodeStep initEWCodeStep,
 
         IntentCategoryParameter intentCategoryParameter,
         MissingValuesParameter missingValuesParameter,
-        KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
         PastMemoriesQueryParameter pastMemoriesQueryParameter,
         DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter,
-        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
         KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter,
-        DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
-        BusinessRequirementsParameter businessRequirementsParameter,
         TechnicalSpecificationParameter technicalSpecificationParameter,
-        RequestRejectedReasonParameter requestRejectedReasonParameter,
         RequestRejectedFlagParameter requestRejectedFlagParameter,
         APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
         GeneratedCodeParameter generatedCodeParameter,
         PipelineResultDataParameter pipelineResultDataParameter,
         ExecutionErrorParameter executionErrorParameter,
-        FinalAnswerParameter finalAnswerParameter,
 
         CodeModeWorkflowConfiguration workflowConfiguration,
 
