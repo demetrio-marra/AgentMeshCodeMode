@@ -5,7 +5,7 @@ using AgentMesh.Application.Utils;
 using AgentMesh.Models;
 using AgentMesh.Services;
 
-namespace AgentMesh.Application.Services
+namespace AgentMesh.Application.Services.Helpers
 {
     public class DisplayValuesEWParameterSerializer : IEWParameterSerializer
     {

@@ -5,7 +5,7 @@ using AgentMesh.Application.Utils;
 using AgentMesh.Models;
 using System.Text.Json;
 
-namespace AgentMesh.Application.Services.Agents
+namespace AgentMesh.Application.Services.Helpers
 {
     public class DefaultAgentInputSerializer : IAgentInputSerializer
     {

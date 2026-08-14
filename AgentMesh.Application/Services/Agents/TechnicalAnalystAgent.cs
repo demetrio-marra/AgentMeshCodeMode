@@ -3,6 +3,7 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.TechnicalAnalyst;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Services.Helpers;
 using AgentMesh.Application.Utils;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;

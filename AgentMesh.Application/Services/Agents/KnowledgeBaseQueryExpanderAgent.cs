@@ -9,6 +9,7 @@ using AgentMesh.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Utils;
 using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Services.Helpers;
 
 namespace AgentMesh.Application.Services.Agents
 {

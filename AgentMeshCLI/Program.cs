@@ -4,6 +4,7 @@ using AgentMesh.Application.Models.Conversation;
 using AgentMesh.Application.Services;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Application.Services.Executors;
+using AgentMesh.Application.Services.Helpers;
 using AgentMesh.Application.Services.Pipelines;
 using AgentMesh.Application.Utils;
 using AgentMesh.Configuration;

@@ -2,6 +2,7 @@
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.ChatMessages;
+using AgentMesh.Application.Services.Helpers;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models;
 using AgentMesh.Utils;
