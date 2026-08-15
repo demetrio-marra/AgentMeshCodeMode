@@ -2,19 +2,20 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Services
 {
-    public abstract class EWPipeline(IEWStepSelector ewStepSelector,
-        IWorkflowProgressNotifier workflowProgressNotifier,
+    public abstract class EWPipeline(IWorkflowProgressNotifier workflowProgressNotifier,
         IEnumerable<IEWParameter> parameters)
     {
+
+
         public async Task<IEnumerable<EWStepStatisticsRecord>> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             await workflowProgressNotifier.NotifyWorkflowStart();
 
-            var initStep = ewStepSelector.GetInitStep();
+            var initStep = GetInitStep();
             await RunStep(initStep, cancellationToken);
 
             var stepRuns = new List<PlannedStepsRun>();
-            var nextSteps = ewStepSelector.NextStepsToRun();
+            var nextSteps = GetNextStepsToRun();
 
             while (nextSteps.Any())
             {
@@ -34,13 +35,27 @@ namespace AgentMesh.Services
                     await workflowProgressNotifier.NotifyWorkflowStepCompleted(cs.Step.Name, cs.Statistics);
                 }
 
-                nextSteps = ewStepSelector.NextStepsToRun();
+                nextSteps = GetNextStepsToRun();
             }
 
             await workflowProgressNotifier.NotifyWorkflowEnd();
 
             return stepRuns.Select(s => s.Statistics).ToList();
         }
+
+        /// <summary>
+        /// The step which initializes workflow parameters
+        /// </summary>
+        /// <returns></returns>
+        protected abstract IEWCodeStep GetInitStep();
+
+        /// <summary>
+        /// Returns the next steps to run in the workflow based on the provided parameters.
+        /// If no more steps are available, it returns an empty collection.
+        /// </summary>
+        /// <returns>The steps to run</returns>
+        /// <remarks>If more than one step are returned, they could be run in parallel</remarks>
+        protected abstract IEnumerable<IEWStep> GetNextStepsToRun();
 
         private async Task<PlannedStepsRun> RunStep(
             IEWStep step,

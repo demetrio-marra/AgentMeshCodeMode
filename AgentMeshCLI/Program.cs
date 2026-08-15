@@ -67,8 +67,6 @@ namespace AgentMesh
             services.AddSingleton<IEnumerable<AgentFlatConfigurationRecord>>(AgentConfigurationReadHelper.ReadAgentConfigurations(appSettings, AppContext.BaseDirectory).ToArray());
             services.AddSingleton<IAgentInputSerializer, DefaultAgentInputSerializer>();
             // insert here
-            services.AddScoped<MainPipelineStepSelector>();
-            services.AddScoped<SummarizationPipelineStepSelector>();
             services.AddScoped<MainPipeline>();
             services.AddScoped<SummarizationPipeline>();
 
