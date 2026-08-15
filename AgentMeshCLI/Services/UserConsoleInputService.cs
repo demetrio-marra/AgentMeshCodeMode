@@ -42,7 +42,7 @@ namespace AgentMesh.Services
                 ConsoleHelper.WriteLineWithColor("\nResponse for user:", ConsoleColor.Gray);
                 ConsoleHelper.WriteLineWithColor(executionResult.Message, ConsoleColor.Cyan);
 
-                ConsoleHelper.WriteLineWithColor($"\n\nConversation status: Count of messages {executionResult.CountOfMessages}. Count of tokens: {executionResult.CountOfTokens}/{conversationSummarizerConfiguration.SummaryTokenThreshold}. Minimum count of messages before summarization: {conversationSummarizerConfiguration.NumMessageToPreseve}\n", ConsoleColor.Gray);
+                ConsoleHelper.WriteLineWithColor($"\n\nConversation status:\nCount of messages {executionResult.CountOfMessages}\nCount of tokens: {executionResult.CountOfTokens}/{conversationSummarizerConfiguration.SummaryTokenThreshold}\nCumulated cost: {Math.Round(executionResult.CumulatedCost, 2)} $", ConsoleColor.Gray);
                 if (executionResult.ContextSummarizerHasRun)
                 {
                     ConsoleHelper.WriteLineWithColor($"Chat conversation has been summarized. Count of messages before: {executionResult.CountOfMessagesBeforeSummarization}", ConsoleColor.White);
@@ -57,7 +57,8 @@ namespace AgentMesh.Services
 
         private void PrintConfigurations()
         {
-            Console.WriteLine("Sandbox Url: " + sesJSSandboxConfiguration.SandboxServiceURL + ", SandboxName: " + sesJSSandboxConfiguration.SandboxName + ", AgentId: " + userConfiguration.AgentId);
+            Console.WriteLine($"Sandbox:\n\tUrl: {sesJSSandboxConfiguration.SandboxServiceURL}\n\tName: {sesJSSandboxConfiguration.SandboxName}\n\tAgentId: {userConfiguration.AgentId}\n");
+            Console.WriteLine($"Conversation summarization configuration:\n\tSummaryTokenThreshold: {conversationSummarizerConfiguration.SummaryTokenThreshold}\n\tNumMessageToPreseve: {conversationSummarizerConfiguration.NumMessageToPreseve}\n");
             Console.WriteLine("Agent configurations:");
             foreach(var agentConfig in agentsConfigurations)
             {

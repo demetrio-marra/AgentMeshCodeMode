@@ -20,11 +20,13 @@ namespace AgentMesh.Application.Services
     {
         public int CountOfMessages { get => conversationContext.Conversation.Count(); }
         public int CountOfTokensInContext { get => conversationContext.TokensCount; }
+        public decimal CumulatedCost { get; private set; }
 
         public async Task InitConversation()
         {
             conversationContext.TokensCount = 0;
             conversationContext.Conversation = [];
+            CumulatedCost = 0;
 
             await Task.CompletedTask;
         }
@@ -116,6 +118,7 @@ namespace AgentMesh.Application.Services
             }
 
             var agentsCosts = CalculateExecutionCosts(usageStatistics);
+            CumulatedCost += agentsCosts.Sum(c => c.InputCost + c.OutputCost);
 
             return new WorkflowResult
             {
@@ -126,7 +129,8 @@ namespace AgentMesh.Application.Services
                 CountOfMessages = conversationContext.Conversation.Count(),
                 CountOfTokens = conversationContext.TokensCount,
                 CountOfMessagesBeforeSummarization = countOfMessagesBeforeSummarization,
-                CountOfTokensBeforeSummarization = countOfTokensBeforeSummarization
+                CountOfTokensBeforeSummarization = countOfTokensBeforeSummarization,
+                CumulatedCost = CumulatedCost
             };
         }
 

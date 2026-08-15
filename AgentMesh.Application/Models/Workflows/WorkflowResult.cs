@@ -13,6 +13,6 @@ namespace AgentMesh.Application.Models.Workflows
         public bool ContextSummarizerHasRun { get; init; }
         public int? CountOfMessagesBeforeSummarization { get; init; }
         public int? CountOfTokensBeforeSummarization { get; init; }
-
+        public decimal CumulatedCost { get; init; }
     }
 }
