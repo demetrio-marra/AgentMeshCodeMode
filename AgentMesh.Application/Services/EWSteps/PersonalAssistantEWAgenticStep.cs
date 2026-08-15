@@ -58,7 +58,7 @@ namespace AgentMesh.Application.Services.EWSteps
             personalAssistantConvenienceErrorSentenceParameter.ParameterValue = agentOutput.Result.ConvenienceErrorSentence;
 
             string? finalAnswer;
-            if (requestFailed)
+            if (requestFailed || executionErrorParameter.ParameterValue)
             {
                 finalAnswer = agentOutput.Result.ConvenienceErrorSentence;
             }
