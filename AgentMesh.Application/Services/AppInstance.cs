@@ -79,11 +79,36 @@ namespace AgentMesh.Application.Services
                 countOfMessagesBeforeSummarization = conversationContext.Conversation.Count();
                 countOfTokensBeforeSummarization = conversationContext.TokensCount;
 
+                var countOfMessagesToIncludeInSummarization = countOfMessagesBeforeSummarization - conversationSummarizerConfiguration.NumMessageToPreseve;
+                if (countOfMessagesToIncludeInSummarization <= 0)
+                {
+                    countOfMessagesToIncludeInSummarization = conversationContext.Conversation.Count();
+                }
+
                 var summarizationPipeline = executionScope.ServiceProvider.GetRequiredService<SummarizationPipeline>();
 
                 var summarizationStepStats = await summarizationPipeline.ExecuteAsync(cancellationToken);
                 var summarizationUsageStatistics = summarizationStepStats.ToList();
-                
+
+                conversationContext.Conversation = conversationContext.Conversation.TakeLast(conversationSummarizerConfiguration.NumMessageToPreseve).ToList();
+                var summarizationContentParameter = executionScope.ServiceProvider.GetRequiredService<SummarizedContentParameter>();
+                var summarizationDatetimeParameter = executionScope.ServiceProvider.GetRequiredService<SummarizedContentDatetimeParameter>();
+
+                var summaryMessage = new ContextMessage
+                {
+                    Role = ContextMessageRole.Assistant,
+                    Date = summarizationDatetimeParameter.ParameterValue!,
+                    Text = summarizationContentParameter.ParameterValue!
+                };
+
+                conversationContext.Conversation = conversationContext.Conversation.Prepend(summaryMessage).ToList();
+
+                // Numero simbolico.
+                // Per avere reale accuratezza dovremmo aggiungere il conteggio dei token a ciascun messaggio nel chatcontext
+                // in modo da poterlo sommare al numero di token del messaggio di riepilogo. Per ora, impostiamo un numero simbolico.
+                // Ad ogni modo, il corretto numero di token sarà ristabilito alla successiva richiesta
+                conversationContext.TokensCount = 100;
+
                 usageStatistics.AddRange(summarizationUsageStatistics);
 
                 summarizerHasRun = true;

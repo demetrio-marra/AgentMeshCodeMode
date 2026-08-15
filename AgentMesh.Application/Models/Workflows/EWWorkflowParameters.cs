@@ -31,6 +31,25 @@ namespace AgentMesh.Application.Models.Workflows
         }
     }
 
+    public sealed class SummarizedContentParameter : EWParameter<string>
+    {
+        public const string ParamName = "Summarized content";
+        public SummarizedContentParameter()
+        {
+            Name = ParamName;
+        }
+    }
+
+    public sealed class SummarizedContentDatetimeParameter : EWParameter<DateTime>
+    {
+        public const string ParamName = "Summarized content datetime";
+        public SummarizedContentDatetimeParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
+        {
+            Name = ParamName;
+            DisplayValueSerializer = displayValueSerializer;
+        }
+    }
+
     public sealed class InitialContextMessagesParameter : EWParameter<IEnumerable<ContextMessage>>
     {
         public const string ParamName = "Initial context messages";

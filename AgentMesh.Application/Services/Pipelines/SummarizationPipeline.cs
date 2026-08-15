@@ -9,6 +9,8 @@ namespace AgentMesh.Application.Services.Pipelines
         MessagesToSummarizeParameter messagesToSummarizeParameter,
         RelevantMessagesToSaveInAgentMemoryParameter relevantMessagesToSaveInAgentMemoryParameter,
         SummarizeLanguageParameter summarizeLanguageParameter,
+        SummarizedContentParameter summarizedContentParameter,
+        SummarizedContentDatetimeParameter summarizedContentDatetimeParameter,
 
         InitSummarizationEWCodeStep initStep,
         ConversationSummarizerEWAgenticStep conversationSummarizerStep,
@@ -16,7 +18,9 @@ namespace AgentMesh.Application.Services.Pipelines
         EWPipeline(workflowProgressNotifier, [
             relevantMessagesToSaveInAgentMemoryParameter,
             messagesToSummarizeParameter,
-            summarizeLanguageParameter
+            summarizeLanguageParameter,
+            summarizedContentParameter,
+            summarizedContentDatetimeParameter
             ]
         )
     {
