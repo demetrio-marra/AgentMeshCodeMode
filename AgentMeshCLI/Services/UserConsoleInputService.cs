@@ -11,6 +11,7 @@ namespace AgentMesh.Services
         UserConfiguration userConfiguration,
         SESJSSandboxConfiguration sesJSSandboxConfiguration,
         IEnumerable<AgentFlatConfigurationRecord> agentsConfigurations,
+        ConversationSummarizationConfiguration conversationSummarizerConfiguration,
         AppInstance appInstance) : BackgroundService
     {
         public async Task Run(CancellationToken cancellationToken)
@@ -41,7 +42,7 @@ namespace AgentMesh.Services
                 ConsoleHelper.WriteLineWithColor("\nResponse for user:", ConsoleColor.Gray);
                 ConsoleHelper.WriteLineWithColor(executionResult.Message, ConsoleColor.Cyan);
 
-                ConsoleHelper.WriteLineWithColor($"\n\nConversation status: Count of messages {executionResult.CountOfMessages}. Count of tokens: {executionResult.CountOfTokens}\n", ConsoleColor.Gray);
+                ConsoleHelper.WriteLineWithColor($"\n\nConversation status: Count of messages {executionResult.CountOfMessages}. Count of tokens: {executionResult.CountOfTokens}/{conversationSummarizerConfiguration.SummaryTokenThreshold}. Minimum count of messages before summarization: {conversationSummarizerConfiguration.NumMessageToPreseve}\n", ConsoleColor.Gray);
                 if (executionResult.ContextSummarizerHasRun)
                 {
                     ConsoleHelper.WriteLineWithColor($"Chat conversation has been summarized. Count of messages before: {executionResult.CountOfMessagesBeforeSummarization}", ConsoleColor.White);

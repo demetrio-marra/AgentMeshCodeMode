@@ -3,12 +3,12 @@
     public record struct EWStepStatisticsRecord(string StepName,
         DateTime StartedOnUtc,
         DateTime CompletedOnUtc,
-        bool IsFirstAgenticStep,
-        bool IsLastAgenticStep,
         IEnumerable<EWDisplayParameterRecord> ParametersBefore,
         IEnumerable<EWDisplayParameterRecord> ParametersAfter,
         bool IsAgentic,
         string? AgentName,
+        bool CountInputTokensAsContextTokens,
+        bool CountOutputTokensAsContextTokens,
         int? InputTokens,
         int? OutputTokens)
     {

@@ -7,5 +7,6 @@ namespace AgentMesh.Services
         string SummarizedContent { get; }
         DateTime SummarizedContentDatetime { get; }
         IEnumerable<ContextMessage> ChatMessagesToSummarize { set; }
+        string SummarizationLanguage { set; }
     }
 }

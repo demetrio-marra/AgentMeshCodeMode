@@ -36,6 +36,8 @@ namespace AgentMesh.Application.Services.Pipelines
 
         public IEnumerable<ContextMessage> ChatMessagesToSummarize { set => messagesToSummarizeParameter.ParameterValue = value.ToList(); }
 
+        public string SummarizationLanguage { set => summarizeLanguageParameter.ParameterValue = value; }
+
         protected override IEnumerable<IEWStep> GetNextStepsToRun()
         {
             if (!summarizationRun)

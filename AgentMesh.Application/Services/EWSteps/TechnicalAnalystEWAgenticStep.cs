@@ -24,9 +24,9 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public string? AgentName => "TechnicalAnalyst";
 
-        public bool IsInputTokensCountSource => false;
+        public bool CountInputTokensAsContextTokens => false;
 
-        public bool IsOutputTokensCountSource => false;
+        public bool CountOutputTokensAsContextTokens => false;
 
         public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {

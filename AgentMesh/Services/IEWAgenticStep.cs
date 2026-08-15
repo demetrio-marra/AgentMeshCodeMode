@@ -6,9 +6,9 @@ namespace AgentMesh.Services
     {
         string? AgentName { get; }
 
-        bool IsInputTokensCountSource { get; }
+        bool CountInputTokensAsContextTokens { get; }
 
-        bool IsOutputTokensCountSource { get; }
+        bool CountOutputTokensAsContextTokens { get; }
 
         Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default);
     }

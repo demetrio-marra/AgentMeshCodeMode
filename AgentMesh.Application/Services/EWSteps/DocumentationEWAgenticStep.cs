@@ -18,9 +18,9 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public string? AgentName => "Documentation";
 
-        public bool IsInputTokensCountSource => false;
+        public bool CountInputTokensAsContextTokens => false;
 
-        public bool IsOutputTokensCountSource => false;
+        public bool CountOutputTokensAsContextTokens => true;
 
         public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {

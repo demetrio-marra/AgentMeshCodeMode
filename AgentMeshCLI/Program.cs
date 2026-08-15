@@ -115,6 +115,12 @@ namespace AgentMesh
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<ResilienceConfiguration>>().Value);
 
+            services
+              .AddOptions<ConversationSummarizationConfiguration>()
+              .Bind(configuration.GetSection(ConversationSummarizationConfiguration.SectionName))
+              .Services
+              .AddSingleton(sp => sp.GetRequiredService<IOptions<ConversationSummarizationConfiguration>>().Value);
+
             services.AddSingleton<Resilience>();
 
             services.AddSingleton<FunctionalAnalystAgent>();
@@ -128,18 +134,6 @@ namespace AgentMesh
             services.AddSingleton<KnowledgeBaseQueryExpanderAgent>();
             services.AddSingleton<AgentMemoryQueryExpanderAgent>();
             services.AddSingleton<RerankerAgent>();
-
-            // conversation summarizer agent config and client
-            services
-                .AddOptions<ConversationSummarizerAgentConfiguration>()
-                .Bind(configuration.GetSection(ConversationSummarizerAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<ConversationSummarizerAgentConfiguration>>().Value);
-
             services.AddSingleton<ConversationSummarizerAgent>();
 
             // CodeModeWorkflow configuration

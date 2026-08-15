@@ -18,9 +18,9 @@ namespace AgentMesh.Application.Services.EWSteps
         
         public string? AgentName => "ConversationSummarizer";
 
-        public bool IsInputTokensCountSource => false;
+        public bool CountInputTokensAsContextTokens => false;
 
-        public bool IsOutputTokensCountSource => true;
+        public bool CountOutputTokensAsContextTokens => true;
 
         public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
         {

@@ -58,8 +58,8 @@ namespace AgentMesh.Services
             int? inputTokens = null;
             int? outputTokens = null;
             bool isAgentic = step is IEWAgenticStep;
-            bool isLastAgenticStep = false;
-            bool isFirstAgenticStep = false;
+            bool countOutputTokensAsContextTokens = false;
+            bool countInputTokensAsContextTokens = false;
             var stepStartTime = DateTime.UtcNow;
             if (step is IEWAgenticStep agenticStep)
             {
@@ -67,8 +67,8 @@ namespace AgentMesh.Services
                 agentName = agenticStep.AgentName;
                 inputTokens = stepResultRecord?.InputTokens;
                 outputTokens = stepResultRecord?.OutputTokens;
-                isFirstAgenticStep = agenticStep.IsInputTokensCountSource;
-                isLastAgenticStep = agenticStep.IsOutputTokensCountSource;
+                countInputTokensAsContextTokens = agenticStep.CountInputTokensAsContextTokens;
+                countOutputTokensAsContextTokens = agenticStep.CountOutputTokensAsContextTokens;
             }
             else if (step is IEWCodeStep codeStep)
             {
@@ -87,8 +87,8 @@ namespace AgentMesh.Services
                 StepName: step.Name,
                 StartedOnUtc: stepStartTime,
                 CompletedOnUtc: stepEndTime,
-                IsFirstAgenticStep: isFirstAgenticStep,
-                IsLastAgenticStep: isLastAgenticStep,
+                CountInputTokensAsContextTokens: countInputTokensAsContextTokens,
+                CountOutputTokensAsContextTokens: countOutputTokensAsContextTokens,
                 ParametersBefore: parametersBeforeSnapshot,
                 ParametersAfter: parametersAfterSnapshot,
                 IsAgentic: isAgentic,

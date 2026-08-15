@@ -16,7 +16,7 @@ namespace AgentMesh.Application.Services
     public class AppInstance(IServiceProvider serviceProvider,
         ConversationContext conversationContext,
         IEnumerable<AgentFlatConfigurationRecord> agentsConfigurations,
-        ConversationSummarizerAgentConfiguration conversationSummarizerConfiguration)
+        ConversationSummarizationConfiguration conversationSummarizerConfiguration)
     {
         public int CountOfMessages { get => conversationContext.Conversation.Count(); }
         public int CountOfTokensInContext { get => conversationContext.TokensCount; }
@@ -58,11 +58,8 @@ namespace AgentMesh.Application.Services
                 Text = answerText,
             });
 
-            var fistAgenticStepStatistics = stepsStats.FirstOrDefault(s => s.IsFirstAgenticStep);
-            var lastAgenticStepStatistics = stepsStats.LastOrDefault(s => s.IsLastAgenticStep);
-
-            var inputTokens = fistAgenticStepStatistics.InputTokens ?? 0;
-            var outputTokens = lastAgenticStepStatistics.OutputTokens ?? 0;
+            var inputTokens = stepsStats.Where(s => s.CountInputTokensAsContextTokens).Sum(s => s.InputTokens ?? 0);
+            var outputTokens = stepsStats.Where(s => s.CountOutputTokensAsContextTokens).Sum(s => s.OutputTokens ?? 0);
 
             conversationContext.TokensCount = inputTokens + outputTokens;
 
@@ -71,48 +68,51 @@ namespace AgentMesh.Application.Services
             int? countOfMessagesBeforeSummarization = null;
             int? countOfTokensBeforeSummarization = null;
 
-            if (conversationContext.TokensCount >= conversationSummarizerConfiguration.SummaryTokenThreshold)
+            if (conversationContext.RequiresSummarization)
             {
                 var cntBefore = conversationContext.Conversation.Count();
                 var cntTokensBefore = conversationContext.TokensCount;
 
-                var countOfMessagesToIncludeInSummarization = cntBefore - conversationSummarizerConfiguration.NumMessageToPreseve;
-                if (countOfMessagesToIncludeInSummarization <= 0)
+                var countOfMessagesToPreserve = cntBefore < conversationSummarizerConfiguration.NumMessageToPreseve ? 
+                    cntBefore : conversationSummarizerConfiguration.NumMessageToPreseve;
+
+                var countOfMessagesToIncludeInSummarization = cntBefore - countOfMessagesToPreserve;
+
+                if (countOfMessagesToIncludeInSummarization > 0)
                 {
-                    countOfMessagesToIncludeInSummarization = conversationContext.Conversation.Count();
+                    var messagesToSummarize = conversationContext.Conversation.Take(countOfMessagesToIncludeInSummarization).ToList();
+
+                    var summarizationPipeline = executionScope.ServiceProvider.GetRequiredService<ISummarizationPipeline>();
+                    summarizationPipeline.ChatMessagesToSummarize = messagesToSummarize;
+                    summarizationPipeline.SummarizationLanguage = conversationSummarizerConfiguration.SummarizeLanguage;
+
+                    var summarizationStepStats = await summarizationPipeline.ExecuteAsync(cancellationToken);
+                    usageStatistics.AddRange(summarizationStepStats.ToList());
+
+                    var summarizationContentParameter = summarizationPipeline.SummarizedContent;
+                    var summarizationDatetimeParameter = summarizationPipeline.SummarizedContentDatetime;
+
+                    var summaryMessage = new ContextMessage
+                    {
+                        Role = ContextMessageRole.Assistant,
+                        Date = summarizationDatetimeParameter,
+                        Text = summarizationContentParameter
+                    };
+
+                    // Rimuoviamo i messaggi che sono stati riassunti e li sostituiamo con il messaggio di riepilogo
+                    var messagesToKeep = conversationContext.Conversation.Skip(countOfMessagesToIncludeInSummarization).ToList();
+                    conversationContext.Conversation = messagesToKeep.Prepend(summaryMessage).ToList();
+
+                    // Numero simbolico.
+                    // Per avere reale accuratezza dovremmo aggiungere il conteggio dei token a ciascun messaggio nel chatcontext
+                    // in modo da poterlo sommare al numero di token del messaggio di riepilogo. Per ora, impostiamo un numero simbolico.
+                    // Ad ogni modo, il corretto numero di token sarà ristabilito alla successiva richiesta
+                    conversationContext.TokensCount = 100;
+
+                    countOfMessagesBeforeSummarization = cntBefore;
+                    countOfTokensBeforeSummarization = cntTokensBefore;
+                    summarizerHasRun = true;
                 }
-
-                var messagesToSummarize = conversationContext.Conversation.Take(countOfMessagesToIncludeInSummarization).ToList();
-
-                var summarizationPipeline = executionScope.ServiceProvider.GetRequiredService<ISummarizationPipeline>();
-                summarizationPipeline.ChatMessagesToSummarize = messagesToSummarize;
-
-                var summarizationStepStats = await summarizationPipeline.ExecuteAsync(cancellationToken);
-                usageStatistics.AddRange(summarizationStepStats.ToList());
-
-                var summarizationContentParameter = summarizationPipeline.SummarizedContent;
-                var summarizationDatetimeParameter = summarizationPipeline.SummarizedContentDatetime;
-
-                var summaryMessage = new ContextMessage
-                {
-                    Role = ContextMessageRole.Assistant,
-                    Date = summarizationDatetimeParameter,
-                    Text = summarizationContentParameter
-                };
-
-                // Rimuoviamo i messaggi che sono stati riassunti e li sostituiamo con il messaggio di riepilogo
-                var messagesToKeep = conversationContext.Conversation.Skip(countOfMessagesToIncludeInSummarization).ToList();
-                conversationContext.Conversation = messagesToKeep.Prepend(summaryMessage).ToList();
-
-                // Numero simbolico.
-                // Per avere reale accuratezza dovremmo aggiungere il conteggio dei token a ciascun messaggio nel chatcontext
-                // in modo da poterlo sommare al numero di token del messaggio di riepilogo. Per ora, impostiamo un numero simbolico.
-                // Ad ogni modo, il corretto numero di token sarà ristabilito alla successiva richiesta
-                conversationContext.TokensCount = 100;
-
-                countOfMessagesBeforeSummarization = cntBefore;
-                countOfTokensBeforeSummarization = cntTokensBefore;
-                summarizerHasRun = true;
             }
 
             var agentsCosts = CalculateExecutionCosts(usageStatistics);
