@@ -1,6 +1,5 @@
 using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.AgentMemory;
-using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.CodeSandbox;
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Models;

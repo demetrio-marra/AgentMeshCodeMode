@@ -1,12 +1,13 @@
 ﻿using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Services.EWSteps;
+using AgentMesh.Models;
 using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.Pipelines
 {
-    public sealed class MainPipeline(
+    public sealed class ChatRequestPipeline(
         RequestDateTimeParameter requestDateTimeParameter,
         UserLastRequestParameter userLastRequestParameter,
         InitialContextMessagesParameter initialContextMessagesParameter,
@@ -43,7 +44,6 @@ namespace AgentMesh.Application.Services.Pipelines
 
         CodeModeWorkflowConfiguration workflowConfiguration,
 
-        InitEWCodeStep initEWCodeStep,
         RequestAnalyzerEWAgenticStep requestAnalyzerEWStep,
         AgentMemoryQueryExpanderEWAgenticStep agentMemoryQueryExpanderEWStep,
         AgentMemoryServiceEWCodeStep agentMemoryServiceEWStep,
@@ -97,9 +97,13 @@ namespace AgentMesh.Application.Services.Pipelines
             finalAnswerParameter,
             qMDQueryTypesDocumentationParameter
             ]
-        )
+        ), IChatRequestPipeline
     {
-        protected override IEWCodeStep GetInitStep() => initEWCodeStep;
+        public string FinalResponse => finalAnswerParameter.ParameterValue!;
+
+        public IEnumerable<ContextMessage> InitialChatHistory { set => initialContextMessagesParameter.ParameterValue = value.ToList(); }
+
+        public string UserLastRequest { set => userLastRequestParameter.ParameterValue = value; }
 
         protected override IEnumerable<IEWStep> GetNextStepsToRun()
         {
@@ -306,6 +310,9 @@ namespace AgentMesh.Application.Services.Pipelines
         }
 
         private readonly Dictionary<string, int> _runCountDictionary = [];
+
+      
+
         private bool RunOnce(IEnumerable<IEWStep> steps,
             out IEnumerable<IEWStep> stepsToRun,
             Func<bool>? runCondition = null)

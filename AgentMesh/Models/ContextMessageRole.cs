@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Application.Models.ChatMessages
+﻿namespace AgentMesh.Models
 {
     public enum ContextMessageRole
     {

@@ -3,16 +3,11 @@ using AgentMesh.Models;
 namespace AgentMesh.Services
 {
     public abstract class EWPipeline(IWorkflowProgressNotifier workflowProgressNotifier,
-        IEnumerable<IEWParameter> parameters)
+        IEnumerable<IEWParameter> parameters) : IEWPipeline
     {
-
-
         public async Task<IEnumerable<EWStepStatisticsRecord>> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             await workflowProgressNotifier.NotifyWorkflowStart();
-
-            var initStep = GetInitStep();
-            await RunStep(initStep, cancellationToken);
 
             var stepRuns = new List<PlannedStepsRun>();
             var nextSteps = GetNextStepsToRun();
@@ -43,11 +38,6 @@ namespace AgentMesh.Services
             return stepRuns.Select(s => s.Statistics).ToList();
         }
 
-        /// <summary>
-        /// The step which initializes workflow parameters
-        /// </summary>
-        /// <returns></returns>
-        protected abstract IEWCodeStep GetInitStep();
 
         /// <summary>
         /// Returns the next steps to run in the workflow based on the provided parameters.

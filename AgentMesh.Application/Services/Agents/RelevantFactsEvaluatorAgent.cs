@@ -3,10 +3,10 @@ using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Utils;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
-using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Services.Helpers;
+using AgentMesh.Models;
 
 namespace AgentMesh.Application.Services.Agents
 {

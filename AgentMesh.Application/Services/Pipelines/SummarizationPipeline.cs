@@ -1,5 +1,6 @@
 ﻿using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Services.EWSteps;
+using AgentMesh.Models;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.Pipelines
@@ -12,9 +13,9 @@ namespace AgentMesh.Application.Services.Pipelines
         SummarizedContentParameter summarizedContentParameter,
         SummarizedContentDatetimeParameter summarizedContentDatetimeParameter,
 
-        InitSummarizationEWCodeStep initStep,
         ConversationSummarizerEWAgenticStep conversationSummarizerStep,
         RelevantFactsEvaluatorEWAgenticStep relevantFactsEvaluatorStep) : 
+
         EWPipeline(workflowProgressNotifier, [
             relevantMessagesToSaveInAgentMemoryParameter,
             messagesToSummarizeParameter,
@@ -22,14 +23,18 @@ namespace AgentMesh.Application.Services.Pipelines
             summarizedContentParameter,
             summarizedContentDatetimeParameter
             ]
-        )
+        ), ISummarizationPipeline
     {
 
         // here list all variables needed to control the execution of steps that reads and writes the same parameters.
         bool summarizationRun = false;
         bool savedToMemory = false;
 
-        protected override IEWCodeStep GetInitStep() => initStep;
+        public string SummarizedContent => summarizedContentParameter.ParameterValue!;
+
+        public DateTime SummarizedContentDatetime => summarizedContentDatetimeParameter.ParameterValue;
+
+        public IEnumerable<ContextMessage> ChatMessagesToSummarize { set => messagesToSummarizeParameter.ParameterValue = value.ToList(); }
 
         protected override IEnumerable<IEWStep> GetNextStepsToRun()
         {

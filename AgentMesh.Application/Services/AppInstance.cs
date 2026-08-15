@@ -1,10 +1,9 @@
 ﻿using AgentMesh.Application.Configuration;
-using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Models.Conversation;
 using AgentMesh.Application.Models.Costs;
 using AgentMesh.Application.Models.Workflows;
-using AgentMesh.Application.Services.Pipelines;
 using AgentMesh.Models;
+using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Services
@@ -30,10 +29,21 @@ namespace AgentMesh.Application.Services
             await Task.CompletedTask;
         }
 
-
         public async Task<WorkflowResult> ProcessRequest(string message, CancellationToken cancellationToken)
         {
             var requestDatetime = DateTime.UtcNow;
+
+            var executionScope = serviceProvider.CreateScope();
+
+            var pipeline = executionScope.ServiceProvider.GetRequiredService<IChatRequestPipeline>();
+            pipeline.InitialChatHistory = conversationContext.Conversation.ToList();
+            pipeline.UserLastRequest = message;
+
+            var stepsStats = await pipeline.ExecuteAsync(cancellationToken);
+            var usageStatistics = stepsStats.ToList();
+
+            var answerDateTime = DateTime.UtcNow;
+            var answerText = pipeline.FinalResponse;
 
             conversationContext.Conversation = conversationContext.Conversation.Append(new()
             {
@@ -41,18 +51,6 @@ namespace AgentMesh.Application.Services
                 Date = requestDatetime,
                 Text = message,
             });
-
-            var executionScope = serviceProvider.CreateScope();
-            var pipeline = executionScope.ServiceProvider.GetRequiredService<MainPipeline>();
-
-            var stepsStats = await pipeline.ExecuteAsync(cancellationToken);
-            var usageStatistics = stepsStats.ToList();
-
-            var parameters = executionScope.ServiceProvider.GetRequiredService<IEnumerable<IEWParameter>>();
-
-            var answerDateTime = DateTime.UtcNow;
-            var answerText = parameters.First(p => p.IsResponseForUserParameter)?.GetDisplayValue() ?? string.Empty;
-
             conversationContext.Conversation = conversationContext.Conversation.Append(new()
             {
                 Role = ContextMessageRole.Assistant,
@@ -62,7 +60,6 @@ namespace AgentMesh.Application.Services
 
             var fistAgenticStepStatistics = stepsStats.FirstOrDefault(s => s.IsFirstAgenticStep);
             var lastAgenticStepStatistics = stepsStats.LastOrDefault(s => s.IsLastAgenticStep);
-            
 
             var inputTokens = fistAgenticStepStatistics.InputTokens ?? 0;
             var outputTokens = lastAgenticStepStatistics.OutputTokens ?? 0;
@@ -76,32 +73,36 @@ namespace AgentMesh.Application.Services
 
             if (conversationContext.TokensCount >= conversationSummarizerConfiguration.SummaryTokenThreshold)
             {
-                countOfMessagesBeforeSummarization = conversationContext.Conversation.Count();
-                countOfTokensBeforeSummarization = conversationContext.TokensCount;
+                var cntBefore = conversationContext.Conversation.Count();
+                var cntTokensBefore = conversationContext.TokensCount;
 
-                var countOfMessagesToIncludeInSummarization = countOfMessagesBeforeSummarization - conversationSummarizerConfiguration.NumMessageToPreseve;
+                var countOfMessagesToIncludeInSummarization = cntBefore - conversationSummarizerConfiguration.NumMessageToPreseve;
                 if (countOfMessagesToIncludeInSummarization <= 0)
                 {
                     countOfMessagesToIncludeInSummarization = conversationContext.Conversation.Count();
                 }
 
-                var summarizationPipeline = executionScope.ServiceProvider.GetRequiredService<SummarizationPipeline>();
+                var messagesToSummarize = conversationContext.Conversation.Take(countOfMessagesToIncludeInSummarization).ToList();
+
+                var summarizationPipeline = executionScope.ServiceProvider.GetRequiredService<ISummarizationPipeline>();
+                summarizationPipeline.ChatMessagesToSummarize = messagesToSummarize;
 
                 var summarizationStepStats = await summarizationPipeline.ExecuteAsync(cancellationToken);
-                var summarizationUsageStatistics = summarizationStepStats.ToList();
+                usageStatistics.AddRange(summarizationStepStats.ToList());
 
-                conversationContext.Conversation = conversationContext.Conversation.TakeLast(conversationSummarizerConfiguration.NumMessageToPreseve).ToList();
-                var summarizationContentParameter = executionScope.ServiceProvider.GetRequiredService<SummarizedContentParameter>();
-                var summarizationDatetimeParameter = executionScope.ServiceProvider.GetRequiredService<SummarizedContentDatetimeParameter>();
+                var summarizationContentParameter = summarizationPipeline.SummarizedContent;
+                var summarizationDatetimeParameter = summarizationPipeline.SummarizedContentDatetime;
 
                 var summaryMessage = new ContextMessage
                 {
                     Role = ContextMessageRole.Assistant,
-                    Date = summarizationDatetimeParameter.ParameterValue!,
-                    Text = summarizationContentParameter.ParameterValue!
+                    Date = summarizationDatetimeParameter,
+                    Text = summarizationContentParameter
                 };
 
-                conversationContext.Conversation = conversationContext.Conversation.Prepend(summaryMessage).ToList();
+                // Rimuoviamo i messaggi che sono stati riassunti e li sostituiamo con il messaggio di riepilogo
+                var messagesToKeep = conversationContext.Conversation.Skip(countOfMessagesToIncludeInSummarization).ToList();
+                conversationContext.Conversation = messagesToKeep.Prepend(summaryMessage).ToList();
 
                 // Numero simbolico.
                 // Per avere reale accuratezza dovremmo aggiungere il conteggio dei token a ciascun messaggio nel chatcontext
@@ -109,8 +110,8 @@ namespace AgentMesh.Application.Services
                 // Ad ogni modo, il corretto numero di token sarà ristabilito alla successiva richiesta
                 conversationContext.TokensCount = 100;
 
-                usageStatistics.AddRange(summarizationUsageStatistics);
-
+                countOfMessagesBeforeSummarization = cntBefore;
+                countOfTokensBeforeSummarization = cntTokensBefore;
                 summarizerHasRun = true;
             }
 

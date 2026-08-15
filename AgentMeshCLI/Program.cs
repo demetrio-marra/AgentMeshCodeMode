@@ -67,8 +67,8 @@ namespace AgentMesh
             services.AddSingleton<IEnumerable<AgentFlatConfigurationRecord>>(AgentConfigurationReadHelper.ReadAgentConfigurations(appSettings, AppContext.BaseDirectory).ToArray());
             services.AddSingleton<IAgentInputSerializer, DefaultAgentInputSerializer>();
             // insert here
-            services.AddScoped<MainPipeline>();
-            services.AddScoped<SummarizationPipeline>();
+            services.AddScoped<IChatRequestPipeline, ChatRequestPipeline>();
+            services.AddScoped<ISummarizationPipeline, SummarizationPipeline>();
 
             #region agents/executors region
             // Embedding configuration and service registration
