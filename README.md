@@ -1,4 +1,4 @@
-# AgentMesh Code Mode
+# AgentMesh
 
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![C#](https://img.shields.io/badge/C%23-12.0-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/en-us/dotnet/csharp/)
@@ -7,106 +7,118 @@
 [![Qdrant](https://img.shields.io/badge/Qdrant-Semantic_Search-DC244C)](https://qdrant.tech/)
 [![GitHub stars](https://img.shields.io/github/stars/demetrio-marra/AgentMeshCodeMode)](https://github.com/demetrio-marra/AgentMeshCodeMode/stargazers)
 
-A multi-agent AI workflow that leverages **dynamic JavaScript code generation** against a set of predefined company APIs. A mesh of specialized small agents collaborate to understand user intent, generate executable code, validate it, run it in a sandboxed environment, and present the results — all orchestrated through a configurable pipeline.
+A flexible, extensible multi-agent AI orchestration framework that executes configurable pipelines composed of steps, where each step can invoke specialized AI agents or static executors to transform business parameters. Steps read from and write to a shared parameter context, enabling rich parameter tracking and cost analysis per step.
 
 ---
 
 ## :sparkles: Features
 
-- **Multi-agent orchestrated workflow** – specialized agents collaborate in a pipeline: intent extraction, canonicalization, requirements collection, functional analysis, technical analysis, code generation, code fixing, execution, failure detection, and result presentation.
-- **Dynamic code generation** – the Coder agent generates JavaScript code targeting your company's predefined API surface.
+- **Pipeline-based orchestration** – two distinct pipeline types (`IChatRequestPipeline` and `ISummarizationPipeline`) composed of reusable steps, each with its own role.
+- **Parameter-driven architecture** – all meaningful business state is modeled as parameters with custom serializers for both agent use and UI display.
+- **Step-based processing** – steps are the cornerstone of execution; they bridge parameters and either AI agents (for agentic steps) or static executors (for code steps).
+- **AI agent integration** – specialized agents process data via LLM, each with configurable model, temperature, and system prompt.
+- **Static executors** – complement agents by running deterministic business logic without AI involvement.
 - **Sandboxed code execution** – generated code runs in an isolated JavaScript sandbox ([JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox)), deployed separately for security and isolation.
-- **Self-healing code pipeline** – static analysis and runtime failure detection agents feed back into a Code Fixer agent, iterating automatically to resolve issues.
-- **Semantic search with Qdrant** – retrieves contextual facts from a vector database (business processes, domain knowledge) relevant to the user's actionable requirements.
-- **Conversation summarization** – a dedicated agent summarizes growing conversation history to keep context manageable within token limits.
+- **Semantic search with Qdrant** – retrieves contextual knowledge from a vector database relevant to the user's requirements.
+- **Conversation summarization** – dedicated summarization pipeline compresses conversation history to stay within token limits.
 - **Agent memory system** – leverages Mem0 for persistent, context-aware agent memory across conversations.
 - **Knowledge base integration** – integrates with QMD for accessing knowledge bases and documentation.
 - **Multi-provider LLM support** – configure different LLM providers (HuggingFace, Together, Fireworks AI, or any OpenAI-compatible endpoint) per agent.
 - **Per-agent configuration** – each agent has its own LLM model, temperature, and system prompt, all configurable via `appsettings.json`.
-- **Token usage tracking** – tracks input/output token consumption per agent for cost monitoring.
+- **Token usage tracking** – tracks input/output token consumption per agent and step for cost monitoring and debugging.
+- **Parameter change auditing** – the library tracks which step changed which parameter for easier troubleshooting and analysis.
 
-## :building_construction: Architecture
+## :building_construction: Core Architecture
+
+### Pipelines
+
+Pipelines define the sequence of steps to be executed. Two pipeline types exist:
+
+- **`IChatRequestPipeline`** – Executes upon each user request. Takes a user message as input and produces a final response string.
+- **`ISummarizationPipeline`** – Executes when conversation token count exceeds configured threshold. Compresses chat history into a manageable summary.
+
+Both pipeline types are scoped to their execution context. The only long-lived object is the `ChatContext`, which holds the entire conversation history between user and assistants.
+
+### Parameters (`IEWParameter`)
+
+Each entity meaningful to the business operation must be defined as a parameter. Parameters:
+- Have a unique name and serialization behavior.
+- Support custom serializers for both AI agent use and GUI/display purposes.
+- Can be marked as conversation history, current user request, or response parameters.
+- Are read from and written to by steps, creating an auditable trail of changes.
+
+### Steps (`IEWStep`)
+
+Steps are the cornerstone of the pipeline. Each step:
+- Reads parameter values and provides them to agents or executors.
+- Writes results back to parameters.
+- Is either **agentic** (invokes an AI agent) or a **code step** (invokes a static executor).
+- Logs its inputs and outputs for tracking and debugging.
+
+### Agents
+
+Agents are LLM-driven services that process data. Each agent:
+- Has its own configurable LLM model, provider, temperature, and system prompt.
+- Is invoked by agentic steps.
+- Returns structured outputs with token count information.
+
+### Executors
+
+Executors are services that run deterministic business logic (static procedures). They are invoked by code steps and do not involve LLMs.
+
+### Overall Flow
 
 ```
-+--------------------------------------------------------------------+
-|                            User (CLI)                              |
-+--------------------------------------------------------------------+
-                 |
-                 v
-+--------------------------+
-|   Intent Extractor Agent |----> Extracts user intent from input
-+--------------------------+
-             |
-             v
-+--------------------------+
-|  Intent Canonicalization |----> Normalizes intent format
-|        Agent             |
-+--------------------------+
-             |
-             v
-+--------------------------+
-| Requirements Collector   |----> Transforms intent into structured
-|        Agent             |      requirements; queries QDrant/QMD
-+--------------------------+
-             |
-             v
-+--------------------------+
-| Functional Analyst Agent |----> Analyzes business requirements
-+--------------------------+
-             |
-             v
-+--------------------------+
-| Technical Analyst Agent  |----> Analyzes technical feasibility
-+--------------------------+
-             |
-             v
-+--------------------------+
-| Relevant Facts Evaluator |----> Filters and ranks relevant facts
-|        Agent             |      from knowledge base
-+--------------------------+
-             |
-             v
-+--------------------------+
-|    Coder Agent           |----> Generates JavaScript code against
-+--------------------------+      predefined API references
-             |
-             v
-+--------------------------+
-| Code Fixer Agent         |<---- Iterates on static/runtime errors
-| (with retry loop)        |
-+--------------------------+
-             |
-             v
-+--------------------------+
-|   JS Sandbox Executor    |----> Executes code in isolated environment
-+--------------------------+
-             |
-             v
-+--------------------------+
-| Code Execution Failures  |----> Detects and analyzes runtime failures
-|  Detector Agent          |
-+--------------------------+
-             |
-             v
-+--------------------------+
-| Documentation Agent      |----> Generates human-readable output
-|   & Results Presenter    |
-+--------------------------+
-
-### Side-by-side Services
-
-- **Conversation Summarizer Agent** – runs periodically to compress conversation history
-- **Personal Assistant Agent** – handles general conversational queries
-- **Domain Expert Agent** – provides domain-specific guidance and context
-- **Agent Memory Executor** – manages persistent agent memory via Mem0
+???????????????????????????????????????????????????????????????
+?                       User Input / Event                     ?
+???????????????????????????????????????????????????????????????
+                     ?
+                     v
+         ?????????????????????????????
+         ?   ChatContext (scoped)    ?
+         ?  - Parameters             ?
+         ?  - Conversation History   ?
+         ?????????????????????????????
+                  ?
+                  v
+      ?????????????????????????????????????
+      ?  Pipeline (Chat/Summarization)    ?
+      ?????????????????????????????????????
+                   ?
+        ???????????????????????
+        ?                     ?
+        v                     v
+    ??????????          ??????????
+    ? Step 1 ?          ? Step N ?
+    ??????????          ??????????
+         ?                  ?
+    ???????????        ???????????
+    ?          ?        ?          ?
+    v          v        v          v
+?????????? ?????????? ?????????? ??????????
+? Agent  ? ?Executor? ? Agent  ? ?Executor?
+?????????? ?????????? ?????????? ??????????
+    ?          ?        ?          ?
+    ????????????        ????????????
+         ?                   ?
+         v                   v
+    ???????????????????????????????
+    ?  Parameters Updated         ?
+    ?  (Audit Trail Maintained)   ?
+    ???????????????????????????????
+               ?
+               v
+          ??????????????
+          ?   Output   ?
+          ??????????????
 ```
 
 ## :file_folder: Project Structure
 
 | Project | Description |
 |---|---|
-| `AgentMesh` | Core domain – agent interfaces, models, and contracts |
-| `AgentMesh.Application` | Agent implementations, workflow orchestration, configuration models |
+| `AgentMesh` | Core domain – pipeline, parameter, step, agent, and executor interfaces and models |
+| `AgentMesh.Application` | Implementations of agents, executors, pipelines, and step orchestration; configuration models |
 | `AgentMeshCLI` | Console application entry point and DI composition root |
 | `AgentMesh.Infrastructure.OpenAIClient` | OpenAI-compatible API client with multi-provider support |
 | `AgentMesh.Infrastructure.JSSandbox` | Client for the external [JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) service |
@@ -203,23 +215,34 @@ The system is configured entirely through `appsettings.json`. Key sections:
 
 Each agent can use a different LLM tier, allowing cost optimization by assigning cheaper/smaller models to simpler tasks and more capable models to complex reasoning.
 
-## :robot: Agents
+## :robot: Concepts
 
-| Agent | Role |
-|---|---|
-| **Intent Extractor** | Extracts user intent and actionable requirements from input |
-| **Intent Canonicalization** | Normalizes and standardizes intent representation |
-| **Requirements Collector** | Transforms user requests into structured business requirements; queries knowledge base |
-| **Functional Analyst** | Analyzes business requirements and feasibility |
-| **Technical Analyst** | Validates technical approach and architecture |
-| **Domain Expert** | Provides domain-specific guidance and contextual knowledge |
-| **Relevant Facts Evaluator** | Filters and prioritizes relevant facts from knowledge base |
-| **Coder** | Generates JavaScript code against predefined API references |
-| **Code Fixer** | Repairs code based on static analysis or runtime error feedback |
-| **Code Execution Failures Detector** | Analyzes sandbox execution results for runtime failures |
-| **Documentation Agent** | Generates formatted documentation and presents results |
-| **Personal Assistant** | Handles general conversational queries and small talk |
-| **Conversation Summarizer** | Compresses conversation history to stay within token limits |
+### Parameters
+
+Parameters are business entities that flow through the pipeline. Each parameter:
+- Has a serialization strategy for LLM consumption (e.g., JSON, plain text).
+- Has a display strategy for console/UI output.
+- Can be flagged as part of conversation history, current user request, or response payload.
+- Is modified by steps in a tracked, auditable manner.
+
+### Agents
+
+Agents are LLM-driven services specialized for specific tasks. The framework includes agents for:
+- Intent extraction and canonicalization
+- Requirements collection and analysis
+- Functional and technical feasibility analysis
+- Code generation
+- Code repair and iteration
+- Conversation summarization
+- And many more domain-specific roles
+
+### Executors
+
+Executors are non-LLM services that run deterministic business logic:
+- JavaScript code sandbox execution
+- Knowledge base queries
+- Memory persistence
+- And other platform services
 
 ## :link: External Dependencies
 
