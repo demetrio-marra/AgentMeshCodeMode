@@ -8,9 +8,9 @@ Guidelines:
 3. Consider the user's preferences when formulating queries
 4. Address any missing values or gaps in information by generating queries to find them
 5. Use appropriate query types as documented in the Documentation queries generation reference:
-   - "vec" for semantic searches using natural language (conceptual understanding, paraphrases)
-   - "lex" for keyword-based searches with boolean operators (exact terms, technical identifiers)
-   - "hyde" for hypothetical document searches (passage-style answer text, exploratory matches)
+   - "Semantic" for semantic searches using natural language (conceptual understanding, paraphrases)
+   - "Keyword" for keyword-based searches with boolean operators (exact terms, technical identifiers)
+   - "HypotheticalDocument" for hypothetical document searches (passage-style answer text, exploratory matches). Do not generate when `intentCategory` is `Documentation`
 6. Follow the syntax rules for each query type as specified in the QMD documentation
 7. Provide queries in the user's language if available
 8. Generate clear, concise queries that are likely to return relevant results
@@ -19,9 +19,9 @@ Guidelines:
 Output your response as a JSON object with the following structure, without backticks or extra text.
 {
   "searchQueries": [
-    { "type": "vec",  "query": "..." },
-    { "type": "hyde", "query": "..." },
-    { "type": "lex",  "query": "..." }
+    { "type": "Semantic",  "query": "..." },
+    { "type": "HypotheticalDocument", "query": "..." },
+    { "type": "Keyword",  "query": "..." }
   ]
 }
 

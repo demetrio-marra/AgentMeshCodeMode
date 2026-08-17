@@ -1,51 +1,76 @@
 using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Models.Conversation;
 using AgentMesh.Application.Services;
+using AgentMesh.Application.Services.Agents;
+using AgentMesh.Application.Services.Executors;
+using AgentMesh.Application.Services.Helpers;
+using AgentMesh.Application.Services.Pipelines;
+using AgentMesh.Application.Utils;
+using AgentMesh.Configuration;
+using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.JSSandbox;
+using AgentMesh.Infrastructure.Mem0;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.QMD;
+using AgentMesh.Infrastructure.QMD.Services;
+using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using AgentMesh.Application.Contracts;
-using AgentMesh.Application.Utils;
-using AgentMesh.Infrastructure.Mem0;
-using AgentMesh.Infrastructure.QMD.Services;
-using AgentMesh.Application.Services.Workflows;
-using AgentMesh.Application.Services.Workflows.Steps;
+using System.Reflection;
 
 namespace AgentMesh
 {
     internal class Program
     {
-        static async Task Main()
+        static async Task Main(string[] args)
         {
-            // Build configuration
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
-                              ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
-                              ?? "Production";
+            var builder = new HostApplicationBuilder(args);
 
-            var configuration = new ConfigurationBuilder()
+            builder.Configuration.Sources.Clear();
+            builder.Configuration
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables()
-                .Build();
+                .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables();
 
-            // Setup Dependency Injection
-            var services = new ServiceCollection();
+            var configuration = builder.Configuration;
+            var services = builder.Services;
+            var appSettings = new AppSettingsConfigurationDto();
+            configuration.Bind(appSettings);
 
-            // Register configuration
-            services.AddSingleton<IConfiguration>(configuration);
-
-            services.AddLogging(builder =>
+            services.AddLogging(loggingBuilder =>
             {
-                builder.AddConfiguration(configuration.GetSection("Logging"));
-                builder.AddConsole();
+                loggingBuilder.AddConfiguration(configuration.GetSection("Logging"));
+                loggingBuilder.AddConsole();
             });
 
+            services.AddKeyedSingleton<IEWParameterSerializer, DisplayValuesEWParameterSerializer>("DisplayParametersSerializer");
+            services.AddKeyedSingleton<IEWParameterSerializer, DefaultEWParameterSerializer>("DefaultParametersSerializer");
+            services.AddSingleton<IOpenAIClientFactory, OpenAIClientFactory>();
 
+            foreach (var ewParameterType in DiscoverEWParameterImplementations())
+            {
+                services.AddScoped(ewParameterType);
+                services.AddScoped(typeof(IEWParameter), sp => (IEWParameter)sp.GetRequiredService(ewParameterType));
+            }
+
+            foreach (var ewStepType in DiscoverEWStepImplementations())
+            {
+                services.AddScoped(ewStepType);
+            }
+
+            services.AddSingleton<IEnumerable<AgentFlatConfigurationRecord>>(AgentConfigurationReadHelper.ReadAgentConfigurations(appSettings, AppContext.BaseDirectory).ToArray());
+            services.AddSingleton<IAgentInputSerializer, DefaultAgentInputSerializer>();
+            // insert here
+            services.AddScoped<IChatRequestPipeline, ChatRequestPipeline>();
+            services.AddScoped<ISummarizationPipeline, SummarizationPipeline>();
+
+            #region agents/executors region
             // Embedding configuration and service registration
             var embeddingConfiguration = new EmbeddingServiceConfiguration();
             configuration.GetSection("Embedding").Bind(embeddingConfiguration);
@@ -83,8 +108,6 @@ namespace AgentMesh
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<SESJSSandboxConfiguration>>().Value);
 
-            services.AddInferenceProviders(configuration);
-
             // Resilience configuration
             services
                 .AddOptions<ResilienceConfiguration>()
@@ -92,358 +115,25 @@ namespace AgentMesh
                 .Services
                 .AddSingleton(sp => sp.GetRequiredService<IOptions<ResilienceConfiguration>>().Value);
 
+            services
+              .AddOptions<ConversationSummarizationConfiguration>()
+              .Bind(configuration.GetSection(ConversationSummarizationConfiguration.SectionName))
+              .Services
+              .AddSingleton(sp => sp.GetRequiredService<IOptions<ConversationSummarizationConfiguration>>().Value);
+
             services.AddSingleton<Resilience>();
 
-            // Load LLMs configuration
-            services
-                .AddOptions<LLMsConfiguration>()
-                .Bind(configuration.GetSection(LLMsConfiguration.SectionName))
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<LLMsConfiguration>>().Value);
-
-            // FunctionalAnalyst agent config and client
-            services
-                .AddOptions<FunctionalAnalystAgentConfiguration>()
-                .Bind(configuration.GetSection(FunctionalAnalystAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<FunctionalAnalystAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(FunctionalAnalystAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<FunctionalAnalystAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<FunctionalAnalystAgent>();
-
-            // DomainExpert agent config and client
-            services
-                .AddOptions<DomainExpertAgentConfiguration>()
-                .Bind(configuration.GetSection(DomainExpertAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<DomainExpertAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(DomainExpertAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<DomainExpertAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<DomainExpertAgent>();
-
-            // TechnicalAnalyst agent config and client
-            services
-                .AddOptions<TechnicalAnalystAgentConfiguration>()
-                .Bind(configuration.GetSection(TechnicalAnalystAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<TechnicalAnalystAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(TechnicalAnalystAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<TechnicalAnalystAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<TechnicalAnalystAgent>();
-
-            // Documentation agent config and client
-            services
-                .AddOptions<DocumentationAgentConfiguration>()
-                .Bind(configuration.GetSection(DocumentationAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<DocumentationAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(DocumentationAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<DocumentationAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<DocumentationAgent>();
-
-            // Coder agent config and client
-            services
-                .AddOptions<CoderAgentConfiguration>()
-                .Bind(configuration.GetSection(CoderAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<CoderAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(CoderAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<CoderAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<CoderAgent>();
-
-            // CodeFixer agent config and client
-            services
-                .AddOptions<CodeFixerAgentConfiguration>()
-                .Bind(configuration.GetSection(CodeFixerAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<CodeFixerAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(CodeFixerAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<CodeFixerAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-            services.AddSingleton<CodeFixerAgent>();
-
-            // CodeExecutionFailuresDetector agent config and client
-            services
-                .AddOptions<CodeExecutionFailuresDetectorAgentConfiguration>()
-                .Bind(configuration.GetSection(CodeExecutionFailuresDetectorAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<CodeExecutionFailuresDetectorAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(CodeExecutionFailuresDetectorAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<CodeExecutionFailuresDetectorAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-            services.AddSingleton<JavascriptCodeExecutionFailuresDetectorAgent>();
-
-            // RequestCanonicalization agent config and client
-            services
-                .AddOptions<RequestCanonicalizationAgentConfiguration>()
-                .Bind(configuration.GetSection(RequestCanonicalizationAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<RequestCanonicalizationAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(RequestCanonicalizationAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<RequestCanonicalizationAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
-            services.AddSingleton<RequestCanonicalizationAgent>();
-
-            // PersonalAssistant agent config and client
-            services
-                .AddOptions<PersonalAssistantAgentConfiguration>()
-                .Bind(configuration.GetSection(PersonalAssistantAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<PersonalAssistantAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(PersonalAssistantAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<PersonalAssistantAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<PersonalAssistantAgent>();
-
-            // RelevantFactsEvaluator agent config and client
-            services
-                .AddOptions<RelevantFactsEvaluatorAgentConfiguration>()
-                .Bind(configuration.GetSection(RelevantFactsEvaluatorAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<RelevantFactsEvaluatorAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(RelevantFactsEvaluatorAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<RelevantFactsEvaluatorAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<RelevantFactsEvaluatorAgent>();
-
-            // RequestAnalyzer agent config and client
-            services
-                .AddOptions<RequestAnalyzerAgentConfiguration>()
-                .Bind(configuration.GetSection(RequestAnalyzerAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<RequestAnalyzerAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(RequestAnalyzerAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<RequestAnalyzerAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<RequestAnalyzerAgent>();
-
-            // KnowledgeBaseQueryExpander agent config and client
-            services
-                .AddOptions<KnowledgeBaseQueryExpanderAgentConfiguration>()
-                .Bind(configuration.GetSection(KnowledgeBaseQueryExpanderAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<KnowledgeBaseQueryExpanderAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(KnowledgeBaseQueryExpanderAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<KnowledgeBaseQueryExpanderAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<KnowledgeBaseQueryExpanderAgent>();
-
-            // AgentMemoryQueryExpander agent config and client
-            services
-                .AddOptions<AgentMemoryQueryExpanderAgentConfiguration>()
-                .Bind(configuration.GetSection(AgentMemoryQueryExpanderAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<AgentMemoryQueryExpanderAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(AgentMemoryQueryExpanderAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<AgentMemoryQueryExpanderAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<AgentMemoryQueryExpanderAgent>();
-
-            // Reranker agent config and client
-            services
-                .AddOptions<RerankerAgentConfiguration>()
-                .Bind(configuration.GetSection(RerankerAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<RerankerAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(RerankerAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<RerankerAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<RerankerAgent>();
-
-            // conversation summarizer agent config and client
-            services
-                .AddOptions<ConversationSummarizerAgentConfiguration>()
-                .Bind(configuration.GetSection(ConversationSummarizerAgentConfiguration.SectionName))
-                .PostConfigure(options =>
-                {
-                    options.SystemPrompt = ResolveConfigText(options.SystemPrompt, options.SystemPromptFile);
-                })
-                .Services
-                .AddSingleton(sp => sp.GetRequiredService<IOptions<ConversationSummarizerAgentConfiguration>>().Value);
-
-            services.AddKeyedSingleton<IOpenAIClient>(ConversationSummarizerAgentConfiguration.AgentName, (sp, _) =>
-            {
-                var factory = sp.GetRequiredService<IOpenAIClientFactory>();
-                var config = sp.GetRequiredService<ConversationSummarizerAgentConfiguration>();
-                var llmsConfig = sp.GetRequiredService<LLMsConfiguration>();
-                var llmConfig = ResolveLLMConfiguration(config.LLM, llmsConfig);
-                var systemPrompt = config.SystemPrompt;
-                return factory.CreateOpenAIClient(llmConfig.Model, llmConfig.Provider, config.ModelTemperature, systemPrompt);
-            });
-
             services.AddSingleton<ConversationSummarizerAgent>();
 
             // CodeModeWorkflow configuration
@@ -456,31 +146,10 @@ namespace AgentMesh
             services.AddSingleton<JSSandboxExecutor>();
             services.AddSingleton<IJSSandbox, SESJSSandboxClient>();
 
+            #endregion
+
             services.AddSingleton<IWorkflowProgressNotifier, ConsoleWorkflowProgressNotifier>();
-
-            services.AddSingleton<KnowledgeBaseDocumentsExtractorWorkflowStep>();
-            services.AddSingleton<DomainsKnowledgeBaseDocumentsExtractorWorkflowStep>();
-            services.AddSingleton<APIKnowledgeBaseDocumentsExtractorWorkflowStep>();
-            services.AddSingleton<RequestCanonicalizationWorkflowStep>();
-            services.AddSingleton<AgentMemoryServiceWorkflowStep>();
-            services.AddSingleton<AgentMemoryQueryExpanderWorkflowStep>();
-            services.AddSingleton<KnowledgeBaseServiceSearchWorkflowStep>();
-            services.AddSingleton<DomainsKnowledgeBaseServiceSearchWorkflowStep>();
-            services.AddSingleton<APIsKnowledgeBaseServiceSearchWorkflowStep>();
-            services.AddSingleton<FunctionalAnalystWorkflowStep>();
-            services.AddSingleton<TechnicalAnalystWorkflowStep>();
-            services.AddSingleton<CoderWorkflowStep>();
-            services.AddSingleton<CodeFixerForRuntimeErrorsWorkflowStep>();
-            services.AddSingleton<JSSandboxWorkflowStep>();
-            services.AddSingleton<CodeExecutionFailuresDetectorWorkflowStep>();
-            services.AddSingleton<DocumentationWorkflowStep>();
-            services.AddSingleton<DomainExpertWorkflowStep>();
-            services.AddSingleton<RequestAnalyzerWorkflowStep>();
-            services.AddSingleton<KnowledgeBaseQueryExpanderWorkflowStep>();
-            services.AddSingleton<RerankerWorkflowStep>();
-
-            services.AddSingleton<IWorkflow, CodeModeWorkflow>();
-            services.AddSingleton<UserConsoleInputService>();
+            services.AddSingleton<ConversationContext>();
 
             services
                .AddOptions<UserConfiguration>()
@@ -488,12 +157,115 @@ namespace AgentMesh
                .Services
                .AddSingleton(sp => sp.GetRequiredService<IOptions<UserConfiguration>>().Value);
 
-            // Build service provider
-            var serviceProvider = services.BuildServiceProvider();
+            services.AddSingleton<AppInstance>();
 
-            // Create and run the service
-            var userConsoleInputService = serviceProvider.GetRequiredService<UserConsoleInputService>();
-            await userConsoleInputService.Run();
+            services.AddHostedService<UserConsoleInputService>();
+
+            var host = builder.Build();
+            await host.RunAsync();
+        }
+
+    
+        private static IEnumerable<Type> DiscoverEWParameterImplementations()
+        {
+            return GetAllAssemblies()
+                .SelectMany(GetTypesSafely)
+                .Where(IsConcreteEWParameter)
+                .Distinct();
+        }
+
+        private static IEnumerable<Type> DiscoverEWStepImplementations()
+        {
+            return GetAllAssemblies()
+                .SelectMany(GetTypesSafely)
+                .Where(IsConcreteEWStep)
+                .Distinct();
+        }
+
+        private static bool IsConcreteEWParameter(Type type)
+        {
+            if (!type.IsClass || type.IsAbstract)
+            {
+                return false;
+            }
+
+            var currentBaseType = type.BaseType;
+            while (currentBaseType != null)
+            {
+                if (currentBaseType.IsGenericType
+                    && currentBaseType.GetGenericTypeDefinition() == typeof(EWParameter<>))
+                {
+                    return true;
+                }
+
+                currentBaseType = currentBaseType.BaseType;
+            }
+
+            return false;
+        }
+
+        private static bool IsConcreteEWStep(Type type)
+        {
+            return type.IsClass
+                && !type.IsAbstract
+                && !type.ContainsGenericParameters
+                && typeof(IEWStep).IsAssignableFrom(type);
+        }
+
+        private static IEnumerable<Assembly> GetAllAssemblies()
+        {
+            var discoveredAssemblies = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
+            var queue = new Queue<Assembly>();
+
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (!discoveredAssemblies.ContainsKey(assembly.FullName ?? assembly.GetName().Name ?? string.Empty))
+                {
+                    discoveredAssemblies[assembly.FullName ?? assembly.GetName().Name ?? string.Empty] = assembly;
+                    queue.Enqueue(assembly);
+                }
+            }
+
+            while (queue.Count > 0)
+            {
+                var assembly = queue.Dequeue();
+                foreach (var reference in assembly.GetReferencedAssemblies())
+                {
+                    if (discoveredAssemblies.ContainsKey(reference.FullName))
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        var loadedAssembly = Assembly.Load(reference);
+                        discoveredAssemblies[reference.FullName] = loadedAssembly;
+                        queue.Enqueue(loadedAssembly);
+                    }
+                    catch
+                    {
+                        // Ignore assemblies that cannot be loaded.
+                    }
+                }
+            }
+
+            return discoveredAssemblies.Values;
+        }
+
+        private static IEnumerable<Type> GetTypesSafely(Assembly assembly)
+        {
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                return ex.Types.Where(t => t != null)!;
+            }
+            catch
+            {
+                return [];
+            }
         }
 
         private static string ResolveConfigText(string currentValue, string? filePath)
@@ -513,16 +285,6 @@ namespace AgentMesh
             }
 
             return currentValue;
-        }
-
-        private static LLMConfiguration ResolveLLMConfiguration(string llmKey, LLMsConfiguration llmsConfiguration)
-        {
-            if (!llmsConfiguration.TryGetValue(llmKey, out var llmConfig))
-            {
-                throw new InvalidOperationException($"LLM configuration not found for key: {llmKey}");
-            }
-
-            return llmConfig;
         }
     }
 }

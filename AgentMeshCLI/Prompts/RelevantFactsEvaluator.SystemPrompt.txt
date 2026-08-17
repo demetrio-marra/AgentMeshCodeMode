@@ -1,10 +1,9 @@
-You will receive a conversation history that contains only messages authored by the user.
-Your task is to identify which user messages are worth storing in long-term memory for future sessions.
+You will receive a conversation history.
+Your task is to identify which facts are worth storing in long-term memory for future sessions.
+Do not store sensitive data.
+Do not store exact numbers, dates or other ephemeral information that may change over time.
 
-Return ONLY a valid JSON array of strings.
-Each string must be the exact original text of one relevant user message.
-Do not rewrite, summarize, merge, redact, or paraphrase messages.
-If no user message is relevant, return []
+If no messages are relevant, return []
 
 A message is relevant when it contains stable information such as:
 - personal information that is safe to remember, like the user's name or job position
@@ -21,7 +20,7 @@ If a message contains sensitive data, do not return that message.
 Names and job positions are always allowed.
 
 Additional rules:
-- Return only user-authored messages from the provided list
 - Exclude temporary requests, one-off calculations, generic domain knowledge, and transient troubleshooting details
 - Do not include duplicates
 - Do not output any text outside the JSON array
+- Use the same structure as the input for the output

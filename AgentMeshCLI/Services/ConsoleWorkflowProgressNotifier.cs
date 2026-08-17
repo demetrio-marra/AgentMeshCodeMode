@@ -1,5 +1,5 @@
-﻿using AgentMesh.Application.Contracts;
-using AgentMesh.Helpers;
+﻿using AgentMesh.Helpers;
+using AgentMesh.Models;
 
 namespace AgentMesh.Services
 {
@@ -17,31 +17,75 @@ namespace AgentMesh.Services
             await Task.CompletedTask;
         }
 
-        public async Task NotifyWorkflowStepEnd(string stepName, Dictionary<string, string> outputParameters)
+        public async Task NotifyWorkflowStepStarted(string stepName)
         {
-            ConsoleHelper.WriteLineWithColor($"Workflow step '{stepName}' has completed.", ConsoleColor.Magenta);
+            ConsoleHelper.WriteLineWithColor($"Workflow step '{stepName}' is running...", ConsoleColor.DarkGray);
+            await Task.CompletedTask;
+        }
 
-            foreach (var output in outputParameters)
-            {
-                WriteParameter(output.Key, output.Value);
-            }
+        public async Task NotifyWorkflowStepCompleted(string stepName, EWStepStatisticsRecord statistics)
+        {
+            ConsoleHelper.WriteLineWithColor($"Workflow step '{stepName}' has completed.", ConsoleColor.Yellow);
+            WriteExecStatistic("Step", statistics.StepName + " " + (statistics.IsAgentic ? "(Agentic)" : "(Code)"));
+            WriteExecStatistic("Elapsed", statistics.HumanReadableElapsed);
 
-            ConsoleHelper.WriteLineWithColor("══════════════════════════════════════════════════════════════════════════", ConsoleColor.Gray);
+            var parametersDiff = statistics.ParametersDiff.ToList();
+
+            List<TextOrConsoleColor> parametersTextOrConsoleColor = parametersDiff.Count == 0 ? [new TextOrConsoleColor { Color = ConsoleColor.White, Text = "(No differences)" }] :
+                [.. parametersDiff.SelectMany(p => new List<TextOrConsoleColor>
+                {
+                    new() { Color = ConsoleColor.White, Text = p.Name },
+                    new() { Color = ConsoleColor.Magenta, Text = $"{p.OldValue ?? string.Empty}" },
+                    new() { Color = ConsoleColor.Green, Text = $"{p.NewValue ?? string.Empty}" },
+                    new() { Color = ConsoleColor.Gray, Text = new string('-', 9) }
+                })];
+
+
+            WriteParameters(parametersTextOrConsoleColor);
+
+            ConsoleHelper.WriteLineWithColor("══════════════════════════════════════════════════════════════════════════", ConsoleColor.Yellow);
 
             await Task.CompletedTask;
         }
 
-        public async Task NotifyWorkflowStepStart(string stepName, Dictionary<string, string> inputParameters)
+        private static void WriteParameters(IEnumerable<TextOrConsoleColor> textElements)
         {
-            ConsoleHelper.WriteLineWithColor($"\nWorkflow step '{stepName}' has started.", ConsoleColor.Green);
-            foreach (var input in inputParameters)
+            var paramPadding = "Params".Length + 2;
+
+            ConsoleHelper.WriteWithColor($"Params: ", ConsoleColor.DarkYellow);
+            
+            // do not pad first element only
+            bool isFirstElement = true;
+            foreach (var element in textElements)
             {
-                WriteParameter(input.Key, input.Value);
+                var paddedLines = element.Text?.Split('\n');
+                List<string> allPaddedLines;
+                
+                if (isFirstElement)
+                {
+                    allPaddedLines =  [paddedLines[0], .. paddedLines.Skip(1).Select(line => new string(' ', paramPadding) + line)];
+                    isFirstElement = false;
+                }
+                else
+                {
+                    allPaddedLines =  paddedLines.Select(line => new string(' ', paramPadding) + line).ToList();
+                }
+
+                foreach (var paddedLine in allPaddedLines)
+                {
+                    if (element.Color.HasValue)
+                    {
+                        ConsoleHelper.WriteLineWithColor(paddedLine, element.Color.Value);
+                    }
+                    else
+                    {
+                        Console.WriteLine(paddedLine);
+                    }
+                }
             }
-            await Task.CompletedTask;
         }
 
-        private static void WriteParameter(string key, string value)
+        private static void WriteExecStatistic(string key, string value)
         {
             var lines = value.Split('\n');
             var paramPadding = key.Length + 2;
@@ -59,6 +103,13 @@ namespace AgentMesh.Services
             {
                 ConsoleHelper.WriteLineWithColor(paddedLine, ConsoleColor.White);
             }
+        }
+
+
+        internal class TextOrConsoleColor
+        {
+            public string? Text { get; init; }
+            public ConsoleColor? Color { get; init; }
         }
     }
 }

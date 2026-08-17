@@ -1,29 +1,25 @@
-﻿using AgentMesh.Application.Contracts;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+﻿using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Contracts;
 
 namespace AgentMesh.Infrastructure.OpenAIClient
 {
-    public class OpenAIClientFactory(OpenAIClientFactoryConfiguration configuration) : IOpenAIClientFactory
+    public class OpenAIClientFactory(IEnumerable<AgentFlatConfigurationRecord> agentFlatConfigurationRecords) : 
+        IOpenAIClientFactory
     {
-        private readonly OpenAIClientFactoryConfiguration _configuration = configuration;
-
-        public IOpenAIClient CreateOpenAIClient(string model, string provider, string temperature, string systemPrompt)
+        public IOpenAIClient CreateOpenAIClient(string agentUniqueRole)
         {
-            var apikey = _configuration[provider].ApiKey;
-            var endpoint = _configuration[provider].Endpoint;
-            return new OpenAIClient(model, apikey, endpoint, temperature, systemPrompt);
+            var cfg = GetAgentConfiguration(agentUniqueRole);
+            return new OpenAIClient(cfg.ProviderModelName, 
+                cfg.ProviderApiKey,
+                cfg.ProviderEndpoint, 
+                cfg.Temperature,
+                cfg.SystemPrompt);
         }
-    }
 
-    public static class ServiceCollectionExtensions
-    {
-        public static void AddOpenAIClientFactory(this IServiceCollection services, IConfiguration configuration)
+        private AgentFlatConfigurationRecord GetAgentConfiguration(string agentUniqueRole)
         {
-            services.AddOptions<OpenAIClientFactoryConfiguration>()
-                    .Bind(configuration.GetSection(OpenAIClientFactoryConfiguration.SectionName));
-            services.AddSingleton<IOpenAIClientFactory, OpenAIClientFactory>();
+            var cfg = agentFlatConfigurationRecords.Single(x => string.Compare(agentUniqueRole, x.AgentUniqueRole, true) == 0);
+            return cfg;
         }
     }
 }

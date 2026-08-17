@@ -1,4 +1,4 @@
-﻿using AgentMesh.Models.Embedding;
+﻿using AgentMesh.Application.Models.Embedding;
 
 namespace AgentMesh.Application.Contracts
 {
