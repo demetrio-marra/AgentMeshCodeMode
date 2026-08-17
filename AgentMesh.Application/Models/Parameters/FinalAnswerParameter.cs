@@ -12,7 +12,6 @@ namespace AgentMesh.Application.Models.Parameters
         public FinalAnswerParameter()
         {
             Name = ParamName;
-            IsResponseForUserParameter = true;
         }
     }
 }

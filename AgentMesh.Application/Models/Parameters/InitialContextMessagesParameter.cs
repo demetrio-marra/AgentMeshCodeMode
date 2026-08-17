@@ -1,5 +1,4 @@
 using AgentMesh.Models;
-using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,7 +10,6 @@ namespace AgentMesh.Application.Models.Parameters
         public InitialContextMessagesParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
         {
             Name = ParamName;
-            IsConversationHistoryParameter = true;
             DisplayValueSerializer = displayValueSerializer;
         }
     }

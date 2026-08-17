@@ -8,7 +8,6 @@ namespace AgentMesh.Application.Models.Parameters
         public UserLastRequestParameter()
         {
             Name = ParamName;
-            IsUserCurrentRequestParameter = true;
         }
     }
 }
