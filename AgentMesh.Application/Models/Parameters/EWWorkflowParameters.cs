@@ -7,7 +7,7 @@ using AgentMesh.Models.RequestAnalysis;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AgentMesh.Application.Models.Workflows
+namespace AgentMesh.Application.Models.Parameters
 {
     public sealed class RequestDateTimeParameter: EWParameter<DateTime>
     {

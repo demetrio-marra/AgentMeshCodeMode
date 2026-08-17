@@ -1,4 +1,4 @@
-using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Parameters;
 using AgentMesh.Application.Services.Executors;
 using AgentMesh.Services;
 

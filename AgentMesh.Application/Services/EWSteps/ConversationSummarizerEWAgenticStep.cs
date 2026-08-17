@@ -1,5 +1,5 @@
 using AgentMesh.Application.Models.ChatMessages;
-using AgentMesh.Application.Models.Workflows;
+using AgentMesh.Application.Models.Parameters;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Models;
 using AgentMesh.Services;

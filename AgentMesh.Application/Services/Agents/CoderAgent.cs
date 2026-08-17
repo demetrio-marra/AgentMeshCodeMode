@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Services.Helpers;
+using AgentMesh.Application.Models.Parameters;
 
 namespace AgentMesh.Application.Services.Agents
 {
