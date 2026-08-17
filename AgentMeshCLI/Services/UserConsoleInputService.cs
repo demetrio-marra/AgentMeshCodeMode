@@ -22,7 +22,7 @@ namespace AgentMesh.Services
 
             while (true)
             {
-                Console.WriteLine("Enter your question or type 'exit':");
+                Console.WriteLine("Enter your question or type /help:");
                 Console.Write("> ");
                 var requestText = Console.ReadLine();
 
@@ -32,9 +32,22 @@ namespace AgentMesh.Services
                     continue;
                 }
 
-                if (string.Equals(requestText?.Trim(), "exit", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(requestText?.Trim(), "/exit", StringComparison.OrdinalIgnoreCase))
                 {
                     break;
+                }
+
+                if (string.Equals(requestText?.Trim(), "/help", StringComparison.OrdinalIgnoreCase))
+                {
+                    PrintHelp();
+                    continue;
+                }
+
+                if (string.Equals(requestText?.Trim(), "/new", StringComparison.OrdinalIgnoreCase))
+                {
+                    await appInstance.InitConversation();
+                    ConsoleHelper.WriteLineWithColor("New conversation initialized.", ConsoleColor.Green);
+                    continue;
                 }
 
                 var executionResult = await appInstance.ProcessRequest(requestText!, cancellationToken);
@@ -65,6 +78,15 @@ namespace AgentMesh.Services
                 ConsoleHelper.PrintAgentConfiguration(agentConfig.AgentUniqueRole, agentConfig.ProviderModelName, Convert.ToDouble(agentConfig.Temperature, CultureInfo.InvariantCulture));
             }
             Console.WriteLine();
+        }
+
+        private void PrintHelp()
+        {
+            Console.WriteLine("Available commands:");
+            Console.WriteLine("/help - Show this help message");
+            Console.WriteLine("/exit - Exit the application");
+            Console.WriteLine("/new - Initializes a new conversation");
+            Console.WriteLine("Any other text will be treated as a question to the AgentMesh system.\n");
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
