@@ -4,13 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class MissingValuesParameter : EWParameter<IEnumerable<string>>
+    public sealed class MissingValuesParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer) : BaseEWParameterConfiguration<IEnumerable<string>>
     {
-        public const string ParamName = "Missing values";
-        public MissingValuesParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
-        {
-            Name = ParamName;
-            DisplayValueSerializer = displayValueSerializer;
-        }
+        public override string Name => "Missing values";
+
+        public override IEWParameterSerializer DisplayValueSerializer => displayValueSerializer;
     }
 }

@@ -7,14 +7,14 @@
 [![Qdrant](https://img.shields.io/badge/Qdrant-Semantic_Search-DC244C)](https://qdrant.tech/)
 [![GitHub stars](https://img.shields.io/github/stars/demetrio-marra/AgentMeshCodeMode)](https://github.com/demetrio-marra/AgentMeshCodeMode/stargazers)
 
-A flexible, extensible multi-agent AI orchestration framework that executes configurable pipelines composed of steps, where each step can invoke specialized AI agents or static executors to transform business parameters. Steps read from and write to a shared parameter context, enabling rich parameter tracking and cost analysis per step.
+A flexible, extensible multi-agent AI orchestration framework that executes configurable pipelines composed of steps, where each step can invoke specialized AI agents or static executors to transform business parameters. Steps read from and write to a shared parameter store with atomic updates, enabling rich parameter tracking and cost analysis per step.
 
 ---
 
 ## :sparkles: Features
 
 - **Pipeline-based orchestration** – two distinct pipeline types (`IChatRequestPipeline` and `ISummarizationPipeline`) composed of reusable steps, each with its own role.
-- **Parameter-driven architecture** – all meaningful business state is modeled as parameters with custom serializers for both agent use and UI display.
+- **Parameter-driven architecture** – all meaningful business state is modeled as parameters; parameter classes define metadata/serialization rules, while runtime values are managed in the parameter store.
 - **Step-based processing** – steps are the cornerstone of execution; they bridge parameters and either AI agents (for agentic steps) or static executors (for code steps).
 - **AI agent integration** – specialized agents process data via LLM, each with configurable model, temperature, and system prompt.
 - **Static executors** – complement agents by running deterministic business logic without AI involvement.
@@ -39,19 +39,21 @@ Pipelines define the sequence of steps to be executed. Two pipeline types exist:
 
 Both pipeline types are scoped to their execution context. The only long-lived object is the `ChatContext`, which holds the entire conversation history between user and assistants.
 
-### Parameters (`IEWParameter`)
+### Parameters (`IEWParameterConfiguration`)
 
 Each entity meaningful to the business operation must be defined as a parameter. Parameters:
-- Have a unique name and serialization behavior.
+- Define a unique name and serialization behavior.
+- Act as configuration/metadata (not mutable singleton state shared across steps).
 - Support custom serializers for both AI agent use and GUI/display purposes.
 - Can be marked as conversation history, current user request, or response parameters.
-- Are read from and written to by steps, creating an auditable trail of changes.
+- Have runtime values stored in a `ParameterStore`, where updates are applied atomically.
+- Are tracked with an auditable trail of changes.
 
 ### Steps (`IEWStep`)
 
 Steps are the cornerstone of the pipeline. Each step:
-- Reads parameter values and provides them to agents or executors.
-- Writes results back to parameters.
+- Reads parameter values from the `ParameterStore` and provides them to agents or executors.
+- Writes results back through atomic parameter store updates.
 - Is either **agentic** (invokes an AI agent) or a **code step** (invokes a static executor).
 - Logs its inputs and outputs for tracking and debugging.
 
@@ -76,7 +78,7 @@ Executors are services that run deterministic business logic (static procedures)
                      v
          ?????????????????????????????
          ?   ChatContext (scoped)    ?
-         ?  - Parameters             ?
+         ?  - ParameterStore         ?
          ?  - Conversation History   ?
          ?????????????????????????????
                   ?
@@ -103,8 +105,8 @@ Executors are services that run deterministic business logic (static procedures)
          ?                   ?
          v                   v
     ???????????????????????????????
-    ?  Parameters Updated         ?
-    ?  (Audit Trail Maintained)   ?
+    ? ParameterStore Updated      ?
+    ? (Atomic + Audited Changes)  ?
     ???????????????????????????????
                ?
                v
@@ -219,11 +221,11 @@ Each agent can use a different LLM tier, allowing cost optimization by assigning
 
 ### Parameters
 
-Parameters are business entities that flow through the pipeline. Each parameter:
+Parameters are business entities that flow through the pipeline as runtime values stored in the `ParameterStore`. Parameter classes define configuration/metadata for how those values behave. Each parameter:
 - Has a serialization strategy for LLM consumption (e.g., JSON, plain text).
 - Has a display strategy for console/UI output.
 - Can be flagged as part of conversation history, current user request, or response payload.
-- Is modified by steps in a tracked, auditable manner.
+- Is atomically updated by steps through the `ParameterStore`, in a tracked and auditable manner.
 
 ### Agents
 

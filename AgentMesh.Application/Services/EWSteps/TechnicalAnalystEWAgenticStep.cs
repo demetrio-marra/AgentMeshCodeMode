@@ -7,18 +7,7 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class TechnicalAnalystEWAgenticStep(
         TechnicalAnalystAgent technicalAnalystAgent,
-        RequestDateTimeParameter requestDateTimeParameter,
-        UserIntentParameter userIntentParameter,
-        ConversationTopicParameter conversationTopicParameter,
-        BusinessRequirementsParameter businessRequirementsParameter,
-        UserRequestedActionsParameter userRequestedActionsParameter,
-        UserProvidedDataParameter userProvidedDataParameter,
-        UserPreferencesParameter userPreferencesParameter,
-        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
-        KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
-        TechnicalSpecificationParameter technicalSpecificationParameter,
-        RequestRejectedFlagParameter requestRejectedFlagParameter,
-        RequestRejectedReasonParameter requestRejectedReasonParameter) : IEWAgenticStep
+        KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter) : IEWAgenticStep
     {
         public string Name => "Technical Analyst";
 
@@ -28,36 +17,53 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool CountOutputTokensAsContextTokens => false;
 
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
-        {
-            var agentOutput = await technicalAnalystAgent.ExecuteAsync([
-                requestDateTimeParameter,
-                knowledgeBaseAPIDocumentsContentParameter,
-                userIntentParameter,
-                conversationTopicParameter,
-                businessRequirementsParameter,
-                userRequestedActionsParameter,
-                userPreferencesParameter,
-                userProvidedDataParameter,
-                pastMemoriesQueryResultsParameter
-                ], cancellationToken);
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(RequestDateTimeParameter),
+            typeof(UserIntentParameter),
+            typeof(ConversationTopicParameter),
+            typeof(BusinessRequirementsParameter),
+            typeof(UserRequestedActionsParameter),
+            typeof(UserProvidedDataParameter),
+            typeof(UserPreferencesParameter),
+            typeof(PastMemoriesQueryResultsParameter),
+            typeof(KnowledgeBaseAPIDocumentsContentParameter)
+            ];
 
-            if (agentOutput.Result.FilteredApisDocumentationFiles != null
-                && agentOutput.Result.FilteredApisDocumentationFiles.Any())
+        public IEnumerable<Type> OutputParameterTypes => [
+            typeof(KnowledgeBaseAPIDocumentsContentParameter),
+            typeof(TechnicalSpecificationParameter),
+            typeof(RequestRejectedFlagParameter),
+            typeof(RequestRejectedReasonParameter)
+            ];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
+        {
+            var agentOutput = await technicalAnalystAgent.ExecuteAsync(Values, cancellationToken);
+
+            var outputMutations = new Dictionary<Type, object?>
+            {
+                { typeof(TechnicalSpecificationParameter), agentOutput.Result.TechnicalSpecification },
+                { typeof(RequestRejectedFlagParameter), agentOutput.Result.RequestRejected },
+                { typeof(RequestRejectedReasonParameter), agentOutput.Result.RequestRejectionReason }
+            };
+
+            if (agentOutput.Result.FilteredApisDocumentationFiles != null && agentOutput.Result.FilteredApisDocumentationFiles.Any())
             {
                 var selectedDocuments = agentOutput.Result.FilteredApisDocumentationFiles.ToList();
-                var filteredKbDocuments = (knowledgeBaseAPIDocumentsContentParameter.ParameterValue ?? [])
+                var currentDocuments = knowledgeBaseAPIDocumentsContentParameter.ValueAs(Values[typeof(KnowledgeBaseAPIDocumentsContentParameter)]) ?? [];
+                var filteredKbDocuments = currentDocuments
                     .Where(doc => selectedDocuments.Contains(doc.File, StringComparer.OrdinalIgnoreCase))
                     .ToList();
 
-                knowledgeBaseAPIDocumentsContentParameter.ParameterValue = filteredKbDocuments;
+                outputMutations[typeof(KnowledgeBaseAPIDocumentsContentParameter)] = filteredKbDocuments;
             }
 
-            technicalSpecificationParameter.ParameterValue = agentOutput.Result.TechnicalSpecification;
-            requestRejectedFlagParameter.ParameterValue = agentOutput.Result.RequestRejected;
-            requestRejectedReasonParameter.ParameterValue = agentOutput.Result.RequestRejectionReason;
-
-            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepExecutionResult
+            {
+                InputTokens = agentOutput.InputTokenCount,
+                OutputTokens = agentOutput.OutputTokenCount,
+                OutputMutations = outputMutations
+            };
         }
     }
 }

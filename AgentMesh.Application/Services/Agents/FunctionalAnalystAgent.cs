@@ -29,12 +29,12 @@ namespace AgentMesh.Application.Services.Agents
             return [
                 new AgentInputParameterConfiguration
                 {
-                    ParameterName = RequestDateTimeParameter.ParamName,
+                    ParameterType = typeof(RequestDateTimeParameter),
                     ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 },
                 new AgentInputParameterConfiguration
                 {
-                    ParameterName = DomainsKnowledgeBaseDocumentsContentParameter.ParamName,
+                    ParameterType = typeof(DomainsKnowledgeBaseDocumentsContentParameter),
                     ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 }
             ];
@@ -92,3 +92,4 @@ namespace AgentMesh.Application.Services.Agents
         }
     }
 }
+

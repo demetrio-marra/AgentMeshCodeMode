@@ -1,17 +1,14 @@
-using AgentMesh.Models;
 using AgentMesh.Application.Models.KnowledgeBase;
+using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class KnowledgeBaseQueryResultsParameter : EWParameter<IEnumerable<KnowledgeBaseQueryResultItem>>
+    public sealed class KnowledgeBaseQueryResultsParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer) : BaseEWParameterConfiguration<IEnumerable<KnowledgeBaseQueryResultItem>>
     {
-        public const string ParamName = "Knowledge base query results";
-        public KnowledgeBaseQueryResultsParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
-        {
-            Name = ParamName;
-            DisplayValueSerializer = displayValueSerializer;
-        }
+        public override string Name => "Knowledge base query results";
+
+        public override IEWParameterSerializer DisplayValueSerializer => displayValueSerializer;
     }
 }

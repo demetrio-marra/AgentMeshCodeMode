@@ -3,12 +3,8 @@ using AgentMesh.Models.RequestAnalysis;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class IntentCategoryParameter : EWParameter<UserIntentCategory?>
+    public sealed class IntentCategoryParameter : BaseEWParameterConfiguration<UserIntentCategory?>
     {
-        public const string ParamName = "Intent category";
-        public IntentCategoryParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "Intent category";
     }
 }

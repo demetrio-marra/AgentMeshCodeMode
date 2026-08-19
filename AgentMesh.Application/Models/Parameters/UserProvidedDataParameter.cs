@@ -4,13 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class UserProvidedDataParameter : EWParameter<IEnumerable<string>>
+    public sealed class UserProvidedDataParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer) : BaseEWParameterConfiguration<IEnumerable<string>>
     {
-        public const string ParamName = "User provided data";
-        public UserProvidedDataParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
-        {
-            Name = ParamName;
-            DisplayValueSerializer = displayValueSerializer;
-        }
+        public override string Name => "User provided data";
+
+        public override IEWParameterSerializer DisplayValueSerializer => displayValueSerializer;
     }
 }

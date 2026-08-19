@@ -17,9 +17,10 @@ namespace AgentMesh.Services
             await Task.CompletedTask;
         }
 
-        public async Task NotifyWorkflowStepStarted(string stepName)
+        public async Task NotifyWorkflowStepStarted(string stepName, IEnumerable<EWDisplayParameterRecord> inputParameters)
         {
             ConsoleHelper.WriteLineWithColor($"Workflow step '{stepName}' is running...", ConsoleColor.DarkGray);
+            WriteParameters("Input Params", inputParameters.Select(p => new TextOrConsoleColor { Color = ConsoleColor.DarkGray, Text = $"{p.Name}: {p.Value}" }));
             await Task.CompletedTask;
         }
 
@@ -41,18 +42,18 @@ namespace AgentMesh.Services
                 })];
 
 
-            WriteParameters(parametersTextOrConsoleColor);
+            WriteParameters("Params changes", parametersTextOrConsoleColor);
 
             ConsoleHelper.WriteLineWithColor("══════════════════════════════════════════════════════════════════════════", ConsoleColor.Yellow);
 
             await Task.CompletedTask;
         }
 
-        private static void WriteParameters(IEnumerable<TextOrConsoleColor> textElements)
+        private static void WriteParameters(string listTitle, IEnumerable<TextOrConsoleColor> textElements)
         {
-            var paramPadding = "Params".Length + 2;
+            var paramPadding = listTitle.Length + 2;
 
-            ConsoleHelper.WriteWithColor($"Params: ", ConsoleColor.DarkYellow);
+            ConsoleHelper.WriteWithColor($"{listTitle}: ", ConsoleColor.DarkYellow);
             
             // do not pad first element only
             bool isFirstElement = true;

@@ -4,13 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class SummarizedContentDatetimeParameter : EWParameter<DateTime>
+    public sealed class SummarizedContentDatetimeParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer) : BaseEWParameterConfiguration<DateTime>
     {
-        public const string ParamName = "Summarized content datetime";
-        public SummarizedContentDatetimeParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
-        {
-            Name = ParamName;
-            DisplayValueSerializer = displayValueSerializer;
-        }
+        public override string Name => "Summarized content datetime";
+
+        public override IEWParameterSerializer DisplayValueSerializer => displayValueSerializer;
     }
 }

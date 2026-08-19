@@ -1,17 +1,14 @@
-using AgentMesh.Models;
 using AgentMesh.Application.Models.AgentMemory;
+using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class PastMemoriesQueryResultsParameter : EWParameter<IEnumerable<AgentMemoryQueryResultItem>>
+    public sealed class PastMemoriesQueryResultsParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer) : BaseEWParameterConfiguration<IEnumerable<AgentMemoryQueryResultItem>>
     {
-        public const string ParamName = "Past memories query results";
-        public PastMemoriesQueryResultsParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
-        {
-            Name = ParamName;
-            DisplayValueSerializer = displayValueSerializer;
-        }
+        public override string Name => "Past memories query results";
+
+        public override IEWParameterSerializer DisplayValueSerializer => displayValueSerializer;
     }
 }

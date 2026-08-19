@@ -2,12 +2,8 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class LanguageOfTheUserParameter : EWParameter<string>
+    public sealed class LanguageOfTheUserParameter : BaseEWParameterConfiguration<string>
     {
-        public const string ParamName = "Language of the user";
-        public LanguageOfTheUserParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "Language of the user";
     }
 }

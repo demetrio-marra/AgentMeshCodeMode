@@ -23,11 +23,11 @@ namespace AgentMesh.Application.Services.Agents
             return [
                 new()
                 {
-                    ParameterName = RequestDateTimeParameter.ParamName,
+                    ParameterType = typeof(RequestDateTimeParameter),
                     ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 },
                 new() {
-                    ParameterName = DomainsKnowledgeBaseDocumentsContentParameter.ParamName,
+                    ParameterType = typeof(DomainsKnowledgeBaseDocumentsContentParameter),
                     ParameterTags = [ParameterTags.AgentSystemParameterTag] 
                 }
             ];
@@ -36,3 +36,4 @@ namespace AgentMesh.Application.Services.Agents
         protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
     }
 }
+

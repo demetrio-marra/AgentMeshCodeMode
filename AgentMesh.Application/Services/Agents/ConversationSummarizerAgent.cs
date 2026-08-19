@@ -1,4 +1,4 @@
-﻿using AgentMesh.Application.Contracts;
+using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.Parameters;
 using AgentMesh.Application.Models.Workflows;
@@ -22,12 +22,12 @@ namespace AgentMesh.Application.Services.Agents
             return [
                new()
                 {
-                    ParameterName = RequestDateTimeParameter.ParamName,
+                    ParameterType = typeof(RequestDateTimeParameter),
                     ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 },
                 new()
                 {
-                    ParameterName = SummarizeLanguageParameter.ParamName,
+                    ParameterType = typeof(SummarizeLanguageParameter),
                     ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 }
            ];
@@ -36,3 +36,4 @@ namespace AgentMesh.Application.Services.Agents
         protected override string ParseStructuredResponse(string rawResponseText) => rawResponseText;
     }
 }
+

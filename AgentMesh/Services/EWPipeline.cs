@@ -3,8 +3,14 @@ using AgentMesh.Models;
 namespace AgentMesh.Services
 {
     public abstract class EWPipeline(IWorkflowProgressNotifier workflowProgressNotifier,
-        IEnumerable<IEWParameter> parameters) : IEWPipeline
+        IParameterStore parameterStore,
+        IEnumerable<IEWParameterConfiguration> parameterConfigurations) : IEWPipeline
     {
+        public void SetInitialParameters(IDictionary<Type, object?> initialParameters)
+        {
+            parameterStore.SetInitialValues(initialParameters);
+        }
+
         public async Task<IEnumerable<EWStepStatisticsRecord>> ExecuteAsync(CancellationToken cancellationToken = default)
         {
             await workflowProgressNotifier.NotifyWorkflowStart();
@@ -18,7 +24,10 @@ namespace AgentMesh.Services
 
                 foreach (var step in nextSteps)
                 {
-                    await workflowProgressNotifier.NotifyWorkflowStepStarted(step.Name);
+                    var stepInputParameters = parameterStore.CreateSnapshot(step.InputParameterTypes);
+                    var inputParametersValueDictionary = stepInputParameters.Values.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Value);
+                    var inputParametersDisplayRecords = GetDisplayParameterRecords(inputParametersValueDictionary, parameterConfigurations);
+                    await workflowProgressNotifier.NotifyWorkflowStepStarted(step.Name, inputParametersDisplayRecords);
                 }
 
                 var currentStepRuns = await Task.WhenAll(stepTasks);
@@ -51,51 +60,52 @@ namespace AgentMesh.Services
             IEWStep step,
             CancellationToken cancellationToken)
         {
-            var parametersBeforeSnapshot = CreateDisplaySnapshot(parameters);
+            var stepInputParameters = parameterStore.CreateSnapshot(step.InputParameterTypes);
+            var inputParametersValueDictionary = stepInputParameters.Values.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Value);
 
-            EWAgenticStepResultRecord? stepResultRecord = null;
-            string? agentName = null;
-            int? inputTokens = null;
-            int? outputTokens = null;
-            bool isAgentic = step is IEWAgenticStep;
-            bool countOutputTokensAsContextTokens = false;
-            bool countInputTokensAsContextTokens = false;
+            // this is needed only for concurrency checks
+            var stepOutputParameters = parameterStore.CreateSnapshot(step.OutputParameterTypes);
+            var outputParametersVersionsDictionary = stepOutputParameters.Values.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Version);
+
             var stepStartTime = DateTime.UtcNow;
-            if (step is IEWAgenticStep agenticStep)
-            {
-                stepResultRecord = await agenticStep.ExecuteAsync(cancellationToken);
-                agentName = agenticStep.AgentName;
-                inputTokens = stepResultRecord?.InputTokens;
-                outputTokens = stepResultRecord?.OutputTokens;
-                countInputTokensAsContextTokens = agenticStep.CountInputTokensAsContextTokens;
-                countOutputTokensAsContextTokens = agenticStep.CountOutputTokensAsContextTokens;
-            }
-            else if (step is IEWCodeStep codeStep)
-            {
-                await codeStep.ExecuteAsync(cancellationToken);
-            }
-            else
-            {
-                throw new NotImplementedException($"Step type '{step.GetType().Name}' is not supported.");
-            }
 
+            var stepResultRecord = await step.ExecuteAsync(inputParametersValueDictionary, cancellationToken);
             var stepEndTime = DateTime.UtcNow;
 
-            var parametersAfterSnapshot = CreateDisplaySnapshot(parameters);
-
             var stepStatistics = new EWStepStatisticsRecord(
-                StepName: step.Name,
-                StartedOnUtc: stepStartTime,
-                CompletedOnUtc: stepEndTime,
-                CountInputTokensAsContextTokens: countInputTokensAsContextTokens,
-                CountOutputTokensAsContextTokens: countOutputTokensAsContextTokens,
-                ParametersBefore: parametersBeforeSnapshot,
-                ParametersAfter: parametersAfterSnapshot,
-                IsAgentic: isAgentic,
-                AgentName: agentName,
-                InputTokens: inputTokens,
-                OutputTokens: outputTokens
-            );
+              StepName: step.Name,
+              StartedOnUtc: stepStartTime,
+              CompletedOnUtc: stepEndTime,
+              InputParameters: GetDisplayParameterRecords(inputParametersValueDictionary, parameterConfigurations),
+              ParametersBefore: [],
+              ParametersAfter: []
+           );
+
+            if (stepResultRecord.OutputMutations.Any())
+            {
+                var parametersToCommit = stepResultRecord.OutputMutations.Select(m => new ParameterMutation(
+                    ParameterVersion: outputParametersVersionsDictionary[m.Key],
+                    ParameterType: m.Key,
+                    NewValue: m.Value
+                )).ToList();
+
+                var parameterStoreCommitResult = parameterStore.TryCommit(step.Name,
+                    parametersToCommit);
+
+                stepStatistics.ParametersBefore = GetDisplayParameterRecords(parameterStoreCommitResult.ToDictionary(p => p.ParameterType, p => p.OldValue).AsReadOnly(), parameterConfigurations);
+                stepStatistics.ParametersAfter = GetDisplayParameterRecords(parameterStoreCommitResult.ToDictionary(p => p.ParameterType, p => p.NewValue).AsReadOnly(), parameterConfigurations);
+            }
+
+            if (stepResultRecord is EWAgenticStepExecutionResult agenticStepResultRecord
+                && step is IEWAgenticStep agenticStep)
+            {
+                stepStatistics.IsAgentic = true;
+                stepStatistics.AgentName = agenticStep.AgentName;
+                stepStatistics.InputTokens = agenticStepResultRecord.InputTokens;
+                stepStatistics.OutputTokens = agenticStepResultRecord.OutputTokens;
+                stepStatistics.CountInputTokensAsContextTokens = agenticStep.CountInputTokensAsContextTokens;
+                stepStatistics.CountOutputTokensAsContextTokens = agenticStep.CountOutputTokensAsContextTokens;
+            }
 
             return new PlannedStepsRun
             {
@@ -105,20 +115,44 @@ namespace AgentMesh.Services
             };
         }
 
-        private static List<EWDisplayParameterRecord> CreateDisplaySnapshot(IEnumerable<IEWParameter> parameters)
+        protected object? GetParameterRawValue(Type parameterType)
         {
-            return [.. parameters.Select(parameter =>
-                {
-                    var displayValue = parameter.GetDisplayValue();
-                    return new EWDisplayParameterRecord(parameter.Name, displayValue);
-                })];
+            var snapshot = parameterStore.CreateSnapshot(new[] { parameterType });
+            if (snapshot.Values.TryGetValue(parameterType, out var parameterValue))
+            {
+                return parameterValue.Value;
+            }
+            return null;
         }
 
         private class PlannedStepsRun
         {
             public required IEWStep Step { get; set; }
-            public EWAgenticStepResultRecord? Result { get; set; }
+            public EWStepExecutionResult? Result { get; set; }
             public EWStepStatisticsRecord Statistics { get; set; }
+        }
+
+        private static IEnumerable<EWDisplayParameterRecord> GetDisplayParameterRecords(IReadOnlyDictionary<Type, object?> values,
+            IEnumerable<IEWParameterConfiguration> parameterConfigurations)
+        {
+            var displayRecords = new List<EWDisplayParameterRecord>();
+            foreach (var kvp in values)
+            {
+                var parameterType = kvp.Key;
+                var value = kvp.Value;
+                var config = parameterConfigurations.FirstOrDefault(c => c.GetType() == parameterType);
+                if (config == null)
+                {
+                    throw new InvalidOperationException($"No configuration found for parameter type '{parameterType.Name}'.");
+                }
+                var displayValueSerializer = config.DisplayValueSerializer;
+                var displayValue = displayValueSerializer.Serialize(value);
+                displayRecords.Add(new EWDisplayParameterRecord(
+                    Name: config.Name,
+                    Value: displayValue
+                ));
+            }
+            return displayRecords;
         }
     }
 }

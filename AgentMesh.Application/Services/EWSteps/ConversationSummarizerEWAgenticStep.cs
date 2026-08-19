@@ -8,32 +8,44 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class ConversationSummarizerEWAgenticStep(
         ConversationSummarizerAgent agent,
-        RequestDateTimeParameter requestDateTimeParameter,
-        SummarizeLanguageParameter summarizeLanguageParameter,
-        MessagesToSummarizeParameter messagesToSummarizeParameter,
-        SummarizedContentParameter summarizedContentParameter,
-        SummarizedContentDatetimeParameter summarizedContentDatetime) : IEWAgenticStep
+        MessagesToSummarizeParameter messagesToSummarizeParameter) : IEWAgenticStep
     {
         public string Name => "Conversation Summarizer";
-        
+
         public string? AgentName => "ConversationSummarizer";
 
         public bool CountInputTokensAsContextTokens => false;
 
         public bool CountOutputTokensAsContextTokens => true;
 
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(RequestDateTimeParameter),
+            typeof(SummarizeLanguageParameter),
+            typeof(MessagesToSummarizeParameter)
+            ];
+
+        public IEnumerable<Type> OutputParameterTypes => [
+            typeof(SummarizedContentParameter),
+            typeof(SummarizedContentDatetimeParameter)
+            ];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
-            var lastSummarizedMessageTimeStamp = messagesToSummarizeParameter.ParameterValue?.LastOrDefault()?.Date ?? DateTime.MinValue;
+            var messagesToSummarize = messagesToSummarizeParameter.ValueAs(Values[typeof(MessagesToSummarizeParameter)]);
+            var lastSummarizedMessageTimeStamp = messagesToSummarize?.LastOrDefault()?.Date ?? DateTime.MinValue;
 
-            var agentOutput = await agent.ExecuteAsync([requestDateTimeParameter,
-                summarizeLanguageParameter,
-                messagesToSummarizeParameter], cancellationToken);
+            var agentOutput = await agent.ExecuteAsync(Values, cancellationToken);
 
-            summarizedContentParameter.ParameterValue = agentOutput.Result;
-            summarizedContentDatetime.ParameterValue = lastSummarizedMessageTimeStamp;
-
-            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepExecutionResult
+            {
+                InputTokens = agentOutput.InputTokenCount,
+                OutputTokens = agentOutput.OutputTokenCount,
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(SummarizedContentParameter), agentOutput.Result },
+                    { typeof(SummarizedContentDatetimeParameter), lastSummarizedMessageTimeStamp }
+                }
+            };
         }
     }
 }

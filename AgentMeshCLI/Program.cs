@@ -55,18 +55,20 @@ namespace AgentMesh
 
             foreach (var ewParameterType in DiscoverEWParameterImplementations())
             {
-                services.AddScoped(ewParameterType);
-                services.AddScoped(typeof(IEWParameter), sp => (IEWParameter)sp.GetRequiredService(ewParameterType));
+                services.AddSingleton(ewParameterType);
+                services.AddSingleton(typeof(IEWParameterConfiguration), sp => (IEWParameterConfiguration)sp.GetRequiredService(ewParameterType));
             }
 
             foreach (var ewStepType in DiscoverEWStepImplementations())
             {
-                services.AddScoped(ewStepType);
+                services.AddSingleton(ewStepType);
             }
 
             services.AddSingleton<IEnumerable<AgentFlatConfigurationRecord>>(AgentConfigurationReadHelper.ReadAgentConfigurations(appSettings, AppContext.BaseDirectory).ToArray());
-            services.AddSingleton<IAgentInputSerializer, DefaultAgentInputSerializer>();
-            // insert here
+
+            services.AddSingleton<IAgentInputSerializer, DefaultAgentInputSerializer>();  
+            
+            services.AddScoped<IParameterStore, ParameterStore>();
             services.AddScoped<IChatRequestPipeline, ChatRequestPipeline>();
             services.AddScoped<ISummarizationPipeline, SummarizationPipeline>();
 
@@ -170,7 +172,7 @@ namespace AgentMesh
         {
             return GetAllAssemblies()
                 .SelectMany(GetTypesSafely)
-                .Where(IsConcreteEWParameter)
+                .Where(IsEWParameterConfiguration)
                 .Distinct();
         }
 
@@ -182,26 +184,12 @@ namespace AgentMesh
                 .Distinct();
         }
 
-        private static bool IsConcreteEWParameter(Type type)
+        private static bool IsEWParameterConfiguration(Type type)
         {
-            if (!type.IsClass || type.IsAbstract)
-            {
-                return false;
-            }
-
-            var currentBaseType = type.BaseType;
-            while (currentBaseType != null)
-            {
-                if (currentBaseType.IsGenericType
-                    && currentBaseType.GetGenericTypeDefinition() == typeof(EWParameter<>))
-                {
-                    return true;
-                }
-
-                currentBaseType = currentBaseType.BaseType;
-            }
-
-            return false;
+            return type.IsClass
+                && !type.IsAbstract
+                && !type.ContainsGenericParameters
+                && typeof(IEWParameterConfiguration).IsAssignableFrom(type);
         }
 
         private static bool IsConcreteEWStep(Type type)

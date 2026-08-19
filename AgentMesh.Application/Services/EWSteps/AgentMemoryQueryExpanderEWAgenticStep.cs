@@ -7,10 +7,7 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Services.EWSteps
 {
     public class AgentMemoryQueryExpanderEWAgenticStep(
-        AgentMemoryQueryExpanderAgent agentMemoryQueryExpanderAgent,
-        MissingValuesParameter missingValuesParameter,
-        RequestDateTimeParameter requestDateTimeParameter,
-        PastMemoriesQueryParameter pastMemoriesQueryParameter) : IEWAgenticStep
+        AgentMemoryQueryExpanderAgent agentMemoryQueryExpanderAgent) : IEWAgenticStep
     {
         public string Name => "Agent Memory Query Expander";
 
@@ -20,20 +17,29 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool CountOutputTokensAsContextTokens => false;
 
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
-        {
-            var agentOutput = await agentMemoryQueryExpanderAgent.ExecuteAsync([
-                requestDateTimeParameter,
-                missingValuesParameter], cancellationToken);
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(RequestDateTimeParameter),
+            typeof(MissingValuesParameter)
+            ];
 
+        public IEnumerable<Type> OutputParameterTypes => [
+            typeof(PastMemoriesQueryParameter)
+            ];
+     
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
+        {
+            var agentOutput = await agentMemoryQueryExpanderAgent.ExecuteAsync(Values, cancellationToken);
+            
             var pastMemories = agentOutput.Result.Select(q => new AgentMemoryItem { Memory = q }).ToList();
 
-            pastMemoriesQueryParameter.ParameterValue = pastMemories;
-
-            var ret = new EWAgenticStepResultRecord
+            var ret = new EWAgenticStepExecutionResult
             {
                 InputTokens = agentOutput.InputTokenCount,
-                OutputTokens = agentOutput.OutputTokenCount
+                OutputTokens = agentOutput.OutputTokenCount,
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(PastMemoriesQueryParameter), pastMemories }
+                }
             };
 
             return ret;

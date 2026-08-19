@@ -28,12 +28,12 @@ namespace AgentMesh.Application.Services.Agents
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
             return [
-                new () { ParameterName = RequestDateTimeParameter.ParamName, ParameterTags = [ParameterTags.AgentSystemParameterTag] },
-                new () { ParameterName = LanguageOfTheUserParameter.ParamName, ParameterTags = [ParameterTags.AgentSystemParameterTag] },
-                new () { ParameterName = RequestRejectedFlagParameter.ParamName, ParameterTags = [ParameterTags.AgentSystemParameterTag] },
-                new () { ParameterName = RequestRejectedReasonParameter.ParamName, ParameterTags = [ParameterTags.AgentSystemParameterTag] },
-                new () { ParameterName = ExecutionErrorParameter.ParamName, ParameterTags = [ParameterTags.AgentSystemParameterTag] },
-                new () { ParameterName = PipelineResultDataParameter.ParamName, ParameterTags = [ParameterTags.AgentSystemParameterTag] }
+                new () { ParameterType = typeof(RequestDateTimeParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] },
+                new () { ParameterType = typeof(LanguageOfTheUserParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] },
+                new () { ParameterType = typeof(RequestRejectedFlagParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] },
+                new () { ParameterType = typeof(RequestRejectedReasonParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] },
+                new () { ParameterType = typeof(ExecutionErrorParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] },
+                new () { ParameterType = typeof(PipelineResultDataParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] }
             ];
         }
 
@@ -91,4 +91,5 @@ namespace AgentMesh.Application.Services.Agents
         }
     }
 }
+
 
