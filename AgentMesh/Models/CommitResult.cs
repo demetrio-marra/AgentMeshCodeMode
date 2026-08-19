@@ -6,7 +6,6 @@ namespace AgentMesh.Models
     /// </summary>
     public record CommitResult(
         bool Success,
-        long NewVersion,
         IReadOnlyCollection<CommitResultItem> CommittedMutations,
         string? ConflictReason = null);
 }

@@ -2,33 +2,22 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class QMDQueryTypesDocumentationParameter : EWParameter<string>
+    public sealed class QMDQueryTypesDocumentationParameter : BaseEWParameterConfiguration<string>
     {
-        public const string ParamName = "QMD query types documentation";
-        private const string QmdQueryTypesFileName = "QMDQueryTypes.md";
+        public override string Name => "QMD query types documentation";
 
-        public QMDQueryTypesDocumentationParameter()
+        protected override string? GetDefaultValue()
         {
-            Name = ParamName;
-            ParameterValue = LoadDocumentationQueriesGenerationReference();
-        }
-
-        private static string? LoadDocumentationQueriesGenerationReference()
-        {
-            var candidatePaths = new[]
+            // return the content of the file QMDQueryTypes.md as a string
+            var filePath = Path.Combine(AppContext.BaseDirectory, "Prompts/QMDQueryTypes.md");
+            if (File.Exists(filePath))
             {
-                Path.Combine(AppContext.BaseDirectory, "Prompts", QmdQueryTypesFileName),
-                Path.Combine(Directory.GetCurrentDirectory(), "Prompts", QmdQueryTypesFileName),
-                Path.Combine(Directory.GetCurrentDirectory(), "AgentMeshCLI", "Prompts", QmdQueryTypesFileName)
-            };
-
-            foreach (var candidatePath in candidatePaths)
-            {
-                if (File.Exists(candidatePath))
-                    return File.ReadAllText(candidatePath);
+                return File.ReadAllText(filePath);
             }
-
-            return null;
+            else
+            {
+                return null;
+            }
         }
     }
 }

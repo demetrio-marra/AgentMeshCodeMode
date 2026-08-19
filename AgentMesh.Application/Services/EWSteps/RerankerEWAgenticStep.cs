@@ -7,13 +7,6 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class RerankerEWAgenticStep(
         RerankerAgent rerankerAgent,
-        RequestDateTimeParameter requestDateTimeParameter,
-        UserIntentParameter userIntentParameter,
-        ConversationTopicParameter conversationTopicParameter,
-        UserRequestedActionsParameter userRequestedActionsParameter,
-        UserProvidedDataParameter userProvidedDataParameter,
-        UserPreferencesParameter userPreferencesParameter,
-        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
         KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter) : IEWAgenticStep
     {
         public string Name => "Reranker";
@@ -24,26 +17,37 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool CountOutputTokensAsContextTokens => false;
 
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
-        {
-            var agentOutput = await rerankerAgent.ExecuteAsync([
-                requestDateTimeParameter,
-                knowledgeBaseQueryResultsParameter,
-                userIntentParameter,
-                conversationTopicParameter,
-                userRequestedActionsParameter,
-                userProvidedDataParameter,
-                userPreferencesParameter,
-                pastMemoriesQueryResultsParameter,
-                ], cancellationToken);
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(RequestDateTimeParameter),
+            typeof(UserIntentParameter),
+            typeof(ConversationTopicParameter),
+            typeof(UserRequestedActionsParameter),
+            typeof(UserProvidedDataParameter),
+            typeof(UserPreferencesParameter),
+            typeof(PastMemoriesQueryResultsParameter),
+            typeof(KnowledgeBaseQueryResultsParameter)
+            ];
 
-            // filter knowledgebase depending on agentOutput file names
-            var result = knowledgeBaseQueryResultsParameter.ParameterValue!.Where(p => agentOutput.Result.Contains(p.File, StringComparer.OrdinalIgnoreCase))
+        public IEnumerable<Type> OutputParameterTypes => [typeof(KnowledgeBaseQueryResultsParameter)];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
+        {
+            var agentOutput = await rerankerAgent.ExecuteAsync(Values, cancellationToken);
+
+            var knowledgeBaseResults = knowledgeBaseQueryResultsParameter.ValueAs(Values[typeof(KnowledgeBaseQueryResultsParameter)]) ?? [];
+            var result = knowledgeBaseResults
+                .Where(p => agentOutput.Result.Contains(p.File, StringComparer.OrdinalIgnoreCase))
                 .ToList();
 
-            knowledgeBaseQueryResultsParameter.ParameterValue = result;
-
-            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepExecutionResult
+            {
+                InputTokens = agentOutput.InputTokenCount,
+                OutputTokens = agentOutput.OutputTokenCount,
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(KnowledgeBaseQueryResultsParameter), result }
+                }
+            };
         }
     }
 }

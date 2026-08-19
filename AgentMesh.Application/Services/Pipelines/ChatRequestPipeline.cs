@@ -8,41 +8,24 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Services.Pipelines
 {
     public sealed class ChatRequestPipeline(
-        RequestDateTimeParameter requestDateTimeParameter,
-        UserLastRequestParameter userLastRequestParameter,
-        InitialContextMessagesParameter initialContextMessagesParameter,
-        UserIntentParameter userIntentParameter,
-        IntentCategoryParameter intentCategoryParameter,
-        LanguageOfTheUserParameter languageOfTheUserParameter,
-        LanguageOfTheDocumentationParameter languageOfTheDocumentationParameter,
-        ConversationTopicParameter conversationTopicParameter,
-        UserPreferencesParameter userPreferencesParameter,
-        UserProvidedDataParameter userProvidedDataParameter,
-        UserRequestedActionsParameter userRequestedActionsParameter,
-        MissingValuesParameter missingValuesParameter,
-        KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
-        PastMemoriesQueryParameter pastMemoriesQueryParameter,
-        DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter,
-        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
-        KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter,
-        DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
-        BusinessRequirementsParameter businessRequirementsParameter,
-        RequestRejectedReasonParameter requestRejectedReasonParameter,
-        TechnicalSpecificationParameter technicalSpecificationParameter,
-        APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
-        GeneratedCodeParameter generatedCodeParameter,
-        SandboxExecutionIdParameter sandboxExecutionIdParameter,
-        CodeExecutionResultTypeParameter codeExecutionResultTypeParameter,
-        RequestRejectedFlagParameter requestRejectedFlagParameter,
-        ExecutionErrorParameter executionErrorParameter,
-        PipelineResultDataParameter pipelineResultDataParameter,
-        PersonalAssistantOpeningSentenceParameter personalAssistantOpeningSentenceParameter,
-        PersonalAssistantClosingSentenceParameter personalAssistantClosingSentenceParameter,
-        PersonalAssistantConvenienceErrorSentenceParameter personalAssistantConvenienceErrorSentenceParameter,
+        IEnumerable<IEWParameterConfiguration> parameterConfigurations,
+        IParameterStore parameterStore,
+
         FinalAnswerParameter finalAnswerParameter,
-        QMDQueryTypesDocumentationParameter qMDQueryTypesDocumentationParameter,
 
         CodeModeWorkflowConfiguration workflowConfiguration,
+
+        MissingValuesParameter missingValuesParameter,
+        PastMemoriesQueryParameter pastMemoriesQueryParameter,
+        DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter,
+        KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter,
+        APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
+        RequestRejectedFlagParameter requestRejectedFlagParameter,
+        TechnicalSpecificationParameter technicalSpecificationParameter,
+        GeneratedCodeParameter generatedCodeParameter,
+        ExecutionErrorParameter executionErrorParameter,
+        PipelineResultDataParameter pipelineResultDataParameter,
+        IntentCategoryParameter intentCategoryParameter,
 
         RequestAnalyzerEWAgenticStep requestAnalyzerEWStep,
         AgentMemoryQueryExpanderEWAgenticStep agentMemoryQueryExpanderEWStep,
@@ -60,50 +43,27 @@ namespace AgentMesh.Application.Services.Pipelines
         JSSandboxEWCodeStep jsSandboxEWStep,
         DomainExpertEWAgenticStep domainExpertEWStep,
         PersonalAssistantEWAgenticStep personalAssistantEWStep,
-        IWorkflowProgressNotifier workflowProgressNotifier
+        IWorkflowProgressNotifier workflowProgressNotifier,
+        CodeModeWorkflowConfiguration codeModeWorkflowConfiguration
 
-        ) : EWPipeline(workflowProgressNotifier, [
-            requestDateTimeParameter,
-            userLastRequestParameter,
-            initialContextMessagesParameter,
-            userIntentParameter,
-            intentCategoryParameter,
-            languageOfTheUserParameter,
-            languageOfTheDocumentationParameter,
-            conversationTopicParameter,
-            userPreferencesParameter,
-            userProvidedDataParameter,
-            userRequestedActionsParameter,
-            missingValuesParameter,
-            knowledgeBaseAPIDocumentsContentParameter,
-            pastMemoriesQueryParameter,
-            domainsKnowledgeBaseQueryParameter,
-            pastMemoriesQueryResultsParameter,
-            knowledgeBaseQueryResultsParameter,
-            domainsKnowledgeBaseDocumentsContentParameter,
-            businessRequirementsParameter,
-            requestRejectedReasonParameter,
-            technicalSpecificationParameter,
-            apisKnowledgeBaseQueryResultsParameter,
-            generatedCodeParameter,
-            sandboxExecutionIdParameter,
-            codeExecutionResultTypeParameter,
-            requestRejectedFlagParameter,
-            executionErrorParameter,
-            pipelineResultDataParameter,
-            personalAssistantOpeningSentenceParameter,
-            personalAssistantClosingSentenceParameter,
-            personalAssistantConvenienceErrorSentenceParameter,
-            finalAnswerParameter,
-            qMDQueryTypesDocumentationParameter
-            ]
+        ) : EWPipeline(workflowProgressNotifier,
+            parameterStore,
+            parameterConfigurations
         ), IChatRequestPipeline
     {
-        public string FinalResponse => finalAnswerParameter.ParameterValue!;
+        public void SetParameterInitialValues(string userLastRequest, IEnumerable<ContextMessage> initialChatHistory, DateTime requestDateTime)
+        {
+            SetInitialParameters(new Dictionary<Type, object?>
+            {
+                { typeof(UserLastRequestParameter), userLastRequest },
+                { typeof(InitialContextMessagesParameter), initialChatHistory },
+                { typeof(RequestDateTimeParameter), requestDateTime },
+                { typeof(LanguageOfTheDocumentationParameter), codeModeWorkflowConfiguration.LanguageOfKnowledgeBase }
+            });
+        }
 
-        public IEnumerable<ContextMessage> InitialChatHistory { set => initialContextMessagesParameter.ParameterValue = value.ToList(); }
+        public string FinalResponse => finalAnswerParameter.ValueAs(GetParameterRawValue(typeof(FinalAnswerParameter))) ?? string.Empty;
 
-        public string UserLastRequest { set => userLastRequestParameter.ParameterValue = value; }
 
         protected override IEnumerable<IEWStep> GetNextStepsToRun()
         {
@@ -132,13 +92,13 @@ namespace AgentMesh.Application.Services.Pipelines
             // - if missingValuesParameter is null or empty, do not run it
             // Conditions are AND
             if (RunOnce([agentMemoryQueryExpanderEWStep], out steps,
-                () => missingValuesParameter.ParameterValue?.Any() ?? false))
+                () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
             {
                 return steps;
             }
 
             if (RunOnce([agentMemoryServiceEWStep], out steps,
-                () => pastMemoriesQueryParameter.ParameterValue?.Any() ?? false))
+                () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
             {
                 return steps;
             }
@@ -156,13 +116,13 @@ namespace AgentMesh.Application.Services.Pipelines
             var steps = Enumerable.Empty<IEWStep>();
 
             if (RunOnce([agentMemoryQueryExpanderEWStep], out steps,
-                () => missingValuesParameter.ParameterValue?.Any() ?? false))
+                () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
             {
                 return steps;
             }
 
             if (RunOnce([agentMemoryServiceEWStep], out steps,
-              () => pastMemoriesQueryParameter.ParameterValue?.Any() ?? false))
+              () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
             {
                 return steps;
             }
@@ -173,7 +133,7 @@ namespace AgentMesh.Application.Services.Pipelines
             }
 
             if (RunOnce([domainsKnowledgeBaseServiceSearchEWStep], out steps,
-                () => domainsKnowledgeBaseQueryParameter.ParameterValue?.Any() ?? false))
+                () => domainsKnowledgeBaseQueryParameter.ValueAs(GetParameterRawValue(typeof(DomainsKnowledgeBaseQueryParameter)))?.Any() ?? false))
             {
                 return steps;
             }
@@ -184,7 +144,7 @@ namespace AgentMesh.Application.Services.Pipelines
             }
 
             if (RunOnce([domainsKnowledgeBaseDocumentsExtractorEWStep], out steps,
-                () => knowledgeBaseQueryResultsParameter.ParameterValue?.Any() ?? false))
+                () => knowledgeBaseQueryResultsParameter.ValueAs(GetParameterRawValue(typeof(KnowledgeBaseQueryResultsParameter)))?.Any() ?? false))
             {
                 return steps;
             }
@@ -207,13 +167,13 @@ namespace AgentMesh.Application.Services.Pipelines
             var steps = Enumerable.Empty<IEWStep>();
 
             if (RunOnce([agentMemoryQueryExpanderEWStep], out steps,
-               () => missingValuesParameter.ParameterValue?.Any() ?? false))
+               () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
             {
                 return steps;
             }
 
             if (RunOnce([agentMemoryServiceEWStep], out steps,
-              () => pastMemoriesQueryParameter.ParameterValue?.Any() ?? false))
+              () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
             {
                 return steps;
             }
@@ -224,7 +184,7 @@ namespace AgentMesh.Application.Services.Pipelines
             }
 
             if (RunOnce([domainsKnowledgeBaseServiceSearchEWStep], out steps,
-                () => domainsKnowledgeBaseQueryParameter.ParameterValue?.Any() ?? false))
+                () => domainsKnowledgeBaseQueryParameter.ValueAs(GetParameterRawValue(typeof(DomainsKnowledgeBaseQueryParameter)))?.Any() ?? false))
             {
                 return steps;
             }
@@ -235,7 +195,7 @@ namespace AgentMesh.Application.Services.Pipelines
             }
 
             if (RunOnce([domainsKnowledgeBaseDocumentsExtractorEWStep], out steps,
-                () => knowledgeBaseQueryResultsParameter.ParameterValue?.Any() ?? false))
+                () => knowledgeBaseQueryResultsParameter.ValueAs(GetParameterRawValue(typeof(KnowledgeBaseQueryResultsParameter)))?.Any() ?? false))
             {
                 return steps;
             }
@@ -245,11 +205,11 @@ namespace AgentMesh.Application.Services.Pipelines
                 return steps;
             }
 
-            var requestWasRejected = requestRejectedFlagParameter.ParameterValue;
+            var requestWasRejected = requestRejectedFlagParameter.ValueAs(GetParameterRawValue(typeof(RequestRejectedFlagParameter)));
 
             if (RunOnce([apiKnowledgeBaseDocumentsExtractorEWStep], out steps,
                     () => !requestWasRejected
-                        && (apisKnowledgeBaseQueryResultsParameter.ParameterValue?.Any() ?? false)))
+                        && (apisKnowledgeBaseQueryResultsParameter.ValueAs(GetParameterRawValue(typeof(APISKnowledgeBaseQueryResultsParameter)))?.Any() ?? false)))
             {
                 return steps;
             }
@@ -262,14 +222,14 @@ namespace AgentMesh.Application.Services.Pipelines
 
             if (RunOnce([coderEWStep], out steps,
                 () => !requestWasRejected
-                    && technicalSpecificationParameter.ParameterValue != null))
+                    && technicalSpecificationParameter.ValueAs(GetParameterRawValue(typeof(TechnicalSpecificationParameter))) != null))
             {
                 return steps;
             }
 
             if (RunOnce([jsSandboxEWStep], out steps,
                 () => !requestWasRejected
-                    && generatedCodeParameter.ParameterValue != null))
+                    && generatedCodeParameter.ValueAs(GetParameterRawValue(typeof(GeneratedCodeParameter))) != null))
             {
                 return steps;
             }
@@ -277,8 +237,8 @@ namespace AgentMesh.Application.Services.Pipelines
             if (RunOnce([domainExpertEWStep], out steps,
                 () => !requestWasRejected
                     && workflowConfiguration.EnableDomainExpert
-                    && !executionErrorParameter.ParameterValue
-                    && pipelineResultDataParameter.ParameterValue != null))
+                    && !executionErrorParameter.ValueAs(GetParameterRawValue(typeof(ExecutionErrorParameter)))
+                    && pipelineResultDataParameter.ValueAs(GetParameterRawValue(typeof(PipelineResultDataParameter))) != null))
             {
                 return steps;
             }
@@ -293,7 +253,7 @@ namespace AgentMesh.Application.Services.Pipelines
 
         private PipelineBranchValue GuessPipelineBranch()
         {
-            return intentCategoryParameter.ParameterValue!.Value switch
+            return intentCategoryParameter.ValueAs(GetParameterRawValue(typeof(IntentCategoryParameter)))!.Value switch
             {
                 UserIntentCategory.Other => PipelineBranchValue.OtherTopics,
                 UserIntentCategory.Documentation => PipelineBranchValue.Documenting,
@@ -338,5 +298,6 @@ namespace AgentMesh.Application.Services.Pipelines
 
             return ls.Count != 0;
         }
+
     }
 }

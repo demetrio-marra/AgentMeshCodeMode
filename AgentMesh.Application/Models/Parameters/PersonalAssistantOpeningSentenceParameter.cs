@@ -2,12 +2,8 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class PersonalAssistantOpeningSentenceParameter : EWParameter<string>
+    public sealed class PersonalAssistantOpeningSentenceParameter : BaseEWParameterConfiguration<string>
     {
-        public const string ParamName = "Personal assistant opening sentence";
-        public PersonalAssistantOpeningSentenceParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "Personal assistant opening sentence";
     }
 }

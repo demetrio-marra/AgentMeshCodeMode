@@ -6,16 +6,7 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Services.EWSteps
 {
     public class DomainExpertEWAgenticStep(
-        RequestDateTimeParameter requestDateTimeParameter,
         DomainExpertAgent domainExpertAgent,
-        UserIntentParameter userIntentParameter,
-        ConversationTopicParameter conversationTopicParameter,
-        UserRequestedActionsParameter userRequestedActionsParameter,
-        UserProvidedDataParameter userProvidedDataParameter,
-        UserPreferencesParameter userPreferencesParameter,
-        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
-        DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
-        LanguageOfTheUserParameter languageOfTheUserParameter,
         PipelineResultDataParameter pipelineResultDataParameter) : IEWAgenticStep
     {
         public string Name => "Domain Expert";
@@ -26,28 +17,41 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool CountOutputTokensAsContextTokens => false;
 
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
-        {
-            var agentOutput = await domainExpertAgent.ExecuteAsync([
-                requestDateTimeParameter,
-                userIntentParameter,
-                conversationTopicParameter,
-                userRequestedActionsParameter,
-                userProvidedDataParameter,
-                userPreferencesParameter,
-                pastMemoriesQueryResultsParameter,
-                domainsKnowledgeBaseDocumentsContentParameter,
-                pipelineResultDataParameter,
-                languageOfTheUserParameter
-                ], cancellationToken);
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(RequestDateTimeParameter),
+            typeof(UserIntentParameter),
+            typeof(ConversationTopicParameter),
+            typeof(UserRequestedActionsParameter),
+            typeof(UserProvidedDataParameter),
+            typeof(UserPreferencesParameter),
+            typeof(PastMemoriesQueryResultsParameter),
+            typeof(DomainsKnowledgeBaseDocumentsContentParameter),
+            typeof(LanguageOfTheUserParameter),
+            typeof(PipelineResultDataParameter)
+            ];
 
-            pipelineResultDataParameter.ParameterValue = $"""
-                {pipelineResultDataParameter.ParameterValue}
+        public IEnumerable<Type> OutputParameterTypes => [typeof(PipelineResultDataParameter)];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
+        {
+            var agentOutput = await domainExpertAgent.ExecuteAsync(Values, cancellationToken);
+
+            var pipelineResultData = pipelineResultDataParameter.ValueAs(Values[typeof(PipelineResultDataParameter)]);
+            var mergedPipelineResultData = $"""
+                {pipelineResultData}
 
                 {agentOutput.Result}
                 """;
 
-            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepExecutionResult
+            {
+                InputTokens = agentOutput.InputTokenCount,
+                OutputTokens = agentOutput.OutputTokenCount,
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(PipelineResultDataParameter), mergedPipelineResultData }
+                }
+            };
         }
     }
 }

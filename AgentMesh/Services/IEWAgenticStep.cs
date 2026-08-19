@@ -9,7 +9,5 @@ namespace AgentMesh.Services
         bool CountInputTokensAsContextTokens { get; }
 
         bool CountOutputTokensAsContextTokens { get; }
-
-        Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default);
     }
 }

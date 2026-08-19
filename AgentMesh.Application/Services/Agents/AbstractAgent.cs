@@ -4,7 +4,6 @@ using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Services.Helpers;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models;
 using AgentMesh.Utils;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -26,7 +25,7 @@ namespace AgentMesh.Application.Services.Agents
         /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
         /// <returns></returns>
         /// <exception cref="EmptyAgentResponseException"></exception>
-        public async Task<AgentResponse<T>> ExecuteAsync(IEnumerable<IEWParameter> inputParameters, CancellationToken cancellationToken = default)
+        public async Task<AgentResponse<T>> ExecuteAsync(IReadOnlyDictionary<Type, object?> inputParameters, CancellationToken cancellationToken = default)
         {
             logger.LogDebug("Executing {agentName}", agentName);
 

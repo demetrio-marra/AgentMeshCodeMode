@@ -6,13 +6,7 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Services.EWSteps
 {
     public class DocumentationEWAgenticStep(
-        DocumentationAgent documentationAgent,
-        UserIntentParameter userIntentParameter,
-        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
-        DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
-        LanguageOfTheUserParameter languageOfTheUserParameter,
-        RequestDateTimeParameter requestDateTimeParameter,
-        PipelineResultDataParameter pipelineResultDataParameter) : IEWAgenticStep
+        DocumentationAgent documentationAgent) : IEWAgenticStep
     {
         public string Name => "Documentation";
 
@@ -22,18 +16,29 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool CountOutputTokensAsContextTokens => true;
 
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(RequestDateTimeParameter),
+            typeof(UserIntentParameter),
+            typeof(PastMemoriesQueryResultsParameter),
+            typeof(DomainsKnowledgeBaseDocumentsContentParameter),
+            typeof(LanguageOfTheUserParameter)
+            ];
+
+        public IEnumerable<Type> OutputParameterTypes => [typeof(PipelineResultDataParameter)];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
-            var agentOutput = await documentationAgent.ExecuteAsync([
-                requestDateTimeParameter,
-                userIntentParameter,
-                pastMemoriesQueryResultsParameter,
-                domainsKnowledgeBaseDocumentsContentParameter,
-                languageOfTheUserParameter], cancellationToken);
+            var agentOutput = await documentationAgent.ExecuteAsync(Values, cancellationToken);
 
-            pipelineResultDataParameter.ParameterValue = agentOutput.Result;
-
-            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepExecutionResult
+            {
+                InputTokens = agentOutput.InputTokenCount,
+                OutputTokens = agentOutput.OutputTokenCount,
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(PipelineResultDataParameter), agentOutput.Result }
+                }
+            };
         }
     }
 }

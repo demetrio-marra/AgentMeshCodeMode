@@ -31,7 +31,7 @@ namespace AgentMesh.Application.Services.Agents
             [
                 new AgentInputParameterConfiguration
                 {
-                    ParameterName = RequestDateTimeParameter.ParamName,
+                    ParameterType = typeof(RequestDateTimeParameter),
                     ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 }
             ];
@@ -157,3 +157,4 @@ namespace AgentMesh.Application.Services.Agents
         }
     }
 }
+

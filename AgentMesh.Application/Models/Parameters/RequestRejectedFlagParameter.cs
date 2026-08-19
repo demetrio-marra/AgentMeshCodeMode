@@ -2,12 +2,8 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class RequestRejectedFlagParameter : EWParameter<bool>
+    public sealed class RequestRejectedFlagParameter : BaseEWParameterConfiguration<bool>
     {
-        public const string ParamName = "Request rejected flag";
-        public RequestRejectedFlagParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "Request rejected flag";
     }
 }

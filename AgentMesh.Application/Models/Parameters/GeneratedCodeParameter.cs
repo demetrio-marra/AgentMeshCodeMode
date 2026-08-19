@@ -2,12 +2,8 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class GeneratedCodeParameter : EWParameter<string>
+    public sealed class GeneratedCodeParameter : BaseEWParameterConfiguration<string>
     {
-        public const string ParamName = "Generated code";
-        public GeneratedCodeParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "Generated code";
     }
 }

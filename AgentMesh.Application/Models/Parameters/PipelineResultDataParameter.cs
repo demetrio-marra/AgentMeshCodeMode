@@ -2,12 +2,8 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class PipelineResultDataParameter : EWParameter<string>
+    public sealed class PipelineResultDataParameter : BaseEWParameterConfiguration<string>
     {
-        public const string ParamName = "Pipeline result data";
-        public PipelineResultDataParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "Pipeline result data";
     }
 }

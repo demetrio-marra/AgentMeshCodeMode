@@ -1,14 +1,10 @@
-using AgentMesh.Models;
 using AgentMesh.Application.Models.CodeSandbox;
+using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class CodeExecutionResultTypeParameter : EWParameter<SandboxResultType>
+    public sealed class CodeExecutionResultTypeParameter : BaseEWParameterConfiguration<SandboxResultType>
     {
-        public const string ParamName = "Code execution result type";
-        public CodeExecutionResultTypeParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "Code execution result type";
     }
 }

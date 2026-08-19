@@ -2,12 +2,8 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class PersonalAssistantConvenienceErrorSentenceParameter : EWParameter<string>
+    public sealed class PersonalAssistantConvenienceErrorSentenceParameter : BaseEWParameterConfiguration<string>
     {
-        public const string ParamName = "Personal assistant convenience error sentence";
-        public PersonalAssistantConvenienceErrorSentenceParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "Personal assistant convenience error sentence";
     }
 }

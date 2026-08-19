@@ -6,43 +6,53 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Services.EWSteps
 {
     public class RequestAnalyzerEWAgenticStep(
-        RequestAnalyzerAgent requestAnalyzerAgent,
-        UserLastRequestParameter userLastRequestParameter,
-        InitialContextMessagesParameter initialContextMessagesParameter,
-        UserIntentParameter userIntentParameter,
-        IntentCategoryParameter intentCategoryParameter,
-        ConversationTopicParameter conversationTopicParameter,
-        UserRequestedActionsParameter userRequestedActionsParameter,
-        UserProvidedDataParameter userProvidedDataParameter,
-        UserPreferencesParameter userPreferencesParameter,
-        MissingValuesParameter missingValuesParameter,
-        RequestDateTimeParameter requestDateTimeParameter,
-        LanguageOfTheUserParameter languageOfTheUserParameter) : IEWAgenticStep
+        RequestAnalyzerAgent requestAnalyzerAgent) : IEWAgenticStep
     {
         public string Name => "Request Analyzer";
-        
+
         public string? AgentName => "RequestAnalyzer";
 
         public bool CountInputTokensAsContextTokens => true;
 
         public bool CountOutputTokensAsContextTokens => false;
 
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(UserLastRequestParameter),
+            typeof(InitialContextMessagesParameter),
+            typeof(RequestDateTimeParameter)
+            ];
+
+        public IEnumerable<Type> OutputParameterTypes => [
+            typeof(UserIntentParameter),
+            typeof(IntentCategoryParameter),
+            typeof(ConversationTopicParameter),
+            typeof(UserRequestedActionsParameter),
+            typeof(UserProvidedDataParameter),
+            typeof(UserPreferencesParameter),
+            typeof(MissingValuesParameter),
+            typeof(LanguageOfTheUserParameter)
+            ];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
-            var agentOutput = await requestAnalyzerAgent.ExecuteAsync([userLastRequestParameter, 
-                initialContextMessagesParameter, 
-                requestDateTimeParameter], cancellationToken);
+            var agentOutput = await requestAnalyzerAgent.ExecuteAsync(Values, cancellationToken);
 
-            userIntentParameter.ParameterValue = agentOutput.Result.Intent;
-            intentCategoryParameter.ParameterValue = agentOutput.Result.IntentCategory;
-            conversationTopicParameter.ParameterValue = agentOutput.Result.ConversationTopic;
-            userRequestedActionsParameter.ParameterValue = agentOutput.Result.UserRequestedActions;
-            userProvidedDataParameter.ParameterValue = agentOutput.Result.UserProvidedData;
-            userPreferencesParameter.ParameterValue = agentOutput.Result.UserPreferences;
-            missingValuesParameter.ParameterValue = agentOutput.Result.MissingValues;
-            languageOfTheUserParameter.ParameterValue = agentOutput.Result.LanguageOfTheUser;
-
-            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepExecutionResult
+            {
+                InputTokens = agentOutput.InputTokenCount,
+                OutputTokens = agentOutput.OutputTokenCount,
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(UserIntentParameter), agentOutput.Result.Intent },
+                    { typeof(IntentCategoryParameter), agentOutput.Result.IntentCategory },
+                    { typeof(ConversationTopicParameter), agentOutput.Result.ConversationTopic },
+                    { typeof(UserRequestedActionsParameter), agentOutput.Result.UserRequestedActions },
+                    { typeof(UserProvidedDataParameter), agentOutput.Result.UserProvidedData },
+                    { typeof(UserPreferencesParameter), agentOutput.Result.UserPreferences },
+                    { typeof(MissingValuesParameter), agentOutput.Result.MissingValues },
+                    { typeof(LanguageOfTheUserParameter), agentOutput.Result.LanguageOfTheUser }
+                }
+            };
         }
     }
 }

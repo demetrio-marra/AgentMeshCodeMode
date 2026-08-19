@@ -28,8 +28,8 @@ namespace AgentMesh.Application.Services.Agents
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
             return [
-                new() { ParameterName = RequestDateTimeParameter.ParamName, ParameterTags = [ParameterTags.AgentSystemParameterTag] },
-                new() { ParameterName = KnowledgeBaseAPIDocumentsContentParameter.ParamName, ParameterTags = [ParameterTags.AgentSystemParameterTag] },
+                new() { ParameterType = typeof(RequestDateTimeParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] },
+                new() { ParameterType = typeof(KnowledgeBaseAPIDocumentsContentParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] },
                 ];
         }
 
@@ -99,3 +99,4 @@ namespace AgentMesh.Application.Services.Agents
         }
     }
 }
+

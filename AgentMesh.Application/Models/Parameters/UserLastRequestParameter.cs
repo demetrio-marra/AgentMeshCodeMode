@@ -2,12 +2,8 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class UserLastRequestParameter : EWParameter<string>
+    public sealed class UserLastRequestParameter : BaseEWParameterConfiguration<string>
     {
-        public const string ParamName = "User last request";
-        public UserLastRequestParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "User last request";
     }
 }

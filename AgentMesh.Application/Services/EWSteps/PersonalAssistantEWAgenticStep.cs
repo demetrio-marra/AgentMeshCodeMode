@@ -7,22 +7,9 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class PersonalAssistantEWAgenticStep(
         PersonalAssistantAgent personalAssistantAgent,
-        RequestDateTimeParameter requestDateTimeParameter,
-        UserIntentParameter userIntentParameter,
-        ConversationTopicParameter conversationTopicParameter,
-        UserPreferencesParameter userPreferencesParameter,
-        UserProvidedDataParameter userProvidedDataParameter,
-        UserRequestedActionsParameter userRequestedActionsParameter,
-        LanguageOfTheUserParameter languageOfTheUserParameter,
-        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
-        RequestRejectedReasonParameter requestRejectedReasonParameter,
         RequestRejectedFlagParameter requestRejectedFlagParameter,
-        PipelineResultDataParameter pipelineResultDataParameter,
         ExecutionErrorParameter executionErrorParameter,
-        PersonalAssistantOpeningSentenceParameter personalAssistantOpeningSentenceParameter,
-        PersonalAssistantClosingSentenceParameter personalAssistantClosingSentenceParameter,
-        PersonalAssistantConvenienceErrorSentenceParameter personalAssistantConvenienceErrorSentenceParameter,
-        FinalAnswerParameter finalAnswerParameter) : IEWAgenticStep
+        PipelineResultDataParameter pipelineResultDataParameter) : IEWAgenticStep
     {
         public string Name => "Personal Assistant";
 
@@ -32,33 +19,38 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool CountOutputTokensAsContextTokens => true;
 
-       
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(RequestDateTimeParameter),
+            typeof(RequestRejectedFlagParameter),
+            typeof(RequestRejectedReasonParameter),
+            typeof(ExecutionErrorParameter),
+            typeof(PipelineResultDataParameter),
+            typeof(LanguageOfTheUserParameter),
+            typeof(UserIntentParameter),
+            typeof(ConversationTopicParameter),
+            typeof(UserPreferencesParameter),
+            typeof(UserProvidedDataParameter),
+            typeof(UserRequestedActionsParameter),
+            typeof(PastMemoriesQueryResultsParameter)
+            ];
+
+        public IEnumerable<Type> OutputParameterTypes => [
+            typeof(PersonalAssistantOpeningSentenceParameter),
+            typeof(PersonalAssistantClosingSentenceParameter),
+            typeof(PersonalAssistantConvenienceErrorSentenceParameter),
+            typeof(FinalAnswerParameter)
+            ];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
-            var data = pipelineResultDataParameter.ParameterValue;
-            var requestFailed = requestRejectedFlagParameter.ParameterValue;
+            var data = pipelineResultDataParameter.ValueAs(Values[typeof(PipelineResultDataParameter)]);
+            var requestFailed = requestRejectedFlagParameter.ValueAs(Values[typeof(RequestRejectedFlagParameter)]);
+            var executionError = executionErrorParameter.ValueAs(Values[typeof(ExecutionErrorParameter)]);
 
-            var agentOutput = await personalAssistantAgent.ExecuteAsync([
-                requestDateTimeParameter,
-                requestRejectedFlagParameter,
-                requestRejectedReasonParameter,
-                executionErrorParameter,
-                pipelineResultDataParameter,
-                languageOfTheUserParameter,
-                userIntentParameter,
-                conversationTopicParameter,
-                userPreferencesParameter,
-                userProvidedDataParameter,
-                userRequestedActionsParameter,
-                pastMemoriesQueryResultsParameter
-                ], cancellationToken);
-
-            personalAssistantOpeningSentenceParameter.ParameterValue = agentOutput.Result.OpeningSentence;
-            personalAssistantClosingSentenceParameter.ParameterValue = agentOutput.Result.ClosingSentence;
-            personalAssistantConvenienceErrorSentenceParameter.ParameterValue = agentOutput.Result.ConvenienceErrorSentence;
+            var agentOutput = await personalAssistantAgent.ExecuteAsync(Values, cancellationToken);
 
             string? finalAnswer;
-            if (requestFailed || executionErrorParameter.ParameterValue)
+            if (requestFailed == true || executionError == true)
             {
                 finalAnswer = agentOutput.Result.ConvenienceErrorSentence;
             }
@@ -69,9 +61,18 @@ namespace AgentMesh.Application.Services.EWSteps
                     .Where(s => !string.IsNullOrWhiteSpace(s)));
             }
 
-            finalAnswerParameter.ParameterValue = finalAnswer;
-
-            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepExecutionResult
+            {
+                InputTokens = agentOutput.InputTokenCount,
+                OutputTokens = agentOutput.OutputTokenCount,
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(PersonalAssistantOpeningSentenceParameter), agentOutput.Result.OpeningSentence },
+                    { typeof(PersonalAssistantClosingSentenceParameter), agentOutput.Result.ClosingSentence },
+                    { typeof(PersonalAssistantConvenienceErrorSentenceParameter), agentOutput.Result.ConvenienceErrorSentence },
+                    { typeof(FinalAnswerParameter), finalAnswer }
+                }
+            };
         }
     }
 }

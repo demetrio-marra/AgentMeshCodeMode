@@ -28,7 +28,7 @@ namespace AgentMesh.Application.Services.Agents
             return [
                 new()
                 {
-                    ParameterName = RequestDateTimeParameter.ParamName,
+                    ParameterType = typeof(RequestDateTimeParameter),
                     ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 }
             ];
@@ -62,3 +62,4 @@ namespace AgentMesh.Application.Services.Agents
         }
     }
 }
+

@@ -4,14 +4,16 @@
         DateTime StartedOnUtc,
         DateTime CompletedOnUtc,
         IEnumerable<EWDisplayParameterRecord> ParametersBefore,
+        IEnumerable<EWDisplayParameterRecord> InputParameters,
         IEnumerable<EWDisplayParameterRecord> ParametersAfter,
-        bool IsAgentic,
-        string? AgentName,
-        bool CountInputTokensAsContextTokens,
-        bool CountOutputTokensAsContextTokens,
-        int? InputTokens,
-        int? OutputTokens)
+        bool IsAgentic = false,
+        string? AgentName = null,
+        bool CountInputTokensAsContextTokens = false,
+        bool CountOutputTokensAsContextTokens = false,
+        int? InputTokens = null,
+        int? OutputTokens = null)
     {
+
         public readonly TimeSpan Elapsed { get => CompletedOnUtc - StartedOnUtc; }
         public readonly int? TotalTokens { get => !IsAgentic ? null : (InputTokens ?? 0) + (OutputTokens ?? 0); }
 

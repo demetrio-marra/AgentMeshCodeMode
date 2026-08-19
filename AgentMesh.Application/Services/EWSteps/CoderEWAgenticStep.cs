@@ -6,12 +6,7 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Services.EWSteps
 {
     public class CoderEWAgenticStep(
-        CoderAgent coderAgent,
-        BusinessRequirementsParameter businessRequirementsParameter,
-        TechnicalSpecificationParameter technicalSpecificationParameter,
-        KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter,
-        RequestDateTimeParameter requestDateTimeParameter,
-        GeneratedCodeParameter generatedCodeParameter) : IEWAgenticStep
+        CoderAgent coderAgent) : IEWAgenticStep
     {
         public string Name => "Coder";
 
@@ -21,18 +16,28 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool CountOutputTokensAsContextTokens => false;
 
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(RequestDateTimeParameter),
+            typeof(BusinessRequirementsParameter),
+            typeof(TechnicalSpecificationParameter),
+            typeof(KnowledgeBaseAPIDocumentsContentParameter)
+        ];
 
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public IEnumerable<Type> OutputParameterTypes => [typeof(GeneratedCodeParameter)];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
-            var agentOutput = await coderAgent.ExecuteAsync([
-                requestDateTimeParameter,
-                businessRequirementsParameter,
-                technicalSpecificationParameter,
-                knowledgeBaseAPIDocumentsContentParameter], cancellationToken);
+            var agentOutput = await coderAgent.ExecuteAsync(Values, cancellationToken);
 
-            generatedCodeParameter.ParameterValue = agentOutput.Result;
-
-            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepExecutionResult
+            {
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(GeneratedCodeParameter), agentOutput.Result }
+                },
+                InputTokens = agentOutput.InputTokenCount,
+                OutputTokens = agentOutput.OutputTokenCount
+            };
         }
     }
 }

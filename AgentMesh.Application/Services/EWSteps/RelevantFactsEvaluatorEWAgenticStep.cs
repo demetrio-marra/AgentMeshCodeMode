@@ -6,27 +6,36 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Services.EWSteps
 {
     public class RelevantFactsEvaluatorEWAgenticStep(
-        RelevantFactsEvaluatorAgent agent,
-        RequestDateTimeParameter requestDateTimeParameter,
-        MessagesToSummarizeParameter messagesToSummarizeParameter,
-        RelevantMessagesToSaveInAgentMemoryParameter relevantMessagesToSaveInAgentMemoryParameter) : IEWAgenticStep
+        RelevantFactsEvaluatorAgent agent) : IEWAgenticStep
     {
         public string Name => "Relevant Facts Evaluator";
-        
+
         public string? AgentName => "RelevantFactsEvaluator";
 
         public bool CountInputTokensAsContextTokens => false;
 
         public bool CountOutputTokensAsContextTokens => false;
 
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(RequestDateTimeParameter),
+            typeof(MessagesToSummarizeParameter)
+            ];
+
+        public IEnumerable<Type> OutputParameterTypes => [typeof(RelevantMessagesToSaveInAgentMemoryParameter)];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
-            var agentOutput = await agent.ExecuteAsync([requestDateTimeParameter,
-                messagesToSummarizeParameter], cancellationToken);
+            var agentOutput = await agent.ExecuteAsync(Values, cancellationToken);
 
-            relevantMessagesToSaveInAgentMemoryParameter.ParameterValue = agentOutput.Result;
-
-            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepExecutionResult
+            {
+                InputTokens = agentOutput.InputTokenCount,
+                OutputTokens = agentOutput.OutputTokenCount,
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(RelevantMessagesToSaveInAgentMemoryParameter), agentOutput.Result }
+                }
+            };
         }
     }
 }

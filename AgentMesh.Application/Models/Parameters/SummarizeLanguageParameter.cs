@@ -2,12 +2,8 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class SummarizeLanguageParameter : EWParameter<string>
+    public sealed class SummarizeLanguageParameter : BaseEWParameterConfiguration<string>
     {
-        public const string ParamName = "Summarize in language";
-        public SummarizeLanguageParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "Summarize in language";
     }
 }

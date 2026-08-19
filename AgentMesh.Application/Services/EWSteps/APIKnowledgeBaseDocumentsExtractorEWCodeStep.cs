@@ -1,20 +1,24 @@
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Parameters;
 using AgentMesh.Application.Services.Executors;
+using AgentMesh.Models;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
     public class APIKnowledgeBaseDocumentsExtractorEWCodeStep(
         KnowledgeBaseExecutor knowledgeBaseExecutor,
-        APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
-        KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter) : IEWCodeStep
+        APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter) : IEWStep
     {
         public string Name => "API Knowledge Base Documents Extractor";
 
-        public async Task ExecuteAsync(CancellationToken cancellationToken = default)
+        public IEnumerable<Type> InputParameterTypes => [typeof(APISKnowledgeBaseQueryResultsParameter)];
+
+        public IEnumerable<Type> OutputParameterTypes => [typeof(KnowledgeBaseAPIDocumentsContentParameter)];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
-            var results = apisKnowledgeBaseQueryResultsParameter.ParameterValue ?? [];
+            var results = apisKnowledgeBaseQueryResultsParameter.ValueAs(Values[typeof(APISKnowledgeBaseQueryResultsParameter)]) ?? [];
             var filesToExtract = results
                 .Select(r => r.File?.Trim())
                 .Where(file => !string.IsNullOrWhiteSpace(file))
@@ -41,7 +45,13 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var documents = documentsByFile.Values.ToList();
 
-            knowledgeBaseAPIDocumentsContentParameter.ParameterValue = documents;
+            return new EWStepExecutionResult
+            {
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(KnowledgeBaseAPIDocumentsContentParameter), documents }
+                }
+            };
         }
     }
 }

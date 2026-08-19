@@ -1,3 +1,4 @@
+using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Models.Parameters;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Models;
@@ -8,14 +9,7 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class KnowledgeBaseQueryExpanderEWAgenticStep(
         KnowledgeBaseQueryExpanderAgent knowledgeBaseQueryExpanderAgent,
-        RequestDateTimeParameter requestDateTimeParameter,
-        LanguageOfTheDocumentationParameter languageOfTheDocumentationParameter,
-        QMDQueryTypesDocumentationParameter qmdQueryTypesDocumentationParameter,
-        UserIntentParameter userIntentParameter,
-        IntentCategoryParameter intentCategoryParameter,
-        UserRequestedActionsParameter userRequestedActionsParameter,
-        UserProvidedDataParameter userProvidedDataParameter,
-        DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter) : IEWAgenticStep
+        IntentCategoryParameter intentCategoryParameter) : IEWAgenticStep
     {
         public string Name => "Knowledge Base Query Expander";
 
@@ -25,31 +19,44 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool CountOutputTokensAsContextTokens => false;
 
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(RequestDateTimeParameter),
+            typeof(LanguageOfTheDocumentationParameter),
+            typeof(QMDQueryTypesDocumentationParameter),
+            typeof(UserIntentParameter),
+            typeof(IntentCategoryParameter),
+            typeof(UserRequestedActionsParameter),
+            typeof(UserProvidedDataParameter)
+            ];
+
+        public IEnumerable<Type> OutputParameterTypes => [typeof(DomainsKnowledgeBaseQueryParameter)];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
-            var agentOutput = await knowledgeBaseQueryExpanderAgent.ExecuteAsync([
-                requestDateTimeParameter,
-                languageOfTheDocumentationParameter,
-                qmdQueryTypesDocumentationParameter,
-                userIntentParameter,
-                intentCategoryParameter,
-                userRequestedActionsParameter,
-                userProvidedDataParameter,
-                ], cancellationToken);
+            var agentOutput = await knowledgeBaseQueryExpanderAgent.ExecuteAsync(Values, cancellationToken);
 
             var searchQueries = agentOutput.Result.ToList();
-            if (intentCategoryParameter.ParameterValue!.Value != UserIntentCategory.Documentation) // safety net
+            var intentCategory = intentCategoryParameter.ValueAs(Values[typeof(IntentCategoryParameter)]);
+            if (intentCategory != UserIntentCategory.Documentation)
             {
                 searchQueries = [.. searchQueries.Where(q => q.SearchType != AgentMesh.Models.KnowledgeBase.KnowledgeBaseQuerySearchType.HypotheticalDocument)];
             }
 
-            domainsKnowledgeBaseQueryParameter.ParameterValue = [.. searchQueries.Select(s => new Models.KnowledgeBase.KnowledgeBaseQueryInputItem
+            var domainQueries = searchQueries.Select(s => new KnowledgeBaseQueryInputItem
             {
                 Query = s.Query,
                 SearchType = s.SearchType
-            })];
+            }).ToList();
 
-            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepExecutionResult
+            {
+                InputTokens = agentOutput.InputTokenCount,
+                OutputTokens = agentOutput.OutputTokenCount,
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(DomainsKnowledgeBaseQueryParameter), domainQueries }
+                }
+            };
         }
     }
 }

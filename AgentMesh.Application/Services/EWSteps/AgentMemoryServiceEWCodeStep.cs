@@ -1,6 +1,7 @@
 using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Application.Models.Parameters;
 using AgentMesh.Application.Services.Executors;
+using AgentMesh.Models;
 using AgentMesh.Services;
 
 namespace AgentMesh.Application.Services.EWSteps
@@ -8,13 +9,29 @@ namespace AgentMesh.Application.Services.EWSteps
     public class AgentMemoryServiceEWCodeStep(
         AgentMemoryExecutor agentMemoryExecutor,
         PastMemoriesQueryParameter pastMemoriesQueryParameter,
-        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter) : IEWCodeStep
+        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter) : IEWStep
     {
         public string Name => "Agent Memory Service";
 
-        public async Task ExecuteAsync(CancellationToken cancellationToken = default)
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(PastMemoriesQueryParameter),
+            typeof(PastMemoriesQueryResultsParameter),
+        ];
+
+        public IEnumerable<Type> OutputParameterTypes => [typeof(PastMemoriesQueryResultsParameter)];
+
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
-            var queriesList = (pastMemoriesQueryParameter.ParameterValue ?? []).Select(s => s.Memory).ToList();
+            var pastMemories = pastMemoriesQueryParameter.ValueAs(Values[typeof(PastMemoriesQueryParameter)]);
+            if (pastMemories == null)
+            {
+                return new EWStepExecutionResult
+                {
+                    OutputMutations = new Dictionary<Type, object?>()
+                };
+            }
+            var queriesList = pastMemories.Select(memory => memory.Memory).ToList();
 
             var agentInput = new AgentMemoryRetrieverInput
             {
@@ -23,12 +40,18 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var executorOutput = await agentMemoryExecutor.GetAsync(agentInput);
 
-            var currentMemories = pastMemoriesQueryResultsParameter.ParameterValue ?? [];
+            var currentMemories = pastMemoriesQueryResultsParameter.ValueAs(Values[typeof(PastMemoriesQueryResultsParameter)]) ?? [];
 
             var retrievedMemories = executorOutput.Items.ToList();
             var allMemories = currentMemories.Concat(retrievedMemories).ToList();
 
-            pastMemoriesQueryResultsParameter.ParameterValue = allMemories;
+            return new EWStepExecutionResult
+            {
+                OutputMutations = new Dictionary<Type, object?>
+                {
+                    { typeof(PastMemoriesQueryResultsParameter), allMemories }
+                }
+            };
         }
     }
 }

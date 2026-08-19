@@ -7,29 +7,35 @@ using System.Text.Json;
 
 namespace AgentMesh.Application.Services.Helpers
 {
-    public class DefaultAgentInputSerializer : IAgentInputSerializer
+    public class DefaultAgentInputSerializer(IEnumerable<IEWParameterConfiguration> parameterConfigurations) : IAgentInputSerializer
     {
-        public IEnumerable<AgentMessage> SerializeInput(IEnumerable<IEWParameter> parameters, IEnumerable<AgentInputParameterConfiguration> parametersConfiguration)
+        public IEnumerable<AgentMessage> SerializeInput(IReadOnlyDictionary<Type, object?> parameters, IEnumerable<AgentInputParameterConfiguration> parameterTagsConfiguration)
         {
             var ret = new List<AgentMessage>();
 
-            var pmc = parametersConfiguration.ToDictionary(c => c.ParameterName, c => c.ParameterTags, StringComparer.InvariantCultureIgnoreCase);
+            var pmc = parameterTagsConfiguration.ToDictionary(c => c.ParameterType, c => c.ParameterTags);
 
             var systemMessages = new List<string>();
             var userPayload = new Dictionary<string, string>();
 
             foreach (var parameter in parameters)
             {
-                var config = pmc.GetValueOrDefault(parameter.Name);
+                var config = pmc.GetValueOrDefault(parameter.Key);
                 bool isSystemParameter = config != null && config.Contains(ParameterTags.AgentSystemParameterTag, StringComparer.InvariantCultureIgnoreCase);
+
+                var parameterConfiguration = parameterConfigurations.FirstOrDefault(t => t.GetType() == parameter.Key);
+                if (parameterConfiguration == null)
+                {
+                    throw new InvalidOperationException($"No parameter configuration found for parameter type {parameter.Key.FullName}");
+                }
 
                 if (isSystemParameter)
                 {
-                    systemMessages.Add($"{parameter.Name}: {parameter.Serialize()}");
+                    systemMessages.Add($"{parameterConfiguration.Name}: {parameterConfiguration.ValueSerializer.Serialize(parameter.Value)}");
                 }
                 else
                 {
-                    userPayload.Add(parameter.Name, parameter.Serialize());
+                    userPayload.Add(parameterConfiguration.Name, parameterConfiguration.ValueSerializer.Serialize(parameter.Value));
                 }
             }
 

@@ -2,12 +2,8 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class UserIntentParameter : EWParameter<string>
+    public sealed class UserIntentParameter : BaseEWParameterConfiguration<string>
     {
-        public const string ParamName = "User intent";
-        public UserIntentParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "User intent";
     }
 }

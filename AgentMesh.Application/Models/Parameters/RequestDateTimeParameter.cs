@@ -4,14 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class RequestDateTimeParameter : EWParameter<DateTime>
+    public sealed class RequestDateTimeParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer) : BaseEWParameterConfiguration<DateTime>
     {
-        public const string ParamName = "Current datetime";
-        public RequestDateTimeParameter([FromKeyedServices("DisplayParametersSerializer")] IEWParameterSerializer displayValueSerializer)
-        {
-            Name = ParamName;
-            ParameterValue = DateTime.UtcNow;
-            DisplayValueSerializer = displayValueSerializer;
-        }
+        public override string Name => "Current datetime";
+
+        public override IEWParameterSerializer DisplayValueSerializer => displayValueSerializer;
     }
 }

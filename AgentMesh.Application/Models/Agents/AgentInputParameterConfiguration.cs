@@ -2,7 +2,7 @@
 {
     public readonly record struct AgentInputParameterConfiguration
     {
-        public string ParameterName { get; init; }
+        public Type ParameterType { get; init; }
         public IEnumerable<string> ParameterTags { get; init; }
     }
 }

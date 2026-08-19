@@ -38,8 +38,7 @@ namespace AgentMesh.Application.Services
             var executionScope = serviceProvider.CreateScope();
 
             var pipeline = executionScope.ServiceProvider.GetRequiredService<IChatRequestPipeline>();
-            pipeline.InitialChatHistory = conversationContext.Conversation.ToList();
-            pipeline.UserLastRequest = message;
+            pipeline.SetParameterInitialValues(message, conversationContext.Conversation.ToList(), requestDatetime);
 
             var stepsStats = await pipeline.ExecuteAsync(cancellationToken);
             var usageStatistics = stepsStats.ToList();
@@ -85,8 +84,7 @@ namespace AgentMesh.Application.Services
                     var messagesToSummarize = conversationContext.Conversation.Take(countOfMessagesToIncludeInSummarization).ToList();
 
                     var summarizationPipeline = executionScope.ServiceProvider.GetRequiredService<ISummarizationPipeline>();
-                    summarizationPipeline.ChatMessagesToSummarize = messagesToSummarize;
-                    summarizationPipeline.SummarizationLanguage = conversationSummarizerConfiguration.SummarizeLanguage;
+                    summarizationPipeline.SetParameterInitialValues(conversationSummarizerConfiguration.SummarizeLanguage, messagesToSummarize, requestDatetime);
 
                     var summarizationStepStats = await summarizationPipeline.ExecuteAsync(cancellationToken);
                     usageStatistics.AddRange(summarizationStepStats.ToList());

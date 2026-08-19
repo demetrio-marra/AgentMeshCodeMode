@@ -6,18 +6,7 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Services.EWSteps
 {
     public class FunctionalAnalystEWAgenticStep(
-        RequestDateTimeParameter requestDateTimeParameter,
-        FunctionalAnalystAgent functionalAnalystAgent,
-        UserIntentParameter userIntentParameter,
-        ConversationTopicParameter conversationTopicParameter,
-        UserRequestedActionsParameter userRequestedActionsParameter,
-        UserProvidedDataParameter userProvidedDataParameter,
-        UserPreferencesParameter userPreferencesParameter,
-        PastMemoriesQueryResultsParameter pastMemoriesQueryResultsParameter,
-        DomainsKnowledgeBaseDocumentsContentParameter domainsKnowledgeBaseDocumentsContentParameter,
-        BusinessRequirementsParameter businessRequirementsParameter,
-        RequestRejectedFlagParameter requestRejectedFlagParameter,
-        RequestRejectedReasonParameter requestRejectedReasonParameter) : IEWAgenticStep
+        FunctionalAnalystAgent functionalAnalystAgent) : IEWAgenticStep
     {
         public string Name => "Functional Analyst";
 
@@ -27,28 +16,44 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public bool CountOutputTokensAsContextTokens => false;
 
-        public async Task<EWAgenticStepResultRecord> ExecuteAsync(CancellationToken cancellationToken = default)
-        {
-            var agentOutput = await functionalAnalystAgent.ExecuteAsync([
-                requestDateTimeParameter,
-                userIntentParameter,
-                conversationTopicParameter,
-                userRequestedActionsParameter,
-                userProvidedDataParameter,
-                userPreferencesParameter,
-                pastMemoriesQueryResultsParameter,
-                domainsKnowledgeBaseDocumentsContentParameter
-                ], cancellationToken);
+        public IEnumerable<Type> InputParameterTypes => [
+            typeof(RequestDateTimeParameter),
+            typeof(UserIntentParameter),
+            typeof(ConversationTopicParameter),
+            typeof(UserRequestedActionsParameter),
+            typeof(UserProvidedDataParameter),
+            typeof(UserPreferencesParameter),
+            typeof(PastMemoriesQueryResultsParameter),
+            typeof(DomainsKnowledgeBaseDocumentsContentParameter)
+            ];
 
-            businessRequirementsParameter.ParameterValue = agentOutput.Result.BusinessRequirements;
-            requestRejectedFlagParameter.ParameterValue = agentOutput.Result.RequestRejected;
-            if (agentOutput.Result.RequestRejected
-                && !string.IsNullOrWhiteSpace(agentOutput.Result.ReasonOfRejection))
+        public IEnumerable<Type> OutputParameterTypes => [
+            typeof(BusinessRequirementsParameter),
+            typeof(RequestRejectedFlagParameter),
+            typeof(RequestRejectedReasonParameter)
+            ];
+
+        public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
+        {
+            var agentOutput = await functionalAnalystAgent.ExecuteAsync(Values, cancellationToken);
+
+            var outputMutations = new Dictionary<Type, object?>
             {
-                requestRejectedReasonParameter.ParameterValue = agentOutput.Result.ReasonOfRejection;
+                { typeof(BusinessRequirementsParameter), agentOutput.Result.BusinessRequirements },
+                { typeof(RequestRejectedFlagParameter), agentOutput.Result.RequestRejected }
+            };
+
+            if (agentOutput.Result.RequestRejected && !string.IsNullOrWhiteSpace(agentOutput.Result.ReasonOfRejection))
+            {
+                outputMutations[typeof(RequestRejectedReasonParameter)] = agentOutput.Result.ReasonOfRejection;
             }
 
-            return new EWAgenticStepResultRecord(agentOutput.InputTokenCount, agentOutput.OutputTokenCount);
+            return new EWAgenticStepExecutionResult
+            {
+                InputTokens = agentOutput.InputTokenCount,
+                OutputTokens = agentOutput.OutputTokenCount,
+                OutputMutations = outputMutations
+            };
         }
     }
 }

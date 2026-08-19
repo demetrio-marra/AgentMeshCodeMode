@@ -6,7 +6,7 @@ namespace AgentMesh.Services
     {
         string SummarizedContent { get; }
         DateTime SummarizedContentDatetime { get; }
-        IEnumerable<ContextMessage> ChatMessagesToSummarize { set; }
-        string SummarizationLanguage { set; }
+
+        void SetParameterInitialValues(string summarizationLanguage, IEnumerable<ContextMessage> chatMessagesToSummarize, DateTime requestDateTime);
     }
 }

@@ -2,12 +2,8 @@ using AgentMesh.Models;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class ConversationTopicParameter : EWParameter<string>
+    public sealed class ConversationTopicParameter : BaseEWParameterConfiguration<string>
     {
-        public const string ParamName = "Conversation topic";
-        public ConversationTopicParameter()
-        {
-            Name = ParamName;
-        }
+        public override string Name => "Conversation topic";
     }
 }

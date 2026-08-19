@@ -14,8 +14,8 @@ namespace AgentMesh.Application.Services.Agents
                       Resilience resilience,
                       ILogger<CoderAgent> logger,
                       IAgentInputSerializer agentInputSerializer) : AbstractAgent<string>(logger,
-                          "Coder", 
-                          openAIClientFactory, 
+                          "Coder",
+                          openAIClientFactory,
                           resilience,
                           agentInputSerializer)
     {
@@ -28,13 +28,15 @@ namespace AgentMesh.Application.Services.Agents
             return [
                 new()
                 {
-                    ParameterName = RequestDateTimeParameter.ParamName,
+                    ParameterType = typeof(RequestDateTimeParameter),
                     ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 },
-                new () { 
-                    ParameterName = KnowledgeBaseAPIDocumentsContentParameter.ParamName, 
-                    ParameterTags = [ParameterTags.AgentSystemParameterTag] },
-                ];
+                new()
+                {
+                    ParameterType = typeof(KnowledgeBaseAPIDocumentsContentParameter),
+                    ParameterTags = [ParameterTags.AgentSystemParameterTag]
+                }
+            ];
         }
 
         protected override string ParseStructuredResponse(string rawResponseText)
