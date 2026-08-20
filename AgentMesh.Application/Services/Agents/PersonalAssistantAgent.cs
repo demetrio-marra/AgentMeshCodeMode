@@ -67,7 +67,7 @@ namespace AgentMesh.Application.Services.Agents
                 {
                     OpeningSentence = responseDTO.OpeningSentence,
                     ClosingSentence = responseDTO.ClosingSentence,
-                    ConvenienceErrorSentence = responseDTO.ConvenienceErrorSentence
+                    DirectAnswer = responseDTO.DirectAnswer
                 };
             }
             catch (JsonException ex)
@@ -86,8 +86,8 @@ namespace AgentMesh.Application.Services.Agents
             [JsonPropertyName("closingSentence")]
             public string? ClosingSentence { get; set; }
 
-            [JsonPropertyName("convenienceErrorSentence")]
-            public string? ConvenienceErrorSentence { get; set; }
+            [JsonPropertyName("directAnswer")]
+            public string? DirectAnswer { get; set; }
         }
     }
 }

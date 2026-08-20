@@ -37,7 +37,7 @@ namespace AgentMesh.Application.Services.EWSteps
         public IEnumerable<Type> OutputParameterTypes => [
             typeof(PersonalAssistantOpeningSentenceParameter),
             typeof(PersonalAssistantClosingSentenceParameter),
-            typeof(PersonalAssistantConvenienceErrorSentenceParameter),
+            typeof(PersonalAssistantDirectAnswerParameter),
             typeof(FinalAnswerParameter)
             ];
 
@@ -50,9 +50,9 @@ namespace AgentMesh.Application.Services.EWSteps
             var agentOutput = await personalAssistantAgent.ExecuteAsync(Values, cancellationToken);
 
             string? finalAnswer;
-            if (requestFailed == true || executionError == true)
+            if (!string.IsNullOrWhiteSpace(agentOutput.Result.DirectAnswer))
             {
-                finalAnswer = agentOutput.Result.ConvenienceErrorSentence;
+                finalAnswer = agentOutput.Result.DirectAnswer;
             }
             else
             {
@@ -69,7 +69,7 @@ namespace AgentMesh.Application.Services.EWSteps
                 {
                     { typeof(PersonalAssistantOpeningSentenceParameter), agentOutput.Result.OpeningSentence },
                     { typeof(PersonalAssistantClosingSentenceParameter), agentOutput.Result.ClosingSentence },
-                    { typeof(PersonalAssistantConvenienceErrorSentenceParameter), agentOutput.Result.ConvenienceErrorSentence },
+                    { typeof(PersonalAssistantDirectAnswerParameter), agentOutput.Result.DirectAnswer },
                     { typeof(FinalAnswerParameter), finalAnswer }
                 }
             };
