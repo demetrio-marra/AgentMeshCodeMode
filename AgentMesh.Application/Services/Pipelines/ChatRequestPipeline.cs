@@ -43,9 +43,7 @@ namespace AgentMesh.Application.Services.Pipelines
         JSSandboxEWCodeStep jsSandboxEWStep,
         DomainExpertEWAgenticStep domainExpertEWStep,
         PersonalAssistantEWAgenticStep personalAssistantEWStep,
-        IWorkflowProgressNotifier workflowProgressNotifier,
-        CodeModeWorkflowConfiguration codeModeWorkflowConfiguration
-
+        IWorkflowProgressNotifier workflowProgressNotifier
         ) : EWPipeline(workflowProgressNotifier,
             parameterStore,
             parameterConfigurations
@@ -58,7 +56,7 @@ namespace AgentMesh.Application.Services.Pipelines
                 { typeof(UserLastRequestParameter), userLastRequest },
                 { typeof(InitialContextMessagesParameter), initialChatHistory },
                 { typeof(RequestDateTimeParameter), requestDateTime },
-                { typeof(LanguageOfTheDocumentationParameter), codeModeWorkflowConfiguration.LanguageOfKnowledgeBase }
+                { typeof(LanguageOfTheDocumentationParameter), workflowConfiguration.LanguageOfKnowledgeBase }
             });
         }
 
@@ -91,13 +89,15 @@ namespace AgentMesh.Application.Services.Pipelines
             // - if agent has already run, do not run it
             // - if missingValuesParameter is null or empty, do not run it
             // Conditions are AND
-            if (RunOnce([agentMemoryQueryExpanderEWStep], out steps,
+            if (workflowConfiguration.EnableMemoryService
+                && RunOnce([agentMemoryQueryExpanderEWStep], out steps,
                 () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
             {
                 return steps;
             }
 
-            if (RunOnce([agentMemoryServiceEWStep], out steps,
+            if (workflowConfiguration.EnableMemoryService
+                && RunOnce([agentMemoryServiceEWStep], out steps,
                 () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
             {
                 return steps;
@@ -115,13 +115,15 @@ namespace AgentMesh.Application.Services.Pipelines
         {
             var steps = Enumerable.Empty<IEWStep>();
 
-            if (RunOnce([agentMemoryQueryExpanderEWStep], out steps,
+            if (workflowConfiguration.EnableMemoryService
+                && RunOnce([agentMemoryQueryExpanderEWStep], out steps, 
                 () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
             {
                 return steps;
             }
 
-            if (RunOnce([agentMemoryServiceEWStep], out steps,
+            if (workflowConfiguration.EnableMemoryService
+                && RunOnce([agentMemoryServiceEWStep], out steps,   
               () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
             {
                 return steps;
@@ -166,13 +168,15 @@ namespace AgentMesh.Application.Services.Pipelines
         {
             var steps = Enumerable.Empty<IEWStep>();
 
-            if (RunOnce([agentMemoryQueryExpanderEWStep], out steps,
+            if (workflowConfiguration.EnableMemoryService
+                && RunOnce([agentMemoryQueryExpanderEWStep], out steps,
                () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
             {
                 return steps;
             }
 
-            if (RunOnce([agentMemoryServiceEWStep], out steps,
+            if (workflowConfiguration.EnableMemoryService
+                && RunOnce([agentMemoryServiceEWStep], out steps,
               () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
             {
                 return steps;
@@ -234,7 +238,8 @@ namespace AgentMesh.Application.Services.Pipelines
                 return steps;
             }
 
-            if (RunOnce([domainExpertEWStep], out steps,
+            if (workflowConfiguration.EnableDomainExpert
+                && RunOnce([domainExpertEWStep], out steps,
                 () => !requestWasRejected
                     && workflowConfiguration.EnableDomainExpert
                     && !executionErrorParameter.ValueAs(GetParameterRawValue(typeof(ExecutionErrorParameter)))

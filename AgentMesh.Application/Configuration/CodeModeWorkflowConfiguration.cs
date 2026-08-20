@@ -4,7 +4,7 @@ namespace AgentMesh.Application.Configuration
     {
         public const string SectionName = "CodeModeWorkflow";
 
-        public bool EnableCacheService { get; set; } = true;
+        //public bool EnableCacheService { get; set; } = true;
         public bool EnableMemoryService { get; set; } = true;
         public bool EnableDomainExpert { get; set; } = true;
         public bool RerankOnHybridSearch { get; set; } = true;
