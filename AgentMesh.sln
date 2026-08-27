@@ -17,8 +17,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.QM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.Mem0", "AgentMesh.Infrastructure.Mem0\AgentMesh.Infrastructure.Mem0.csproj", "{6495993B-79E4-4140-8EC5-AC5FFD784B97}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.QDrant", "AgentMesh.Infrastructure.QDrant\AgentMesh.Infrastructure.QDrant.csproj", "{73DC0FF2-7FD8-472D-937B-7194080811A6}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -113,18 +111,6 @@ Global
 		{6495993B-79E4-4140-8EC5-AC5FFD784B97}.Release|x64.Build.0 = Release|Any CPU
 		{6495993B-79E4-4140-8EC5-AC5FFD784B97}.Release|x86.ActiveCfg = Release|Any CPU
 		{6495993B-79E4-4140-8EC5-AC5FFD784B97}.Release|x86.Build.0 = Release|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|x64.Build.0 = Debug|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Debug|x86.Build.0 = Debug|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|x64.ActiveCfg = Release|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|x64.Build.0 = Release|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|x86.ActiveCfg = Release|Any CPU
-		{73DC0FF2-7FD8-472D-937B-7194080811A6}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -133,3 +119,4 @@ Global
 		SolutionGuid = {53AB4135-A7FD-458A-A6A7-0EFE9A7D9C1D}
 	EndGlobalSection
 EndGlobal
+

@@ -83,12 +83,6 @@ namespace AgentMesh
             services.AddSingleton<IKnowledgeBaseService, QMDKnowledgeBaseService>();
             services.AddSingleton<KnowledgeBaseExecutor>();
 
-            //// Queries cache service configuration
-            //var queriesCacheServiceConfig = new QDrantQueriesCacheServiceConfiguration();
-            //configuration.GetSection("QDrantQueriesCacheService").Bind(queriesCacheServiceConfig);
-            //services.AddSingleton(queriesCacheServiceConfig);
-            //services.AddSingleton<IQueriesCacheService, QDrantQueriesCacheService>();
-
             // Agent Memory Service configuration
             var agentMemoryConfig = new AgentMemoryServiceConfiguration();
             configuration.GetSection(AgentMemoryServiceConfiguration.SectionName).Bind(agentMemoryConfig);

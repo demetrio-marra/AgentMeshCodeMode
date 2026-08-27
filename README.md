@@ -4,7 +4,6 @@
 [![C#](https://img.shields.io/badge/C%23-12.0-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/en-us/dotnet/csharp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenAI](https://img.shields.io/badge/OpenAI_Compatible-API-412991?logo=openai&logoColor=white)](https://platform.openai.com/)
-[![Qdrant](https://img.shields.io/badge/Qdrant-Semantic_Search-DC244C)](https://qdrant.tech/)
 [![GitHub stars](https://img.shields.io/github/stars/demetrio-marra/AgentMeshCodeMode)](https://github.com/demetrio-marra/AgentMeshCodeMode/stargazers)
 
 A flexible, extensible multi-agent AI orchestration framework that executes configurable pipelines composed of steps, where each step can invoke specialized AI agents or static executors to transform business parameters. Steps read from and write to a shared parameter store with atomic updates, enabling rich parameter tracking and cost analysis per step.
@@ -19,7 +18,6 @@ A flexible, extensible multi-agent AI orchestration framework that executes conf
 - **AI agent integration** – specialized agents process data via LLM, each with configurable model, temperature, and system prompt.
 - **Static executors** – complement agents by running deterministic business logic without AI involvement.
 - **Sandboxed code execution** – generated code runs in an isolated JavaScript sandbox ([JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox)), deployed separately for security and isolation.
-- **Semantic search with Qdrant** – retrieves contextual knowledge from a vector database relevant to the user's requirements.
 - **Conversation summarization** – dedicated summarization pipeline compresses conversation history to stay within token limits.
 - **Agent memory system** – leverages Mem0 for persistent, context-aware agent memory across conversations.
 - **Knowledge base integration** – integrates with QMD for accessing knowledge bases and documentation.
@@ -119,12 +117,11 @@ Executors are services that run deterministic business logic (static procedures)
 
 | Project | Description |
 |---|---|
-| `AgentMesh` | Core domain – pipeline, parameter, step, agent, and executor interfaces and models |
+| `AgentMesh` | Core domain ? pipeline, parameter, step, agent, and executor interfaces and models |
 | `AgentMesh.Application` | Implementations of agents, executors, pipelines, and step orchestration; configuration models |
 | `AgentMeshCLI` | Console application entry point and DI composition root |
 | `AgentMesh.Infrastructure.OpenAIClient` | OpenAI-compatible API client with multi-provider support |
 | `AgentMesh.Infrastructure.JSSandbox` | Client for the external [JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) service |
-| `AgentMesh.Infrastructure.QDrant` | Qdrant vector database integration for semantic search and caching |
 | `AgentMesh.Infrastructure.Mem0` | Mem0 agent memory service integration for persistent context |
 | `AgentMesh.Infrastructure.QMD` | QMD knowledge base and documentation integration for knowledge access |
 
@@ -133,7 +130,6 @@ Executors are services that run deterministic business logic (static procedures)
 ### Prerequisites
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- A running [Qdrant](https://qdrant.tech/) instance for semantic search
 - A deployed [JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) instance for sandboxed code execution
 - A [Mem0](https://mem0.ai/) instance for agent memory (optional but recommended)
 - A [QMD](https://github.com/tobi/qmd) instance for knowledge base access (optional)
@@ -155,14 +151,13 @@ Executors are services that run deterministic business logic (static procedures)
 3. **Configure `appsettings.json`**
 
    Edit `AgentMeshCLI/appsettings.json` to set:
-   - **LLM providers** – endpoints and API keys (via environment variables) under `InferenceProviders`
-   - **LLMs** – model names and providers for each tier under `LLMs`
-   - **Agent settings** – per-agent LLM assignment, temperature, and system prompt files under `Agents`
-   - **Qdrant** – host, port, and collection names under `QDrantQueriesCacheService`
-   - **Embedding** – model endpoint and name under `Embedding`
-   - **Sandbox** – URL and sandbox name under `SESJSSandbox`
-   - **Agent Memory** – Mem0 service URL under `AgentMemoryService`
-   - **QMD** – QMD proxy configuration under `QMDHttpProxy`
+   - **LLM providers** ? endpoints and API keys (via environment variables) under `InferenceProviders`
+   - **LLMs** ? model names and providers for each tier under `LLMs`
+   - **Agent settings** ? per-agent LLM assignment, temperature, and system prompt files under `Agents`
+   - **Embedding** ? model endpoint and name under `Embedding`
+   - **Sandbox** ? URL and sandbox name under `SESJSSandbox`
+   - **Agent Memory** ? Mem0 service URL under `AgentMemoryService`
+   - **QMD** ? QMD proxy configuration under `QMDHttpProxy`
 
 4. **Set environment variables** for API keys as required by your LLM providers.
 
@@ -206,11 +201,6 @@ The system is configured entirely through `appsettings.json`. Key sections:
   "AgentMemoryService": {
     "BaseUrl": "http://localhost:8000",
     "TimeoutSeconds": 30
-  },
-  "QDrantQueriesCacheService": {
-    "Host": "localhost",
-    "Port": 6333,
-    "CollectionName": "queries_cache"
   }
 }
 ```
@@ -251,7 +241,6 @@ Executors are non-LLM services that run deterministic business logic:
 | Service | Purpose | Reference |
 |---|---|---|
 | **JSCodeSandbox** | Sandboxed JavaScript execution environment | [github.com/demetrio-marra/JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) |
-| **Qdrant** | Vector database for semantic search and query caching | [qdrant.tech](https://qdrant.tech/) |
 | **Mem0** | Agent memory and context persistence service | [mem0.ai](https://mem0.ai/) |
 | **QMD** | Knowledge base and documentation access | [github.com/tobi/qmd](https://github.com/tobi/qmd) |
 
@@ -260,7 +249,6 @@ Executors are non-LLM services that run deterministic business logic:
 - **.NET 8** / **C# 12**
 - **Microsoft.Extensions** (DI, Configuration, Logging, Options, HttpClient)
 - **OpenAI SDK** (OpenAI-compatible API client)
-- **Qdrant.Client** for vector search
 - **Polly** for resilience and retry policies
 - **Mem0 SDK** for agent memory
 - **QMD** for knowledge base integration
