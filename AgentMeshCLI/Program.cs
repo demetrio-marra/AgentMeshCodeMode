@@ -74,12 +74,6 @@ namespace AgentMesh
             services.AddScoped<ISummarizationPipeline, SummarizationPipeline>();
 
             #region agents/executors region
-            // Embedding configuration and service registration
-            var embeddingConfiguration = new EmbeddingServiceConfiguration();
-            configuration.GetSection("Embedding").Bind(embeddingConfiguration);
-            services.AddSingleton(embeddingConfiguration);
-            services.AddHttpClient<IEmbeddingService, EmbeddingService>();
-
             services.AddSingleton<IKnowledgeBaseService, QMDKnowledgeBaseService>();
             services.AddSingleton<KnowledgeBaseExecutor>();
 
