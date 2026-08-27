@@ -51,6 +51,7 @@ namespace AgentMesh
 
             services.AddKeyedSingleton<IEWParameterSerializer, DisplayValuesEWParameterSerializer>("DisplayParametersSerializer");
             services.AddKeyedSingleton<IEWParameterSerializer, DefaultEWParameterSerializer>("DefaultParametersSerializer");
+            services.AddKeyedSingleton<IEWParameterSerializer, OmittedValueEWParameterSerializer>("OmittedValueParametersSerializer");
             services.AddSingleton<IOpenAIClientFactory, OpenAIClientFactory>();
 
             foreach (var ewParameterType in DiscoverEWParameterImplementations())

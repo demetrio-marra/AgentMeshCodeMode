@@ -1,10 +1,14 @@
 using AgentMesh.Models;
+using AgentMesh.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AgentMesh.Application.Models.Parameters
 {
-    public sealed class QMDQueryTypesDocumentationParameter : BaseEWParameterConfiguration<string>
+    public sealed class QMDQueryTypesDocumentationParameter([FromKeyedServices("OmittedValueParametersSerializer")] IEWParameterSerializer displayValueSerializer) : BaseEWParameterConfiguration<string>
     {
         public override string Name => "QMD query types documentation";
+
+        public override IEWParameterSerializer DisplayValueSerializer => displayValueSerializer;
 
         protected override string? GetDefaultValue()
         {
