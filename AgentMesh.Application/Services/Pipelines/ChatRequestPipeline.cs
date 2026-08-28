@@ -20,6 +20,7 @@ namespace AgentMesh.Application.Services.Pipelines
         PastMemoriesQueryParameter pastMemoriesQueryParameter,
         DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter,
         KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter,
+        KnowledgeQueryResultParameter knowledgeQueryResultParameter,
         APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
         RequestRejectedFlagParameter requestRejectedFlagParameter,
         TechnicalSpecificationParameter technicalSpecificationParameter,
@@ -47,6 +48,7 @@ namespace AgentMesh.Application.Services.Pipelines
         PersonalAssistantEWAgenticStep personalAssistantEWStep,
         RequestDataToKnowledgeQueryEWCodeStep requestDataToKnowledgeQueryEWCodeStep,
         KnowledgeEWCodeStep knowledgeEWCodeStep,
+        KnowledgeRerankerEWAgenticStep knowledgeRerankerEWAgenticStep,
         CanonicalizerEWAgenticStep canonicalizerEWAgenticStep,
         AnalystEWAgenticStep analystEWStep,
         IWorkflowProgressNotifier workflowProgressNotifier
@@ -102,6 +104,11 @@ namespace AgentMesh.Application.Services.Pipelines
             }
 
             if (RunOnce([knowledgeEWCodeStep], out steps))
+            {
+                return steps;
+            }
+
+            if (RunOnce([knowledgeRerankerEWAgenticStep], out steps))
             {
                 return steps;
             }
