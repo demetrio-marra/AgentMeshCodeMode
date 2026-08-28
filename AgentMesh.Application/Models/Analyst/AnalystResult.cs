@@ -1,0 +1,10 @@
+namespace AgentMesh.Application.Models.Analyst
+{
+    public readonly record struct AnalystResult
+    {
+        public required bool Accepted { get; init; }
+        public string? Specification { get; init; }
+        public string? RejectReason { get; init; }
+        public IEnumerable<string>? DocumentationMissingEntities { get; init; }
+    }
+}
