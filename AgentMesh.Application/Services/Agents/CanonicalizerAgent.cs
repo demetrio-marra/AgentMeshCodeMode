@@ -1,7 +1,9 @@
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Exceptions;
 using AgentMesh.Application.Models.Agents;
+using AgentMesh.Application.Models.Parameters;
 using AgentMesh.Application.Models.RequestAnalysis;
+using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Services.Helpers;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models.RequestAnalysis;
@@ -25,7 +27,13 @@ namespace AgentMesh.Application.Services.Agents
 
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            return [];
+            return [
+                new()
+                {
+                    ParameterType = typeof(KnowledgeQueryResultParameter),
+                    ParameterTags = [ParameterTags.AgentSystemParameterTag]
+                }
+            ];
         }
 
         protected override StructuredUserRequest ParseStructuredResponse(string rawResponseText)

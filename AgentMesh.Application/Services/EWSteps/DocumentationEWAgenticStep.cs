@@ -20,7 +20,7 @@ namespace AgentMesh.Application.Services.EWSteps
             typeof(RequestDateTimeParameter),
             typeof(UserIntentParameter),
             typeof(PastMemoriesQueryResultsParameter),
-            typeof(DomainsKnowledgeBaseDocumentsContentParameter),
+            typeof(KnowledgeQueryResultParameter),
             typeof(LanguageOfTheUserParameter)
             ];
 

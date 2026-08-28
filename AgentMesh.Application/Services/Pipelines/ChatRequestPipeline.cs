@@ -136,27 +136,27 @@ namespace AgentMesh.Application.Services.Pipelines
         {
             var steps = Enumerable.Empty<IEWStep>();
 
-            if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
-            {
-                return steps;
-            }
+            //if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
+            //{
+            //    return steps;
+            //}
 
-            if (RunOnce([domainsKnowledgeBaseServiceSearchEWStep], out steps,
-                () => domainsKnowledgeBaseQueryParameter.ValueAs(GetParameterRawValue(typeof(DomainsKnowledgeBaseQueryParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
+            //if (RunOnce([domainsKnowledgeBaseServiceSearchEWStep], out steps,
+            //    () => domainsKnowledgeBaseQueryParameter.ValueAs(GetParameterRawValue(typeof(DomainsKnowledgeBaseQueryParameter)))?.Any() ?? false))
+            //{
+            //    return steps;
+            //}
 
-            if (RunOnce([rerankerEWStep], out steps))
-            {
-                return steps;
-            }
+            //if (RunOnce([rerankerEWStep], out steps))
+            //{
+            //    return steps;
+            //}
 
-            if (RunOnce([domainsKnowledgeBaseDocumentsExtractorEWStep], out steps,
-                () => knowledgeBaseQueryResultsParameter.ValueAs(GetParameterRawValue(typeof(KnowledgeBaseQueryResultsParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
+            //if (RunOnce([domainsKnowledgeBaseDocumentsExtractorEWStep], out steps,
+            //    () => knowledgeBaseQueryResultsParameter.ValueAs(GetParameterRawValue(typeof(KnowledgeBaseQueryResultsParameter)))?.Any() ?? false))
+            //{
+            //    return steps;
+            //}
 
             if (RunOnce([documentationEWStep], out steps))
             {
