@@ -1,4 +1,5 @@
 ﻿using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Models.Knowledge;
 using AgentMesh.Application.Models.Parameters;
 using AgentMesh.Application.Services.EWSteps;
 using AgentMesh.Models;
@@ -43,6 +44,8 @@ namespace AgentMesh.Application.Services.Pipelines
         JSSandboxEWCodeStep jsSandboxEWStep,
         DomainExpertEWAgenticStep domainExpertEWStep,
         PersonalAssistantEWAgenticStep personalAssistantEWStep,
+        RequestDataToKnowledgeQueryEWCodeStep requestDataToKnowledgeQueryEWCodeStep,
+        KnowledgeEWCodeStep knowledgeEWCodeStep,
         IWorkflowProgressNotifier workflowProgressNotifier
         ) : EWPipeline(workflowProgressNotifier,
             parameterStore,
@@ -129,6 +132,16 @@ namespace AgentMesh.Application.Services.Pipelines
                 return steps;
             }
 
+            if (RunOnce([requestDataToKnowledgeQueryEWCodeStep], out steps))
+            {
+                return steps;
+            }
+
+            if (RunOnce([knowledgeEWCodeStep], out steps))
+            {
+                return steps;
+            }
+
             if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
             {
                 return steps;
@@ -181,6 +194,8 @@ namespace AgentMesh.Application.Services.Pipelines
             {
                 return steps;
             }
+
+
 
             if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
             {

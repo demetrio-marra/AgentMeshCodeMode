@@ -117,9 +117,9 @@ namespace AgentMesh.Application.Utils
                 return EWParameterConstants.NoDataPlaceholder;
             }
 
-            var displayValue = $"Contents: {GetListOfStringsDisplayValue(result.Contents?.Select(c => GetDisplayValueForKnowledgeContentItem(c)))}\n" +
-                               $"Entities: {GetListOfStringsDisplayValue(result.Entities?.Select(e => GetDisplayValueForKnowledgeEntityItem(e)))}\n" +
-                               $"Relations: {GetListOfStringsDisplayValue(result.Relations?.Select(r => GetDisplayValueForKnowledgeRelationItem(r)))}";
+            var displayValue = $"Contents:\n{GetListOfStringsDisplayValue(result.Contents?.Select(c => GetDisplayValueForKnowledgeContentItem(c)))}\n" +
+                               $"Entities:\n{GetListOfStringsDisplayValue(result.Entities?.Select(e => GetDisplayValueForKnowledgeEntityItem(e)))}\n" +
+                               $"Relations:\n{GetListOfStringsDisplayValue(result.Relations?.Select(r => GetDisplayValueForKnowledgeRelationItem(r)))}";
             return displayValue;
         }
 
@@ -130,7 +130,9 @@ namespace AgentMesh.Application.Utils
                 return EWParameterConstants.NoDataPlaceholder;
             }
 
-            return $"Id: {item.Id}, Source: {item.Source}, Content: {item.Content}";
+            var truncatedContent = item.Content.Length > 100 ? item.Content.Substring(0, 100) + "...(lenght: " + item.Content.Length + ")": item.Content;
+
+            return $"Id: {item.Id}, Source: {item.Source}, Content: {truncatedContent}";
         }
 
         private static string GetDisplayValueForKnowledgeEntityItem(KnowledgeEntityItem item)
@@ -139,7 +141,7 @@ namespace AgentMesh.Application.Utils
             {
                 return EWParameterConstants.NoDataPlaceholder;
             }
-            return $"Entity: {item.Entity}, Type: {item.Type}";
+            return $"Entity: {item.Entity}, Type: {item.Type}, Description: {item.Description}, Source: {item.ContentItem.Source}";
         }
 
         private static string GetDisplayValueForKnowledgeRelationItem(KnowledgeRelationItem item)
@@ -148,7 +150,7 @@ namespace AgentMesh.Application.Utils
             {
                 return EWParameterConstants.NoDataPlaceholder;
             }
-            return $"Relation: {item.Description}";
+            return $"Relation: {item.Description}, Source: {item.ContentItem.Source}";
         }
     }
 }

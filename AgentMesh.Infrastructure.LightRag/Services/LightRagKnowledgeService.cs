@@ -99,7 +99,7 @@ namespace AgentMesh.Infrastructure.LightRag.Services
                     Keywords = r.Keywords ?? string.Empty,
                     EntityRelationFrom = r.SourceEntity,
                     EntityRelationTo = r.TargetEntity,
-                    ContentItemId = GetContentItem(r.SourceId, r.FilePath, contentById)
+                    ContentItem = GetContentItem(r.SourceId, r.FilePath, contentById)
                 }).ToList()
                 : [];
 

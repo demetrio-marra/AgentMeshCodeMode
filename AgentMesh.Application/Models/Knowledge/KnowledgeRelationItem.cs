@@ -6,7 +6,7 @@ namespace AgentMesh.Application.Models.Knowledge
 
         public string Keywords { get; set; } = string.Empty;
 
-        public KnowledgeContentItem ContentItemId { get; set; } = new();
+        public KnowledgeContentItem ContentItem { get; set; } = new();
 
         public string EntityRelationFrom { get; set; } = string.Empty;
 
