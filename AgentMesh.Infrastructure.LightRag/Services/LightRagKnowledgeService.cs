@@ -28,7 +28,7 @@ namespace AgentMesh.Infrastructure.LightRag.Services
             _httpClient.BaseAddress = new Uri(configuration.BaseUrl);
         }
 
-        public async Task<KnowledgeQueryResult> QueryKnowledgeAsync(KnowledgeQuery query)
+        public async Task<KnowledgeQueryResult> QueryKnowledgeAsync(KnowledgeQuery query, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(query);
 
@@ -53,7 +53,7 @@ namespace AgentMesh.Infrastructure.LightRag.Services
                 requestMessage.Headers.TryAddWithoutValidation("X-API-Key", _apiKey);
             }
 
-            using var response = await _httpClient.SendAsync(requestMessage);
+            using var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var responseDto = await response.Content.ReadFromJsonAsync<QueryDataResponseDto>(JsonSerializerOptions);
