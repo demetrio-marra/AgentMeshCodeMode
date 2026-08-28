@@ -14,7 +14,7 @@ namespace AgentMesh.Application.Models.RequestAnalysis
         /// <summary>
         /// The high-level category of the user's intent.
         /// </summary>
-        public UserIntentCategory IntentCategory { get; set; } = UserIntentCategory.Other;
+        public UserIntentCategory? IntentCategory { get; set; }
 
         /// <summary>
         /// The main topic or subject that the user's request relates to, providing context for the conversation or interaction.
@@ -41,6 +41,11 @@ namespace AgentMesh.Application.Models.RequestAnalysis
         /// A collection of values or information that the user's request indicates are missing but necessary to complete the request.
         /// </summary>
         public IEnumerable<string> MissingValues { get; set; } = [];
+
+        /// <summary>
+        /// Indicates whether the user request is small talk (greetings, chit-chat, social interaction) rather than a concrete execution or documentation request.
+        /// </summary>
+        public bool IsSmallTalk { get; set; }
 
         /// <summary>
         /// The natural language or locale of the user, indicating the language in which the user communicated their request.

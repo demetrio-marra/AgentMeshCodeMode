@@ -27,6 +27,7 @@ namespace AgentMesh.Application.Services.Pipelines
         ExecutionErrorParameter executionErrorParameter,
         PipelineResultDataParameter pipelineResultDataParameter,
         IntentCategoryParameter intentCategoryParameter,
+        IsSmallTalkParameter isSmallTalkParameter,
 
         RequestAnalyzerEWAgenticStep requestAnalyzerEWStep,
         AgentMemoryQueryExpanderEWAgenticStep agentMemoryQueryExpanderEWStep,
@@ -74,10 +75,15 @@ namespace AgentMesh.Application.Services.Pipelines
                 return steps;
             }
 
+            var isSmallTalk = isSmallTalkParameter.ValueAs(GetParameterRawValue(typeof(IsSmallTalkParameter)))!.Value;
+            if (isSmallTalk)
+            {
+                return HandleOtherTopicsBranch();
+            }
+
             var pipelineBranch = GuessPipelineBranch();
             return pipelineBranch switch
             {
-                PipelineBranchValue.OtherTopics => HandleOtherTopicsBranch(),
                 PipelineBranchValue.Documenting => HandleDocumentingBranch(),
                 PipelineBranchValue.TaskExecution => HandleTaskExecutionBranch(),
                 _ => throw new NotImplementedException()
@@ -201,7 +207,20 @@ namespace AgentMesh.Application.Services.Pipelines
                 return steps;
             }
 
+            if (RunOnce([requestDataToKnowledgeQueryEWCodeStep], out steps))
+            {
+                return steps;
+            }
 
+            if (RunOnce([knowledgeEWCodeStep], out steps))
+            {
+                return steps;
+            }
+
+            if (RunOnce([canonicalizerEWAgenticStep], out steps))
+            {
+                return steps;
+            }
 
             if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
             {
@@ -281,7 +300,6 @@ namespace AgentMesh.Application.Services.Pipelines
         {
             return intentCategoryParameter.ValueAs(GetParameterRawValue(typeof(IntentCategoryParameter)))!.Value switch
             {
-                UserIntentCategory.Other => PipelineBranchValue.OtherTopics,
                 UserIntentCategory.Documentation => PipelineBranchValue.Documenting,
                 UserIntentCategory.TaskExecution => PipelineBranchValue.TaskExecution,
                 _ => throw new NotImplementedException(),
@@ -290,7 +308,6 @@ namespace AgentMesh.Application.Services.Pipelines
 
         private enum PipelineBranchValue
         {
-            OtherTopics,
             Documenting,
             TaskExecution
         }

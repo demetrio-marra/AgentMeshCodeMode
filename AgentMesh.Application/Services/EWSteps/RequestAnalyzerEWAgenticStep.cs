@@ -25,6 +25,7 @@ namespace AgentMesh.Application.Services.EWSteps
         public IEnumerable<Type> OutputParameterTypes => [
             typeof(UserIntentParameter),
             typeof(IntentCategoryParameter),
+            typeof(IsSmallTalkParameter),
             typeof(ConversationTopicParameter),
             typeof(UserRequestedActionsParameter),
             typeof(UserProvidedDataParameter),
@@ -45,6 +46,7 @@ namespace AgentMesh.Application.Services.EWSteps
                 {
                     { typeof(UserIntentParameter), agentOutput.Result.Intent },
                     { typeof(IntentCategoryParameter), agentOutput.Result.IntentCategory },
+                    { typeof(IsSmallTalkParameter), agentOutput.Result.IsSmallTalk },
                     { typeof(ConversationTopicParameter), agentOutput.Result.ConversationTopic },
                     { typeof(UserRequestedActionsParameter), agentOutput.Result.UserRequestedActions },
                     { typeof(UserProvidedDataParameter), agentOutput.Result.UserProvidedData },

@@ -6,7 +6,6 @@ using AgentMesh.Application.Models.RequestAnalysis;
 using AgentMesh.Application.Models.Workflows;
 using AgentMesh.Application.Services.Helpers;
 using AgentMesh.Application.Utils;
-using AgentMesh.Models.RequestAnalysis;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -17,9 +16,9 @@ namespace AgentMesh.Application.Services.Agents
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
         IAgentInputSerializer agentInputSerializer,
-        ILogger<RequestAnalyzerAgent> logger) : AbstractAgent<StructuredUserRequest>(logger, 
+        ILogger<RequestAnalyzerAgent> logger) : AbstractAgent<StructuredUserRequest>(logger,
             "RequestAnalyzer",
-            openAIClientFactory, 
+            openAIClientFactory,
             resilience,
             agentInputSerializer)
     {
@@ -27,7 +26,7 @@ namespace AgentMesh.Application.Services.Agents
 
         protected override IEnumerable<AgentInputParameterConfiguration> GetAgentInputParameterConfiguration()
         {
-            return 
+            return
             [
                 new AgentInputParameterConfiguration
                 {
@@ -55,21 +54,20 @@ namespace AgentMesh.Application.Services.Agents
                     throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty intent.");
                 }
 
-                if (string.IsNullOrWhiteSpace(responseDTO.IntentCategoryRaw))
-                {
-                    _logger.LogWarning("The model's response contains empty intent category. Response text: {ResponseText}", rawResponseText);
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty intent category.");
-                }
-
                 if (string.IsNullOrWhiteSpace(responseDTO.LanguageOfTheUser))
                 {
                     _logger.LogWarning("The model's response contains empty language of the user. Response text: {ResponseText}", rawResponseText);
                     throw new BadStructuredResponseException(rawResponseText, "The model's response contains empty language of the user.");
                 }
 
+                if (!responseDTO.IsSmallTalk.HasValue)
+                {
+                    _logger.LogWarning("The model's response contains missing isSmallTalk flag. Response text: {ResponseText}", rawResponseText);
+                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains missing isSmallTalk flag.");
+                }
+
                 responseDTO.LanguageOfTheUser = responseDTO.LanguageOfTheUser.Trim();
                 responseDTO.Intent = responseDTO.Intent.Trim();
-                responseDTO.IntentCategory = ParseIntentCategory(responseDTO.IntentCategoryRaw);
                 responseDTO.ConversationTopic = responseDTO.ConversationTopic?.Trim() ?? string.Empty;
 
                 responseDTO.UserRequestedActions = responseDTO.UserRequestedActions
@@ -99,12 +97,12 @@ namespace AgentMesh.Application.Services.Agents
                 var ret = new StructuredUserRequest
                 {
                     Intent = responseDTO.Intent,
-                    IntentCategory = responseDTO.IntentCategory,
                     ConversationTopic = responseDTO.ConversationTopic,
                     UserRequestedActions = responseDTO.UserRequestedActions.ToArray(),
                     UserPreferences = responseDTO.UserPreferences.ToArray(),
                     UserProvidedData = responseDTO.UserProvidedData.ToArray(),
                     MissingValues = responseDTO.MissingValues.ToArray(),
+                    IsSmallTalk = responseDTO.IsSmallTalk.Value,
                     LanguageOfTheUser = responseDTO.LanguageOfTheUser
                 };
                 return ret;
@@ -116,26 +114,10 @@ namespace AgentMesh.Application.Services.Agents
             }
         }
 
-        private static UserIntentCategory ParseIntentCategory(string intentCategory)
-        {
-            if (Enum.TryParse<UserIntentCategory>(intentCategory, true, out var parsedIntentCategory))
-            {
-                return parsedIntentCategory;
-            }
-
-            throw new BadStructuredResponseException(intentCategory, $"Unknown intent category: {intentCategory}");
-        }
-     
         private class ParsedResponse
         {
             [JsonPropertyName("intent")]
             public string Intent { get; set; } = string.Empty;
-
-            [JsonPropertyName("intentCategory")]
-            public string IntentCategoryRaw { get; set; } = string.Empty;
-
-            [JsonIgnore]
-            public UserIntentCategory IntentCategory { get; set; }
 
             [JsonPropertyName("conversationTopic")]
             public string ConversationTopic { get; set; } = string.Empty;
@@ -151,6 +133,9 @@ namespace AgentMesh.Application.Services.Agents
 
             [JsonPropertyName("missingValues")]
             public IEnumerable<string> MissingValues { get; set; } = [];
+
+            [JsonPropertyName("isSmallTalk")]
+            public bool? IsSmallTalk { get; set; }
 
             [JsonPropertyName("languageOfTheUser")]
             public string LanguageOfTheUser { get; set; } = string.Empty;
