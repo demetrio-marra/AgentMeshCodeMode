@@ -11,8 +11,4 @@
     <ProjectReference Include="..\AgentMesh\AgentMesh.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="DTOs\" />
-  </ItemGroup>
-
 </Project>

@@ -11,6 +11,7 @@ using AgentMesh.Configuration;
 using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Infrastructure.LightRag.Services;
+using AgentMesh.Infrastructure.LightRag.Configuration;
 using AgentMesh.Infrastructure.Mem0;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Infrastructure.QMD;
@@ -75,7 +76,11 @@ namespace AgentMesh
             services.AddScoped<ISummarizationPipeline, SummarizationPipeline>();
 
             #region agents/executors region
-            services.AddSingleton<IKnowledgeService, LightRagKnowledgeService>();
+            // LightRAG service configuration and HTTP client
+            var lightRagConfig = new LightRagServiceConfiguration();
+            configuration.GetSection(LightRagServiceConfiguration.SectionName).Bind(lightRagConfig);
+            services.AddSingleton(lightRagConfig);
+            services.AddHttpClient<IKnowledgeService, LightRagKnowledgeService>();
 
             services.AddSingleton<IKnowledgeBaseService, QMDKnowledgeBaseService>();
             services.AddSingleton<KnowledgeBaseExecutor>();
