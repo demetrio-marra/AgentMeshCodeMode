@@ -25,7 +25,7 @@ namespace AgentMesh.Application.Services.EWSteps
             typeof(QMDQueryTypesDocumentationParameter),
             typeof(UserIntentParameter),
             typeof(IntentCategoryParameter),
-            typeof(UserRequestedActionsParameter),
+            typeof(UserMentionedEntitiesParameter),
             typeof(UserProvidedDataParameter)
             ];
 

@@ -23,9 +23,9 @@ namespace AgentMesh.Application.Models.RequestAnalysis
         public string? ConversationTopic { get; set; } = string.Empty;
 
         /// <summary>
-        /// A collection of features or capabilities mentioned by the user in their request.
+        /// A collection of entities mentioned by the user in their request.
         /// </summary>
-        public IEnumerable<string> UserRequestedActions { get; set; } = [];
+        public IEnumerable<string> UserMentionedEntities { get; set; } = [];
 
         /// <summary>
         /// A collection of specific values or parameters mentioned by the user that are relevant to their request.

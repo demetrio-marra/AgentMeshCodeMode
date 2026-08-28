@@ -22,7 +22,7 @@ namespace AgentMesh.Application.Services.EWSteps
             typeof(UserIntentParameter),
             typeof(ConversationTopicParameter),
             typeof(BusinessRequirementsParameter),
-            typeof(UserRequestedActionsParameter),
+            typeof(UserMentionedEntitiesParameter),
             typeof(UserProvidedDataParameter),
             typeof(UserPreferencesParameter),
             typeof(PastMemoriesQueryResultsParameter),

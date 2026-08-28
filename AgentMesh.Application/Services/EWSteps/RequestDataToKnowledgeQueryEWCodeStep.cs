@@ -7,7 +7,7 @@ namespace AgentMesh.Application.Services.EWSteps
 {
     public class RequestDataToKnowledgeQueryEWCodeStep(
         UserIntentParameter userIntentParameter,
-        UserRequestedActionsParameter userRequestedActionsParameter,
+        UserMentionedEntitiesParameter userMentionedEntitiesParameter,
         UserProvidedDataParameter userProvidedDataParameter,
         ConversationTopicParameter conversationTopicParameter) : IEWStep
     {
@@ -16,7 +16,7 @@ namespace AgentMesh.Application.Services.EWSteps
         public IEnumerable<Type> InputParameterTypes =>
         [
             typeof(UserIntentParameter),
-            typeof(UserRequestedActionsParameter),
+            typeof(UserMentionedEntitiesParameter),
             typeof(UserProvidedDataParameter),
             typeof(ConversationTopicParameter)
         ];
@@ -26,14 +26,14 @@ namespace AgentMesh.Application.Services.EWSteps
         public Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
             var userIntent = userIntentParameter.ValueAs(Values[typeof(UserIntentParameter)]);
-            var userRequestedActions = userRequestedActionsParameter.ValueAs(Values[typeof(UserRequestedActionsParameter)]);
+            var userMentionedEntities = userMentionedEntitiesParameter.ValueAs(Values[typeof(UserMentionedEntitiesParameter)]);
             var userProvidedData = userProvidedDataParameter.ValueAs(Values[typeof(UserProvidedDataParameter)]);
             _ = conversationTopicParameter.ValueAs(Values[typeof(ConversationTopicParameter)]);
 
             var knowledgeQuery = new KnowledgeQuery
             {
                 QueryText = userIntent!,
-                PrimaryRelevanceKeywords = userRequestedActions ?? [],
+                PrimaryRelevanceKeywords = userMentionedEntities ?? [],
                 SecondaryRelevanceKeywords = userProvidedData ?? []
             };
 

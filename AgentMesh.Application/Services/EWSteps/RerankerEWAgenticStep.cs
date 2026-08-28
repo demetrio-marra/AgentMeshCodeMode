@@ -21,7 +21,7 @@ namespace AgentMesh.Application.Services.EWSteps
             typeof(RequestDateTimeParameter),
             typeof(UserIntentParameter),
             typeof(ConversationTopicParameter),
-            typeof(UserRequestedActionsParameter),
+            typeof(UserMentionedEntitiesParameter),
             typeof(UserProvidedDataParameter),
             typeof(UserPreferencesParameter),
             typeof(PastMemoriesQueryResultsParameter),

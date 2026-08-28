@@ -81,59 +81,15 @@ namespace AgentMesh.Application.Services.Pipelines
                 return HandleOtherTopicsBranch();
             }
 
-            var pipelineBranch = GuessPipelineBranch();
-            return pipelineBranch switch
-            {
-                PipelineBranchValue.Documenting => HandleDocumentingBranch(),
-                PipelineBranchValue.TaskExecution => HandleTaskExecutionBranch(),
-                _ => throw new NotImplementedException()
-            };
-        }
-
-
-        private IEnumerable<IEWStep> HandleOtherTopicsBranch()
-        {
-            var steps = Enumerable.Empty<IEWStep>();
-
-            // Equivalent to:
-            // - if agent has already run, do not run it
-            // - if missingValuesParameter is null or empty, do not run it
-            // Conditions are AND
             if (workflowConfiguration.EnableMemoryService
-                && RunOnce([agentMemoryQueryExpanderEWStep], out steps,
-                () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
+             && RunOnce([agentMemoryQueryExpanderEWStep], out steps,
+             () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
             {
                 return steps;
             }
 
             if (workflowConfiguration.EnableMemoryService
                 && RunOnce([agentMemoryServiceEWStep], out steps,
-                () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (RunOnce([personalAssistantEWStep], out steps))
-            {
-                return steps;
-            }
-
-            return steps;
-        }
-
-        private IEnumerable<IEWStep> HandleDocumentingBranch()
-        {
-            var steps = Enumerable.Empty<IEWStep>();
-
-            if (workflowConfiguration.EnableMemoryService
-                && RunOnce([agentMemoryQueryExpanderEWStep], out steps, 
-                () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (workflowConfiguration.EnableMemoryService
-                && RunOnce([agentMemoryServiceEWStep], out steps,   
               () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
             {
                 return steps;
@@ -153,6 +109,32 @@ namespace AgentMesh.Application.Services.Pipelines
             {
                 return steps;
             }
+
+            var pipelineBranch = GuessPipelineBranch();
+            return pipelineBranch switch
+            {
+                PipelineBranchValue.Documenting => HandleDocumentingBranch(),
+                PipelineBranchValue.TaskExecution => HandleTaskExecutionBranch(),
+                _ => throw new NotImplementedException()
+            };
+        }
+
+
+        private IEnumerable<IEWStep> HandleOtherTopicsBranch()
+        {
+            var steps = Enumerable.Empty<IEWStep>();
+
+            if (RunOnce([personalAssistantEWStep], out steps))
+            {
+                return steps;
+            }
+
+            return steps;
+        }
+
+        private IEnumerable<IEWStep> HandleDocumentingBranch()
+        {
+            var steps = Enumerable.Empty<IEWStep>();
 
             if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
             {
@@ -192,35 +174,6 @@ namespace AgentMesh.Application.Services.Pipelines
         private IEnumerable<IEWStep> HandleTaskExecutionBranch()
         {
             var steps = Enumerable.Empty<IEWStep>();
-
-            if (workflowConfiguration.EnableMemoryService
-                && RunOnce([agentMemoryQueryExpanderEWStep], out steps,
-               () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (workflowConfiguration.EnableMemoryService
-                && RunOnce([agentMemoryServiceEWStep], out steps,
-              () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (RunOnce([requestDataToKnowledgeQueryEWCodeStep], out steps))
-            {
-                return steps;
-            }
-
-            if (RunOnce([knowledgeEWCodeStep], out steps))
-            {
-                return steps;
-            }
-
-            if (RunOnce([canonicalizerEWAgenticStep], out steps))
-            {
-                return steps;
-            }
 
             if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
             {

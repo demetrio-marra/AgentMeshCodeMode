@@ -30,7 +30,7 @@ namespace AgentMesh.Application.Services.EWSteps
             typeof(ConversationTopicParameter),
             typeof(UserPreferencesParameter),
             typeof(UserProvidedDataParameter),
-            typeof(UserRequestedActionsParameter),
+            typeof(UserMentionedEntitiesParameter),
             typeof(PastMemoriesQueryResultsParameter)
             ];
 

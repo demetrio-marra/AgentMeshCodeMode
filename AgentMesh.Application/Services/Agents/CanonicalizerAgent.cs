@@ -32,7 +32,7 @@ namespace AgentMesh.Application.Services.Agents
         {
             try
             {
-                var responseDto = JsonSerializer.Deserialize<ParsedResponse>(rawResponseText, AgentResponseJsonSerializationUtils.DefaultDeserializeOptions);
+                var responseDto = JsonSerializer.Deserialize<CanonicalizerResponseDto>(rawResponseText, AgentResponseJsonSerializationUtils.DefaultDeserializeOptions);
 
                 if (responseDto == null)
                 {
@@ -57,7 +57,7 @@ namespace AgentMesh.Application.Services.Agents
                     ? null
                     : responseDto.ConversationTopic.Trim();
 
-                responseDto.UserRequestedActions = NormalizeList(responseDto.UserRequestedActions);
+                responseDto.UserMentionedEntities = NormalizeList(responseDto.UserMentionedEntities);
                 responseDto.UserProvidedData = NormalizeList(responseDto.UserProvidedData);
                 responseDto.UserPreferences = NormalizeList(responseDto.UserPreferences);
 
@@ -66,7 +66,7 @@ namespace AgentMesh.Application.Services.Agents
                     Intent = responseDto.Intent,
                     IntentCategory = ParseIntentCategory(responseDto.CanonicalizedIntentCategoryRaw),
                     ConversationTopic = responseDto.ConversationTopic,
-                    UserRequestedActions = responseDto.UserRequestedActions,
+                    UserMentionedEntities = responseDto.UserMentionedEntities,
                     UserProvidedData = responseDto.UserProvidedData,
                     UserPreferences = responseDto.UserPreferences
                 };
@@ -99,7 +99,7 @@ namespace AgentMesh.Application.Services.Agents
                 .ToArray();
         }
 
-        private class ParsedResponse
+        private class CanonicalizerResponseDto
         {
             [JsonPropertyName("intent")]
             public string Intent { get; set; } = string.Empty;
@@ -107,8 +107,8 @@ namespace AgentMesh.Application.Services.Agents
             [JsonPropertyName("conversationTopic")]
             public string? ConversationTopic { get; set; }
 
-            [JsonPropertyName("userRequestedActions")]
-            public IEnumerable<string>? UserRequestedActions { get; set; }
+            [JsonPropertyName("userMentionedEntities")]
+            public IEnumerable<string>? UserMentionedEntities { get; set; }
 
             [JsonPropertyName("userProvidedData")]
             public IEnumerable<string>? UserProvidedData { get; set; }

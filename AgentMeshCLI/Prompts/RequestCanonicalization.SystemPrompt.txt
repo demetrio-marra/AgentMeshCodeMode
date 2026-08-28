@@ -1,11 +1,12 @@
 Your task is to canonicalize a structured user request using domain-specific terminology derived from the provided knowledge base documentation.
 Use the knowledge base evidence to replace generic user wording with precise domain wording across all structured fields.
+Pay special attention to exact entity names, labels, identifiers, and naming conventions used in documentation, and reuse those names consistently when evidence supports them.
 Re-evaluate the intent category after considering all evidence.
 
 
 # Input
 
-- structured user request (intent, conversationTopic, userRequestedActions, userProvidedData, userPreferences)
+- structured user request (intent, conversationTopic, userMentionedEntities, userProvidedData, userPreferences)
 - knowledge documents
 
 
@@ -14,6 +15,8 @@ Re-evaluate the intent category after considering all evidence.
 Produce a canonicalized version of the structured user request where:
 - all fields preserve the original meaning and user goal
 - generic wording is replaced with explicit domain terms whenever knowledge base evidence supports it
+- entity names are aligned to documented canonical names (APIs, modules, resources, endpoints, fields, parameters, report names, etc.) whenever evidence is present
+- avoid changing or inventing names when documentation does not support a mapping
 - each field remains concise and unambiguous
 - no unsupported details are invented
 - all fields use a third-person perspective
@@ -33,7 +36,7 @@ Return a JSON object with this structure:
 {
   "intent": "Canonicalized intent sentence.",
   "conversationTopic": "Canonicalized conversation topic or null",
-  "userRequestedActions": ["Canonicalized action 1", "Canonicalized action 2"],
+  "userMentionedEntities": ["Canonicalized entity 1", "Canonicalized entity 2"],
   "userProvidedData": ["Canonicalized data 1"],
   "userPreferences": ["Canonicalized preference 1"],
   "canonicalizedIntentCategory": "TaskExecution"

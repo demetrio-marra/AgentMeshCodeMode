@@ -40,7 +40,7 @@ namespace AgentMesh.Application.Services.Agents
         {
             try
             {
-                var responseDTO = JsonSerializer.Deserialize<ParsedResponse>(rawResponseText, AgentResponseJsonSerializationUtils.DefaultDeserializeOptions);
+                var responseDTO = JsonSerializer.Deserialize<RequestAnalyzerResponseDto>(rawResponseText, AgentResponseJsonSerializationUtils.DefaultDeserializeOptions);
 
                 if (responseDTO == null)
                 {
@@ -70,7 +70,7 @@ namespace AgentMesh.Application.Services.Agents
                 responseDTO.Intent = responseDTO.Intent.Trim();
                 responseDTO.ConversationTopic = responseDTO.ConversationTopic?.Trim() ?? string.Empty;
 
-                responseDTO.UserRequestedActions = responseDTO.UserRequestedActions
+                responseDTO.UserMentionedEntities = responseDTO.UserMentionedEntities
                     .Where(entry => !string.IsNullOrWhiteSpace(entry))
                     .Select(entry => entry.Trim())
                     .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -98,7 +98,7 @@ namespace AgentMesh.Application.Services.Agents
                 {
                     Intent = responseDTO.Intent,
                     ConversationTopic = responseDTO.ConversationTopic,
-                    UserRequestedActions = responseDTO.UserRequestedActions.ToArray(),
+                    UserMentionedEntities = responseDTO.UserMentionedEntities.ToArray(),
                     UserPreferences = responseDTO.UserPreferences.ToArray(),
                     UserProvidedData = responseDTO.UserProvidedData.ToArray(),
                     MissingValues = responseDTO.MissingValues.ToArray(),
@@ -114,7 +114,7 @@ namespace AgentMesh.Application.Services.Agents
             }
         }
 
-        private class ParsedResponse
+        private class RequestAnalyzerResponseDto
         {
             [JsonPropertyName("intent")]
             public string Intent { get; set; } = string.Empty;
@@ -122,8 +122,8 @@ namespace AgentMesh.Application.Services.Agents
             [JsonPropertyName("conversationTopic")]
             public string ConversationTopic { get; set; } = string.Empty;
 
-            [JsonPropertyName("userRequestedActions")]
-            public IEnumerable<string> UserRequestedActions { get; set; } = [];
+            [JsonPropertyName("userMentionedEntities")]
+            public IEnumerable<string> UserMentionedEntities { get; set; } = [];
 
             [JsonPropertyName("userPreferences")]
             public IEnumerable<string> UserPreferences { get; set; } = [];

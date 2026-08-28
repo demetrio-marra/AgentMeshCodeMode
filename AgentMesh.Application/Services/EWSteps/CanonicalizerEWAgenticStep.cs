@@ -20,7 +20,7 @@ namespace AgentMesh.Application.Services.EWSteps
         [
             typeof(UserIntentParameter),
             typeof(ConversationTopicParameter),
-            typeof(UserRequestedActionsParameter),
+            typeof(UserMentionedEntitiesParameter),
             typeof(UserProvidedDataParameter),
             typeof(UserPreferencesParameter),
             typeof(KnowledgeQueryResultParameter)
@@ -31,7 +31,7 @@ namespace AgentMesh.Application.Services.EWSteps
             typeof(UserIntentParameter),
             typeof(IntentCategoryParameter),
             typeof(ConversationTopicParameter),
-            typeof(UserRequestedActionsParameter),
+            typeof(UserMentionedEntitiesParameter),
             typeof(UserProvidedDataParameter),
             typeof(UserPreferencesParameter)
         ];
@@ -49,7 +49,7 @@ namespace AgentMesh.Application.Services.EWSteps
                     { typeof(UserIntentParameter), agentOutput.Result.Intent },
                     { typeof(IntentCategoryParameter), agentOutput.Result.IntentCategory },
                     { typeof(ConversationTopicParameter), agentOutput.Result.ConversationTopic },
-                    { typeof(UserRequestedActionsParameter), agentOutput.Result.UserRequestedActions },
+                    { typeof(UserMentionedEntitiesParameter), agentOutput.Result.UserMentionedEntities },
                     { typeof(UserProvidedDataParameter), agentOutput.Result.UserProvidedData },
                     { typeof(UserPreferencesParameter), agentOutput.Result.UserPreferences }
                 }
