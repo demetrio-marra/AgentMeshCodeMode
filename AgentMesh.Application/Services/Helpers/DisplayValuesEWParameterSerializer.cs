@@ -1,4 +1,5 @@
 ﻿using AgentMesh.Application.Models.AgentMemory;
+using AgentMesh.Application.Models.Knowledge;
 using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models;
@@ -21,6 +22,8 @@ namespace AgentMesh.Application.Services.Helpers
                 IEnumerable<KnowledgeBaseQueryInputItem> queryInputItems => EWParameterDisplayUtils.GetKnowledgeBaseQueryInputItemsDisplayValue(queryInputItems),
                 IEnumerable<KnowledgeBaseQueryResultItem> queryResultItems => EWParameterDisplayUtils.GetKnowledgeBaseQueryResultsDisplayValue(queryResultItems),
                 IEnumerable<KnowledgeBaseDocumentContent> documents => EWParameterDisplayUtils.GetKnowledgeBaseDocumentsContentDisplayValue(documents),
+                KnowledgeQuery knowledgeQuery => EWParameterDisplayUtils.GetKnowledgeDisplayValue(knowledgeQuery),
+                KnowledgeQueryResult knowledgeQueryResult => EWParameterDisplayUtils.GetKnowledgeQueryResultDisplayValue(knowledgeQueryResult),
                 _ => throw new ArgumentException($"Unsupported type '{obj.GetType().FullName}' for display value serialization.", nameof(obj))
             };
         }
