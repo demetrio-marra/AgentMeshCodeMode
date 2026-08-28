@@ -48,6 +48,7 @@ namespace AgentMesh.Application.Services.Pipelines
         RequestDataToKnowledgeQueryEWCodeStep requestDataToKnowledgeQueryEWCodeStep,
         KnowledgeEWCodeStep knowledgeEWCodeStep,
         CanonicalizerEWAgenticStep canonicalizerEWAgenticStep,
+        AnalystEWAgenticStep analystEWStep,
         IWorkflowProgressNotifier workflowProgressNotifier
         ) : EWPipeline(workflowProgressNotifier,
             parameterStore,
@@ -174,6 +175,11 @@ namespace AgentMesh.Application.Services.Pipelines
         private IEnumerable<IEWStep> HandleTaskExecutionBranch()
         {
             var steps = Enumerable.Empty<IEWStep>();
+
+            if (RunOnce([analystEWStep], out steps))
+            {
+                return steps;
+            }
 
             if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
             {

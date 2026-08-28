@@ -51,7 +51,7 @@ namespace AgentMesh.Application.Services.Agents
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                response.DocumentationMissingEntities ??= Array.Empty<string>();
+                response.RejectReasons ??= Array.Empty<string>();
 
                 if (response.Accepted)
                 {
@@ -62,14 +62,17 @@ namespace AgentMesh.Application.Services.Agents
                     }
 
                     response.RejectReason = null;
-                    response.DocumentationMissingEntities = Array.Empty<string>();
+                    response.RejectReasons = Array.Empty<string>();
                 }
                 else
                 {
-                    if (string.IsNullOrWhiteSpace(response.RejectReason))
+                    var hasRejectReason = !string.IsNullOrWhiteSpace(response.RejectReason);
+                    var hasRejectReasons = response.RejectReasons.Any(r => !string.IsNullOrWhiteSpace(r));
+
+                    if (!hasRejectReason && !hasRejectReasons)
                     {
-                        _logger.LogWarning("The model's response rejected the request without a rejectReason. Response text: {ResponseText}", rawResponseText);
-                        throw new BadStructuredResponseException(rawResponseText, "The model's response rejected the request without a rejectReason.");
+                        _logger.LogWarning("The model's response rejected the request without rejection reasons. Response text: {ResponseText}", rawResponseText);
+                        throw new BadStructuredResponseException(rawResponseText, "The model's response rejected the request without rejection reasons.");
                     }
 
                     response.Specification = string.Empty;
@@ -80,7 +83,7 @@ namespace AgentMesh.Application.Services.Agents
                     Accepted = response.Accepted,
                     Specification = response.Specification,
                     RejectReason = response.RejectReason,
-                    DocumentationMissingEntities = response.DocumentationMissingEntities
+                    RejectReasons = response.RejectReasons
                 };
             }
             catch (JsonException ex)
@@ -102,8 +105,8 @@ namespace AgentMesh.Application.Services.Agents
             [JsonPropertyName("rejectReason")]
             public string? RejectReason { get; set; }
 
-            [JsonPropertyName("documentationMissingEntities")]
-            public IEnumerable<string>? DocumentationMissingEntities { get; set; }
+            [JsonPropertyName("rejectReasons")]
+            public IEnumerable<string>? RejectReasons { get; set; }
         }
     }
 }

@@ -28,7 +28,7 @@ namespace AgentMesh.Application.Services.EWSteps
             typeof(AnalystAcceptedParameter),
             typeof(AnalystSpecificationParameter),
             typeof(AnalystRejectReasonParameter),
-            typeof(AnalystDocumentationMissingEntitiesParameter)
+            typeof(AnalystRejectReasonsParameter)
         ];
 
         public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
@@ -44,7 +44,7 @@ namespace AgentMesh.Application.Services.EWSteps
                     { typeof(AnalystAcceptedParameter), agentOutput.Result.Accepted },
                     { typeof(AnalystSpecificationParameter), agentOutput.Result.Specification },
                     { typeof(AnalystRejectReasonParameter), agentOutput.Result.RejectReason },
-                    { typeof(AnalystDocumentationMissingEntitiesParameter), agentOutput.Result.DocumentationMissingEntities }
+                    { typeof(AnalystRejectReasonsParameter), agentOutput.Result.RejectReasons }
                 }
             };
         }
