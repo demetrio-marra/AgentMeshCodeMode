@@ -130,6 +130,7 @@ namespace AgentMesh
             services.AddSingleton<PersonalAssistantAgent>();
             services.AddSingleton<RelevantFactsEvaluatorAgent>();
             services.AddSingleton<RequestAnalyzerAgent>();
+            services.AddSingleton<CanonicalizerAgent>();
             services.AddSingleton<KnowledgeBaseQueryExpanderAgent>();
             services.AddSingleton<AgentMemoryQueryExpanderAgent>();
             services.AddSingleton<RerankerAgent>();

@@ -46,6 +46,7 @@ namespace AgentMesh.Application.Services.Pipelines
         PersonalAssistantEWAgenticStep personalAssistantEWStep,
         RequestDataToKnowledgeQueryEWCodeStep requestDataToKnowledgeQueryEWCodeStep,
         KnowledgeEWCodeStep knowledgeEWCodeStep,
+        CanonicalizerEWAgenticStep canonicalizerEWAgenticStep,
         IWorkflowProgressNotifier workflowProgressNotifier
         ) : EWPipeline(workflowProgressNotifier,
             parameterStore,
@@ -138,6 +139,11 @@ namespace AgentMesh.Application.Services.Pipelines
             }
 
             if (RunOnce([knowledgeEWCodeStep], out steps))
+            {
+                return steps;
+            }
+
+            if (RunOnce([canonicalizerEWAgenticStep], out steps))
             {
                 return steps;
             }
