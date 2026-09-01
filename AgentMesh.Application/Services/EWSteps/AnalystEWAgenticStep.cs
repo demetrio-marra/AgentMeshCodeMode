@@ -1,3 +1,4 @@
+using AgentMesh.Application.Models.Knowledge;
 using AgentMesh.Application.Models.Parameters;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Models;
@@ -25,9 +26,10 @@ namespace AgentMesh.Application.Services.EWSteps
         ];
 
         public IEnumerable<Type> OutputParameterTypes => [
-            typeof(AnalystAcceptedParameter),
+            typeof(RequestRejectedFlagParameter),
             typeof(AnalystSpecificationParameter),
-            typeof(AnalystRejectReasonParameter),
+            typeof(KnowledgeContentForCoderParameter),
+            typeof(RequestRejectedReasonParameter),
             typeof(AnalystRejectReasonsParameter)
         ];
 
@@ -35,15 +37,19 @@ namespace AgentMesh.Application.Services.EWSteps
         {
             var agentOutput = await analystAgent.ExecuteAsync(Values, cancellationToken);
 
+            var knowledge = Values[typeof(KnowledgeQueryResultParameter)] as KnowledgeQueryResult;
+            IEnumerable<KnowledgeContentItem> contentForCoder = knowledge?.Contents.Where(c => agentOutput.Result.ContentIds.Contains(c.Id)).ToList() ?? Enumerable.Empty<KnowledgeContentItem>();
+
             return new EWAgenticStepExecutionResult
             {
                 InputTokens = agentOutput.InputTokenCount,
                 OutputTokens = agentOutput.OutputTokenCount,
                 OutputMutations = new Dictionary<Type, object?>
                 {
-                    { typeof(AnalystAcceptedParameter), agentOutput.Result.Accepted },
+                    { typeof(RequestRejectedFlagParameter), !agentOutput.Result.Accepted }, // NOT!
                     { typeof(AnalystSpecificationParameter), agentOutput.Result.Specification },
-                    { typeof(AnalystRejectReasonParameter), agentOutput.Result.RejectReason },
+                    { typeof(KnowledgeContentForCoderParameter), contentForCoder },
+                    { typeof(RequestRejectedReasonParameter), agentOutput.Result.RejectReason },
                     { typeof(AnalystRejectReasonsParameter), agentOutput.Result.RejectReasons }
                 }
             };

@@ -24,6 +24,7 @@ namespace AgentMesh.Application.Services.Helpers
                 IEnumerable<KnowledgeBaseDocumentContent> documents => EWParameterDisplayUtils.GetKnowledgeBaseDocumentsContentDisplayValue(documents),
                 KnowledgeQuery knowledgeQuery => EWParameterDisplayUtils.GetKnowledgeDisplayValue(knowledgeQuery),
                 KnowledgeQueryResult knowledgeQueryResult => EWParameterDisplayUtils.GetKnowledgeQueryResultDisplayValue(knowledgeQueryResult),
+                IEnumerable<KnowledgeContentItem> knowledgeContentItems => EWParameterDisplayUtils.GetDisplayValueForKnowledgeContentItem(knowledgeContentItems),
                 _ => throw new ArgumentException($"Unsupported type '{obj.GetType().FullName}' for display value serialization.", nameof(obj))
             };
         }

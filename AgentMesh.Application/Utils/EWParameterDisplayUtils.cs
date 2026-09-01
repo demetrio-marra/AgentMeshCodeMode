@@ -135,6 +135,16 @@ namespace AgentMesh.Application.Utils
             return $"Id: {item.Id}, Source: {item.Source}, Content: {truncatedContent}";
         }
 
+        public static string GetDisplayValueForKnowledgeContentItem(IEnumerable<KnowledgeContentItem> items)
+        {
+            if (!items.Any())
+            {
+                return EWParameterConstants.NoDataPlaceholder;
+            }
+
+            return ListsFormatter.ToBulletList(items.Select(item => GetDisplayValueForKnowledgeContentItem(item)));
+        }
+
         private static string GetDisplayValueForKnowledgeEntityItem(KnowledgeEntityItem item)
         {
             if (item == null)
