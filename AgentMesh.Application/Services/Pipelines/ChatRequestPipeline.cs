@@ -78,15 +78,9 @@ namespace AgentMesh.Application.Services.Pipelines
                 return steps;
             }
 
-            var isSmallTalk = isSmallTalkParameter.ValueAs(GetParameterRawValue(typeof(IsSmallTalkParameter)))!.Value;
-            if (isSmallTalk)
-            {
-                return HandleOtherTopicsBranch();
-            }
-
             if (workflowConfiguration.EnableMemoryService
-             && RunOnce([agentMemoryQueryExpanderEWStep], out steps,
-             () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
+          && RunOnce([agentMemoryQueryExpanderEWStep], out steps,
+          () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
             {
                 return steps;
             }
@@ -96,6 +90,12 @@ namespace AgentMesh.Application.Services.Pipelines
               () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
             {
                 return steps;
+            }
+
+            var isSmallTalk = isSmallTalkParameter.ValueAs(GetParameterRawValue(typeof(IsSmallTalkParameter)))!.Value;
+            if (isSmallTalk)
+            {
+                return HandleOtherTopicsBranch();
             }
 
             if (RunOnce([requestDataToKnowledgeQueryEWCodeStep], out steps))
