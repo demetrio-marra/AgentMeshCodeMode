@@ -53,3 +53,5 @@ Return your analysis as a JSON object with the following structure:
   "missingValues": ["string"],
   "languageOfTheUser": "string"
 }
+
+Do not wrap the JSON object in any additional text or formatting. Ensure that the output is valid JSON.
