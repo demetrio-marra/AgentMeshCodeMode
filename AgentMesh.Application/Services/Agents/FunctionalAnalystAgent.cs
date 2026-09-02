@@ -34,7 +34,7 @@ namespace AgentMesh.Application.Services.Agents
                 },
                 new AgentInputParameterConfiguration
                 {
-                    ParameterType = typeof(DomainsKnowledgeBaseDocumentsContentParameter),
+                    ParameterType = typeof(KnowledgeQueryResultParameter),
                     ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 }
             ];

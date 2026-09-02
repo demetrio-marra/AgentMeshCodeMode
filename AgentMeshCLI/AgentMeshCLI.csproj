@@ -30,7 +30,6 @@
     <ProjectReference Include="..\AgentMesh.Infrastructure.Mem0\AgentMesh.Infrastructure.Mem0.csproj" />
     <ProjectReference Include="..\AgentMesh.Infrastructure.JSSandbox\AgentMesh.Infrastructure.JSSandbox.csproj" />
     <ProjectReference Include="..\AgentMesh.Infrastructure.OpenAIClient\AgentMesh.Infrastructure.OpenAIClient.csproj" />
-    <ProjectReference Include="..\AgentMesh.Infrastructure.QMD\AgentMesh.Infrastructure.QMD.csproj" />
     <ProjectReference Include="..\AgentMesh\AgentMesh.csproj" />
   </ItemGroup>
 

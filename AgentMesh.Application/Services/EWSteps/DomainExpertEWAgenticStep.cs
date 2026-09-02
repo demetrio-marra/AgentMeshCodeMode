@@ -25,7 +25,7 @@ namespace AgentMesh.Application.Services.EWSteps
             typeof(UserProvidedDataParameter),
             typeof(UserPreferencesParameter),
             typeof(PastMemoriesQueryResultsParameter),
-            typeof(DomainsKnowledgeBaseDocumentsContentParameter),
+            typeof(KnowledgeQueryResultParameter),
             typeof(LanguageOfTheUserParameter),
             typeof(PipelineResultDataParameter)
             ];

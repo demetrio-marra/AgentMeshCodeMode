@@ -12,8 +12,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.JS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.OpenAIClient", "AgentMesh.Infrastructure.OpenAIClient\AgentMesh.Infrastructure.OpenAIClient.csproj", "{23C51EC1-699F-42EB-A94E-60E36377ED2D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.QMD", "AgentMesh.Infrastructure.QMD\AgentMesh.Infrastructure.QMD.csproj", "{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.Mem0", "AgentMesh.Infrastructure.Mem0\AgentMesh.Infrastructure.Mem0.csproj", "{6495993B-79E4-4140-8EC5-AC5FFD784B97}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentMesh.Infrastructure.LightRag", "AgentMesh.Infrastructure.LightRag\AgentMesh.Infrastructure.LightRag.csproj", "{E5EACB55-95C7-4FA2-AF7B-DBE4A48ACB8B}"
@@ -88,18 +86,6 @@ Global
 		{23C51EC1-699F-42EB-A94E-60E36377ED2D}.Release|x64.Build.0 = Release|Any CPU
 		{23C51EC1-699F-42EB-A94E-60E36377ED2D}.Release|x86.ActiveCfg = Release|Any CPU
 		{23C51EC1-699F-42EB-A94E-60E36377ED2D}.Release|x86.Build.0 = Release|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Debug|x64.Build.0 = Debug|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Debug|x86.Build.0 = Debug|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Release|x64.ActiveCfg = Release|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Release|x64.Build.0 = Release|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Release|x86.ActiveCfg = Release|Any CPU
-		{7E0DC7F2-D841-42A2-9CDA-ED20CAE953C8}.Release|x86.Build.0 = Release|Any CPU
 		{6495993B-79E4-4140-8EC5-AC5FFD784B97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6495993B-79E4-4140-8EC5-AC5FFD784B97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6495993B-79E4-4140-8EC5-AC5FFD784B97}.Debug|x64.ActiveCfg = Debug|Any CPU

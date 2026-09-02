@@ -14,8 +14,6 @@ using AgentMesh.Infrastructure.LightRag.Services;
 using AgentMesh.Infrastructure.LightRag.Configuration;
 using AgentMesh.Infrastructure.Mem0;
 using AgentMesh.Infrastructure.OpenAIClient;
-using AgentMesh.Infrastructure.QMD;
-using AgentMesh.Infrastructure.QMD.Services;
 using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.Configuration;
@@ -82,9 +80,6 @@ namespace AgentMesh
             services.AddSingleton(lightRagConfig);
             services.AddHttpClient<IKnowledgeService, LightRagKnowledgeService>();
 
-            services.AddSingleton<IKnowledgeBaseService, QMDKnowledgeBaseService>();
-            services.AddSingleton<KnowledgeBaseExecutor>();
-
             // Agent Memory Service configuration
             var agentMemoryConfig = new AgentMemoryServiceConfiguration();
             configuration.GetSection(AgentMemoryServiceConfiguration.SectionName).Bind(agentMemoryConfig);
@@ -93,12 +88,6 @@ namespace AgentMesh
 
             // Register Agent Memory Executor - single implementation for both interfaces
             services.AddSingleton<AgentMemoryExecutor>();
-
-            // QMD MCP server proxy configuration and HTTP client
-            var qmdHttpProxyConfig = new QMDHttpProxyConfiguration();
-            configuration.GetSection(QMDHttpProxyConfiguration.SectionName).Bind(qmdHttpProxyConfig);
-            services.AddSingleton(qmdHttpProxyConfig);
-            services.AddHttpClient<QMDHttpProxy>();
 
             // Configure JSSandbox options
             services
@@ -125,17 +114,14 @@ namespace AgentMesh
             services.AddSingleton<FunctionalAnalystAgent>();
             services.AddSingleton<DomainExpertAgent>();
             services.AddSingleton<TechnicalAnalystAgent>();
-            services.AddSingleton<AnalystAgent>();
             services.AddSingleton<DocumentationAgent>();
             services.AddSingleton<CoderAgent>();
             services.AddSingleton<PersonalAssistantAgent>();
             services.AddSingleton<RelevantFactsEvaluatorAgent>();
             services.AddSingleton<RequestAnalyzerAgent>();
             services.AddSingleton<CanonicalizerAgent>();
-            services.AddSingleton<KnowledgeBaseQueryExpanderAgent>();
             services.AddSingleton<KnowledgeQueryBuilderForCoderAgent>();
             services.AddSingleton<AgentMemoryQueryExpanderAgent>();
-            services.AddSingleton<RerankerAgent>();
             services.AddSingleton<KnowledgeRerankerAgent>();
             services.AddSingleton<KnowledgeForCoderRerankerAgent>();
             services.AddSingleton<ConversationSummarizerAgent>();

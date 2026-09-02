@@ -7,10 +7,11 @@ using AgentMesh.Application.Utils;
 using AgentMesh.Utils;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace AgentMesh.Application.Services.Agents
 {
-    public abstract class AbstractAgent<T>(ILogger logger,
+    public abstract partial class AbstractAgent<T>(ILogger logger,
         string agentName,
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
@@ -48,6 +49,9 @@ namespace AgentMesh.Application.Services.Agents
                     logger.LogWarning("The model's response is empty");
                     throw new EmptyAgentResponseException();
                 }
+
+                // remove <think></think> content if present
+                responseText = Regex.Replace(responseText, @"<think>.*?</think>", string.Empty, RegexOptions.Singleline | RegexOptions.IgnoreCase).Trim();
 
                 var parsedResult = ParseStructuredResponse(responseText);
 

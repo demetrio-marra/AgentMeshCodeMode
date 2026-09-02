@@ -1,6 +1,5 @@
 using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Application.Models.Knowledge;
-using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Models;
 using AgentMesh.Utils;
 
@@ -51,47 +50,6 @@ namespace AgentMesh.Application.Utils
             }
 
             return ListsFormatter.ToBulletList(items.Select(item => $"{item.Memory} - Confidence: {item.Confidence}"));
-        }
-
-        public static string GetKnowledgeBaseQueryInputItemsDisplayValue(IEnumerable<KnowledgeBaseQueryInputItem>? items)
-        {
-            if (items == null || !items.Any())
-            {
-                return EWParameterConstants.NoDataPlaceholder;
-            }
-
-            return ListsFormatter.ToBulletList(items.Select(item => item.ToString()));
-        }
-
-        public static string GetKnowledgeBaseQueryResultsDisplayValue(IEnumerable<KnowledgeBaseQueryResultItem>? items)
-        {
-            if (items == null || !items.Any())
-            {
-                return EWParameterConstants.NoDataPlaceholder;
-            }
-
-            return ListsFormatter.ToBulletList(items.Select(item => $"{item.File} - Title: {item.Title} - Relevance: {item.Relevance}"));
-        }
-
-        public static string GetKnowledgeBaseDocumentsContentDisplayValue(IEnumerable<KnowledgeBaseDocumentContent>? documents)
-        {
-            if (documents == null || !documents.Any())
-            {
-                return EWParameterConstants.NoDataPlaceholder;
-            }
-
-            var files = documents
-                .Select(document => document.File)
-                .Where(file => !string.IsNullOrWhiteSpace(file))
-                .Cast<string>()
-                .ToList();
-
-            if (!files.Any())
-            {
-                return EWParameterConstants.NoDataPlaceholder;
-            }
-
-            return ListsFormatter.ToBulletList(files);
         }
 
         public static string GetKnowledgeDisplayValue(KnowledgeQuery query)

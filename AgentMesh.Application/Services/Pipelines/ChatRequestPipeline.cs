@@ -36,10 +36,12 @@ namespace AgentMesh.Application.Services.Pipelines
         KnowledgeEWCodeStep knowledgeEWCodeStep,
         KnowledgeRerankerEWAgenticStep knowledgeRerankerEWAgenticStep,
         CanonicalizerEWAgenticStep canonicalizerEWAgenticStep,
-        AnalystEWAgenticStep analystEWStep,
+        FunctionalAnalystEWAgenticStep functionalAnalystEWStep,
+        TechnicalAnalystEWAgenticStep technicalAnalystEWAgenticStep,
         KnowledgeQueryBuilderForCoderEWAgenticStep knowledgeQueryBuilderForCoderEWAgenticStep,
         KnowledgeForCoderRerankerEWAgenticStep knowledgeRerankerForCoderEWAgenticStep,
         KnowledgeForCoderEWCodeStep knowledgeForCoderEWCodeStep,
+
         IWorkflowProgressNotifier workflowProgressNotifier
         ) : EWPipeline(workflowProgressNotifier,
             parameterStore,
@@ -150,7 +152,7 @@ namespace AgentMesh.Application.Services.Pipelines
         {
             var steps = Enumerable.Empty<IEWStep>();
 
-            if (RunOnce([analystEWStep], out steps))
+            if (RunOnce([functionalAnalystEWStep], out steps))
             {
                 return steps;
             }
@@ -163,12 +165,20 @@ namespace AgentMesh.Application.Services.Pipelines
                 return steps;
             }
 
-            if (RunOnce([knowledgeForCoderEWCodeStep], out steps))
+            if (RunOnce([knowledgeForCoderEWCodeStep], out steps,
+                () => !requestWasRejected))
             {
                 return steps;
             }
 
-            if (RunOnce([knowledgeRerankerForCoderEWAgenticStep], out steps))
+            if (RunOnce([knowledgeRerankerForCoderEWAgenticStep], out steps,
+                () => !requestWasRejected))
+            {
+                return steps;
+            }
+
+            if (RunOnce([technicalAnalystEWAgenticStep], out steps,
+                () => !requestWasRejected))
             {
                 return steps;
             }

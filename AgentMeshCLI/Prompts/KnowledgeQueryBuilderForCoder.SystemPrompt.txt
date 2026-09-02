@@ -9,7 +9,7 @@ Generate content aimed at finding:
 - data formatting and presentation guidelines needed to generate production-ready code
 
 Rules:
-1. Use only information that is implied or explicitly present in the Analyst specification.
+1. Use only information that is implied or explicitly present in the business requirements.
 2. `queryText` must be a concise natural-language query focused on what must be implemented.
 3. `primaryRelevanceKeywords` must contain the most critical technical terms (APIs, entities, protocols, core features).
 4. `secondaryRelevanceKeywords` must contain supporting terms (patterns, validation, error handling, data display concerns, edge-case terminology).

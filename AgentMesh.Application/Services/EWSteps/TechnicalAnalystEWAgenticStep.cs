@@ -6,8 +6,7 @@ using AgentMesh.Services;
 namespace AgentMesh.Application.Services.EWSteps
 {
     public class TechnicalAnalystEWAgenticStep(
-        TechnicalAnalystAgent technicalAnalystAgent,
-        KnowledgeBaseAPIDocumentsContentParameter knowledgeBaseAPIDocumentsContentParameter) : IEWAgenticStep
+        TechnicalAnalystAgent technicalAnalystAgent) : IEWAgenticStep
     {
         public string Name => "Technical Analyst";
 
@@ -19,19 +18,11 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public IEnumerable<Type> InputParameterTypes => [
             typeof(RequestDateTimeParameter),
-            typeof(UserIntentParameter),
-            typeof(ConversationTopicParameter),
             typeof(BusinessRequirementsParameter),
-            typeof(UserMentionedEntitiesParameter),
-            typeof(UserProvidedDataParameter),
-            typeof(UserPreferencesParameter),
-            typeof(PastMemoriesQueryResultsParameter),
-            typeof(KnowledgeBaseAPIDocumentsContentParameter)
+            typeof(KnowledgeContentForCoderParameter)
             ];
 
         public IEnumerable<Type> OutputParameterTypes => [
-            typeof(KnowledgeBaseAPIDocumentsContentParameter),
-            typeof(TechnicalSpecificationParameter),
             typeof(RequestRejectedFlagParameter),
             typeof(RequestRejectedReasonParameter)
             ];
@@ -42,21 +33,9 @@ namespace AgentMesh.Application.Services.EWSteps
 
             var outputMutations = new Dictionary<Type, object?>
             {
-                { typeof(TechnicalSpecificationParameter), agentOutput.Result.TechnicalSpecification },
                 { typeof(RequestRejectedFlagParameter), agentOutput.Result.RequestRejected },
                 { typeof(RequestRejectedReasonParameter), agentOutput.Result.RequestRejectionReason }
             };
-
-            if (agentOutput.Result.FilteredApisDocumentationFiles != null && agentOutput.Result.FilteredApisDocumentationFiles.Any())
-            {
-                var selectedDocuments = agentOutput.Result.FilteredApisDocumentationFiles.ToList();
-                var currentDocuments = knowledgeBaseAPIDocumentsContentParameter.ValueAs(Values[typeof(KnowledgeBaseAPIDocumentsContentParameter)]) ?? [];
-                var filteredKbDocuments = currentDocuments
-                    .Where(doc => selectedDocuments.Contains(doc.File, StringComparer.OrdinalIgnoreCase))
-                    .ToList();
-
-                outputMutations[typeof(KnowledgeBaseAPIDocumentsContentParameter)] = filteredKbDocuments;
-            }
 
             return new EWAgenticStepExecutionResult
             {

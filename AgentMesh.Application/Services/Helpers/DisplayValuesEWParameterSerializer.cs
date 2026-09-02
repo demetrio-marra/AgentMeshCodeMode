@@ -1,6 +1,5 @@
 ﻿using AgentMesh.Application.Models.AgentMemory;
 using AgentMesh.Application.Models.Knowledge;
-using AgentMesh.Application.Models.KnowledgeBase;
 using AgentMesh.Application.Utils;
 using AgentMesh.Models;
 using AgentMesh.Services;
@@ -19,9 +18,6 @@ namespace AgentMesh.Application.Services.Helpers
                 IEnumerable<ContextMessage> contextMessages => EWParameterDisplayUtils.GetContextMessagesDisplayValue(contextMessages),
                 IEnumerable<AgentMemoryQueryResultItem> queryResults => EWParameterDisplayUtils.GetAgentMemoryQueryResultsDisplayValue(queryResults),
                 IEnumerable<AgentMemoryItem> memoryItems => EWParameterDisplayUtils.GetAgentMemoryItemsDisplayValue(memoryItems),
-                IEnumerable<KnowledgeBaseQueryInputItem> queryInputItems => EWParameterDisplayUtils.GetKnowledgeBaseQueryInputItemsDisplayValue(queryInputItems),
-                IEnumerable<KnowledgeBaseQueryResultItem> queryResultItems => EWParameterDisplayUtils.GetKnowledgeBaseQueryResultsDisplayValue(queryResultItems),
-                IEnumerable<KnowledgeBaseDocumentContent> documents => EWParameterDisplayUtils.GetKnowledgeBaseDocumentsContentDisplayValue(documents),
                 KnowledgeQuery knowledgeQuery => EWParameterDisplayUtils.GetKnowledgeDisplayValue(knowledgeQuery),
                 KnowledgeQueryResult knowledgeQueryResult => EWParameterDisplayUtils.GetKnowledgeQueryResultDisplayValue(knowledgeQueryResult),
                 IEnumerable<KnowledgeContentItem> knowledgeContentItems => EWParameterDisplayUtils.GetDisplayValueForKnowledgeContentItem(knowledgeContentItems),
