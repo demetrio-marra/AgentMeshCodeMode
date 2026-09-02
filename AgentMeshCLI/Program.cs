@@ -137,6 +137,7 @@ namespace AgentMesh
             services.AddSingleton<AgentMemoryQueryExpanderAgent>();
             services.AddSingleton<RerankerAgent>();
             services.AddSingleton<KnowledgeRerankerAgent>();
+            services.AddSingleton<KnowledgeForCoderRerankerAgent>();
             services.AddSingleton<ConversationSummarizerAgent>();
 
             // CodeModeWorkflow configuration

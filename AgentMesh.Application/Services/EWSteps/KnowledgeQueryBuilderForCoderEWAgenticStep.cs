@@ -1,3 +1,4 @@
+using AgentMesh.Application.Models.Knowledge;
 using AgentMesh.Application.Models.Parameters;
 using AgentMesh.Application.Services.Agents;
 using AgentMesh.Models;

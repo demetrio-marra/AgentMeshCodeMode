@@ -38,6 +38,8 @@ namespace AgentMesh.Application.Services.Pipelines
         CanonicalizerEWAgenticStep canonicalizerEWAgenticStep,
         AnalystEWAgenticStep analystEWStep,
         KnowledgeQueryBuilderForCoderEWAgenticStep knowledgeQueryBuilderForCoderEWAgenticStep,
+        KnowledgeForCoderRerankerEWAgenticStep knowledgeRerankerForCoderEWAgenticStep,
+        KnowledgeForCoderEWCodeStep knowledgeForCoderEWCodeStep,
         IWorkflowProgressNotifier workflowProgressNotifier
         ) : EWPipeline(workflowProgressNotifier,
             parameterStore,
@@ -157,6 +159,16 @@ namespace AgentMesh.Application.Services.Pipelines
 
             if (RunOnce([knowledgeQueryBuilderForCoderEWAgenticStep], out steps,
                 () => !requestWasRejected))
+            {
+                return steps;
+            }
+
+            if (RunOnce([knowledgeForCoderEWCodeStep], out steps))
+            {
+                return steps;
+            }
+
+            if (RunOnce([knowledgeRerankerForCoderEWAgenticStep], out steps))
             {
                 return steps;
             }

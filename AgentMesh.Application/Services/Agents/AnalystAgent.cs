@@ -82,7 +82,6 @@ namespace AgentMesh.Application.Services.Agents
                 {
                     Accepted = response.Accepted,
                     Specification = response.Specification,
-                    ContentIds = response.ContentIds,
                     RejectReason = response.RejectReason,
                     RejectReasons = response.RejectReasons
                 };
@@ -102,9 +101,6 @@ namespace AgentMesh.Application.Services.Agents
 
             [JsonPropertyName("specification")]
             public string Specification { get; set; } = string.Empty;
-
-            [JsonPropertyName("contentIds")]
-            public IEnumerable<string> ContentIds { get; set; } = [];
 
             [JsonPropertyName("rejectReason")]
             public string? RejectReason { get; set; }
