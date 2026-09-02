@@ -17,31 +17,17 @@ namespace AgentMesh.Application.Services.Pipelines
 
         MissingValuesParameter missingValuesParameter,
         PastMemoriesQueryParameter pastMemoriesQueryParameter,
-        //DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter,
-        //KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter,
-        //KnowledgeQueryResultParameter knowledgeQueryResultParameter,
-        //APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
         RequestRejectedFlagParameter requestRejectedFlagParameter,
-        //TechnicalSpecificationParameter technicalSpecificationParameter,
         GeneratedCodeParameter generatedCodeParameter,
         ExecutionErrorParameter executionErrorParameter,
         PipelineResultDataParameter pipelineResultDataParameter,
         IntentCategoryParameter intentCategoryParameter,
         IsSmallTalkParameter isSmallTalkParameter,
-        AnalystRejectReasonsParameter analystRejectReasonsParameter,
 
         RequestAnalyzerEWAgenticStep requestAnalyzerEWStep,
         AgentMemoryQueryExpanderEWAgenticStep agentMemoryQueryExpanderEWStep,
         AgentMemoryServiceEWCodeStep agentMemoryServiceEWStep,
-        //KnowledgeBaseQueryExpanderEWAgenticStep knowledgeBaseQueryExpanderEWStep,
-        //DomainsKnowledgeBaseServiceSearchEWCodeStep domainsKnowledgeBaseServiceSearchEWStep,
-        //RerankerEWAgenticStep rerankerEWStep,
-        //DomainsKnowledgeBaseDocumentsExtractorEWCodeStep domainsKnowledgeBaseDocumentsExtractorEWStep,
         DocumentationEWAgenticStep documentationEWStep,
-        //FunctionalAnalystEWAgenticStep functionalAnalystEWStep,
-        //APIsKnowledgeBaseServiceSearchEWCodeStep apisKnowledgeBaseServiceSearchEWStep,
-        //APIKnowledgeBaseDocumentsExtractorEWCodeStep apiKnowledgeBaseDocumentsExtractorEWStep,
-        //TechnicalAnalystEWAgenticStep technicalAnalystEWStep,
         CoderEWAgenticStep coderEWStep,
         JSSandboxEWCodeStep jsSandboxEWStep,
         DomainExpertEWAgenticStep domainExpertEWStep,
@@ -165,48 +151,6 @@ namespace AgentMesh.Application.Services.Pipelines
             {
                 return steps;
             }
-
-            //if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
-            //{
-            //    return steps;
-            //}
-
-            //if (RunOnce([domainsKnowledgeBaseServiceSearchEWStep], out steps,
-            //    () => domainsKnowledgeBaseQueryParameter.ValueAs(GetParameterRawValue(typeof(DomainsKnowledgeBaseQueryParameter)))?.Any() ?? false))
-            //{
-            //    return steps;
-            //}
-
-            //if (RunOnce([rerankerEWStep], out steps))
-            //{
-            //    return steps;
-            //}
-
-            //if (RunOnce([domainsKnowledgeBaseDocumentsExtractorEWStep], out steps,
-            //    () => knowledgeBaseQueryResultsParameter.ValueAs(GetParameterRawValue(typeof(KnowledgeBaseQueryResultsParameter)))?.Any() ?? false))
-            //{
-            //    return steps;
-            //}
-
-            //if (RunOnce([functionalAnalystEWStep, apisKnowledgeBaseServiceSearchEWStep], out steps))
-            //{
-            //    return steps;
-            //}
-
-            //var requestWasRejected = requestRejectedFlagParameter.ValueAs(GetParameterRawValue(typeof(RequestRejectedFlagParameter)));
-
-            //if (RunOnce([apiKnowledgeBaseDocumentsExtractorEWStep], out steps,
-            //        () => !requestWasRejected
-            //            && (apisKnowledgeBaseQueryResultsParameter.ValueAs(GetParameterRawValue(typeof(APISKnowledgeBaseQueryResultsParameter)))?.Any() ?? false)))
-            //{
-            //    return steps;
-            //}
-
-            //if (RunOnce([technicalAnalystEWStep], out steps,
-            //    () => !requestWasRejected))
-            //{
-            //    return steps;
-            //}
 
             var requestWasRejected = requestRejectedFlagParameter.ValueAs(GetParameterRawValue(typeof(RequestRejectedFlagParameter)));
 
