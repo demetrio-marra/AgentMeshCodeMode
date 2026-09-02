@@ -133,6 +133,7 @@ namespace AgentMesh
             services.AddSingleton<RequestAnalyzerAgent>();
             services.AddSingleton<CanonicalizerAgent>();
             services.AddSingleton<KnowledgeBaseQueryExpanderAgent>();
+            services.AddSingleton<KnowledgeQueryBuilderForCoderAgent>();
             services.AddSingleton<AgentMemoryQueryExpanderAgent>();
             services.AddSingleton<RerankerAgent>();
             services.AddSingleton<KnowledgeRerankerAgent>();

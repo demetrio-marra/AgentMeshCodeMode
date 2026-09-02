@@ -37,6 +37,7 @@ namespace AgentMesh.Application.Services.Pipelines
         KnowledgeRerankerEWAgenticStep knowledgeRerankerEWAgenticStep,
         CanonicalizerEWAgenticStep canonicalizerEWAgenticStep,
         AnalystEWAgenticStep analystEWStep,
+        KnowledgeQueryBuilderForCoderEWAgenticStep knowledgeQueryBuilderForCoderEWAgenticStep,
         IWorkflowProgressNotifier workflowProgressNotifier
         ) : EWPipeline(workflowProgressNotifier,
             parameterStore,
@@ -153,6 +154,12 @@ namespace AgentMesh.Application.Services.Pipelines
             }
 
             var requestWasRejected = requestRejectedFlagParameter.ValueAs(GetParameterRawValue(typeof(RequestRejectedFlagParameter)));
+
+            if (RunOnce([knowledgeQueryBuilderForCoderEWAgenticStep], out steps,
+                () => !requestWasRejected))
+            {
+                return steps;
+            }
 
             if (RunOnce([coderEWStep], out steps,
                 () => !requestWasRejected))
