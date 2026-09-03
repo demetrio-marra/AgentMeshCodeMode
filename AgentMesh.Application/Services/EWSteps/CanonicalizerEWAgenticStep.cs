@@ -12,7 +12,7 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public string? AgentName => "RequestCanonicalization";
 
-        public bool CountInputTokensAsContextTokens => true;
+        public bool CountInputTokensAsContextTokens => false;
 
         public bool CountOutputTokensAsContextTokens => false;
 
