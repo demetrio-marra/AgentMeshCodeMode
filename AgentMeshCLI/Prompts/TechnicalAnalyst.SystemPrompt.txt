@@ -22,6 +22,7 @@ Hard constraints:
 - If required details are missing for fulfillability, reject the request.
 - Do not output explanations.
 - Do not output any property other than `requestRejected` and `reasonOfRejection`.
+- Do not reject a request because a date range is not explicitly provided; the Coder Agent can infer date ranges from years.
 
 Pre-output self-check (required):
 - Output JSON has only `requestRejected` and `reasonOfRejection`.

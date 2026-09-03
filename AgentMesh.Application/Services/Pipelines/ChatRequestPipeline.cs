@@ -177,11 +177,11 @@ namespace AgentMesh.Application.Services.Pipelines
                 return steps;
             }
 
-            if (RunOnce([technicalAnalystEWAgenticStep], out steps,
-                () => !requestWasRejected))
-            {
-                return steps;
-            }
+            //if (RunOnce([technicalAnalystEWAgenticStep], out steps,
+            //    () => !requestWasRejected))
+            //{
+            //    return steps;
+            //}
 
             if (RunOnce([coderEWStep], out steps,
                 () => !requestWasRejected))

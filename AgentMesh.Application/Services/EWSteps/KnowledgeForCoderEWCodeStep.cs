@@ -17,6 +17,10 @@ namespace AgentMesh.Application.Services.EWSteps
         public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
             var knowledgeQueryResult = await knowledgeService.QueryKnowledgeAsync(knowledgeQueryParameter.ValueAs(Values[typeof(KnowledgeQueryForCoderParameter)]), cancellationToken);
+
+            // we must filter documents that includes the "scope: api-documentation" text in their Frontmatter
+            knowledgeQueryResult.Contents = knowledgeQueryResult.Contents.Where(c => c.Content.Contains("scope: api-documentation", StringComparison.OrdinalIgnoreCase));
+
             return new EWStepExecutionResult
             {
                 OutputMutations = new Dictionary<Type, object?>
