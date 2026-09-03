@@ -44,7 +44,7 @@ namespace AgentMesh.Infrastructure.Cohere
                 };
             }
 
-            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/v1/rerank")
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "v1/rerank")
             {
                 Content = JsonContent.Create(new RerankRequestDto
                 {

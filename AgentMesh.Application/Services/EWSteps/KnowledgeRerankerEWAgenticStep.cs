@@ -1,13 +1,15 @@
+using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.Knowledge;
 using AgentMesh.Application.Models.Parameters;
-using AgentMesh.Application.Services.Agents;
+using AgentMesh.Application.Models.Rerank;
 using AgentMesh.Models;
 using AgentMesh.Services;
+using System.Text;
 
 namespace AgentMesh.Application.Services.EWSteps
 {
     public class KnowledgeRerankerEWAgenticStep(
-        KnowledgeRerankerAgent knowledgeRerankerAgent,
+        IRerankerService rerankerService,
         KnowledgeQueryResultParameter knowledgeQueryResultParameter) : IEWAgenticStep
     {
         public string Name => "Knowledge Reranker";
@@ -19,13 +21,7 @@ namespace AgentMesh.Application.Services.EWSteps
         public bool CountOutputTokensAsContextTokens => false;
 
         public IEnumerable<Type> InputParameterTypes => [
-            typeof(RequestDateTimeParameter),
             typeof(UserIntentParameter),
-            typeof(ConversationTopicParameter),
-            typeof(UserMentionedEntitiesParameter),
-            typeof(UserProvidedDataParameter),
-            typeof(UserPreferencesParameter),
-            typeof(PastMemoriesQueryResultsParameter),
             typeof(KnowledgeQueryResultParameter)
             ];
 
@@ -33,24 +29,88 @@ namespace AgentMesh.Application.Services.EWSteps
 
         public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
-            var agentOutput = await knowledgeRerankerAgent.ExecuteAsync(Values, cancellationToken);
-
             var initialKnowledgeQueryResult = knowledgeQueryResultParameter.ValueAs(Values[typeof(KnowledgeQueryResultParameter)]) ?? new KnowledgeQueryResult();
+            var contents = initialKnowledgeQueryResult.Contents.ToList();
 
-            var selectedContentIds = new HashSet<string>(agentOutput.Result.ContentIds, StringComparer.OrdinalIgnoreCase);
-            var selectedEntityIds = new HashSet<string>(agentOutput.Result.EntityIds, StringComparer.OrdinalIgnoreCase);
-            var selectedRelationIds = new HashSet<string>(agentOutput.Result.RelationIds, StringComparer.OrdinalIgnoreCase);
+            var entitiesByContentId = initialKnowledgeQueryResult.Entities
+                .Where(entity => !string.IsNullOrWhiteSpace(entity.ContentItem?.Id))
+                .GroupBy(entity => entity.ContentItem.Id, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);
 
-            var rerankedContents = initialKnowledgeQueryResult.Contents
+            var relationsByContentId = initialKnowledgeQueryResult.Relations
+                .Where(relation => !string.IsNullOrWhiteSpace(relation.ContentItem?.Id))
+                .GroupBy(relation => relation.ContentItem.Id, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);
+
+            var rearrangedKnowledgeQueryResults = contents
+                .Select(content =>
+                {
+                    var builder = new StringBuilder();
+                    builder.AppendLine($"ContentId: {content.Id}");
+                    builder.AppendLine($"Source: {content.Source}");
+                    builder.AppendLine();
+
+                    builder.AppendLine("Entities:");
+                    if (entitiesByContentId.TryGetValue(content.Id, out var contentEntities) && contentEntities.Count > 0)
+                    {
+                        foreach (var entity in contentEntities)
+                        {
+                            builder.AppendLine($"- Entity: {entity.Entity}; Type: {entity.Type}; Description: {entity.Description}");
+                        }
+                    }
+                    else
+                    {
+                        builder.AppendLine("- (none)");
+                    }
+
+                    builder.AppendLine();
+                    builder.AppendLine("Relations:");
+                    if (relationsByContentId.TryGetValue(content.Id, out var contentRelations) && contentRelations.Count > 0)
+                    {
+                        foreach (var relation in contentRelations)
+                        {
+                            builder.AppendLine($"- {relation.Description}");
+                        }
+                    }
+                    else
+                    {
+                        builder.AppendLine("- (none)");
+                    }
+
+                    builder.AppendLine();
+                    builder.AppendLine("Content: ");
+                    builder.AppendLine(content.Content);
+
+                    return builder.ToString();
+                })
+                .ToList();
+
+            var rerankerInputRequest = new RerankInputQuery
+            {
+                TopN = 10,
+                Query = Values[typeof(UserIntentParameter)]?.ToString() ?? string.Empty,
+                CandidateDocuments = rearrangedKnowledgeQueryResults
+            };
+
+            var rerankResult = await rerankerService.RerankAsync(rerankerInputRequest, cancellationToken);
+
+            var selectedContentIds = rerankResult.RerankedDocuments
+                .Select(resultItem => resultItem.DocumentIndex)
+                .Where(index => index >= 0 && index < contents.Count)
+                .Select(index => contents[index].Id)
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var rerankedContents = contents
                 .Where(content => selectedContentIds.Contains(content.Id))
                 .ToArray();
 
             var rerankedEntities = initialKnowledgeQueryResult.Entities
-                .Where(entity => selectedEntityIds.Contains(entity.Id))
+                .Where(entity => !string.IsNullOrWhiteSpace(entity.ContentItem?.Id) && selectedContentIds.Contains(entity.ContentItem.Id))
                 .ToArray();
 
             var rerankedRelations = initialKnowledgeQueryResult.Relations
-                .Where(relation => selectedRelationIds.Contains(relation.Id))
+                .Where(relation => !string.IsNullOrWhiteSpace(relation.ContentItem?.Id) && selectedContentIds.Contains(relation.ContentItem.Id))
                 .ToArray();
 
             var result = new KnowledgeQueryResult
@@ -62,14 +122,13 @@ namespace AgentMesh.Application.Services.EWSteps
 
             return new EWAgenticStepExecutionResult
             {
-                InputTokens = agentOutput.InputTokenCount,
-                OutputTokens = agentOutput.OutputTokenCount,
+                InputTokens = rerankResult.PromptTokens,
+                OutputTokens = rerankResult.CompletionTokens,
                 OutputMutations = new Dictionary<Type, object?>
                 {
                     { typeof(KnowledgeQueryResultParameter), result }
                 }
             };
         }
-
-            }
-        }
+    }
+}
