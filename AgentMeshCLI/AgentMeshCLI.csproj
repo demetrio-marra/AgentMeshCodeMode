@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AgentMesh.Application\AgentMesh.Application.csproj" />
+    <ProjectReference Include="..\AgentMesh.Infrastructure.Cohere\AgentMesh.Infrastructure.Cohere.csproj" />
     <ProjectReference Include="..\AgentMesh.Infrastructure.LightRag\AgentMesh.Infrastructure.LightRag.csproj" />
     <ProjectReference Include="..\AgentMesh.Infrastructure.Mem0\AgentMesh.Infrastructure.Mem0.csproj" />
     <ProjectReference Include="..\AgentMesh.Infrastructure.JSSandbox\AgentMesh.Infrastructure.JSSandbox.csproj" />

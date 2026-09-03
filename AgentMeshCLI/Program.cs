@@ -9,6 +9,7 @@ using AgentMesh.Application.Services.Pipelines;
 using AgentMesh.Application.Utils;
 using AgentMesh.Configuration;
 using AgentMesh.Helpers;
+using AgentMesh.Infrastructure.Cohere;
 using AgentMesh.Infrastructure.JSSandbox;
 using AgentMesh.Infrastructure.LightRag.Services;
 using AgentMesh.Infrastructure.LightRag.Configuration;
@@ -85,6 +86,12 @@ namespace AgentMesh
             configuration.GetSection(AgentMemoryServiceConfiguration.SectionName).Bind(agentMemoryConfig);
             services.AddSingleton(agentMemoryConfig);
             services.AddHttpClient<IAgentMemoryService, Mem0AgentMemoryService>();
+
+            // Cohere reranker service configuration and HTTP client
+            var cohereRerankerConfig = new CohereV1RerankerServiceConfiguration();
+            configuration.GetSection(CohereV1RerankerServiceConfiguration.SectionName).Bind(cohereRerankerConfig);
+            services.AddSingleton(cohereRerankerConfig);
+            services.AddHttpClient<IRerankerService, CohereV1RerankerService>();
 
             // Register Agent Memory Executor - single implementation for both interfaces
             services.AddSingleton<AgentMemoryExecutor>();
