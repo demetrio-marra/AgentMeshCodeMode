@@ -2,8 +2,10 @@
 using System.Text.Json;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.Knowledge;
+using AgentMesh.Application.Utils;
 using AgentMesh.Infrastructure.LightRag.Configuration;
 using AgentMesh.Infrastructure.LightRag.DTOs.QueryData;
+using Microsoft.Extensions.Logging;
 
 namespace AgentMesh.Infrastructure.LightRag.Services
 {
@@ -14,17 +16,25 @@ namespace AgentMesh.Infrastructure.LightRag.Services
         private readonly HttpClient _httpClient;
         private readonly int _maxResults;
         private readonly string? _apiKey;
+        private readonly Resilience _resilience;
+        private readonly ILogger<LightRagKnowledgeService> _logger;
 
         private static readonly JsonSerializerOptions JsonSerializerOptions = new()
         {
             PropertyNameCaseInsensitive = true
         };
 
-        public LightRagKnowledgeService(HttpClient httpClient, LightRagServiceConfiguration configuration)
+        public LightRagKnowledgeService(
+            HttpClient httpClient,
+            LightRagServiceConfiguration configuration,
+            Resilience resilience,
+            ILogger<LightRagKnowledgeService> logger)
         {
             _httpClient = httpClient;
             _maxResults = configuration.MaxTopK;
             _apiKey = configuration.ApiKey;
+            _resilience = resilience;
+            _logger = logger;
             _httpClient.BaseAddress = new Uri(configuration.BaseUrl);
         }
 
@@ -43,20 +53,26 @@ namespace AgentMesh.Infrastructure.LightRag.Services
                 IncludeChunkContent = true
             };
 
-            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, QueryDataEndpoint)
-            {
-                Content = JsonContent.Create(request, options: JsonSerializerOptions)
-            };
+            using var response = await _resilience.SendWithRetryAsync(
+                async () =>
+                {
+                    using var requestMessage = new HttpRequestMessage(HttpMethod.Post, QueryDataEndpoint)
+                    {
+                        Content = JsonContent.Create(request, options: JsonSerializerOptions)
+                    };
 
-            if (!string.IsNullOrWhiteSpace(_apiKey))
-            {
-                requestMessage.Headers.TryAddWithoutValidation("X-API-Key", _apiKey);
-            }
+                    if (!string.IsNullOrWhiteSpace(_apiKey))
+                    {
+                        requestMessage.Headers.TryAddWithoutValidation("X-API-Key", _apiKey);
+                    }
 
-            using var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+                    return await _httpClient.SendAsync(requestMessage, cancellationToken);
+                },
+                nameof(QueryKnowledgeAsync),
+                _logger);
             response.EnsureSuccessStatusCode();
 
-            var responseDto = await response.Content.ReadFromJsonAsync<QueryDataResponseDto>(JsonSerializerOptions);
+            var responseDto = await response.Content.ReadFromJsonAsync<QueryDataResponseDto>(JsonSerializerOptions, cancellationToken);
             if (responseDto?.Data == null)
             {
                 return new KnowledgeQueryResult();
