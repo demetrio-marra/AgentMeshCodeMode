@@ -24,7 +24,6 @@ Produce a canonicalized version of the structured user request where:
 Also output:
 1) a canonicalized intent category that can differ from the original when evidence supports reclassification.
 Allowed values:
-- Other
 - Documentation
 - TaskExecution
 
@@ -39,5 +38,5 @@ Return a JSON object with this structure:
   "userMentionedEntities": ["Canonicalized entity 1", "Canonicalized entity 2"],
   "userProvidedData": ["Canonicalized data 1"],
   "userPreferences": ["Canonicalized preference 1"],
-  "canonicalizedIntentCategory": "TaskExecution"
+  "intentCategory": "TaskExecution"
 }

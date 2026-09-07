@@ -124,7 +124,7 @@ namespace AgentMesh.Application.Services.Agents
             [JsonPropertyName("userPreferences")]
             public IEnumerable<string>? UserPreferences { get; set; }
 
-            [JsonPropertyName("canonicalizedIntentCategory")]
+            [JsonPropertyName("intentCategory")]
             public string CanonicalizedIntentCategoryRaw { get; set; } = string.Empty;
         }
     }
