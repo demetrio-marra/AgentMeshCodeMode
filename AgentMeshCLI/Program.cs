@@ -2,7 +2,6 @@ using AgentMesh.Application.Configuration;
 using AgentMesh.Application.Contracts;
 using AgentMesh.Application.Models.Conversation;
 using AgentMesh.Application.Services;
-using AgentMesh.Application.Services.Agents;
 using AgentMesh.Application.Services.Executors;
 using AgentMesh.Application.Services.Helpers;
 using AgentMesh.Application.Services.Pipelines;
@@ -22,7 +21,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Reflection;
 
 namespace AgentMesh
 {
@@ -55,13 +53,13 @@ namespace AgentMesh
             services.AddKeyedSingleton<IEWParameterSerializer, OmittedValueEWParameterSerializer>("OmittedValueParametersSerializer");
             services.AddSingleton<IOpenAIClientFactory, OpenAIClientFactory>();
 
-            foreach (var ewParameterType in DiscoverEWParameterImplementations())
+            foreach (var ewParameterType in AssemblyDiscoveryHelper.DiscoverEWParameterImplementations())
             {
                 services.AddSingleton(ewParameterType);
                 services.AddSingleton(typeof(IEWParameterConfiguration), sp => (IEWParameterConfiguration)sp.GetRequiredService(ewParameterType));
             }
 
-            foreach (var ewStepType in DiscoverEWStepImplementations())
+            foreach (var ewStepType in AssemblyDiscoveryHelper.DiscoverEWStepImplementations())
             {
                 services.AddSingleton(ewStepType);
             }
@@ -118,18 +116,11 @@ namespace AgentMesh
 
             services.AddSingleton<Resilience>();
 
-            services.AddSingleton<FunctionalAnalystAgent>();
-            services.AddSingleton<DomainExpertAgent>();
-            services.AddSingleton<TechnicalAnalystAgent>();
-            services.AddSingleton<DocumentationAgent>();
-            services.AddSingleton<CoderAgent>();
-            services.AddSingleton<PersonalAssistantAgent>();
-            services.AddSingleton<RelevantFactsEvaluatorAgent>();
-            services.AddSingleton<RequestAnalyzerAgent>();
-            services.AddSingleton<CanonicalizerAgent>();
-            services.AddSingleton<KnowledgeQueryBuilderForCoderAgent>();
-            services.AddSingleton<AgentMemoryQueryExpanderAgent>();
-            services.AddSingleton<ConversationSummarizerAgent>();
+            foreach (var ewAgentType in AssemblyDiscoveryHelper.DiscoverEWAgentImplementations())
+            {
+                services.AddSingleton(ewAgentType);
+                services.AddSingleton(typeof(IEWAgent), sp => (IEWAgent)sp.GetRequiredService(ewAgentType));
+            }
 
             // CodeModeWorkflow configuration
             services
@@ -158,114 +149,6 @@ namespace AgentMesh
 
             var host = builder.Build();
             await host.RunAsync();
-        }
-
-    
-        private static IEnumerable<Type> DiscoverEWParameterImplementations()
-        {
-            return GetAllAssemblies()
-                .SelectMany(GetTypesSafely)
-                .Where(IsEWParameterConfiguration)
-                .Distinct();
-        }
-
-        private static IEnumerable<Type> DiscoverEWStepImplementations()
-        {
-            return GetAllAssemblies()
-                .SelectMany(GetTypesSafely)
-                .Where(IsConcreteEWStep)
-                .Distinct();
-        }
-
-        private static bool IsEWParameterConfiguration(Type type)
-        {
-            return type.IsClass
-                && !type.IsAbstract
-                && !type.ContainsGenericParameters
-                && typeof(IEWParameterConfiguration).IsAssignableFrom(type);
-        }
-
-        private static bool IsConcreteEWStep(Type type)
-        {
-            return type.IsClass
-                && !type.IsAbstract
-                && !type.ContainsGenericParameters
-                && typeof(IEWStep).IsAssignableFrom(type);
-        }
-
-        private static IEnumerable<Assembly> GetAllAssemblies()
-        {
-            var discoveredAssemblies = new Dictionary<string, Assembly>(StringComparer.OrdinalIgnoreCase);
-            var queue = new Queue<Assembly>();
-
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                if (!discoveredAssemblies.ContainsKey(assembly.FullName ?? assembly.GetName().Name ?? string.Empty))
-                {
-                    discoveredAssemblies[assembly.FullName ?? assembly.GetName().Name ?? string.Empty] = assembly;
-                    queue.Enqueue(assembly);
-                }
-            }
-
-            while (queue.Count > 0)
-            {
-                var assembly = queue.Dequeue();
-                foreach (var reference in assembly.GetReferencedAssemblies())
-                {
-                    if (discoveredAssemblies.ContainsKey(reference.FullName))
-                    {
-                        continue;
-                    }
-
-                    try
-                    {
-                        var loadedAssembly = Assembly.Load(reference);
-                        discoveredAssemblies[reference.FullName] = loadedAssembly;
-                        queue.Enqueue(loadedAssembly);
-                    }
-                    catch
-                    {
-                        // Ignore assemblies that cannot be loaded.
-                    }
-                }
-            }
-
-            return discoveredAssemblies.Values;
-        }
-
-        private static IEnumerable<Type> GetTypesSafely(Assembly assembly)
-        {
-            try
-            {
-                return assembly.GetTypes();
-            }
-            catch (ReflectionTypeLoadException ex)
-            {
-                return ex.Types.Where(t => t != null)!;
-            }
-            catch
-            {
-                return [];
-            }
-        }
-
-        private static string ResolveConfigText(string currentValue, string? filePath)
-        {
-            if (!string.IsNullOrWhiteSpace(filePath))
-            {
-                var fullPath = Path.IsPathRooted(filePath)
-                    ? filePath
-                    : Path.Combine(AppContext.BaseDirectory, filePath);
-
-                if (!File.Exists(fullPath))
-                {
-                    throw new FileNotFoundException($"Configuration file not found: {fullPath}");
-                }
-
-                return File.ReadAllText(fullPath);
-            }
-
-            return currentValue;
         }
     }
 }

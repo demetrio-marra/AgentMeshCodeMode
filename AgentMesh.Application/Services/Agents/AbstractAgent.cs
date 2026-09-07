@@ -4,6 +4,7 @@ using AgentMesh.Application.Models.Agents;
 using AgentMesh.Application.Models.ChatMessages;
 using AgentMesh.Application.Services.Helpers;
 using AgentMesh.Application.Utils;
+using AgentMesh.Services;
 using AgentMesh.Utils;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -15,7 +16,7 @@ namespace AgentMesh.Application.Services.Agents
         string agentName,
         IOpenAIClientFactory openAIClientFactory,
         Resilience resilience,
-        IAgentInputSerializer agentInputSerializer)
+        IAgentInputSerializer agentInputSerializer) : IEWAgent
     {
         private readonly IOpenAIClient _openAIClient = openAIClientFactory.CreateOpenAIClient(agentName);
 
