@@ -35,27 +35,25 @@ namespace AgentMesh.Application.Services.EWSteps
             ];
 
         public IEnumerable<Type> OutputParameterTypes => [
-            typeof(PersonalAssistantOpeningSentenceParameter),
-            typeof(PersonalAssistantClosingSentenceParameter),
-            typeof(PersonalAssistantDirectAnswerParameter),
             typeof(FinalAnswerParameter)
             ];
 
         public async Task<EWStepExecutionResult> ExecuteAsync(IReadOnlyDictionary<Type, object?> Values, CancellationToken cancellationToken = default)
         {
             var data = pipelineResultDataParameter.ValueAs(Values[typeof(PipelineResultDataParameter)]);
-            var requestFailed = requestRejectedFlagParameter.ValueAs(Values[typeof(RequestRejectedFlagParameter)]);
+            var requestRejected = requestRejectedFlagParameter.ValueAs(Values[typeof(RequestRejectedFlagParameter)]);
             var executionError = executionErrorParameter.ValueAs(Values[typeof(ExecutionErrorParameter)]);
 
             var agentOutput = await personalAssistantAgent.ExecuteAsync(Values, cancellationToken);
 
             string? finalAnswer;
-            if (!string.IsNullOrWhiteSpace(agentOutput.Result.DirectAnswer))
+
+            if (requestRejected || executionError || string.IsNullOrWhiteSpace(data))
             {
                 finalAnswer = agentOutput.Result.DirectAnswer;
             }
-            else
-            {
+            else 
+            { 
                 finalAnswer = string.Join(Environment.NewLine + Environment.NewLine,
                     new[] { agentOutput.Result.OpeningSentence, data, agentOutput.Result.ClosingSentence }
                     .Where(s => !string.IsNullOrWhiteSpace(s)));
@@ -67,9 +65,6 @@ namespace AgentMesh.Application.Services.EWSteps
                 OutputTokens = agentOutput.OutputTokenCount,
                 OutputMutations = new Dictionary<Type, object?>
                 {
-                    { typeof(PersonalAssistantOpeningSentenceParameter), agentOutput.Result.OpeningSentence },
-                    { typeof(PersonalAssistantClosingSentenceParameter), agentOutput.Result.ClosingSentence },
-                    { typeof(PersonalAssistantDirectAnswerParameter), agentOutput.Result.DirectAnswer },
                     { typeof(FinalAnswerParameter), finalAnswer }
                 }
             };
