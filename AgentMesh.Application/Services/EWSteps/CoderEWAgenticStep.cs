@@ -19,8 +19,7 @@ namespace AgentMesh.Application.Services.EWSteps
         public IEnumerable<Type> InputParameterTypes => [
             typeof(RequestDateTimeParameter),
             typeof(BusinessRequirementsParameter),
-            typeof(TechnicalSpecificationParameter),
-            typeof(KnowledgeBaseAPIDocumentsContentParameter)
+            typeof(KnowledgeContentForCoderParameter)
         ];
 
         public IEnumerable<Type> OutputParameterTypes => [typeof(GeneratedCodeParameter)];

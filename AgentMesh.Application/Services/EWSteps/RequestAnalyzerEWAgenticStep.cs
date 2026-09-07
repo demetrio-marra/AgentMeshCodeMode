@@ -25,8 +25,9 @@ namespace AgentMesh.Application.Services.EWSteps
         public IEnumerable<Type> OutputParameterTypes => [
             typeof(UserIntentParameter),
             typeof(IntentCategoryParameter),
+            typeof(IsSmallTalkParameter),
             typeof(ConversationTopicParameter),
-            typeof(UserRequestedActionsParameter),
+            typeof(UserMentionedEntitiesParameter),
             typeof(UserProvidedDataParameter),
             typeof(UserPreferencesParameter),
             typeof(MissingValuesParameter),
@@ -45,8 +46,9 @@ namespace AgentMesh.Application.Services.EWSteps
                 {
                     { typeof(UserIntentParameter), agentOutput.Result.Intent },
                     { typeof(IntentCategoryParameter), agentOutput.Result.IntentCategory },
+                    { typeof(IsSmallTalkParameter), agentOutput.Result.IsSmallTalk },
                     { typeof(ConversationTopicParameter), agentOutput.Result.ConversationTopic },
-                    { typeof(UserRequestedActionsParameter), agentOutput.Result.UserRequestedActions },
+                    { typeof(UserMentionedEntitiesParameter), agentOutput.Result.UserMentionedEntities },
                     { typeof(UserProvidedDataParameter), agentOutput.Result.UserProvidedData },
                     { typeof(UserPreferencesParameter), agentOutput.Result.UserPreferences },
                     { typeof(MissingValuesParameter), agentOutput.Result.MissingValues },

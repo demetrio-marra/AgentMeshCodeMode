@@ -1,5 +1,5 @@
 using AgentMesh.Application.Models.AgentMemory;
-using AgentMesh.Application.Models.KnowledgeBase;
+using AgentMesh.Application.Models.Knowledge;
 using AgentMesh.Models;
 using AgentMesh.Utils;
 
@@ -52,45 +52,73 @@ namespace AgentMesh.Application.Utils
             return ListsFormatter.ToBulletList(items.Select(item => $"{item.Memory} - Confidence: {item.Confidence}"));
         }
 
-        public static string GetKnowledgeBaseQueryInputItemsDisplayValue(IEnumerable<KnowledgeBaseQueryInputItem>? items)
+        public static string GetKnowledgeDisplayValue(KnowledgeQuery query)
         {
-            if (items == null || !items.Any())
+            if (query == null)
             {
                 return EWParameterConstants.NoDataPlaceholder;
             }
-
-            return ListsFormatter.ToBulletList(items.Select(item => item.ToString()));
+            var displayValue = $"Query Text: {query.QueryText}\n" +
+                               $"Retrieval Kind: {query.QueryRetrievalKind}\n" +
+                               $"Max Results: {query.MaxResults}\n" +
+                               $"Include Entities: {query.IncludeEntities}\n" +
+                               $"Include Relations: {query.IncludeRelations}\n" +
+                               $"Primary Relevance Keywords: {GetListOfStringsDisplayValue(query.PrimaryRelevanceKeywords)}\n" +
+                               $"Secondary Relevance Keywords: {GetListOfStringsDisplayValue(query.SecondaryRelevanceKeywords)}";
+            return displayValue;
         }
 
-        public static string GetKnowledgeBaseQueryResultsDisplayValue(IEnumerable<KnowledgeBaseQueryResultItem>? items)
+        public static string GetKnowledgeQueryResultDisplayValue(KnowledgeQueryResult result)
         {
-            if (items == null || !items.Any())
+            if (result == null)
             {
                 return EWParameterConstants.NoDataPlaceholder;
             }
 
-            return ListsFormatter.ToBulletList(items.Select(item => $"{item.File} - Title: {item.Title} - Relevance: {item.Relevance}"));
+            var displayValue = $"Contents:\n{GetListOfStringsDisplayValue(result.Contents?.Select(c => GetDisplayValueForKnowledgeContentItem(c)))}\n" +
+                               $"Entities:\n{GetListOfStringsDisplayValue(result.Entities?.Select(e => GetDisplayValueForKnowledgeEntityItem(e)))}\n" +
+                               $"Relations:\n{GetListOfStringsDisplayValue(result.Relations?.Select(r => GetDisplayValueForKnowledgeRelationItem(r)))}";
+            return displayValue;
         }
 
-        public static string GetKnowledgeBaseDocumentsContentDisplayValue(IEnumerable<KnowledgeBaseDocumentContent>? documents)
+        private static string GetDisplayValueForKnowledgeContentItem(KnowledgeContentItem item)
         {
-            if (documents == null || !documents.Any())
+            if (item == null)
             {
                 return EWParameterConstants.NoDataPlaceholder;
             }
 
-            var files = documents
-                .Select(document => document.File)
-                .Where(file => !string.IsNullOrWhiteSpace(file))
-                .Cast<string>()
-                .ToList();
+            var truncatedContent = item.Content.Length > 100 ? item.Content.Substring(0, 100) + "...(lenght: " + item.Content.Length + ")": item.Content;
 
-            if (!files.Any())
+            return $"Id: {item.Id}, Source: {item.Source}, Content: {truncatedContent}";
+        }
+
+        public static string GetDisplayValueForKnowledgeContentItem(IEnumerable<KnowledgeContentItem> items)
+        {
+            if (!items.Any())
             {
                 return EWParameterConstants.NoDataPlaceholder;
             }
 
-            return ListsFormatter.ToBulletList(files);
+            return ListsFormatter.ToBulletList(items.Select(item => GetDisplayValueForKnowledgeContentItem(item)));
+        }
+
+        private static string GetDisplayValueForKnowledgeEntityItem(KnowledgeEntityItem item)
+        {
+            if (item == null)
+            {
+                return EWParameterConstants.NoDataPlaceholder;
+            }
+            return $"Entity: {item.Entity}, Type: {item.Type}, Description: {item.Description}, Source: {item.ContentItem.Source}";
+        }
+
+        private static string GetDisplayValueForKnowledgeRelationItem(KnowledgeRelationItem item)
+        {
+            if (item == null)
+            {
+                return EWParameterConstants.NoDataPlaceholder;
+            }
+            return $"Relation: {item.Description}, Source: {item.ContentItem.Source}";
         }
     }
 }

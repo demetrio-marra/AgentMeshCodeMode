@@ -33,7 +33,7 @@ namespace AgentMesh.Application.Services.Agents
                 },
                 new()
                 {
-                    ParameterType = typeof(KnowledgeBaseAPIDocumentsContentParameter),
+                    ParameterType = typeof(KnowledgeContentForCoderParameter),
                     ParameterTags = [ParameterTags.AgentSystemParameterTag]
                 }
             ];

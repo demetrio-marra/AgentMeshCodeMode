@@ -27,7 +27,7 @@ namespace AgentMesh.Application.Services.Agents
         {
             return [
                 new () { ParameterType = typeof(RequestDateTimeParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] },
-                new () { ParameterType = typeof(DomainsKnowledgeBaseDocumentsContentParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] }
+                new () { ParameterType = typeof(KnowledgeQueryResultParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] }
                 ];
         }
 

@@ -17,32 +17,31 @@ namespace AgentMesh.Application.Services.Pipelines
 
         MissingValuesParameter missingValuesParameter,
         PastMemoriesQueryParameter pastMemoriesQueryParameter,
-        DomainsKnowledgeBaseQueryParameter domainsKnowledgeBaseQueryParameter,
-        KnowledgeBaseQueryResultsParameter knowledgeBaseQueryResultsParameter,
-        APISKnowledgeBaseQueryResultsParameter apisKnowledgeBaseQueryResultsParameter,
         RequestRejectedFlagParameter requestRejectedFlagParameter,
-        TechnicalSpecificationParameter technicalSpecificationParameter,
         GeneratedCodeParameter generatedCodeParameter,
         ExecutionErrorParameter executionErrorParameter,
         PipelineResultDataParameter pipelineResultDataParameter,
         IntentCategoryParameter intentCategoryParameter,
+        IsSmallTalkParameter isSmallTalkParameter,
 
         RequestAnalyzerEWAgenticStep requestAnalyzerEWStep,
         AgentMemoryQueryExpanderEWAgenticStep agentMemoryQueryExpanderEWStep,
         AgentMemoryServiceEWCodeStep agentMemoryServiceEWStep,
-        KnowledgeBaseQueryExpanderEWAgenticStep knowledgeBaseQueryExpanderEWStep,
-        DomainsKnowledgeBaseServiceSearchEWCodeStep domainsKnowledgeBaseServiceSearchEWStep,
-        RerankerEWAgenticStep rerankerEWStep,
-        DomainsKnowledgeBaseDocumentsExtractorEWCodeStep domainsKnowledgeBaseDocumentsExtractorEWStep,
         DocumentationEWAgenticStep documentationEWStep,
-        FunctionalAnalystEWAgenticStep functionalAnalystEWStep,
-        APIsKnowledgeBaseServiceSearchEWCodeStep apisKnowledgeBaseServiceSearchEWStep,
-        APIKnowledgeBaseDocumentsExtractorEWCodeStep apiKnowledgeBaseDocumentsExtractorEWStep,
-        TechnicalAnalystEWAgenticStep technicalAnalystEWStep,
         CoderEWAgenticStep coderEWStep,
         JSSandboxEWCodeStep jsSandboxEWStep,
         DomainExpertEWAgenticStep domainExpertEWStep,
         PersonalAssistantEWAgenticStep personalAssistantEWStep,
+        RequestDataToKnowledgeQueryEWCodeStep requestDataToKnowledgeQueryEWCodeStep,
+        KnowledgeEWCodeStep knowledgeEWCodeStep,
+        KnowledgeRerankerEWAgenticStep knowledgeRerankerEWAgenticStep,
+        CanonicalizerEWAgenticStep canonicalizerEWAgenticStep,
+        FunctionalAnalystEWAgenticStep functionalAnalystEWStep,
+        TechnicalAnalystEWAgenticStep technicalAnalystEWAgenticStep,
+        KnowledgeQueryBuilderForCoderEWAgenticStep knowledgeQueryBuilderForCoderEWAgenticStep,
+        KnowledgeForCoderRerankerEWAgenticStep knowledgeRerankerForCoderEWAgenticStep,
+        KnowledgeForCoderEWCodeStep knowledgeForCoderEWCodeStep,
+
         IWorkflowProgressNotifier workflowProgressNotifier
         ) : EWPipeline(workflowProgressNotifier,
             parameterStore,
@@ -70,10 +69,49 @@ namespace AgentMesh.Application.Services.Pipelines
                 return steps;
             }
 
+            if (workflowConfiguration.EnableMemoryService
+          && RunOnce([agentMemoryQueryExpanderEWStep], out steps,
+          () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
+            {
+                return steps;
+            }
+
+            if (workflowConfiguration.EnableMemoryService
+                && RunOnce([agentMemoryServiceEWStep], out steps,
+              () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
+            {
+                return steps;
+            }
+
+            var isSmallTalk = isSmallTalkParameter.ValueAs(GetParameterRawValue(typeof(IsSmallTalkParameter)))!.Value;
+            if (isSmallTalk)
+            {
+                return HandleOtherTopicsBranch();
+            }
+
+            if (RunOnce([requestDataToKnowledgeQueryEWCodeStep], out steps))
+            {
+                return steps;
+            }
+
+            if (RunOnce([knowledgeEWCodeStep], out steps))
+            {
+                return steps;
+            }
+
+            if (RunOnce([knowledgeRerankerEWAgenticStep], out steps))
+            {
+                return steps;
+            }
+
+            if (RunOnce([canonicalizerEWAgenticStep], out steps))
+            {
+                return steps;
+            }
+
             var pipelineBranch = GuessPipelineBranch();
             return pipelineBranch switch
             {
-                PipelineBranchValue.OtherTopics => HandleOtherTopicsBranch(),
                 PipelineBranchValue.Documenting => HandleDocumentingBranch(),
                 PipelineBranchValue.TaskExecution => HandleTaskExecutionBranch(),
                 _ => throw new NotImplementedException()
@@ -84,24 +122,6 @@ namespace AgentMesh.Application.Services.Pipelines
         private IEnumerable<IEWStep> HandleOtherTopicsBranch()
         {
             var steps = Enumerable.Empty<IEWStep>();
-
-            // Equivalent to:
-            // - if agent has already run, do not run it
-            // - if missingValuesParameter is null or empty, do not run it
-            // Conditions are AND
-            if (workflowConfiguration.EnableMemoryService
-                && RunOnce([agentMemoryQueryExpanderEWStep], out steps,
-                () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (workflowConfiguration.EnableMemoryService
-                && RunOnce([agentMemoryServiceEWStep], out steps,
-                () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
 
             if (RunOnce([personalAssistantEWStep], out steps))
             {
@@ -114,42 +134,6 @@ namespace AgentMesh.Application.Services.Pipelines
         private IEnumerable<IEWStep> HandleDocumentingBranch()
         {
             var steps = Enumerable.Empty<IEWStep>();
-
-            if (workflowConfiguration.EnableMemoryService
-                && RunOnce([agentMemoryQueryExpanderEWStep], out steps, 
-                () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (workflowConfiguration.EnableMemoryService
-                && RunOnce([agentMemoryServiceEWStep], out steps,   
-              () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
-            {
-                return steps;
-            }
-
-            if (RunOnce([domainsKnowledgeBaseServiceSearchEWStep], out steps,
-                () => domainsKnowledgeBaseQueryParameter.ValueAs(GetParameterRawValue(typeof(DomainsKnowledgeBaseQueryParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (RunOnce([rerankerEWStep], out steps))
-            {
-                return steps;
-            }
-
-            if (RunOnce([domainsKnowledgeBaseDocumentsExtractorEWStep], out steps,
-                () => knowledgeBaseQueryResultsParameter.ValueAs(GetParameterRawValue(typeof(KnowledgeBaseQueryResultsParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
 
             if (RunOnce([documentationEWStep], out steps))
             {
@@ -168,65 +152,39 @@ namespace AgentMesh.Application.Services.Pipelines
         {
             var steps = Enumerable.Empty<IEWStep>();
 
-            if (workflowConfiguration.EnableMemoryService
-                && RunOnce([agentMemoryQueryExpanderEWStep], out steps,
-               () => missingValuesParameter.ValueAs(GetParameterRawValue(typeof(MissingValuesParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (workflowConfiguration.EnableMemoryService
-                && RunOnce([agentMemoryServiceEWStep], out steps,
-              () => pastMemoriesQueryParameter.ValueAs(GetParameterRawValue(typeof(PastMemoriesQueryParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (RunOnce([knowledgeBaseQueryExpanderEWStep], out steps))
-            {
-                return steps;
-            }
-
-            if (RunOnce([domainsKnowledgeBaseServiceSearchEWStep], out steps,
-                () => domainsKnowledgeBaseQueryParameter.ValueAs(GetParameterRawValue(typeof(DomainsKnowledgeBaseQueryParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (RunOnce([rerankerEWStep], out steps))
-            {
-                return steps;
-            }
-
-            if (RunOnce([domainsKnowledgeBaseDocumentsExtractorEWStep], out steps,
-                () => knowledgeBaseQueryResultsParameter.ValueAs(GetParameterRawValue(typeof(KnowledgeBaseQueryResultsParameter)))?.Any() ?? false))
-            {
-                return steps;
-            }
-
-            if (RunOnce([functionalAnalystEWStep, apisKnowledgeBaseServiceSearchEWStep], out steps))
+            if (RunOnce([functionalAnalystEWStep], out steps))
             {
                 return steps;
             }
 
             var requestWasRejected = requestRejectedFlagParameter.ValueAs(GetParameterRawValue(typeof(RequestRejectedFlagParameter)));
 
-            if (RunOnce([apiKnowledgeBaseDocumentsExtractorEWStep], out steps,
-                    () => !requestWasRejected
-                        && (apisKnowledgeBaseQueryResultsParameter.ValueAs(GetParameterRawValue(typeof(APISKnowledgeBaseQueryResultsParameter)))?.Any() ?? false)))
+            if (RunOnce([knowledgeQueryBuilderForCoderEWAgenticStep], out steps,
+                () => !requestWasRejected))
             {
                 return steps;
             }
 
-            if (RunOnce([technicalAnalystEWStep], out steps,
+            if (RunOnce([knowledgeForCoderEWCodeStep], out steps,
+                () => !requestWasRejected))
+            {
+                return steps;
+            }
+
+            if (RunOnce([knowledgeRerankerForCoderEWAgenticStep], out steps,
+                () => !requestWasRejected))
+            {
+                return steps;
+            }
+
+            if (RunOnce([technicalAnalystEWAgenticStep], out steps,
                 () => !requestWasRejected))
             {
                 return steps;
             }
 
             if (RunOnce([coderEWStep], out steps,
-                () => !requestWasRejected
-                    && technicalSpecificationParameter.ValueAs(GetParameterRawValue(typeof(TechnicalSpecificationParameter))) != null))
+                () => !requestWasRejected))
             {
                 return steps;
             }
@@ -260,7 +218,6 @@ namespace AgentMesh.Application.Services.Pipelines
         {
             return intentCategoryParameter.ValueAs(GetParameterRawValue(typeof(IntentCategoryParameter)))!.Value switch
             {
-                UserIntentCategory.Other => PipelineBranchValue.OtherTopics,
                 UserIntentCategory.Documentation => PipelineBranchValue.Documenting,
                 UserIntentCategory.TaskExecution => PipelineBranchValue.TaskExecution,
                 _ => throw new NotImplementedException(),
@@ -269,7 +226,6 @@ namespace AgentMesh.Application.Services.Pipelines
 
         private enum PipelineBranchValue
         {
-            OtherTopics,
             Documenting,
             TaskExecution
         }

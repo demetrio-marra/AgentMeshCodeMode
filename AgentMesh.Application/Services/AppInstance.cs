@@ -116,7 +116,7 @@ namespace AgentMesh.Application.Services
             }
 
             var agentsCosts = CalculateExecutionCosts(usageStatistics);
-            CumulatedCost += agentsCosts.Sum(c => c.InputCost + c.OutputCost);
+            CumulatedCost += agentsCosts.Sum(c => c.TotalCost);
 
             return new WorkflowResult
             {
@@ -150,7 +150,9 @@ namespace AgentMesh.Application.Services
                         CostPerMillionInputTokens: agentConfig.LLMClassCostPerMillionInputTokens,
                         CostPerMillionOutputTokens: agentConfig.LLMClassCostPerMillionOutputTokens,
                         ConsumedInputTokens: step.InputTokens ?? 0,
-                        ConsumedOutputTokens: step.OutputTokens ?? 0
+                        ConsumedOutputTokens: step.OutputTokens ?? 0,
+                        CostPerHour: agentConfig.LLMClassCostPerHour,
+                        Elapsed: step.Elapsed
                     );
                     costs.Add(agentCost);
                 }

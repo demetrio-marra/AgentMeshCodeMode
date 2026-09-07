@@ -29,7 +29,7 @@ namespace AgentMesh.Application.Services.Agents
         {
             return [
                 new() { ParameterType = typeof(RequestDateTimeParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] },
-                new() { ParameterType = typeof(KnowledgeBaseAPIDocumentsContentParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] },
+                new() { ParameterType = typeof(KnowledgeContentForCoderParameter), ParameterTags = [ParameterTags.AgentSystemParameterTag] },
                 ];
         }
 
@@ -45,12 +45,6 @@ namespace AgentMesh.Application.Services.Agents
                     throw new BadStructuredResponseException(rawResponseText, "The model's response could not be deserialized into the expected format.");
                 }
 
-                if (!responseDTO.RequestRejected && string.IsNullOrWhiteSpace(responseDTO.TechnicalSpecification))
-                {
-                    _logger.LogWarning("The model's response contains an empty technical specification for a non-rejected request. Response text: {ResponseText}", rawResponseText);
-                    throw new BadStructuredResponseException(rawResponseText, "The model's response contains an empty technical specification for a non-rejected request.");
-                }
-
                 if (responseDTO.RequestRejected && string.IsNullOrWhiteSpace(responseDTO.ReasonOfRejection))
                 {
                     _logger.LogWarning("The model's response rejected the request without providing reasonOfRejection. Response text: {ResponseText}", rawResponseText);
@@ -62,16 +56,9 @@ namespace AgentMesh.Application.Services.Agents
                     responseDTO.ReasonOfRejection = null;
                 }
 
-                if (responseDTO.SelectedAPIsFileLocations == null)
-                {
-                    responseDTO.SelectedAPIsFileLocations = Array.Empty<string>();
-                }
-
                 return new TechnicalAnalysis
                 {
-                    TechnicalSpecification = responseDTO.TechnicalSpecification,
                     RequestRejected = responseDTO.RequestRejected,
-                    FilteredApisDocumentationFiles = responseDTO.SelectedAPIsFileLocations.ToList(),
                     RequestRejectionReason = responseDTO.ReasonOfRejection
                 };
             }
@@ -84,18 +71,12 @@ namespace AgentMesh.Application.Services.Agents
 
         public class ParsedResponse
         {
-            [JsonPropertyName("technicalSpecification")]
-            public string TechnicalSpecification { get; set; } = string.Empty;
-
             [JsonRequired]
             [JsonPropertyName("requestRejected")]
             public bool RequestRejected { get; set; }
 
             [JsonPropertyName("reasonOfRejection")]
             public string? ReasonOfRejection { get; set; }
-
-            [JsonPropertyName("selectedAPIsFileLocations")]
-            public IEnumerable<string> SelectedAPIsFileLocations { get; set; } = Array.Empty<string>();
         }
     }
 }

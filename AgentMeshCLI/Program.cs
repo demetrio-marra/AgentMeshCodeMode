@@ -9,11 +9,12 @@ using AgentMesh.Application.Services.Pipelines;
 using AgentMesh.Application.Utils;
 using AgentMesh.Configuration;
 using AgentMesh.Helpers;
+using AgentMesh.Infrastructure.Cohere;
 using AgentMesh.Infrastructure.JSSandbox;
+using AgentMesh.Infrastructure.LightRag.Services;
+using AgentMesh.Infrastructure.LightRag.Configuration;
 using AgentMesh.Infrastructure.Mem0;
 using AgentMesh.Infrastructure.OpenAIClient;
-using AgentMesh.Infrastructure.QMD;
-using AgentMesh.Infrastructure.QMD.Services;
 using AgentMesh.Models;
 using AgentMesh.Services;
 using Microsoft.Extensions.Configuration;
@@ -74,8 +75,11 @@ namespace AgentMesh
             services.AddScoped<ISummarizationPipeline, SummarizationPipeline>();
 
             #region agents/executors region
-            services.AddSingleton<IKnowledgeBaseService, QMDKnowledgeBaseService>();
-            services.AddSingleton<KnowledgeBaseExecutor>();
+            // LightRAG service configuration and HTTP client
+            var lightRagConfig = new LightRagServiceConfiguration();
+            configuration.GetSection(LightRagServiceConfiguration.SectionName).Bind(lightRagConfig);
+            services.AddSingleton(lightRagConfig);
+            services.AddHttpClient<IKnowledgeService, LightRagKnowledgeService>();
 
             // Agent Memory Service configuration
             var agentMemoryConfig = new AgentMemoryServiceConfiguration();
@@ -83,14 +87,14 @@ namespace AgentMesh
             services.AddSingleton(agentMemoryConfig);
             services.AddHttpClient<IAgentMemoryService, Mem0AgentMemoryService>();
 
+            // Cohere reranker service configuration and HTTP client
+            var cohereRerankerConfig = new CohereV1RerankerServiceConfiguration();
+            configuration.GetSection(CohereV1RerankerServiceConfiguration.SectionName).Bind(cohereRerankerConfig);
+            services.AddSingleton(cohereRerankerConfig);
+            services.AddHttpClient<IRerankerService, CohereV1RerankerService>();
+
             // Register Agent Memory Executor - single implementation for both interfaces
             services.AddSingleton<AgentMemoryExecutor>();
-
-            // QMD MCP server proxy configuration and HTTP client
-            var qmdHttpProxyConfig = new QMDHttpProxyConfiguration();
-            configuration.GetSection(QMDHttpProxyConfiguration.SectionName).Bind(qmdHttpProxyConfig);
-            services.AddSingleton(qmdHttpProxyConfig);
-            services.AddHttpClient<QMDHttpProxy>();
 
             // Configure JSSandbox options
             services
@@ -122,9 +126,9 @@ namespace AgentMesh
             services.AddSingleton<PersonalAssistantAgent>();
             services.AddSingleton<RelevantFactsEvaluatorAgent>();
             services.AddSingleton<RequestAnalyzerAgent>();
-            services.AddSingleton<KnowledgeBaseQueryExpanderAgent>();
+            services.AddSingleton<CanonicalizerAgent>();
+            services.AddSingleton<KnowledgeQueryBuilderForCoderAgent>();
             services.AddSingleton<AgentMemoryQueryExpanderAgent>();
-            services.AddSingleton<RerankerAgent>();
             services.AddSingleton<ConversationSummarizerAgent>();
 
             // CodeModeWorkflow configuration
