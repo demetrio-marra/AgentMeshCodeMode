@@ -27,6 +27,7 @@ namespace AgentMesh.Configuration
         public string Provider { get; set; } = string.Empty;
         public decimal CostPerMillionInputTokens { get; set; }
         public decimal CostPerMillionOutputTokens { get; set; }
+        public decimal? CostPerHour { get; set; }
     }
 
     public sealed class AgentsConfigurationDto : Dictionary<string, AgentConfigurationDto>

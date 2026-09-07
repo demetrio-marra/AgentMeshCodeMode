@@ -1,4 +1,4 @@
-﻿namespace AgentMesh.Application.Configuration
+namespace AgentMesh.Application.Configuration
 {
     public readonly record struct AgentFlatConfigurationRecord
     {
@@ -12,7 +12,8 @@
         public readonly string LLMClass { get; init; }
         public readonly decimal LLMClassCostPerMillionInputTokens { get; init; }
         public readonly decimal LLMClassCostPerMillionOutputTokens { get; init; }
-        
+        public readonly decimal? LLMClassCostPerHour { get; init; }
+
         public readonly string Temperature { get; init; }
         public readonly string SystemPrompt { get; init; }
     }

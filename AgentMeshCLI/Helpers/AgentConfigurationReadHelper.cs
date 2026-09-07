@@ -1,4 +1,4 @@
-﻿using AgentMesh.Application.Configuration;
+using AgentMesh.Application.Configuration;
 using AgentMesh.Configuration;
 
 namespace AgentMesh.Helpers
@@ -34,6 +34,7 @@ namespace AgentMesh.Helpers
                     LLMClass = agentConfiguration.LLM,
                     LLMClassCostPerMillionInputTokens = llmConfiguration.CostPerMillionInputTokens,
                     LLMClassCostPerMillionOutputTokens = llmConfiguration.CostPerMillionOutputTokens,
+                    LLMClassCostPerHour = llmConfiguration.CostPerHour,
                     Temperature = agentConfiguration.ModelTemperature,
                     SystemPrompt = ResolveSystemPrompt(agentConfiguration, basePath)
                 };
