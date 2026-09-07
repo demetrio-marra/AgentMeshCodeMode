@@ -20,7 +20,7 @@ A flexible, extensible multi-agent AI orchestration framework that executes conf
 - **Sandboxed code execution** – generated code runs in an isolated JavaScript sandbox ([JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox)), deployed separately for security and isolation.
 - **Conversation summarization** – dedicated summarization pipeline compresses conversation history to stay within token limits.
 - **Agent memory system** – leverages Mem0 for persistent, context-aware agent memory across conversations.
-- **Knowledge base integration** – integrates with QMD for accessing knowledge bases and documentation.
+- **Knowledge base integration** – integrates with LightRAG for accessing knowledge bases and documentation ([LightRAG](https://github.com/HKUDS/LightRAG)).
 - **Multi-provider LLM support** – configure different LLM providers (HuggingFace, Together, Fireworks AI, or any OpenAI-compatible endpoint) per agent.
 - **Per-agent configuration** – each agent has its own LLM model, temperature, and system prompt, all configurable via `appsettings.json`.
 - **Token usage tracking** – tracks input/output token consumption per agent and step for cost monitoring and debugging.
@@ -123,7 +123,7 @@ Executors are services that run deterministic business logic (static procedures)
 | `AgentMesh.Infrastructure.OpenAIClient` | OpenAI-compatible API client with multi-provider support |
 | `AgentMesh.Infrastructure.JSSandbox` | Client for the external [JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) service |
 | `AgentMesh.Infrastructure.Mem0` | Mem0 agent memory service integration for persistent context |
-| `AgentMesh.Infrastructure.QMD` | QMD knowledge base and documentation integration for knowledge access |
+| `AgentMesh.Infrastructure.LightRag` | LightRag knowledge graph retrieval engine C# client ([LightRAG](https://github.com/HKUDS/LightRAG)) |
 
 ## :rocket: Getting Started
 
@@ -132,7 +132,7 @@ Executors are services that run deterministic business logic (static procedures)
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - A deployed [JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) instance for sandboxed code execution
 - A [Mem0](https://mem0.ai/) instance for agent memory (optional but recommended)
-- A [QMD](https://github.com/tobi/qmd) instance for knowledge base access (optional)
+- A [LightRAG](https://github.com/HKUDS/LightRAG) C# client for knowledge base integration
 - API keys for your chosen LLM provider(s) (HuggingFace, Together, Fireworks AI, etc.)
 
 ### Setup
@@ -157,7 +157,7 @@ Executors are services that run deterministic business logic (static procedures)
    - **Embedding** ? model endpoint and name under `Embedding`
    - **Sandbox** ? URL and sandbox name under `SESJSSandbox`
    - **Agent Memory** ? Mem0 service URL under `AgentMemoryService`
-   - **QMD** ? QMD proxy configuration under `QMDHttpProxy`
+   - **LightRag** ? LightRag proxy configuration under `LightRagKnowledgeService`
 
 4. **Set environment variables** for API keys as required by your LLM providers.
 
@@ -224,7 +224,6 @@ Agents are LLM-driven services specialized for specific tasks. The framework inc
 - Requirements collection and analysis
 - Functional and technical feasibility analysis
 - Code generation
-- Code repair and iteration
 - Conversation summarization
 - And many more domain-specific roles
 
@@ -242,7 +241,7 @@ Executors are non-LLM services that run deterministic business logic:
 |---|---|---|
 | **JSCodeSandbox** | Sandboxed JavaScript execution environment | [github.com/demetrio-marra/JSCodeSandbox](https://github.com/demetrio-marra/JSCodeSandbox) |
 | **Mem0** | Agent memory and context persistence service | [mem0.ai](https://mem0.ai/) |
-| **QMD** | Knowledge base and documentation access | [github.com/tobi/qmd](https://github.com/tobi/qmd) |
+| **LightRag** | Knowledge graph retrieval engine| [github.com/HKUDS/LightRAG](https://github.com/HKUDS/LightRAG) |
 
 ## :gear: Tech Stack
 
@@ -251,7 +250,7 @@ Executors are non-LLM services that run deterministic business logic:
 - **OpenAI SDK** (OpenAI-compatible API client)
 - **Polly** for resilience and retry policies
 - **Mem0 SDK** for agent memory
-- **QMD** for knowledge base integration
+- **LightRag** for knowledge base integration
 
 ## :page_facing_up: License
 
