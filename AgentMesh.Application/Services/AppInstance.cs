@@ -159,21 +159,5 @@ namespace AgentMesh.Application.Services
             }
             return costs;
         }
-
-
-        public Task GetLastExecutionDetails()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task GetLastExecutionDetailByParameter()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task GetLastExecutionDetailByStep()
-        {
-            throw new NotImplementedException();
-        }
     }
 }
