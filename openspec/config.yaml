@@ -12,6 +12,37 @@ context: |
     Domain: development of AI-powered applications, including chatbots and recommendation systems.
     Kubernetes-ready agentic pipelines for AI applications
 
+    Architecture baseline source of truth:
+    - openspec/changes/archive/2026-09-10-architecture-baseline-scan/design.md
+
+    Project layering:
+    - AgentMeshCLI: composition root, configuration binding, hosted console loop, runtime DI setup.
+    - AgentMesh.Application: pipeline implementations, step implementations, agent implementations, application contracts.
+    - AgentMesh: core interfaces/models for pipelines, steps, parameters, parameter store, workflow notifications.
+    - AgentMesh.Infrastructure.*: adapters for OpenAI, Mem0, LightRag, Cohere, JS sandbox.
+
+    Runtime flow:
+    - User request enters from UserConsoleInputService.
+    - AppInstance creates a scoped pipeline run and sets initial parameters.
+    - ChatRequestPipeline chooses step branches.
+    - EWPipeline executes steps and commits parameter mutations through ParameterStore.
+    - Final response is read from FinalAnswerParameter and appended to conversation context.
+    - SummarizationPipeline may run when token threshold is reached.
+
+    External boundaries:
+    - IOpenAIClient (OpenAIClientFactory/OpenAIClient)
+    - IKnowledgeService (LightRagKnowledgeService)
+    - IAgentMemoryService (Mem0AgentMemoryService)
+    - IRerankerService (CohereV1RerankerService)
+    - IJSSandbox (SESJSSandboxClient/JSSandboxExecutor)
+
+    Extension points:
+    - Add state via BaseEWParameterConfiguration<T>.
+    - Add behavior via IEWStep / IEWAgenticStep.
+    - Update orchestration in ChatRequestPipeline and SummarizationPipeline.
+    - Add agents via AbstractAgent<T> descendants with prompt/config updates.
+    - Register dependencies in Program.cs.
+
 # Per-artifact rules (optional)
 # Add custom rules for specific artifacts.
 # Example:
@@ -19,6 +50,9 @@ rules:
     proposal:
       - Keep proposals under 500 words
       - Always include a "Non-goals" section
+      - Before drafting, read architecture baseline from openspec/changes/archive/2026-09-10-architecture-baseline-scan/design.md
+    design:
+      - Before drafting, read architecture baseline from openspec/changes/archive/2026-09-10-architecture-baseline-scan/design.md
     tasks:
       - Break tasks into chunks of max 2 hours
 
