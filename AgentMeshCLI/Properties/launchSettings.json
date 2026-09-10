@@ -1,20 +1,16 @@
 {
   "profiles": {
-    "WSL": {
-      "commandName": "WSL2",
-      "environmentVariables": {
-        "DOTNET_ENVIRONMENT": "Development"
-      },
-      "distributionName": ""
-    },
-    "MyCompany": {
+    "WebMode": {
       "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }
     },
-    "Mocked data": {
+    "InteractiveMode": {
       "commandName": "Project",
+      "commandLineArgs": "--interactive",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }
