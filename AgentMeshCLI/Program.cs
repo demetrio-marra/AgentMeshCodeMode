@@ -6,6 +6,7 @@ using AgentMesh.Application.Services.Executors;
 using AgentMesh.Application.Services.Helpers;
 using AgentMesh.Application.Services.Pipelines;
 using AgentMesh.Application.Utils;
+using AgentMesh.Authentication;
 using AgentMesh.Configuration;
 using AgentMesh.Helpers;
 using AgentMesh.Infrastructure.Cohere;
@@ -16,11 +17,12 @@ using AgentMesh.Infrastructure.Mem0;
 using AgentMesh.Infrastructure.OpenAIClient;
 using AgentMesh.Models;
 using AgentMesh.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 
 namespace AgentMesh
 {
@@ -28,7 +30,9 @@ namespace AgentMesh
     {
         static async Task Main(string[] args)
         {
-            var builder = new HostApplicationBuilder(args);
+            var isInteractive = args.Any(a => string.Equals(a, "--interactive", StringComparison.OrdinalIgnoreCase));
+
+            var builder = WebApplication.CreateBuilder(args);
 
             builder.Configuration.Sources.Clear();
             builder.Configuration
@@ -66,8 +70,8 @@ namespace AgentMesh
 
             services.AddSingleton<IEnumerable<AgentFlatConfigurationRecord>>(AgentConfigurationReadHelper.ReadAgentConfigurations(appSettings, AppContext.BaseDirectory).ToArray());
 
-            services.AddSingleton<IAgentInputSerializer, DefaultAgentInputSerializer>();  
-            
+            services.AddSingleton<IAgentInputSerializer, DefaultAgentInputSerializer>();
+
             services.AddScoped<IParameterStore, ParameterStore>();
             services.AddScoped<IChatRequestPipeline, ChatRequestPipeline>();
             services.AddScoped<ISummarizationPipeline, SummarizationPipeline>();
@@ -134,21 +138,79 @@ namespace AgentMesh
 
             #endregion
 
-            services.AddSingleton<IWorkflowProgressNotifier, ConsoleWorkflowProgressNotifier>();
-            services.AddSingleton<ConversationContext>();
+            services
+                .AddOptions<UserConfiguration>()
+                .Bind(configuration.GetSection(UserConfiguration.SectionName))
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<UserConfiguration>>().Value);
 
             services
-               .AddOptions<UserConfiguration>()
-               .Bind(configuration.GetSection(UserConfiguration.SectionName))
-               .Services
-               .AddSingleton(sp => sp.GetRequiredService<IOptions<UserConfiguration>>().Value);
+                .AddOptions<ApiKeyAuthenticationConfiguration>()
+                .Bind(configuration.GetSection(ApiKeyAuthenticationConfiguration.SectionName))
+                .Services
+                .AddSingleton(sp => sp.GetRequiredService<IOptions<ApiKeyAuthenticationConfiguration>>().Value);
 
+            if (isInteractive)
+            {
+                services.AddSingleton<IWorkflowProgressNotifier, ConsoleWorkflowProgressNotifier>();
+                services.AddHostedService<UserConsoleInputService>();
+            }
+            else
+            {
+                var apiKeyConfiguration = configuration.GetSection(ApiKeyAuthenticationConfiguration.SectionName).Get<ApiKeyAuthenticationConfiguration>() ?? new ApiKeyAuthenticationConfiguration();
+                if (string.IsNullOrWhiteSpace(apiKeyConfiguration.ApiKey))
+                {
+                    throw new InvalidOperationException($"Missing API key configuration: '{ApiKeyAuthenticationConfiguration.SectionName}:ApiKey'.");
+                }
+
+                services.AddSingleton<IWorkflowProgressNotifier, DummyWorkflowProgressNotifier>();
+                services.AddAuthentication(ApiKeyAuthenticationDefaults.SchemeName)
+                    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(ApiKeyAuthenticationDefaults.SchemeName, _ => { });
+                services.AddAuthorization();
+                services.AddControllers();
+                services.AddEndpointsApiExplorer();
+                services.AddSwaggerGen(options =>
+                {
+                    options.AddSecurityDefinition(ApiKeyAuthenticationDefaults.SchemeName, new OpenApiSecurityScheme
+                    {
+                        Name = apiKeyConfiguration.HeaderName,
+                        Type = SecuritySchemeType.ApiKey,
+                        In = ParameterLocation.Header,
+                        Description = "Provide the API key to access protected endpoints."
+                    });
+
+                    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    {
+                        {
+                            new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = ApiKeyAuthenticationDefaults.SchemeName
+                                }
+                            },
+                            Array.Empty<string>()
+                        }
+                    });
+                });
+            }
+
+            services.AddSingleton<ConversationContext>();
             services.AddSingleton<AppInstance>();
 
-            services.AddHostedService<UserConsoleInputService>();
+            var app = builder.Build();
 
-            var host = builder.Build();
-            await host.RunAsync();
+            if (!isInteractive)
+            {
+                app.UseAuthentication();
+                app.UseAuthorization();
+                app.MapControllers();
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            await app.RunAsync();
         }
     }
 }
